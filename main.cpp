@@ -27,8 +27,8 @@ struct Linedef
 
 struct Sidedef
 {
-	int16_t xOffset;
-	int16_t yOffset;
+	int16_t xTextureOffset;
+	int16_t yTextureOffset;
 	char upperTexture[8];
 	char lowerTexture[8];
 	char middleTexture[8];
@@ -48,6 +48,9 @@ struct Sector
 #pragma pack(pop)
 
 std::vector<Vertex> vertices;
+std::vector<Linedef> linedefs;
+std::vector<Sidedef> sidedefs;
+std::vector<Sector> sectors;
 
 template <typename T>
 void readRaw(T& ret, const void* bytes)
@@ -59,6 +62,18 @@ template <typename T>
 T readRaw(const void* bytes)
 {
 	return *reinterpret_cast<const T*>(bytes);
+}
+
+template <typename T> 
+std::vector<T> getVectorFromWad(int32_t lumpDataOffset, int32_t lumpSizeBytes, const std::vector<char>& wadBytes)
+{
+	std::vector<T> ret;
+	for (int i = 0; i < lumpSizeBytes; i += sizeof(T))
+	{
+		T v = readRaw<T>(&wadBytes[lumpDataOffset + i]);
+		ret.push_back(v);
+	}
+	return ret;
 }
 
 void loadPwad(std::string path)
@@ -92,15 +107,10 @@ void loadPwad(std::string path)
 
 		filePtr += 16;
 
-		if (!strcmp(name, "VERTEXES"))
-		{
-			for (int i = 0; i < lumpSizeBytes; i += sizeof(Vertex))
-			{
-				Vertex v = readRaw<Vertex>(&wadBytes[lumpDataOffset + i]);
-				vertices.push_back(v);
-				std::cout << "Got vertex " << v.x << " " << v.y << "\n";
-			}
-		}
+		if (!strcmp(name, "VERTEXES")) vertices = getVectorFromWad<Vertex>(lumpDataOffset, lumpSizeBytes, wadBytes);
+		if (!strcmp(name, "LINEDEFS")) linedefs = getVectorFromWad<Linedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
+		if (!strcmp(name, "SIDEDEFS")) sidedefs = getVectorFromWad<Sidedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
+		if (!strcmp(name, "SECTORS")) sectors = getVectorFromWad<Sector>(lumpDataOffset, lumpSizeBytes, wadBytes);
 	}
 }
 
@@ -108,5 +118,9 @@ void main()
 {
 	loadPwad("D:/Games/GZDoom/STUPID_copy.wad");
 
+	for (auto& sec : sectors)
+	{
+		//do drawing of sectors here
+	}
 	system("pause");
 }

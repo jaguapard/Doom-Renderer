@@ -8,6 +8,19 @@
 
 #undef main
 
+struct Vertex
+{
+	int16_t x, y;
+};
+
+std::vector<Vertex> vertices;
+
+template <typename T>
+void readRaw(T& ret, const void* bytes)
+{
+	ret = *reinterpret_cast<const T*>(bytes);
+}
+
 void loadPwad(std::string path)
 {
 	std::ifstream f(path, std::ios::binary);
@@ -29,13 +42,27 @@ void loadPwad(std::string path)
 	for (int i = 0; i < numFiles; ++i)
 	{
 		char name[9] = { 0 };
-		int32_t lumpDataOffset = *reinterpret_cast<int32_t*>(&wadBytes[filePtr]);
-		int32_t lumpSizeBytes = *reinterpret_cast<int32_t*>(&wadBytes[filePtr+4]);
+		int32_t lumpDataOffset;
+		int32_t lumpSizeBytes;
+		readRaw(lumpDataOffset, &wadBytes[filePtr]);
+		readRaw(lumpSizeBytes, &wadBytes[filePtr + 4]);
 		memcpy(name, &wadBytes[filePtr + 8], 8);
 
 		std::cout << "Found WAD file: " << name << ", data offset: " << lumpDataOffset << ", size: " << lumpSizeBytes << "\n";
 
-		filePtr += 4 + 4 + 8;
+		filePtr += 16;
+
+		if (!strcmp(name, "VERTEXES"))
+		{
+			for (int i = 0; i < lumpSizeBytes; i += 4)
+			{
+				Vertex v;
+				readRaw(v.x, &wadBytes[lumpDataOffset + i]);
+				readRaw(v.y, &wadBytes[lumpDataOffset + i + 2]);
+				vertices.push_back(v);
+				std::cout << "Got vertex " << v.x << " " << v.y << "\n";
+			}
+		}
 	}
 }
 

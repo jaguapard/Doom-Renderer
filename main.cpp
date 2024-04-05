@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include <bob/Vec3.h>
+#include "Matrix3.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -217,7 +218,7 @@ void main()
 	std::vector<Texture> textures;
 	std::unordered_map<std::string, int> textureNameToIndexMap;
 
-	Vec3 camPos = { 0,32,144 };
+	Vec3 camPos = { 0.1,32.1,144.1 };
 	Vec3 camAng = { 0,0,0 };
 
 	for (int i = 0; i < sectors.size(); ++i)
@@ -308,6 +309,11 @@ void main()
 		camPos += { 1.0 * input.isButtonHeld(SDL_SCANCODE_D), 1.0 * input.isButtonHeld(SDL_SCANCODE_X), 1.0 * input.isButtonHeld(SDL_SCANCODE_W)};
 		camPos -= { 1.0 * input.isButtonHeld(SDL_SCANCODE_A), 1.0 * input.isButtonHeld(SDL_SCANCODE_Z), 1.0 * input.isButtonHeld(SDL_SCANCODE_S)};
 
+		camAng += { 1e-2 * input.isButtonHeld(SDL_SCANCODE_R), 1e-2 * input.isButtonHeld(SDL_SCANCODE_T), 1e-2 * input.isButtonHeld(SDL_SCANCODE_Y)};
+		camAng -= { 1e-2 * input.isButtonHeld(SDL_SCANCODE_F), 1e-2 * input.isButtonHeld(SDL_SCANCODE_G), 1e-2 * input.isButtonHeld(SDL_SCANCODE_H)};
+
+		Matrix3 transformMatrix = getRotationMatrix(camAng);
+
 		for (int i = 0; i < sectors.size(); ++i)
 		{
 			for (const auto& p : sectorPrimitives[i])
@@ -316,6 +322,7 @@ void main()
 				for (int i = 0; i < 4; ++i)
 				{
 					verts[i] = p.vertices[i] - camPos;
+					verts[i] = transformMatrix * verts[i];
 					verts[i] /= verts[i].z * 2; //2 is for screen space transform
 					verts[i] += 1;
 					verts[i] *= 200;

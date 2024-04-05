@@ -7,9 +7,14 @@
 #include <cstdint>
 #include <unordered_map>
 
+#include <bob/Vec3.h>
+
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
 #undef main
+
+
+typedef bob::_Vec3<double> Vec3;
 
 #pragma pack(push, 1)
 struct Vertex
@@ -113,11 +118,6 @@ void loadPwad(std::string path)
 	}
 }
 
-struct Vec3
-{
-	double x, y, z;
-};
-
 struct Texture
 {
 	SDL_Surface* surf;
@@ -153,7 +153,7 @@ int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std:
 
 struct DrawingPrimitive
 {
-	Vec3 vertices[6];
+	Vec3 vertices[4];
 	int textureIndex;
 	int xTextureOffset = 0, yTextureOffset = 0;
 };
@@ -246,7 +246,7 @@ void main()
 
 		for (int i = 0; i < sectors.size(); ++i)
 		{
-			for (const auto& v : sectorVertices[i])
+			for (const auto& p : sectorPrimitives[i])
 			{
 				int x = v.x / 4 + 32;
 				int y = v.y / 4 + 32;
@@ -258,15 +258,6 @@ void main()
 		SDL_UpperBlitScaled(framebuf, nullptr, wndSurf, nullptr);
 		SDL_UpdateWindowSurface(wnd);
 		SDL_Delay(10);
-	}
-	for (int i = 0; i < sectors.size(); ++i)
-	{
-		const Sector& me = sectors[i];
-		std::vector<Sidedef*> mySidedefs;
-		std::vector<Linedef*> myLinedefs;
-		std::vector<Vertex> myVertices;
-
-		//gather all stuff required to make a draw packet 
 	}
 
 	system("pause");

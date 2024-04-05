@@ -90,27 +90,23 @@ void loadPwad(std::string path)
 	if (memcmp(&wadBytes.front(), "PWAD", 4))
 		throw std::exception("Invalid PWAD file: header mismatch");
 
-	int32_t numFiles = *reinterpret_cast<int32_t*>(&wadBytes[4]);
-	int32_t FAToffset = *reinterpret_cast<int32_t*>(&wadBytes[8]);
+	int32_t numFiles = readRaw<int32_t>(&wadBytes[4]);
+	int32_t FAToffset = readRaw<int32_t>(&wadBytes[8]);
 
 	int32_t filePtr = FAToffset;
 	for (int i = 0; i < numFiles; ++i)
 	{
 		char name[9] = { 0 };
-		int32_t lumpDataOffset;
-		int32_t lumpSizeBytes;
-		readRaw(lumpDataOffset, &wadBytes[filePtr]);
-		readRaw(lumpSizeBytes, &wadBytes[filePtr + 4]);
+		int32_t lumpDataOffset = readRaw<int32_t>(&wadBytes[filePtr]);
+		int32_t lumpSizeBytes = readRaw<int32_t>(&wadBytes[filePtr + 4]);
 		memcpy(name, &wadBytes[filePtr + 8], 8);
-
 		std::cout << "Found WAD file: " << name << ", data offset: " << lumpDataOffset << ", size: " << lumpSizeBytes << "\n";
-
-		filePtr += 16;
 
 		if (!strcmp(name, "VERTEXES")) vertices = getVectorFromWad<Vertex>(lumpDataOffset, lumpSizeBytes, wadBytes);
 		if (!strcmp(name, "LINEDEFS")) linedefs = getVectorFromWad<Linedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
 		if (!strcmp(name, "SIDEDEFS")) sidedefs = getVectorFromWad<Sidedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
 		if (!strcmp(name, "SECTORS")) sectors = getVectorFromWad<Sector>(lumpDataOffset, lumpSizeBytes, wadBytes);
+		filePtr += 16;
 	}
 }
 
@@ -118,9 +114,39 @@ void main()
 {
 	loadPwad("D:/Games/GZDoom/STUPID_copy.wad");
 
-	for (auto& sec : sectors)
+	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
+	std::vector<std::vector<Linedef*>> sidedefLinedefs(sidedefs.size());
+	for (int i = 0; i < sectors.size(); ++i)
 	{
-		//do drawing of sectors here
+		for (auto& it : sidedefs)
+		{
+			if (it.facingSector == i)
+			{
+				sectorSidedefs[i].push_back(&it);
+			}
+		}
+	}	
+
+	for (int i = 0; i < sidedefs.size(); ++i)
+	{
+		for (auto& it : linedefs)
+		{
+			if (it.frontSidedef == i || it.backSidedef == i)
+			{
+				sidedefLinedefs[i].push_back(&it);
+			}
+		}
 	}
+
+	for (int i = 0; i < sectors.size(); ++i)
+	{
+		const Sector& me = sectors[i];
+		std::vector<Sidedef*> mySidedefs;
+		std::vector<Linedef*> myLinedefs;
+		std::vector<Vertex> myVertices;
+
+		//gather all stuff required to make a draw packet 
+	}
+
 	system("pause");
 }

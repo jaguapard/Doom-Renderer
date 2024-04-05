@@ -6,6 +6,8 @@
 #include <vector>
 #include <cstdint>
 
+#pragma comment(lib,"SDL2.lib")
+#pragma comment(lib,"SDL2_image.lib")
 #undef main
 
 #pragma pack(push, 1)
@@ -112,6 +114,7 @@ void loadPwad(std::string path)
 
 void main()
 {
+	SDL_Init(SDL_INIT_EVERYTHING);
 	loadPwad("D:/Games/GZDoom/STUPID_copy.wad");
 
 	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
@@ -138,6 +141,21 @@ void main()
 		}
 	}
 
+	
+	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
+	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
+	SDL_Surface* framebuf = SDL_CreateRGBSurface(0, 320, 200, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0xFF);
+	while (true)
+	{
+		SDL_Event ev;
+		while (SDL_PollEvent(&ev))
+		{
+
+		}
+
+		SDL_UpperBlitScaled(framebuf, nullptr, nullptr, nullptr);
+		SDL_Delay(10);
+	}
 	for (int i = 0; i < sectors.size(); ++i)
 	{
 		const Sector& me = sectors[i];

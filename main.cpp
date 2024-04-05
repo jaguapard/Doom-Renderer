@@ -155,6 +155,7 @@ struct DrawingPrimitive
 {
 	Vec3 vertices[6];
 	int textureIndex;
+	int xTextureOffset = 0, yTextureOffset = 0;
 };
 
 void main()
@@ -190,7 +191,7 @@ void main()
 		}
 	}
 
-	std::vector<DrawingPrimitive> primitives;
+	std::vector<std::vector<DrawingPrimitive>> sectorPrimitives(sectors.size());
 	for (int i = 0; i < sectors.size(); ++i)
 	{
 		for (int j = 0; j < sectorSidedefs[i].size(); ++j)
@@ -198,27 +199,34 @@ void main()
 			for (int k = 0; k < sidedefLinedefs[j].size(); ++k)
 			{
 				Linedef* ldf = sidedefLinedefs[j][k];
-				Vec3 v1, v2, v3, v4;
-				v1.x = vertices[ldf->startVertex].x;
-				v1.y = vertices[ldf->startVertex].y;
-				v1.z = sectors[i].floorHeight;	
-				
-				v2.x = vertices[ldf->endVertex].x;
-				v2.y = vertices[ldf->endVertex].y;
-				v2.z = sectors[i].floorHeight;
-								
-				v3.x = vertices[ldf->startVertex].x;
-				v3.y = vertices[ldf->startVertex].y;
-				v3.z = sectors[i].ceilingHeight;	
-				
-				v4.x = vertices[ldf->endVertex].x;
-				v4.y = vertices[ldf->endVertex].y;
-				v4.z = sectors[i].ceilingHeight;
+				DrawingPrimitive p;
+				Vertex sv = vertices[ldf->startVertex];
+				Vertex ev = vertices[ldf->endVertex];
+				double fh = sectors[i].floorHeight;
+				double ch = sectors[i].ceilingHeight;
 
-				sectorVertices[i].push_back(v1);
-				sectorVertices[i].push_back(v2);
-				sectorVertices[i].push_back(v3);
-				sectorVertices[i].push_back(v4);
+				p.vertices[0] = { double(sv.x), fh, double(sv.y) }; //z is supposed to be depth, so swap with y? i.e. doom takes depth as y, height as z, we take y as height
+				p.vertices[1] = { double(ev.x), fh, double(sv.y) };
+				p.vertices[2] = { double(sv.x), fh, double(ev.y) };
+				p.vertices[3] = { double(ev.x), fh, double(ev.y) };
+				p.textureIndex = getTextureIndexByName(sectors[i].floorTexture, textures, textureNameToIndexMap);
+				sectorPrimitives[i].push_back(p);
+
+				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
+				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
+				p.vertices[2] = { double(sv.x), ch, double(ev.y) };
+				p.vertices[3] = { double(ev.x), ch, double(ev.y) };
+				p.textureIndex = getTextureIndexByName(sectors[i].ceilingTexture, textures, textureNameToIndexMap);
+				sectorPrimitives[i].push_back(p);
+
+				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
+				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
+				p.vertices[2] = { double(ev.x), fh, double(sv.y) };
+				p.vertices[3] = { double(sv.x), fh, double(sv.y) };
+				p.textureIndex = getTextureIndexByName(sectorSidedefs[i][j]->middleTexture, textures, textureNameToIndexMap);
+				p.xTextureOffset = sectorSidedefs[i][j]->xTextureOffset;
+				p.yTextureOffset = sectorSidedefs[i][j]->yTextureOffset;
+				sectorPrimitives[i].push_back(p);
 			}
 		}
 	}

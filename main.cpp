@@ -276,9 +276,9 @@ void main()
 				sectorPrimitives[i].push_back(p);*/
 
 				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
-				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
-				p.vertices[2] = { double(ev.x), fh, double(sv.y) };
-				p.vertices[3] = { double(sv.x), fh, double(ev.y) };
+				p.vertices[1] = { double(ev.x), ch, double(ev.y) };
+				p.vertices[2] = { double(ev.x), fh, double(ev.y) };
+				p.vertices[3] = { double(sv.x), fh, double(sv.y) };
 				memset(nameBuf, 0, 9);
 				memcpy(nameBuf, sectorSidedefs[i][j]->middleTexture, 8);
 				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);

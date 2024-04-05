@@ -158,6 +158,48 @@ struct DrawingPrimitive
 	int xTextureOffset = 0, yTextureOffset = 0;
 };
 
+void setPixel(SDL_Surface* s, int x, int y, uint32_t color)
+{
+	if (x >= 0 && y >= 0 && x < s->w && y < s->h)
+	{
+		uint32_t* px = (uint32_t*)s->pixels;
+		px[y * s->w + x] = color;
+	}
+}
+
+
+class C_Input
+{
+public:
+	C_Input() = default;
+	void handleEvent(const SDL_Event& ev);
+	bool isButtonHeld(SDL_Scancode k);
+private:
+	std::unordered_map<SDL_Scancode, bool> buttonHoldStatus;
+};
+
+void C_Input::handleEvent(const SDL_Event& ev)
+{
+	switch (ev.type)
+	{
+	case SDL_KEYDOWN:
+		buttonHoldStatus[ev.key.keysym.scancode] = true;
+		break;
+	case SDL_KEYUP:
+		buttonHoldStatus[ev.key.keysym.scancode] = false;
+		break;
+	default:
+		break;
+	}
+}
+
+bool C_Input::isButtonHeld(SDL_Scancode k)
+{
+	if (buttonHoldStatus.find(k) == buttonHoldStatus.end()) return false;
+	return buttonHoldStatus[k];
+}
+
+
 void main()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -168,6 +210,9 @@ void main()
 	std::vector<std::vector<Vec3>> sectorVertices(sectors.size());
 	std::vector<Texture> textures;
 	std::unordered_map<std::string, int> textureNameToIndexMap;
+
+	Vec3 camPos = { 0,32,144 };
+	Vec3 camAng = { 0,0,0 };
 
 	for (int i = 0; i < sectors.size(); ++i)
 	{
@@ -207,15 +252,15 @@ void main()
 
 				p.vertices[0] = { double(sv.x), fh, double(sv.y) }; //z is supposed to be depth, so swap with y? i.e. doom takes depth as y, height as z, we take y as height
 				p.vertices[1] = { double(ev.x), fh, double(sv.y) };
-				p.vertices[2] = { double(sv.x), fh, double(ev.y) };
-				p.vertices[3] = { double(ev.x), fh, double(ev.y) };
+				p.vertices[2] = { double(ev.x), fh, double(ev.y) };
+				p.vertices[3] = { double(sv.x), fh, double(ev.y) };
 				p.textureIndex = getTextureIndexByName(sectors[i].floorTexture, textures, textureNameToIndexMap);
 				sectorPrimitives[i].push_back(p);
 
 				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
 				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
-				p.vertices[2] = { double(sv.x), ch, double(ev.y) };
-				p.vertices[3] = { double(ev.x), ch, double(ev.y) };
+				p.vertices[2] = { double(ev.x), ch, double(ev.y) };
+				p.vertices[3] = { double(sv.x), ch, double(ev.y) };
 				p.textureIndex = getTextureIndexByName(sectors[i].ceilingTexture, textures, textureNameToIndexMap);
 				sectorPrimitives[i].push_back(p);
 
@@ -236,22 +281,44 @@ void main()
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 	SDL_Surface* framebuf = SDL_CreateRGBSurface(0, 320, 200, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0xFF);
+	C_Input input;
+
 	while (true)
 	{
+		SDL_FillRect(framebuf, nullptr, 0);
+		SDL_FillRect(wndSurf, nullptr, 0);
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev))
 		{
-
+			input.handleEvent(ev);
 		}
+
+		camPos += { 1.0 * input.isButtonHeld(SDL_SCANCODE_D), 1.0 * input.isButtonHeld(SDL_SCANCODE_X), 1.0 * input.isButtonHeld(SDL_SCANCODE_W)};
+		camPos -= { 1.0 * input.isButtonHeld(SDL_SCANCODE_A), 1.0 * input.isButtonHeld(SDL_SCANCODE_Z), 1.0 * input.isButtonHeld(SDL_SCANCODE_S)};
 
 		for (int i = 0; i < sectors.size(); ++i)
 		{
 			for (const auto& p : sectorPrimitives[i])
 			{
-				int x = v.x / 4 + 32;
-				int y = v.y / 4 + 32;
-				uint32_t* px = (uint32_t*)framebuf->pixels;
-				px[framebuf->w * y + x] = 0xFFFFFFFF;
+				Vec3 verts[4];
+				for (int i = 0; i < 4; ++i)
+				{
+					verts[i] = p.vertices[i] - camPos;
+					verts[i] /= verts[i].z * 2; //2 is for screen space transform
+					verts[i] += 1;
+					verts[i] *= 200;
+				}
+
+				for (int i = 1; i < 4; ++i)
+				{
+					for (int y = verts[i - 1].y; y < verts[i].y; ++y)
+					{
+						for (int x = verts[i - 1].x; x < verts[i].x; ++x)
+						{
+							setPixel(framebuf, x, y, 0xFFFFFFFF);
+						}
+					}
+				}
 			}
 		}
 

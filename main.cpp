@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <unordered_map>
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -117,7 +118,44 @@ struct Vec3
 	double x, y, z;
 };
 
+struct Texture
+{
+	SDL_Surface* surf;
+	Texture(std::string name)
+	{
+		std::string path = "D:/Games/GZDoom/Doom2_unpacked/" + name + ".png";
+		surf = IMG_Load(path.c_str());
+		//SDL_PixelFormat fmt = SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA8888;
+	}
+	uint32_t getPixel(int x, int y)
+	{
+		x %= surf->w;
+		y %= surf->h;
+		uint32_t* px = (uint32_t*)surf->pixels;
+		return px[y * surf->w + x];
+	}
+
+	~Texture()
+	{
+		SDL_FreeSurface(surf);
+	}
+};
 //void setPixel()
+
+int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std::unordered_map<std::string, int>& textureNameToIndexMap)
+{
+	if (textureNameToIndexMap.find(name) != textureNameToIndexMap.end()) return textureNameToIndexMap[name];
+
+	textures.emplace_back(name);
+	textureNameToIndexMap[name] = textures.size() - 1;
+	return textures.size() - 1;
+}
+
+struct DrawingPrimitive
+{
+	Vec3 vertices[6];
+	int textureIndex;
+};
 
 void main()
 {
@@ -127,6 +165,8 @@ void main()
 	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
 	std::vector<std::vector<Linedef*>> sidedefLinedefs(sidedefs.size());
 	std::vector<std::vector<Vec3>> sectorVertices(sectors.size());
+	std::vector<Texture> textures;
+	std::unordered_map<std::string, int> textureNameToIndexMap;
 
 	for (int i = 0; i < sectors.size(); ++i)
 	{
@@ -150,6 +190,7 @@ void main()
 		}
 	}
 
+	std::vector<DrawingPrimitive> primitives;
 	for (int i = 0; i < sectors.size(); ++i)
 	{
 		for (int j = 0; j < sectorSidedefs[i].size(); ++j)
@@ -164,11 +205,11 @@ void main()
 				
 				v2.x = vertices[ldf->endVertex].x;
 				v2.y = vertices[ldf->endVertex].y;
-				v2.z = sectors[i].ceilingHeight;
+				v2.z = sectors[i].floorHeight;
 								
-				v3.x = vertices[ldf->endVertex].x;
-				v3.y = vertices[ldf->endVertex].y;
-				v3.z = sectors[i].floorHeight;	
+				v3.x = vertices[ldf->startVertex].x;
+				v3.y = vertices[ldf->startVertex].y;
+				v3.z = sectors[i].ceilingHeight;	
 				
 				v4.x = vertices[ldf->endVertex].x;
 				v4.y = vertices[ldf->endVertex].y;

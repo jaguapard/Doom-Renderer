@@ -258,7 +258,7 @@ void main()
 				double ch = sectors[i].ceilingHeight;
 
 				char nameBuf[9] = { 0 };
-				p.vertices[0] = { double(sv.x), fh, double(sv.y) }; //z is supposed to be depth, so swap with y? i.e. doom takes depth as y, height as z, we take y as height
+				/*/p.vertices[0] = {double(sv.x), fh, double(sv.y)}; //z is supposed to be depth, so swap with y? i.e. doom takes depth as y, height as z, we take y as height
 				p.vertices[1] = { double(ev.x), fh, double(sv.y) };
 				p.vertices[2] = { double(ev.x), fh, double(ev.y) };
 				p.vertices[3] = { double(sv.x), fh, double(ev.y) };
@@ -273,12 +273,12 @@ void main()
 				memset(nameBuf, 0, 9);
 				memcpy(nameBuf, sectors[i].ceilingTexture, 8);
 				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
-				sectorPrimitives[i].push_back(p);
+				sectorPrimitives[i].push_back(p);*/
 
 				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
 				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
 				p.vertices[2] = { double(ev.x), fh, double(sv.y) };
-				p.vertices[3] = { double(sv.x), fh, double(sv.y) };
+				p.vertices[3] = { double(sv.x), fh, double(ev.y) };
 				memset(nameBuf, 0, 9);
 				memcpy(nameBuf, sectorSidedefs[i][j]->middleTexture, 8);
 				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);

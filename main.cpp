@@ -121,10 +121,16 @@ void loadPwad(std::string path)
 struct Texture
 {
 	SDL_Surface* surf;
+	std::string name;
 	Texture(std::string name)
 	{
-		std::string path = "D:/Games/GZDoom/Doom2_unpacked/" + name + ".png";
+		this->name = name;
+		std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
 		surf = IMG_Load(path.c_str());
+
+		SDL_Surface* old = surf;
+		surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
+		SDL_FreeSurface(old);
 		//SDL_PixelFormat fmt = SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA8888;
 	}
 	uint32_t getPixel(int x, int y)
@@ -137,7 +143,7 @@ struct Texture
 
 	~Texture()
 	{
-		SDL_FreeSurface(surf);
+		//SDL_FreeSurface(surf);
 	}
 };
 //void setPixel()
@@ -203,7 +209,7 @@ bool C_Input::isButtonHeld(SDL_Scancode k)
 void main()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	loadPwad("D:/Games/GZDoom/STUPID_copy.wad");
+	loadPwad("D:/Games/GZDoom/STUPID.wad");
 
 	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
 	std::vector<std::vector<Linedef*>> sidedefLinedefs(sidedefs.size());
@@ -250,25 +256,31 @@ void main()
 				double fh = sectors[i].floorHeight;
 				double ch = sectors[i].ceilingHeight;
 
+				char nameBuf[9] = { 0 };
 				p.vertices[0] = { double(sv.x), fh, double(sv.y) }; //z is supposed to be depth, so swap with y? i.e. doom takes depth as y, height as z, we take y as height
 				p.vertices[1] = { double(ev.x), fh, double(sv.y) };
 				p.vertices[2] = { double(ev.x), fh, double(ev.y) };
 				p.vertices[3] = { double(sv.x), fh, double(ev.y) };
-				p.textureIndex = getTextureIndexByName(sectors[i].floorTexture, textures, textureNameToIndexMap);
+				memcpy(nameBuf, sectors[i].floorTexture, 8);
+				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
 				sectorPrimitives[i].push_back(p);
 
 				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
 				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
 				p.vertices[2] = { double(ev.x), ch, double(ev.y) };
 				p.vertices[3] = { double(sv.x), ch, double(ev.y) };
-				p.textureIndex = getTextureIndexByName(sectors[i].ceilingTexture, textures, textureNameToIndexMap);
+				memset(nameBuf, 0, 9);
+				memcpy(nameBuf, sectors[i].ceilingTexture, 8);
+				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
 				sectorPrimitives[i].push_back(p);
 
 				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
 				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
 				p.vertices[2] = { double(ev.x), fh, double(sv.y) };
 				p.vertices[3] = { double(sv.x), fh, double(sv.y) };
-				p.textureIndex = getTextureIndexByName(sectorSidedefs[i][j]->middleTexture, textures, textureNameToIndexMap);
+				memset(nameBuf, 0, 9);
+				memcpy(nameBuf, sectorSidedefs[i][j]->middleTexture, 8);
+				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
 				p.xTextureOffset = sectorSidedefs[i][j]->xTextureOffset;
 				p.yTextureOffset = sectorSidedefs[i][j]->yTextureOffset;
 				sectorPrimitives[i].push_back(p);
@@ -315,7 +327,10 @@ void main()
 					{
 						for (int x = verts[i - 1].x; x < verts[i].x; ++x)
 						{
-							setPixel(framebuf, x, y, 0xFFFFFFFF);
+							int tx = x - verts[i - 1].x;
+							int ty = y - verts[i - 1].y;
+							uint32_t tc = textures[p.textureIndex].getPixel(tx, ty);
+							setPixel(framebuf, x, y, tc);
 						}
 					}
 				}

@@ -8,10 +8,44 @@
 
 #undef main
 
+#pragma pack(push, 1)
 struct Vertex
 {
 	int16_t x, y;
 };
+
+struct Linedef
+{
+	int16_t startVertex;
+	int16_t endVertex;
+	int16_t flags;
+	int16_t specialType;
+	int16_t sectorTag;
+	int16_t frontSidedef;
+	int16_t backSidedef;
+};
+
+struct Sidedef
+{
+	int16_t xOffset;
+	int16_t yOffset;
+	char upperTexture[8];
+	char lowerTexture[8];
+	char middleTexture[8];
+	int16_t facingSector;
+};
+
+struct Sector
+{
+	int16_t floorHeight;
+	int16_t ceilingHeight;
+	char floorTexture[8];
+	char ceilingTexture[8];
+	int16_t lightLevel;
+	int16_t specialType;
+	int16_t tagNumber;
+};
+#pragma pack(pop)
 
 std::vector<Vertex> vertices;
 
@@ -19,6 +53,12 @@ template <typename T>
 void readRaw(T& ret, const void* bytes)
 {
 	ret = *reinterpret_cast<const T*>(bytes);
+}
+
+template <typename T>
+T readRaw(const void* bytes)
+{
+	return *reinterpret_cast<const T*>(bytes);
 }
 
 void loadPwad(std::string path)
@@ -54,11 +94,9 @@ void loadPwad(std::string path)
 
 		if (!strcmp(name, "VERTEXES"))
 		{
-			for (int i = 0; i < lumpSizeBytes; i += 4)
+			for (int i = 0; i < lumpSizeBytes; i += sizeof(Vertex))
 			{
-				Vertex v;
-				readRaw(v.x, &wadBytes[lumpDataOffset + i]);
-				readRaw(v.y, &wadBytes[lumpDataOffset + i + 2]);
+				Vertex v = readRaw<Vertex>(&wadBytes[lumpDataOffset + i]);
 				vertices.push_back(v);
 				std::cout << "Got vertex " << v.x << " " << v.y << "\n";
 			}

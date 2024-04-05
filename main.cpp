@@ -112,6 +112,13 @@ void loadPwad(std::string path)
 	}
 }
 
+struct Vec3
+{
+	double x, y, z;
+};
+
+//void setPixel()
+
 void main()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -119,6 +126,8 @@ void main()
 
 	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
 	std::vector<std::vector<Linedef*>> sidedefLinedefs(sidedefs.size());
+	std::vector<std::vector<Vec3>> sectorVertices(sectors.size());
+
 	for (int i = 0; i < sectors.size(); ++i)
 	{
 		for (auto& it : sidedefs)
@@ -141,6 +150,39 @@ void main()
 		}
 	}
 
+	for (int i = 0; i < sectors.size(); ++i)
+	{
+		for (int j = 0; j < sectorSidedefs[i].size(); ++j)
+		{
+			for (int k = 0; k < sidedefLinedefs[j].size(); ++k)
+			{
+				Linedef* ldf = sidedefLinedefs[j][k];
+				Vec3 v1, v2, v3, v4;
+				v1.x = vertices[ldf->startVertex].x;
+				v1.y = vertices[ldf->startVertex].y;
+				v1.z = sectors[i].floorHeight;	
+				
+				v2.x = vertices[ldf->endVertex].x;
+				v2.y = vertices[ldf->endVertex].y;
+				v2.z = sectors[i].ceilingHeight;
+								
+				v3.x = vertices[ldf->endVertex].x;
+				v3.y = vertices[ldf->endVertex].y;
+				v3.z = sectors[i].floorHeight;	
+				
+				v4.x = vertices[ldf->endVertex].x;
+				v4.y = vertices[ldf->endVertex].y;
+				v4.z = sectors[i].ceilingHeight;
+
+				sectorVertices[i].push_back(v1);
+				sectorVertices[i].push_back(v2);
+				sectorVertices[i].push_back(v3);
+				sectorVertices[i].push_back(v4);
+			}
+		}
+	}
+
+
 	
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
@@ -153,7 +195,19 @@ void main()
 
 		}
 
-		SDL_UpperBlitScaled(framebuf, nullptr, nullptr, nullptr);
+		for (int i = 0; i < sectors.size(); ++i)
+		{
+			for (const auto& v : sectorVertices[i])
+			{
+				int x = v.x / 4 + 32;
+				int y = v.y / 4 + 32;
+				uint32_t* px = (uint32_t*)framebuf->pixels;
+				px[framebuf->w * y + x] = 0xFFFFFFFF;
+			}
+		}
+
+		SDL_UpperBlitScaled(framebuf, nullptr, wndSurf, nullptr);
+		SDL_UpdateWindowSurface(wnd);
 		SDL_Delay(10);
 	}
 	for (int i = 0; i < sectors.size(); ++i)

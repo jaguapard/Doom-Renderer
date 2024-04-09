@@ -207,6 +207,10 @@ bool C_Input::isButtonHeld(SDL_Scancode k)
 	return buttonHoldStatus[k];
 }
 
+double nainve_lerp(double start, double end, double amount)
+{
+	return start + (end - start) * amount;
+}
 struct Triangle
 {
 	Vec3 v[3];
@@ -216,6 +220,7 @@ struct Triangle
 		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by y (ascending)
 		double sx = v[0].x + (v[1].y - v[0].y) / (v[2].y - v[0].y) * (v[2].x - v[0].x);
 		double sy = v[1].y;
+		double dy = v[2].y - v[0].y;
 		double dy1 = sy - v[0].y;
 		double dy2 = v[2].y - sy;
 		
@@ -231,7 +236,18 @@ struct Triangle
 				setPixel(s, x, y, 0xFFFFFFFF);
 		}
 
-		
+		double xt = sx + (sy - v[0].y) / dy * (v[2].x - v[0].x); //end of splitting line
+		for (int y = sy; y < v[2].y; ++y) //draw flat top part;
+		{
+			double yp = (y - sy) / dy2; // TODO: optimize by just adding step;
+			double xLeft = sx + yp * (v[2].x - sx);
+			double xRight = xt + yp * (v[2].x - xt);
+			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+
+			for (int x = xLeft; x < xRight; ++x)
+				setPixel(s, x, y, 0x7F7F7FFF);
+		}
+
 	}
 };
 void main()

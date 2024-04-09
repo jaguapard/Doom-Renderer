@@ -125,12 +125,24 @@ struct Texture
 	Texture(std::string name)
 	{
 		this->name = name;
-		std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
+		/*/std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
 		surf = IMG_Load(path.c_str());
 
 		SDL_Surface* old = surf;
 		surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
-		SDL_FreeSurface(old);
+		SDL_FreeSurface(old);*/
+
+		surf = SDL_CreateRGBSurfaceWithFormat(0, 256, 256, 32, SDL_PIXELFORMAT_ABGR32);
+		for (int y = 0; y < 256; ++y)
+		{
+			for (int x = 0; x < 256; ++x)
+			{
+				Uint32* px = (Uint32*)(surf->pixels);
+				//px[y * 256 + x] = (x << 24) + (y << 16) + 255;
+				//px[y * 256 + x] = (x << 24) + (x << 16) + (x << 8) + 255;
+				px[y * 256 + x] = (y << 24) + (y << 16) + (y << 8) + 255;
+			}
+		}
 	}
 	uint32_t getPixel(int x, int y)
 	{

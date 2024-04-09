@@ -212,8 +212,7 @@ struct Triangle
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
 		double split_uend = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[2].textureCoords.x, splitAlpha); //last u of splitting line
 
-		//TODO: change conditions, since any non-zero triangle will be at least 1 pixel big
-		for (int y = y1; y < y2; ++y) //draw flat bottom part
+		for (double y = y1; y < y2; ++y) //draw flat bottom part
 		{
 			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
 			double xLeft = naive_lerp(x1, x2, yp);
@@ -229,7 +228,7 @@ struct Triangle
 				std::swap(uLeft, uRight); //this is not a mistake. If we swap x, then u also has to go.
 			}
 			
-			for (int x = xLeft; x < xRight; ++x)
+			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
 				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
@@ -237,7 +236,7 @@ struct Triangle
 			}
 		}
 
-		for (int y = y2; y < y3; ++y) //draw flat top part
+		for (double y = y2; y < y3; ++y) //draw flat top part
 		{
 			double yp = (y - y2) / (y3 - y2); //this is the "progress" along the flat top part, not whole triangle!
 			double xLeft = naive_lerp(x2, x3, yp);
@@ -253,7 +252,7 @@ struct Triangle
 				std::swap(uLeft, uRight); //this is not a mistake. If we swap x, then u also has to go.
 			}
 
-			for (int x = xLeft; x < xRight; ++x)
+			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
 				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);

@@ -367,6 +367,10 @@ void main()
 		while (SDL_PollEvent(&ev))
 		{
 			input.handleEvent(ev);
+			if (input.isMouseButtonHeld(SDL_BUTTON_LEFT) && ev.type == SDL_MOUSEMOTION)
+			{
+				camAng += { ev.motion.xrel * 1e-3, 0, ev.motion.yrel * 1e-3};
+			}
 		}
 
 		camPos += { 1.0 * input.isButtonHeld(SDL_SCANCODE_D), 1.0 * input.isButtonHeld(SDL_SCANCODE_X), 1.0 * input.isButtonHeld(SDL_SCANCODE_W)};

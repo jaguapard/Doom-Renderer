@@ -261,7 +261,8 @@ void main()
 	std::vector<Texture> textures;
 	std::unordered_map<std::string, int> textureNameToIndexMap;
 
-	Vec3 camPos = { 0.1,32.1,144.1 };
+	//Vec3 camPos = { 0.1,32.1,144.1 };
+	Vec3 camPos = { 0,0,0 };
 	Vec3 camAng = { 0,0,0 };
 
 	for (int i = 0; i < sectors.size(); ++i)
@@ -358,7 +359,7 @@ void main()
 
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
 
-		for (int i = 0; i < sectors.size(); ++i)
+		/*for (int i = 0; i < sectors.size(); ++i)
 		{
 			for (const auto& p : sectorPrimitives[i])
 			{
@@ -377,7 +378,20 @@ void main()
 				t1.drawOn(framebuf);
 				t2.drawOn(framebuf);
 			}
+		}*/
+
+		Vec3 v[3] = { {10,15,20}, { 7, 20, 10 }, { 12, 11, 24 } };
+
+		for (auto& it : v)
+		{
+			it -= camPos;
+			it = transformMatrix * it;
+			it /= it.z;
+			it *= 200;
 		}
+
+		Triangle t = { v[0], v[1],v[2] };
+		t.drawOn(framebuf);
 
 		SDL_UpperBlitScaled(framebuf, nullptr, wndSurf, nullptr);
 		SDL_UpdateWindowSurface(wnd);

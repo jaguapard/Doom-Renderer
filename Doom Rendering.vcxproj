@@ -134,11 +134,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CoordinateTransformer.cpp" />
+    <ClCompile Include="C_Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Matrix3.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CoordinateTransformer.h" />
+    <ClInclude Include="C_Input.h" />
     <ClInclude Include="Matrix3.h" />
     <ClInclude Include="Vec.h" />
   </ItemGroup>

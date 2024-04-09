@@ -1,0 +1,13 @@
+#pragma once
+#include <SDL/SDL.h>
+#include <unordered_map>
+
+class C_Input
+{
+public:
+	C_Input() = default;
+	void handleEvent(const SDL_Event& ev);
+	bool isButtonHeld(SDL_Scancode k);
+private:
+	std::unordered_map<SDL_Scancode, bool> buttonHoldStatus;
+};

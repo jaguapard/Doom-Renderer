@@ -8,9 +8,7 @@
 #include <unordered_map>
 #include <algorithm>
 
-#include <bob/Vec3.h>
-#include <bob/Vec2.h>
-
+#include "C_Input.h"
 #include "CoordinateTransformer.h"
 #include "Matrix3.h"
 
@@ -176,38 +174,6 @@ void setPixel(SDL_Surface* s, int x, int y, uint32_t color)
 		uint32_t* px = (uint32_t*)s->pixels;
 		px[y * s->w + x] = color;
 	}
-}
-
-
-class C_Input
-{
-public:
-	C_Input() = default;
-	void handleEvent(const SDL_Event& ev);
-	bool isButtonHeld(SDL_Scancode k);
-private:
-	std::unordered_map<SDL_Scancode, bool> buttonHoldStatus;
-};
-
-void C_Input::handleEvent(const SDL_Event& ev)
-{
-	switch (ev.type)
-	{
-	case SDL_KEYDOWN:
-		buttonHoldStatus[ev.key.keysym.scancode] = true;
-		break;
-	case SDL_KEYUP:
-		buttonHoldStatus[ev.key.keysym.scancode] = false;
-		break;
-	default:
-		break;
-	}
-}
-
-bool C_Input::isButtonHeld(SDL_Scancode k)
-{
-	if (buttonHoldStatus.find(k) == buttonHoldStatus.end()) return false;
-	return buttonHoldStatus[k];
 }
 
 double naive_lerp(double start, double end, double amount)

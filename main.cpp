@@ -191,10 +191,15 @@ struct Triangle
 		Vec3 screenSpace[3];
 		for (int i = 0; i < 3; ++i) screenSpace[i] = ctr.toScreenCoords(v[i]);
 		std::sort(std::begin(screenSpace), std::end(screenSpace), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by screen y (ascending, i.e. going from top to bottom)
-
+		
+		/*
+		Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b, 
+		"mixing" (linearly interpolating) between two values. Note, that texture mapping is plain ol' linear stuff, not perspective correct.
+		*/
 		double x1 = screenSpace[0].x, x2 = screenSpace[1].x, x3 = screenSpace[2].x, y1 = screenSpace[0].y, y2 = screenSpace[1].y, y3 = screenSpace[2].y;
 		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
+		double split_uend = naive_lerp(textureCoords[0].x, textureCoords[2].x, splitAlpha); //last u of splitting line
 
 		//TODO: change conditions, since any non-zero triangle will be at least 1 pixel big
 		for (int y = y1; y < y2; ++y) //draw flat bottom part
@@ -210,15 +215,13 @@ struct Triangle
 			if (xLeft > xRight)
 			{
 				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-				std::swap(uLeft, uRight);
+				std::swap(uLeft, uRight); //this is not a mistake. If we swap x, then u also has to go.
 			}
-
 			
 			for (int x = xLeft; x < xRight; ++x)
 			{
-				//Vec3 world
 				double xp = (x - xLeft) / (xRight - xLeft);
-				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v); //TODO: this does not work properly, because world coordinates need to be used, not screen. This is a temporary stub.
+				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
 				setPixel(s, x, y, c);
 			}
 		}
@@ -228,11 +231,21 @@ struct Triangle
 			double yp = (y - y2) / (y3 - y2); //this is the "progress" along the flat top part, not whole triangle!
 			double xLeft = naive_lerp(x2, x3, yp);
 			double xRight = naive_lerp(split_xend, x3, yp);
-			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+
+			double uLeft = naive_lerp(textureCoords[1].x, textureCoords[2].x, yp);
+			double uRight = naive_lerp(split_uend, textureCoords[2].x, yp);
+			double v = naive_lerp(textureCoords[1].y, textureCoords[2].y, yp);
+
+			if (xLeft > xRight)
+			{
+				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+				std::swap(uLeft, uRight); //this is not a mistake. If we swap x, then u also has to go.
+			}
 
 			for (int x = xLeft; x < xRight; ++x)
 			{
-				auto c = textures[textureIndex].getPixel(x,y);
+				double xp = (x - xLeft) / (xRight - xLeft);
+				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
 				setPixel(s, x, y, c);
 			}
 		}

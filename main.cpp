@@ -207,7 +207,7 @@ bool C_Input::isButtonHeld(SDL_Scancode k)
 	return buttonHoldStatus[k];
 }
 
-double nainve_lerp(double start, double end, double amount)
+double naive_lerp(double start, double end, double amount)
 {
 	return start + (end - start) * amount;
 }
@@ -218,7 +218,35 @@ struct Triangle
 	void drawOn(SDL_Surface* s)
 	{
 		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by y (ascending)
-		double sx = v[0].x + (v[1].y - v[0].y) / (v[2].y - v[0].y) * (v[2].x - v[0].x);
+		double x1 = v[0].x, x2 = v[1].x, x3 = v[2].x, y1 = v[0].y, y2 = v[1].y, y3 = v[2].y;
+		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
+		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
+
+		for (int y = y1; y < y2; ++y) //draw flat bottom part
+		{
+			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
+			double xLeft = naive_lerp(x1, x2, yp);
+			double xRight = naive_lerp(x1, x3, splitAlpha * yp); //?
+			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+			for (int x = xLeft; x < xRight; ++x)
+			{
+				setPixel(s, x, y, 0xFFFFFFFF);
+			}
+		}
+
+		for (int y = y2; y < y3; ++y) //draw flat top part
+		{
+			double yp = (y - y2) / (y3 - y2); //this is the "progress" along the flat top part, not whole triangle!
+			double xLeft = naive_lerp(x2, x3, yp);
+			double xRight = naive_lerp(split_xend, x3, yp);
+			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+
+			for (int x = xLeft; x < xRight; ++x)
+				setPixel(s, x, y, 0x7F7F7FFF);
+		}
+
+
+		/*/double sx = v[0].x + (v[1].y - v[0].y) / (v[2].y - v[0].y) * (v[2].x - v[0].x);
 		double sy = v[1].y;
 		double dy = v[2].y - v[0].y;
 		double dy1 = sy - v[0].y;
@@ -228,7 +256,7 @@ struct Triangle
 		for (int y = v[0].y; y < sy; ++y) //draw flat bottom part;
 		{
 			double yp = (y-v[0].y) / dy1; // TODO: optimize by just adding step;
-			double xLeft = v[0].x + yp * (v[1].x - v[0].x);
+			double xLeft = naive_lerp()
 			double xRight = v[0].x + yp * (v[2].x - v[0].x);
 			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
 
@@ -236,7 +264,17 @@ struct Triangle
 				setPixel(s, x, y, 0xFFFFFFFF);
 		}
 
-		double xt = sx + (sy - v[0].y) / dy * (v[2].x - v[0].x); //end of splitting line
+		for (int y = sy; y < v[2].y; ++y)
+		{
+			double yp = (y - sy) / dy2; // TODO: optimize by just adding step;
+			double xLeft = naive_lerp(v[1].x, v[2].x, yp);
+			double xRight = naive_lerp(sx, v[2].x, yp);
+			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+
+			for (int x = xLeft; x < xRight; ++x)
+				setPixel(s, x, y, 0x7F7F7FFF);
+		}*/
+		/*/double xt = sx + (sy - v[0].y) / dy * (v[2].x - v[0].x); //end of splitting line
 		for (int y = sy; y < v[2].y; ++y) //draw flat top part;
 		{
 			double yp = (y - sy) / dy2; // TODO: optimize by just adding step;
@@ -246,7 +284,7 @@ struct Triangle
 
 			for (int x = xLeft; x < xRight; ++x)
 				setPixel(s, x, y, 0x7F7F7FFF);
-		}
+		}*/
 
 	}
 };

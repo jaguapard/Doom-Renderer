@@ -180,26 +180,37 @@ T naive_lerp(const T& start, const T& end, const T& amount)
 	return start + (end - start) * amount;
 }
 std::vector<Texture> textures;
+
+struct TexVertex
+{
+	Vec3 worldCoords;
+	Vec2 textureCoords;
+
+	bool operator<(const TexVertex& b) const
+	{
+		return worldCoords.y < b.worldCoords.y;
+	}
+};
+
 struct Triangle
 {
-	Vec3 v[3];
-	Vec2 textureCoords[3];
+	TexVertex tv[3];
 	int textureIndex;
 
-	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr) const
+	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, std::vector<double>& zBuffer) const
 	{		
-		Vec3 screenSpace[3];
-		for (int i = 0; i < 3; ++i) screenSpace[i] = ctr.toScreenCoords(v[i]);
-		std::sort(std::begin(screenSpace), std::end(screenSpace), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by screen y (ascending, i.e. going from top to bottom)
+		TexVertex screenSpace[3];
+		for (int i = 0; i < 3; ++i) screenSpace[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };
+		std::sort(std::begin(screenSpace), std::end(screenSpace)); //sort triangles by screen y (ascending, i.e. going from top to bottom). We also must preserve the texture coords data
 		
 		/*
 		Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b, 
 		"mixing" (linearly interpolating) between two values. Note, that texture mapping is plain ol' linear stuff, not perspective correct.
 		*/
-		double x1 = screenSpace[0].x, x2 = screenSpace[1].x, x3 = screenSpace[2].x, y1 = screenSpace[0].y, y2 = screenSpace[1].y, y3 = screenSpace[2].y;
+		double x1 = screenSpace[0].worldCoords.x, x2 = screenSpace[1].worldCoords.x, x3 = screenSpace[2].worldCoords.x, y1 = screenSpace[0].worldCoords.y, y2 = screenSpace[1].worldCoords.y, y3 = screenSpace[2].worldCoords.y;
 		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
-		double split_uend = naive_lerp(textureCoords[0].x, textureCoords[2].x, splitAlpha); //last u of splitting line
+		double split_uend = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[2].textureCoords.x, splitAlpha); //last u of splitting line
 
 		//TODO: change conditions, since any non-zero triangle will be at least 1 pixel big
 		for (int y = y1; y < y2; ++y) //draw flat bottom part
@@ -208,9 +219,9 @@ struct Triangle
 			double xLeft = naive_lerp(x1, x2, yp);
 			double xRight = naive_lerp(x1, x3, splitAlpha * yp); //?
 
-			double uLeft = naive_lerp(textureCoords[0].x, textureCoords[1].x, yp);
-			double uRight = naive_lerp(textureCoords[0].x, textureCoords[2].x, splitAlpha * yp);
-			double v = naive_lerp(textureCoords[0].y, textureCoords[1].y, yp);
+			double uLeft = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[1].textureCoords.x, yp);
+			double uRight = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[2].textureCoords.x, splitAlpha * yp);
+			double v = naive_lerp(screenSpace[0].textureCoords.y, screenSpace[1].textureCoords.y, yp);
 
 			if (xLeft > xRight)
 			{
@@ -232,9 +243,9 @@ struct Triangle
 			double xLeft = naive_lerp(x2, x3, yp);
 			double xRight = naive_lerp(split_xend, x3, yp);
 
-			double uLeft = naive_lerp(textureCoords[1].x, textureCoords[2].x, yp);
-			double uRight = naive_lerp(split_uend, textureCoords[2].x, yp);
-			double v = naive_lerp(textureCoords[1].y, textureCoords[2].y, yp);
+			double uLeft = naive_lerp(screenSpace[1].textureCoords.x, screenSpace[2].textureCoords.x, yp);
+			double uRight = naive_lerp(split_uend, screenSpace[2].textureCoords.x, yp);
+			double v = naive_lerp(screenSpace[1].textureCoords.y, screenSpace[2].textureCoords.y, yp);
 
 			if (xLeft > xRight)
 			{
@@ -338,9 +349,9 @@ void main()
 					t.textureIndex = textureIndex;					
 					for (int m = 0; m < 3; ++m)
 					{
-						t.v[m] = verts[m + n];
-						Vec3 uv3 = t.v[m] - verts[0];
-						t.textureCoords[m] = { uv3.x + sectorSidedefs[i][j]->xTextureOffset, uv3.y + sectorSidedefs[i][j]->yTextureOffset };
+						t.tv[m].worldCoords = verts[m + n];
+						Vec3 uv3 = verts[m + n] - verts[0];
+						t.tv[m].textureCoords = { uv3.x + sectorSidedefs[i][j]->xTextureOffset, uv3.y + sectorSidedefs[i][j]->yTextureOffset };
 					}
 					sectorTriangles[i].emplace_back(t);
 				}
@@ -359,10 +370,14 @@ void main()
 	C_Input input;
 	CoordinateTransformer ctr(framebufW, framebufH);
 
+	std::vector<double> zBuffer(framebufW * framebufH);
+
 	while (true)
 	{
 		SDL_FillRect(framebuf, nullptr, 0);
 		SDL_FillRect(wndSurf, nullptr, 0);
+		for (auto& it : zBuffer) it = std::numeric_limits<double>::infinity();
+
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev))
 		{
@@ -388,7 +403,7 @@ void main()
 
 		for (int i = 0; i < sectors.size(); ++i)
 		{
-			for (const auto& t : sectorTriangles[i]) t.drawOn(framebuf, ctr);
+			for (const auto& t : sectorTriangles[i]) t.drawOn(framebuf, ctr, zBuffer);
 			/*for (const auto& p : sectorPrimitives[i])
 			{
 				Vec3 verts[4];

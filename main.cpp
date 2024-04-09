@@ -134,6 +134,8 @@ struct Texture
 	}
 	uint32_t getPixel(int x, int y)
 	{
+		x = abs(x);
+		y = abs(y);
 		x %= surf->w;
 		y %= surf->h;
 		uint32_t* px = (uint32_t*)surf->pixels;
@@ -158,6 +160,7 @@ int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std:
 struct DrawingPrimitive
 {
 	Vec3 vertices[4];
+	Vec2 uv[4]; //notice, that is is a misnomer. Doom doesn't use UV system, texture size change will make it bigger in the world space as well.
 	int textureIndex;
 	int xTextureOffset = 0, yTextureOffset = 0;
 };
@@ -180,12 +183,14 @@ struct Triangle
 {
 	Vec3 v[3];
 
-	void drawOn(SDL_Surface* s, const DrawingPrimitive& p)
+	void drawOn(SDL_Surface* s, const DrawingPrimitive& p, int index)
 	{
 		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by y (ascending)
 		double x1 = v[0].x, x2 = v[1].x, x3 = v[2].x, y1 = v[0].y, y2 = v[1].y, y3 = v[2].y;
 		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
+
+		Vec3 textureCoords = p.vertices[index] - p.vertices[0];
 
 		//TODO: change conditions, since any non-zero triangle will be at least 1 pixel big
 		for (int y = y1; y < y2; ++y) //draw flat bottom part
@@ -196,7 +201,8 @@ struct Triangle
 			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
 			for (int x = xLeft; x < xRight; ++x)
 			{
-				auto c = textures[p.textureIndex].getPixel(x - xLeft, y - y1); //TODO: this does not work properly, because world coordinates need to be used, not screen. This is a temporary stub.
+				//Vec3 world
+				auto c = textures[p.textureIndex].getPixel(x,y); //TODO: this does not work properly, because world coordinates need to be used, not screen. This is a temporary stub.
 				setPixel(s, x, y, c);
 			}
 		}
@@ -210,7 +216,7 @@ struct Triangle
 
 			for (int x = xLeft; x < xRight; ++x)
 			{
-				auto c = textures[p.textureIndex].getPixel(x - xLeft, y - y2);
+				auto c = textures[p.textureIndex].getPixel(x,y);
 				setPixel(s, x, y, c);
 			}
 		}
@@ -327,7 +333,7 @@ void main()
 
 		camAng += { 1e-2 * input.isButtonHeld(SDL_SCANCODE_R), 1e-2 * input.isButtonHeld(SDL_SCANCODE_T), 1e-2 * input.isButtonHeld(SDL_SCANCODE_Y)};
 		camAng -= { 1e-2 * input.isButtonHeld(SDL_SCANCODE_F), 1e-2 * input.isButtonHeld(SDL_SCANCODE_G), 1e-2 * input.isButtonHeld(SDL_SCANCODE_H)};
-		if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0,0,0 };
+		if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
 		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
 
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
@@ -343,10 +349,11 @@ void main()
 					verts[i] = ctr.toScreenCoords(p.vertices[i]);
 				}
 
-				Triangle t1 = { verts[0], verts[1], verts[2] };
-				Triangle t2 = { verts[1], verts[2], verts[3] };
-				t1.drawOn(framebuf, p);
-				t2.drawOn(framebuf, p);
+				for (int i = 0; i < 2; ++i)
+				{
+					Triangle t = { verts[i], verts[i + 1], verts[i + 2] };
+					t.drawOn(framebuf, p, i);
+				}
 			}
 		}
 

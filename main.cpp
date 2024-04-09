@@ -16,9 +16,6 @@
 #pragma comment(lib,"SDL2_image.lib")
 #undef main
 
-
-typedef bob::_Vec3<double> Vec3;
-
 #pragma pack(push, 1)
 struct Vertex
 {
@@ -134,7 +131,6 @@ struct Texture
 		SDL_Surface* old = surf;
 		surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
 		SDL_FreeSurface(old);
-		//SDL_PixelFormat fmt = SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA8888;
 	}
 	uint32_t getPixel(int x, int y)
 	{
@@ -149,7 +145,6 @@ struct Texture
 		//SDL_FreeSurface(surf);
 	}
 };
-//void setPixel()
 
 int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std::unordered_map<std::string, int>& textureNameToIndexMap)
 {
@@ -191,6 +186,7 @@ struct Triangle
 		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
 
+		//TODO: change conditions, since any non-zero triangle will be at least 1 pixel big
 		for (int y = y1; y < y2; ++y) //draw flat bottom part
 		{
 			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!

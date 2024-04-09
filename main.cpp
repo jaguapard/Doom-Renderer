@@ -216,12 +216,13 @@ struct Triangle
 		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by y (ascending)
 		double sx = v[0].x + (v[1].y - v[0].y) / (v[2].y - v[0].y) * (v[2].x - v[0].x);
 		double sy = v[1].y;
-		double dy = v[2].y - v[0].y;
+		double dy1 = sy - v[0].y;
+		double dy2 = v[2].y - sy;
 		
 		Vec3 splittingVertex = { sx, sy, 0 }; //split into flat top and flat bottom triangles
 		for (int y = v[0].y; y < sy; ++y) //draw flat bottom part;
 		{
-			double yp = (y-v[0].y) / dy; // TODO: optimize by just adding step;
+			double yp = (y-v[0].y) / dy1; // TODO: optimize by just adding step;
 			double xLeft = v[0].x + yp * (v[1].x - v[0].x);
 			double xRight = v[0].x + yp * (v[2].x - v[0].x);
 			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
@@ -355,35 +356,10 @@ void main()
 					verts[i] *= 200;
 				}
 
-				Vec3 v1 = verts[1] - verts[0];
-				Vec3 v2 = verts[2] - verts[0];
-				for (int y = 0; y < v2.y; ++y)
-				{
-					for (int x = 0; x < v1.x; ++x)
-					{
-						double progressX = x / v1.x;
-						double progressY = y / v2.y;
-						int tx = x;
-						int ty = y;
-						uint32_t tc = textures[p.textureIndex].getPixel(tx, ty);
-						setPixel(framebuf, verts[0].x + x, verts[0].y + y, tc);
-					}
-				}
-				int a = 0;
-
-				/*for (int i = 1; i < 4; ++i)
-				{
-					for (int y = verts[i - 1].y; y < verts[i].y; ++y)
-					{
-						for (int x = verts[i - 1].x; x < verts[i].x; ++x)
-						{
-							int tx = x - verts[i - 1].x;
-							int ty = y - verts[i - 1].y;
-							uint32_t tc = textures[p.textureIndex].getPixel(tx, ty);
-							setPixel(framebuf, x, y, tc);
-						}
-					}
-				}*/
+				Triangle t1 = { verts[0], verts[1], verts[2] };
+				Triangle t2 = { verts[1], verts[2], verts[3] };
+				t1.drawOn(framebuf);
+				t2.drawOn(framebuf);
 			}
 		}
 

@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include <bob/Vec3.h>
+#include <bob/Vec2.h>
 #include "Matrix3.h"
 
 #pragma comment(lib,"SDL2.lib")
@@ -246,6 +247,41 @@ struct Triangle
 		}
 	}
 };
+
+class CoordinateTransformer
+{
+public:
+	CoordinateTransformer(int w, int h)
+	{
+		this->w = w;
+		this->h = h;
+		double widthToHeightAspectRatio = double(w) / h;
+		shift = { widthToHeightAspectRatio / 2, 0.5, 0 };
+	}
+
+	void prepare(const Vec3& camPos, const Matrix3& rotation)
+	{
+		this->camPos = camPos;
+		this->rotation = rotation;
+	}
+
+	Vec3 toScreenCoords(const Vec3& v)
+	{
+		Vec3 camOffset = v - camPos;
+		Vec3 rot = rotation * camOffset;
+		Vec3 perspective = rot / rot.z; //screen space coords of vector
+
+		Vec3 shifted = perspective + this->shift; //convert so (0,0) in `perspective` corresponds to center of the screen
+		Vec3 final = shifted * h;
+		return final;
+	}
+private:
+	int w, h;
+	Vec3 camPos;
+	Matrix3 rotation;
+	Vec3 shift;
+	double widthToHeightAspectRatio;
+};
 void main()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -334,8 +370,12 @@ void main()
 	
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
-	SDL_Surface* framebuf = SDL_CreateRGBSurface(0, 320, 200, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0xFF);
+
+	int framebufW = 320;
+	int framebufH = 180;
+	SDL_Surface* framebuf = SDL_CreateRGBSurface(0, framebufW, framebufH, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0xFF);
 	C_Input input;
+	CoordinateTransformer ctr(framebufW, framebufH);
 
 	while (true)
 	{
@@ -352,8 +392,11 @@ void main()
 
 		camAng += { 1e-2 * input.isButtonHeld(SDL_SCANCODE_R), 1e-2 * input.isButtonHeld(SDL_SCANCODE_T), 1e-2 * input.isButtonHeld(SDL_SCANCODE_Y)};
 		camAng -= { 1e-2 * input.isButtonHeld(SDL_SCANCODE_F), 1e-2 * input.isButtonHeld(SDL_SCANCODE_G), 1e-2 * input.isButtonHeld(SDL_SCANCODE_H)};
+		if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0,0,0 };
+		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
 
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
+		ctr.prepare(camPos, transformMatrix);
 
 		for (int i = 0; i < sectors.size(); ++i)
 		{
@@ -362,11 +405,7 @@ void main()
 				Vec3 verts[4];
 				for (int i = 0; i < 4; ++i)
 				{
-					verts[i] = p.vertices[i] - camPos;
-					verts[i] = transformMatrix * verts[i];
-					verts[i] /= verts[i].z * 2; //2 is for screen space transform
-					verts[i] += 1;
-					verts[i] *= 200;
+					verts[i] = ctr.toScreenCoords(p.vertices[i]);
 				}
 
 				Triangle t1 = { verts[0], verts[1], verts[2] };

@@ -125,22 +125,30 @@ struct Texture
 	Texture(std::string name)
 	{
 		this->name = name;
-		/*/std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
-		surf = IMG_Load(path.c_str());
+		constexpr bool DEBUG_TEXTURES = true;
 
-		SDL_Surface* old = surf;
-		surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
-		SDL_FreeSurface(old);*/
-
-		surf = SDL_CreateRGBSurfaceWithFormat(0, 256, 256, 32, SDL_PIXELFORMAT_ABGR32);
-		for (int y = 0; y < 256; ++y)
+		if (!DEBUG_TEXTURES)
 		{
-			for (int x = 0; x < 256; ++x)
+			std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
+			surf = IMG_Load(path.c_str());
+
+			SDL_Surface* old = surf;
+			surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
+			SDL_FreeSurface(old);
+		}
+		else
+		{
+			surf = SDL_CreateRGBSurfaceWithFormat(0, 1024, 1024, 32, SDL_PIXELFORMAT_ABGR32);
+			for (int y = 0; y < 1024; ++y)
 			{
-				Uint32* px = (Uint32*)(surf->pixels);
-				//px[y * 256 + x] = (x << 24) + (y << 16) + 255;
-				//px[y * 256 + x] = (x << 24) + (x << 16) + (x << 8) + 255;
-				px[y * 256 + x] = (y << 24) + (y << 16) + (y << 8) + 255;
+				for (int x = 0; x < 1024; ++x)
+				{
+					Uint32* px = (Uint32*)(surf->pixels);
+					//px[y * 256 + x] = (x << 24) + (y << 16) + 255;
+					//px[y * 256 + x] = (x << 24) + (x << 16) + (x << 8) + 255;
+					//px[y * 256 + x] = (uint8_t(y) << 24) + (uint8_t(y) << 16) + (uint8_t(y) << 8) + 255;
+					px[y * 1024 + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0xFF : 0xFFFFFFFF; //checkerboard pattern
+				}
 			}
 		}
 	}
@@ -204,12 +212,22 @@ struct TexVertex
 	}
 };
 
+enum DebugColors
+{
+	WHITE = 0xFFFFFFFF,
+	GREY = 0x7F7F7FFF,
+	RED = 0xFF0000FF,
+	GREEN = 0x00FF00FF,
+	BLUE = 0x0000FFFF,
+	YELLOW = 0xFFFF00FF,
+};
+
 struct Triangle
 {
 	TexVertex tv[3];
 	int textureIndex;
 
-	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, std::vector<double>& zBuffer) const
+	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, std::vector<double>& zBuffer, int n = 0) const
 	{		
 		TexVertex screenSpace[3];
 		for (int i = 0; i < 3; ++i) screenSpace[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };
@@ -224,10 +242,11 @@ struct Triangle
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
 		double split_uend = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[2].textureCoords.x, splitAlpha); //last u of splitting line
 
+		Uint32 dbg_colors[] = { WHITE, GREY, RED, GREEN, BLUE, YELLOW };
 		for (double y = y1; y < y2; ++y) //draw flat bottom part
 		{
 			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
-			double xLeft = naive_lerp(x1, x2, yp);
+			double xLeft = naive_lerp(x1, x2, yp); //do double lerp here? i.e lerp(lerp(x1,x3, yp), lerp(x1,x2,yp), yp)) (and in other)
 			double xRight = naive_lerp(x1, x3, splitAlpha * yp); //?
 
 			double uLeft = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[1].textureCoords.x, yp);
@@ -243,7 +262,8 @@ struct Triangle
 			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
-				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
+				//auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
+				auto c = dbg_colors[n];
 				setPixel(s, x, y, c);
 			}
 		}
@@ -267,7 +287,8 @@ struct Triangle
 			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
-				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
+				//auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
+				auto c = dbg_colors[n];
 				setPixel(s, x, y, c);
 			}
 		}
@@ -414,7 +435,8 @@ void main()
 
 		for (int i = 0; i < sectors.size(); ++i)
 		{
-			for (const auto& t : sectorTriangles[i]) t.drawOn(framebuf, ctr, zBuffer);
+			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, j % 5);
+			//for (const auto& t : sectorTriangles[i]) t.drawOn(framebuf, ctr, zBuffer);
 			/*for (const auto& p : sectorPrimitives[i])
 			{
 				Vec3 verts[4];

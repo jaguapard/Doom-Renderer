@@ -384,7 +384,7 @@ void main()
 			input.handleEvent(ev);
 			if (input.isMouseButtonHeld(SDL_BUTTON_LEFT) && ev.type == SDL_MOUSEMOTION)
 			{
-				camAng += { ev.motion.xrel * 1e-3, 0, ev.motion.yrel * 1e-3};
+				camAng += { 0, ev.motion.xrel * 1e-3, ev.motion.yrel * -1e-3};
 			}
 		}
 

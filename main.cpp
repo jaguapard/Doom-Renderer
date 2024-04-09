@@ -175,11 +175,12 @@ double naive_lerp(double start, double end, double amount)
 {
 	return start + (end - start) * amount;
 }
+std::vector<Texture> textures;
 struct Triangle
 {
 	Vec3 v[3];
 
-	void drawOn(SDL_Surface* s)
+	void drawOn(SDL_Surface* s, const DrawingPrimitive& p)
 	{
 		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by y (ascending)
 		double x1 = v[0].x, x2 = v[1].x, x3 = v[2].x, y1 = v[0].y, y2 = v[1].y, y3 = v[2].y;
@@ -195,7 +196,8 @@ struct Triangle
 			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
 			for (int x = xLeft; x < xRight; ++x)
 			{
-				setPixel(s, x, y, 0xFFFFFFFF);
+				auto c = textures[p.textureIndex].getPixel(x - xLeft, y - y1); //TODO: this does not work properly, because world coordinates need to be used, not screen. This is a temporary stub.
+				setPixel(s, x, y, c);
 			}
 		}
 
@@ -207,7 +209,10 @@ struct Triangle
 			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
 
 			for (int x = xLeft; x < xRight; ++x)
-				setPixel(s, x, y, 0x7F7F7FFF);
+			{
+				auto c = textures[p.textureIndex].getPixel(x - xLeft, y - y2);
+				setPixel(s, x, y, c);
+			}
 		}
 	}
 };
@@ -221,7 +226,6 @@ void main()
 	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
 	std::vector<std::vector<Linedef*>> sidedefLinedefs(sidedefs.size());
 	std::vector<std::vector<Vec3>> sectorVertices(sectors.size());
-	std::vector<Texture> textures;
 	std::unordered_map<std::string, int> textureNameToIndexMap;
 
 	Vec3 camPos = { 0.1,32.1,144.1 };
@@ -334,15 +338,15 @@ void main()
 			for (const auto& p : sectorPrimitives[i])
 			{
 				Vec3 verts[4];
-				for (int i = 0; i < 4; ++i)
+				for (int i = 0; i < 4; ++i) 
 				{
 					verts[i] = ctr.toScreenCoords(p.vertices[i]);
 				}
 
 				Triangle t1 = { verts[0], verts[1], verts[2] };
 				Triangle t2 = { verts[1], verts[2], verts[3] };
-				t1.drawOn(framebuf);
-				t2.drawOn(framebuf);
+				t1.drawOn(framebuf, p);
+				t2.drawOn(framebuf, p);
 			}
 		}
 

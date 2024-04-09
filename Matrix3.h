@@ -1,6 +1,6 @@
-#include <bob/Vec3.h>
+#pragma once
+#include "Vec.h"
 
-typedef bob::_Vec3<double> Vec3;
 class Matrix3
 {
 public:

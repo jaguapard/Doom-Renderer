@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdint>
 #include <unordered_map>
+#include <algorithm>
 
 #include <bob/Vec3.h>
 #include "Matrix3.h"
@@ -206,7 +207,32 @@ bool C_Input::isButtonHeld(SDL_Scancode k)
 	return buttonHoldStatus[k];
 }
 
+struct Triangle
+{
+	Vec3 v[3];
 
+	void drawOn(SDL_Surface* s)
+	{
+		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by y (ascending)
+		double sx = v[0].x + (v[1].y - v[0].y) / (v[2].y - v[0].y) * (v[2].x - v[0].x);
+		double sy = v[1].y;
+		double dy = v[2].y - v[0].y;
+		
+		Vec3 splittingVertex = { sx, sy, 0 }; //split into flat top and flat bottom triangles
+		for (int y = v[0].y; y < sy; ++y) //draw flat bottom part;
+		{
+			double yp = (y-v[0].y) / dy; // TODO: optimize by just adding step;
+			double xLeft = v[0].x + yp * (v[1].x - v[0].x);
+			double xRight = v[0].x + yp * (v[2].x - v[0].x);
+			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+
+			for (int x = xLeft; x < xRight; ++x)
+				setPixel(s, x, y, 0xFFFFFFFF);
+		}
+
+		
+	}
+};
 void main()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -277,8 +303,9 @@ void main()
 
 				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
 				p.vertices[1] = { double(ev.x), ch, double(ev.y) };
-				p.vertices[2] = { double(ev.x), fh, double(ev.y) };
-				p.vertices[3] = { double(sv.x), fh, double(sv.y) };
+				p.vertices[2] = { double(sv.x), fh, double(sv.y) };
+				p.vertices[3] = { double(ev.x), fh, double(ev.y) };
+
 				memset(nameBuf, 0, 9);
 				memcpy(nameBuf, sectorSidedefs[i][j]->middleTexture, 8);
 				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
@@ -328,7 +355,23 @@ void main()
 					verts[i] *= 200;
 				}
 
-				for (int i = 1; i < 4; ++i)
+				Vec3 v1 = verts[1] - verts[0];
+				Vec3 v2 = verts[2] - verts[0];
+				for (int y = 0; y < v2.y; ++y)
+				{
+					for (int x = 0; x < v1.x; ++x)
+					{
+						double progressX = x / v1.x;
+						double progressY = y / v2.y;
+						int tx = x;
+						int ty = y;
+						uint32_t tc = textures[p.textureIndex].getPixel(tx, ty);
+						setPixel(framebuf, verts[0].x + x, verts[0].y + y, tc);
+					}
+				}
+				int a = 0;
+
+				/*for (int i = 1; i < 4; ++i)
 				{
 					for (int y = verts[i - 1].y; y < verts[i].y; ++y)
 					{
@@ -340,7 +383,7 @@ void main()
 							setPixel(framebuf, x, y, tc);
 						}
 					}
-				}
+				}*/
 			}
 		}
 

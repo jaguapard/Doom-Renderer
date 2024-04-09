@@ -14,7 +14,7 @@ void CoordinateTransformer::prepare(const Vec3& camPos, const Matrix3& rotation)
 	this->rotation = rotation;
 }
 
-Vec3 CoordinateTransformer::toScreenCoords(const Vec3& v)
+Vec3 CoordinateTransformer::toScreenCoords(const Vec3& v) const
 {
 	Vec3 camOffset = v - camPos;
 	Vec3 rot = rotation * camOffset;

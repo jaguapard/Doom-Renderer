@@ -244,48 +244,6 @@ struct Triangle
 			for (int x = xLeft; x < xRight; ++x)
 				setPixel(s, x, y, 0x7F7F7FFF);
 		}
-
-
-		/*/double sx = v[0].x + (v[1].y - v[0].y) / (v[2].y - v[0].y) * (v[2].x - v[0].x);
-		double sy = v[1].y;
-		double dy = v[2].y - v[0].y;
-		double dy1 = sy - v[0].y;
-		double dy2 = v[2].y - sy;
-		
-		Vec3 splittingVertex = { sx, sy, 0 }; //split into flat top and flat bottom triangles
-		for (int y = v[0].y; y < sy; ++y) //draw flat bottom part;
-		{
-			double yp = (y-v[0].y) / dy1; // TODO: optimize by just adding step;
-			double xLeft = naive_lerp()
-			double xRight = v[0].x + yp * (v[2].x - v[0].x);
-			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-
-			for (int x = xLeft; x < xRight; ++x)
-				setPixel(s, x, y, 0xFFFFFFFF);
-		}
-
-		for (int y = sy; y < v[2].y; ++y)
-		{
-			double yp = (y - sy) / dy2; // TODO: optimize by just adding step;
-			double xLeft = naive_lerp(v[1].x, v[2].x, yp);
-			double xRight = naive_lerp(sx, v[2].x, yp);
-			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-
-			for (int x = xLeft; x < xRight; ++x)
-				setPixel(s, x, y, 0x7F7F7FFF);
-		}*/
-		/*/double xt = sx + (sy - v[0].y) / dy * (v[2].x - v[0].x); //end of splitting line
-		for (int y = sy; y < v[2].y; ++y) //draw flat top part;
-		{
-			double yp = (y - sy) / dy2; // TODO: optimize by just adding step;
-			double xLeft = sx + yp * (v[2].x - sx);
-			double xRight = xt + yp * (v[2].x - xt);
-			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-
-			for (int x = xLeft; x < xRight; ++x)
-				setPixel(s, x, y, 0x7F7F7FFF);
-		}*/
-
 	}
 };
 void main()
@@ -299,8 +257,8 @@ void main()
 	std::vector<Texture> textures;
 	std::unordered_map<std::string, int> textureNameToIndexMap;
 
-	//Vec3 camPos = { 0.1,32.1,144.1 };
-	Vec3 camPos = { 0,0,0 };
+	Vec3 camPos = { 0.1,32.1,144.1 };
+	//Vec3 camPos = { 0,0,0 };
 	Vec3 camAng = { 0,0,0 };
 
 	for (int i = 0; i < sectors.size(); ++i)
@@ -397,7 +355,7 @@ void main()
 
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
 
-		/*for (int i = 0; i < sectors.size(); ++i)
+		for (int i = 0; i < sectors.size(); ++i)
 		{
 			for (const auto& p : sectorPrimitives[i])
 			{
@@ -416,9 +374,9 @@ void main()
 				t1.drawOn(framebuf);
 				t2.drawOn(framebuf);
 			}
-		}*/
+		}
 
-		Vec3 v[3] = { {10,15,20}, { 7, 20, 10 }, { 12, 11, 24 } };
+		/*/Vec3 v[3] = {{10,15,20}, {7, 20, 10}, {12, 11, 24}};
 
 		for (auto& it : v)
 		{
@@ -429,7 +387,7 @@ void main()
 		}
 
 		Triangle t = { v[0], v[1],v[2] };
-		t.drawOn(framebuf);
+		t.drawOn(framebuf);*/
 
 		SDL_UpperBlitScaled(framebuf, nullptr, wndSurf, nullptr);
 		SDL_UpdateWindowSurface(wnd);

@@ -174,7 +174,8 @@ void setPixel(SDL_Surface* s, int x, int y, uint32_t color)
 	}
 }
 
-double naive_lerp(double start, double end, double amount)
+template <typename T>
+T naive_lerp(const T& start, const T& end, const T& amount)
 {
 	return start + (end - start) * amount;
 }
@@ -182,15 +183,18 @@ std::vector<Texture> textures;
 struct Triangle
 {
 	Vec3 v[3];
+	Vec2 textureCoords[3];
+	int textureIndex;
 
-	void drawOn(SDL_Surface* s, const DrawingPrimitive& p, int index)
-	{
-		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by y (ascending)
-		double x1 = v[0].x, x2 = v[1].x, x3 = v[2].x, y1 = v[0].y, y2 = v[1].y, y3 = v[2].y;
+	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr) const
+	{		
+		Vec3 screenSpace[3];
+		for (int i = 0; i < 3; ++i) screenSpace[i] = ctr.toScreenCoords(v[i]);
+		std::sort(std::begin(screenSpace), std::end(screenSpace), [](const Vec3& a, const Vec3& b) {return a.y < b.y; }); //sort triangles by screen y (ascending, i.e. going from top to bottom)
+
+		double x1 = screenSpace[0].x, x2 = screenSpace[1].x, x3 = screenSpace[2].x, y1 = screenSpace[0].y, y2 = screenSpace[1].y, y3 = screenSpace[2].y;
 		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
-
-		Vec3 textureCoords = p.vertices[index] - p.vertices[0];
 
 		//TODO: change conditions, since any non-zero triangle will be at least 1 pixel big
 		for (int y = y1; y < y2; ++y) //draw flat bottom part
@@ -198,11 +202,23 @@ struct Triangle
 			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
 			double xLeft = naive_lerp(x1, x2, yp);
 			double xRight = naive_lerp(x1, x3, splitAlpha * yp); //?
-			if (xLeft > xRight) std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+
+			double uLeft = naive_lerp(textureCoords[0].x, textureCoords[1].x, yp);
+			double uRight = naive_lerp(textureCoords[0].x, textureCoords[2].x, splitAlpha * yp);
+			double v = naive_lerp(textureCoords[0].y, textureCoords[1].y, yp);
+
+			if (xLeft > xRight)
+			{
+				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
+				std::swap(uLeft, uRight);
+			}
+
+			
 			for (int x = xLeft; x < xRight; ++x)
 			{
 				//Vec3 world
-				auto c = textures[p.textureIndex].getPixel(x,y); //TODO: this does not work properly, because world coordinates need to be used, not screen. This is a temporary stub.
+				double xp = (x - xLeft) / (xRight - xLeft);
+				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v); //TODO: this does not work properly, because world coordinates need to be used, not screen. This is a temporary stub.
 				setPixel(s, x, y, c);
 			}
 		}
@@ -216,7 +232,7 @@ struct Triangle
 
 			for (int x = xLeft; x < xRight; ++x)
 			{
-				auto c = textures[p.textureIndex].getPixel(x,y);
+				auto c = textures[textureIndex].getPixel(x,y);
 				setPixel(s, x, y, c);
 			}
 		}
@@ -261,6 +277,9 @@ void main()
 	}
 
 	std::vector<std::vector<DrawingPrimitive>> sectorPrimitives(sectors.size());
+	//std::vector<Triangle> triangles;
+	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
+
 	for (int i = 0; i < sectors.size(); ++i)
 	{
 		for (int j = 0; j < sectorSidedefs[i].size(); ++j)
@@ -268,11 +287,11 @@ void main()
 			for (int k = 0; k < sidedefLinedefs[j].size(); ++k)
 			{
 				Linedef* ldf = sidedefLinedefs[j][k];
-				DrawingPrimitive p;
 				Vertex sv = vertices[ldf->startVertex];
 				Vertex ev = vertices[ldf->endVertex];
 				double fh = sectors[i].floorHeight;
 				double ch = sectors[i].ceilingHeight;
+				Vec3 verts[4];
 
 				char nameBuf[9] = { 0 };
 				/*/p.vertices[0] = {double(sv.x), fh, double(sv.y)}; //z is supposed to be depth, so swap with y? i.e. doom takes depth as y, height as z, we take y as height
@@ -292,17 +311,26 @@ void main()
 				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
 				sectorPrimitives[i].push_back(p);*/
 
-				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
-				p.vertices[1] = { double(ev.x), ch, double(ev.y) };
-				p.vertices[2] = { double(sv.x), fh, double(sv.y) };
-				p.vertices[3] = { double(ev.x), fh, double(ev.y) };
-
+				verts[0] = { double(sv.x), ch, double(sv.y) };
+				verts[1] = { double(ev.x), ch, double(ev.y) };
+				verts[2] = { double(sv.x), fh, double(sv.y) };
+				verts[3] = { double(ev.x), fh, double(ev.y) };
+				
 				memset(nameBuf, 0, 9);
 				memcpy(nameBuf, sectorSidedefs[i][j]->middleTexture, 8);
-				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
-				p.xTextureOffset = sectorSidedefs[i][j]->xTextureOffset;
-				p.yTextureOffset = sectorSidedefs[i][j]->yTextureOffset;
-				sectorPrimitives[i].push_back(p);
+				int textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
+				for (int n = 0; n < 2; ++n)
+				{
+					Triangle t;
+					t.textureIndex = textureIndex;					
+					for (int m = 0; m < 3; ++m)
+					{
+						t.v[m] = verts[m + n];
+						Vec3 uv3 = t.v[m] - verts[0];
+						t.textureCoords[m] = { uv3.x + sectorSidedefs[i][j]->xTextureOffset, uv3.y + sectorSidedefs[i][j]->yTextureOffset };
+					}
+					sectorTriangles[i].emplace_back(t);
+				}
 			}
 		}
 	}
@@ -339,9 +367,12 @@ void main()
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
 		ctr.prepare(camPos, transformMatrix);
 
+		//std::vector<Triangle> cameraOffsets()
+
 		for (int i = 0; i < sectors.size(); ++i)
 		{
-			for (const auto& p : sectorPrimitives[i])
+			for (const auto& t : sectorTriangles[i]) t.drawOn(framebuf, ctr);
+			/*for (const auto& p : sectorPrimitives[i])
 			{
 				Vec3 verts[4];
 				for (int i = 0; i < 4; ++i) 
@@ -352,9 +383,12 @@ void main()
 				for (int i = 0; i < 2; ++i)
 				{
 					Triangle t = { verts[i], verts[i + 1], verts[i + 2] };
-					t.drawOn(framebuf, p, i);
+					t.drawOn(framebuf);
 				}
 			}
+			*/
+
+
 		}
 
 		/*/Vec3 v[3] = {{10,15,20}, {7, 20, 10}, {12, 11, 24}};

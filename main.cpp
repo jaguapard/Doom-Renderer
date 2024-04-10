@@ -348,56 +348,60 @@ void main()
 
 	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
 
-	for (int i = 0; i < sectors.size(); ++i)
+	for (int nSector = 0; nSector < sectors.size(); ++nSector)
 	{
-		for (int j = 0; j < sectorSidedefs[i].size(); ++j)
+		for (int nSidedef = 0; nSidedef < sectorSidedefs[nSector].size(); ++nSidedef)
 		{
-			for (int k = 0; k < sidedefLinedefs[j].size(); ++k)
+			for (int nLinedef = 0; nLinedef < sidedefLinedefs[nSidedef].size(); ++nLinedef)
 			{
-				Linedef* ldf = sidedefLinedefs[j][k];
+				char nameBuf[9] = { 0 };
+				memset(nameBuf, 0, 9);
+				memcpy(nameBuf, sectorSidedefs[nSector][nSidedef]->middleTexture, 8);
+				if (!strcmp(nameBuf, "-")) break; //skip sidedef if it has no middle texture
+
+				Linedef* ldf = sidedefLinedefs[nSidedef][nLinedef];
 				Vertex sv = vertices[ldf->startVertex];
 				Vertex ev = vertices[ldf->endVertex];
-				double fh = sectors[i].floorHeight;
-				double ch = sectors[i].ceilingHeight;
+				double fh = sectors[nSector].floorHeight;
+				double ch = sectors[nSector].ceilingHeight;
+				bool sidedefIsBack = ldf->backSidedef == nSidedef;
 				Vec3 verts[4];
 
-				char nameBuf[9] = { 0 };
-				/*/p.vertices[0] = {double(sv.x), fh, double(sv.y)}; //z is supposed to be depth, so swap with y? i.e. doom takes depth as y, height as z, we take y as height
+				
+				/*/p.vertices[0] = {double(sv.x), fh, double(sv.y)}; //z is supposed to be depth, so swap with y? i.e. Doom takes depth as y, height as z, we take y as height
 				p.vertices[1] = { double(ev.x), fh, double(sv.y) };
 				p.vertices[2] = { double(ev.x), fh, double(ev.y) };
 				p.vertices[3] = { double(sv.x), fh, double(ev.y) };
-				memcpy(nameBuf, sectors[i].floorTexture, 8);
+				memcpy(nameBuf, sectors[nSector].floorTexture, 8);
 				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
-				sectorPrimitives[i].push_back(p);
+				sectorPrimitives[nSector].push_back(p);
 
 				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
 				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
 				p.vertices[2] = { double(ev.x), ch, double(ev.y) };
 				p.vertices[3] = { double(sv.x), ch, double(ev.y) };
 				memset(nameBuf, 0, 9);
-				memcpy(nameBuf, sectors[i].ceilingTexture, 8);
+				memcpy(nameBuf, sectors[nSector].ceilingTexture, 8);
 				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
-				sectorPrimitives[i].push_back(p);*/
+				sectorPrimitives[nSector].push_back(p);*/
 
 				verts[0] = { double(sv.x), ch, double(sv.y) };
 				verts[1] = { double(ev.x), ch, double(ev.y) };
 				verts[2] = { double(sv.x), fh, double(sv.y) };
 				verts[3] = { double(ev.x), fh, double(ev.y) };
 				
-				memset(nameBuf, 0, 9);
-				memcpy(nameBuf, sectorSidedefs[i][j]->middleTexture, 8);
 				int textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
-				for (int n = 0; n < 2; ++n)
+				for (int i = 0; i < 2; ++i)
 				{
 					Triangle t;
 					t.textureIndex = textureIndex;					
-					for (int m = 0; m < 3; ++m)
+					for (int j = 0; j < 3; ++j)
 					{
-						t.tv[m].worldCoords = verts[m + n];
-						Vec3 uv3 = verts[m + n] - verts[0];
-						t.tv[m].textureCoords = { uv3.x + sectorSidedefs[i][j]->xTextureOffset, uv3.y + sectorSidedefs[i][j]->yTextureOffset };
+						t.tv[j].worldCoords = verts[j + i];
+						Vec3 uv3 = verts[j + i] - verts[0];
+						t.tv[j].textureCoords = { uv3.x + sectorSidedefs[nSector][nSidedef]->xTextureOffset, uv3.y + sectorSidedefs[nSector][nSidedef]->yTextureOffset };
 					}
-					sectorTriangles[i].emplace_back(t);
+					sectorTriangles[nSector].emplace_back(t);
 				}
 			}
 		}

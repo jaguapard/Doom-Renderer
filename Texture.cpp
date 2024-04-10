@@ -19,7 +19,7 @@ Texture::Texture(std::string name)
 		else
 		{
 			std::cout << "Failed to load texture " << name << " from " << path << ": " << IMG_GetError() << "\n" <<
-				"Falling back to purple-black checkerboard.\n\n";
+				"Falling back to purple-grey checkerboard.\n\n";
 			int w = 64, h = 64;
 
 			surf = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_ABGR32);
@@ -28,7 +28,7 @@ Texture::Texture(std::string name)
 				for (int x = 0; x < w; ++x)
 				{
 					Uint32* ptr = (Uint32*)(surf->pixels);
-					ptr[y * w + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0xFF : 0xFF00FFFF;
+					ptr[y * w + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0x7F7F7FFF : 0xFF00FFFF;
 				}
 			}
 		}

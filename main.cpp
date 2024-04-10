@@ -121,12 +121,14 @@ void loadPwad(std::string path)
 	}
 }
 
-int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std::unordered_map<std::string, int>& textureNameToIndexMap)
+int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std::unordered_map<std::string, int>& textureNameToIndexMap, const std::unordered_map<std::string,std::string>& textureNameTranslation)
 {
-	if (textureNameToIndexMap.find(name) != textureNameToIndexMap.end()) return textureNameToIndexMap[name];
+	auto it = textureNameTranslation.find(name);
+	std::string fileName = it == textureNameTranslation.end() ? name : it->second;
+	if (textureNameToIndexMap.find(fileName) != textureNameToIndexMap.end()) return textureNameToIndexMap[fileName]; //find by file name
 
-	textures.emplace_back(name);
-	textureNameToIndexMap[name] = textures.size() - 1;
+	textures.emplace_back(fileName);
+	textureNameToIndexMap[fileName] = textures.size() - 1;
 	return textures.size() - 1;
 }
 
@@ -261,10 +263,36 @@ struct Triangle
 	}
 };
 
+#include <adm/strings.h>
+std::unordered_map<std::string, std::string> loadTextureTranslation()
+{
+	std::unordered_map<std::string, std::string> ret;
+	std::ifstream f("D:/Games/GZDoom/MappingTests/TEXTURES.txt");
+
+	std::string line, textureName, fileName;
+	while (std::getline(f, line))
+	{
+		if (line.empty() || line[0] == '/') continue;
+
+		auto parts = adm::strings::split_copy(line, " ");
+		if (parts[0] == "WallTexture") textureName = std::string(parts[1], 1, parts[1].length() - 3);
+		if (parts[0].find("Patch") != parts[0].npos)
+		{
+			fileName = std::string(parts[1], 1, parts[1].length() - 3);
+			ret[textureName] = fileName;
+		}
+		int a = 1;
+	}
+
+	return ret;
+}
+
 void main()
 {
+	auto textureNameTranslation = loadTextureTranslation();
 	SDL_Init(SDL_INIT_EVERYTHING);
-	loadPwad("D:/Games/GZDoom/STUPID.wad");
+	//loadPwad("D:/Games/GZDoom/STUPID.wad");
+	loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
 
 	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
 	std::vector<std::vector<Linedef*>> sidedefLinedefs(sidedefs.size());
@@ -276,9 +304,10 @@ void main()
 		{ 0.1,32.1,370 }, {0,0,0}, //default view
 		{ -45.9, 175.1, 145 }, { 0,0.086, 0.518 }, //buggy mess 1
 		{0.1, 124.1, 188}, {0,0.012, 0.349}, //buggy mess 2
+		{-96, 70, 784}, {0,0,0}, //doom 2 map 01 player start
 	};
 
-	int activeCamPosAndAngle = 3;
+	int activeCamPosAndAngle = 4;
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 	//Vec3 camPos = { 0.1,32.1,370 };
@@ -348,7 +377,7 @@ void main()
 				
 				memset(nameBuf, 0, 9);
 				memcpy(nameBuf, sectorSidedefs[i][j]->middleTexture, 8);
-				int textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
+				int textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
 				for (int n = 0; n < 2; ++n)
 				{
 					Triangle t;
@@ -377,7 +406,7 @@ void main()
 	CoordinateTransformer ctr(framebufW, framebufH);
 
 	ZBuffer zBuffer(framebufW, framebufH);
-
+	uint64_t frames = 0;
 	while (true)
 	{
 		SDL_FillRect(framebuf, nullptr, 0);
@@ -410,6 +439,7 @@ void main()
 			//Vec3 testTri[3] = {{10,15,20}, {7, 20, 10}, {12, 11, 24}};
 			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer);
 		}
+		std::cout << "Frame " << frames++ << " done\n";
 
 		SDL_UpperBlitScaled(framebuf, nullptr, wndSurf, nullptr);
 		SDL_UpdateWindowSurface(wnd);

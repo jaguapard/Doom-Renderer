@@ -179,6 +179,14 @@ struct Triangle
 			worldSpace[i] = { rot,tv[screenIndices[i]].textureCoords};
 			screenSpace[i] = { fullyTransformed[screenIndices[i]] };
 		}
+
+		std::array<Vec3, 3> uvDividedByZ;
+		for (int i = 0; i < 3; ++i)
+		{
+			double zInv = 1.0/worldSpace[i].worldCoords.z;
+			Vec2 dividedUv = worldSpace[i].textureCoords* zInv;
+			uvDividedByZ[i] = Vec3(dividedUv.x, dividedUv.y, zInv);
+		}
 		
 		/*
 		Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b, 

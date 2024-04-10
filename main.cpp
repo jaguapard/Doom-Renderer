@@ -188,10 +188,8 @@ struct Triangle
 			uvDividedByZ[i] = Vec3(dividedUv.x, dividedUv.y, zInv);
 		}
 		
-		/*
-		Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b, 
-		"mixing" (linearly interpolating) between two values. Note, that texture mapping is plain ol' linear stuff, not perspective correct.
-		*/
+		/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b, 
+		"mixing" (linearly interpolating) between two values. */
 		double x1 = screenSpace[0].worldCoords.x, x2 = screenSpace[1].worldCoords.x, x3 = screenSpace[2].worldCoords.x, y1 = screenSpace[0].worldCoords.y, y2 = screenSpace[1].worldCoords.y, y3 = screenSpace[2].worldCoords.y;
 		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
@@ -200,7 +198,7 @@ struct Triangle
 		for (double y = y1; y < y2; ++y) //draw flat bottom part
 		{
 			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
-			double xLeft = naive_lerp(x1, x2, yp); //do double lerp here? i.e lerp(lerp(x1,x3, yp), lerp(x1,x2,yp), yp)) (and in other)
+			double xLeft = naive_lerp(x1, x2, yp);
 			double xRight = naive_lerp(x1, x3, splitAlpha * yp);
 
 			Vec3 dividedUvLeft = naive_lerp(uvDividedByZ[0], uvDividedByZ[1], yp);
@@ -208,8 +206,8 @@ struct Triangle
 
 			if (xLeft > xRight)
 			{
-				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-				std::swap(dividedUvLeft, dividedUvRight); //this is not a mistake. If we swap x, then uv also has to go.
+				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop.
+				std::swap(dividedUvLeft, dividedUvRight); //If we swap x, then uv also has to go.
 			}
 			
 			for (double x = xLeft; x < xRight; ++x)
@@ -236,8 +234,8 @@ struct Triangle
 
 			if (xLeft > xRight)
 			{
-				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-				std::swap(dividedUvLeft, dividedUvRight); //this is not a mistake. If we swap x, then uv also has to go.
+				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop.
+				std::swap(dividedUvLeft, dividedUvRight); //If we swap x, then uv also has to go.
 			}
 
 			for (double x = xLeft; x < xRight; ++x)

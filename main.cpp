@@ -138,7 +138,7 @@ void setPixel(SDL_Surface* s, int x, int y, uint32_t color)
 }
 
 template <typename T>
-T naive_lerp(const T& start, const T& end, const T& amount)
+T naive_lerp(const T& start, const T& end, double amount)
 {
 	return start + (end - start) * amount;
 }
@@ -173,28 +173,28 @@ struct Triangle
 		double x1 = screenSpace[0].worldCoords.x, x2 = screenSpace[1].worldCoords.x, x3 = screenSpace[2].worldCoords.x, y1 = screenSpace[0].worldCoords.y, y2 = screenSpace[1].worldCoords.y, y3 = screenSpace[2].worldCoords.y;
 		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
-		double split_uend = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[2].textureCoords.x, splitAlpha); //last u of splitting line
+		Vec2 split_uvEnd = naive_lerp(screenSpace[0].textureCoords, screenSpace[2].textureCoords, splitAlpha);
 
 		for (double y = y1; y < y2; ++y) //draw flat bottom part
 		{
 			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
 			double xLeft = naive_lerp(x1, x2, yp); //do double lerp here? i.e lerp(lerp(x1,x3, yp), lerp(x1,x2,yp), yp)) (and in other)
-			double xRight = naive_lerp(x1, x3, splitAlpha * yp); //?
+			double xRight = naive_lerp(x1, x3, splitAlpha * yp);
 
-			double uLeft = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[1].textureCoords.x, yp);
-			double uRight = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[2].textureCoords.x, splitAlpha * yp);
-			double v = naive_lerp(screenSpace[0].textureCoords.y, screenSpace[1].textureCoords.y, yp);
+			Vec2 uvLeft = naive_lerp(screenSpace[0].textureCoords, screenSpace[1].textureCoords, yp);
+			Vec2 uvRight = naive_lerp(screenSpace[0].textureCoords, screenSpace[2].textureCoords, splitAlpha*yp);
 
 			if (xLeft > xRight)
 			{
 				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-				std::swap(uLeft, uRight); //this is not a mistake. If we swap x, then u also has to go.
+				std::swap(uvLeft, uvRight); //this is not a mistake. If we swap x, then uv also has to go.
 			}
 			
 			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
-				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
+				Vec2 interpolatedUv = naive_lerp(uvLeft, uvRight, xp);
+				auto c = textures[textureIndex].getPixel(interpolatedUv.x, interpolatedUv.y);
 				setPixel(s, x, y, c);
 			}
 		}
@@ -205,20 +205,20 @@ struct Triangle
 			double xLeft = naive_lerp(x2, x3, yp);
 			double xRight = naive_lerp(split_xend, x3, yp);
 
-			double uLeft = naive_lerp(screenSpace[1].textureCoords.x, screenSpace[2].textureCoords.x, yp);
-			double uRight = naive_lerp(split_uend, screenSpace[2].textureCoords.x, yp);
-			double v = naive_lerp(screenSpace[1].textureCoords.y, screenSpace[2].textureCoords.y, yp);
+			Vec2 uvLeft = naive_lerp(screenSpace[1].textureCoords, screenSpace[2].textureCoords, yp);
+			Vec2 uvRight = naive_lerp(split_uvEnd, screenSpace[2].textureCoords, yp);
 
 			if (xLeft > xRight)
 			{
 				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-				std::swap(uLeft, uRight); //this is not a mistake. If we swap x, then u also has to go.
+				std::swap(uvLeft, uvRight); //this is not a mistake. If we swap x, then uv also has to go.
 			}
 
 			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
-				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
+				Vec2 interpolatedUv = naive_lerp(uvLeft, uvRight, xp);
+				auto c = textures[textureIndex].getPixel(interpolatedUv.x, interpolatedUv.y);
 				setPixel(s, x, y, c);
 			}
 		}

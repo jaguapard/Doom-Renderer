@@ -12,6 +12,7 @@
 #include "CoordinateTransformer.h"
 #include "Matrix3.h"
 #include "Texture.h"
+#include "ZBuffer.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -160,7 +161,7 @@ struct Triangle
 	TexVertex tv[3];
 	int textureIndex;
 
-	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, std::vector<double>& zBuffer) const
+	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer) const
 	{		
 		TexVertex screenSpace[3];
 		for (int i = 0; i < 3; ++i) screenSpace[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };
@@ -329,13 +330,13 @@ void main()
 	C_Input input;
 	CoordinateTransformer ctr(framebufW, framebufH);
 
-	std::vector<double> zBuffer(framebufW * framebufH);
+	ZBuffer zBuffer(framebufW, framebufH);
 
 	while (true)
 	{
 		SDL_FillRect(framebuf, nullptr, 0);
 		SDL_FillRect(wndSurf, nullptr, 0);
-		for (auto& it : zBuffer) it = std::numeric_limits<double>::infinity();
+		zBuffer.clear();
 
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev))

@@ -128,14 +128,6 @@ int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std:
 	return textures.size() - 1;
 }
 
-struct DrawingPrimitive
-{
-	Vec3 vertices[4];
-	Vec2 uv[4]; //notice, that is is a misnomer. Doom doesn't use UV system, texture size change will make it bigger in the world space as well.
-	int textureIndex;
-	int xTextureOffset = 0, yTextureOffset = 0;
-};
-
 void setPixel(SDL_Surface* s, int x, int y, uint32_t color)
 {
 	if (x >= 0 && y >= 0 && x < s->w && y < s->h)
@@ -235,8 +227,6 @@ struct Triangle
 
 void main()
 {
-	
-
 	SDL_Init(SDL_INIT_EVERYTHING);
 	loadPwad("D:/Games/GZDoom/STUPID.wad");
 
@@ -271,8 +261,6 @@ void main()
 		}
 	}
 
-	std::vector<std::vector<DrawingPrimitive>> sectorPrimitives(sectors.size());
-	//std::vector<Triangle> triangles;
 	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
 
 	for (int i = 0; i < sectors.size(); ++i)
@@ -370,43 +358,11 @@ void main()
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
 		ctr.prepare(camPos, transformMatrix);
 
-		//std::vector<Triangle> cameraOffsets()
-
 		for (int i = 0; i < sectors.size(); ++i)
 		{
+			//Vec3 testTri[3] = {{10,15,20}, {7, 20, 10}, {12, 11, 24}};
 			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer);
-			//for (const auto& t : sectorTriangles[i]) t.drawOn(framebuf, ctr, zBuffer);
-			/*for (const auto& p : sectorPrimitives[i])
-			{
-				Vec3 verts[4];
-				for (int i = 0; i < 4; ++i) 
-				{
-					verts[i] = ctr.toScreenCoords(p.vertices[i]);
-				}
-
-				for (int i = 0; i < 2; ++i)
-				{
-					Triangle t = { verts[i], verts[i + 1], verts[i + 2] };
-					t.drawOn(framebuf);
-				}
-			}
-			*/
-
-
 		}
-
-		/*/Vec3 v[3] = {{10,15,20}, {7, 20, 10}, {12, 11, 24}};
-
-		for (auto& it : v)
-		{
-			it -= camPos;
-			it = transformMatrix * it;
-			it /= it.z;
-			it *= 200;
-		}
-
-		Triangle t = { v[0], v[1],v[2] };
-		t.drawOn(framebuf);*/
 
 		SDL_UpperBlitScaled(framebuf, nullptr, wndSurf, nullptr);
 		SDL_UpdateWindowSurface(wnd);

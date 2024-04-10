@@ -78,10 +78,11 @@ Texture::Texture(std::string name)
 
 uint32_t Texture::getPixel(int x, int y)
 {
-	x = abs(x);
-	y = abs(y);
 	x %= surf->w;
 	y %= surf->h;
+	if (x < 0) x += surf->w; //this adds prevent reflection of wrapped coordinates around 0 
+	if (y < 0) y += surf->h;
+
 	uint32_t* px = (uint32_t*)surf->pixels;
 	return px[y * surf->w + x];
 }

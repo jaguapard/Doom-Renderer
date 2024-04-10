@@ -164,9 +164,21 @@ struct Triangle
 
 	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer) const
 	{		
-		auto screenSpace = tv;
-		for (int i = 0; i < 3; ++i) screenSpace[i].worldCoords = ctr.toScreenCoords(tv[i].worldCoords);
-		std::sort(std::begin(screenSpace), std::end(screenSpace)); //sort triangles by screen y (ascending, i.e. going from top to bottom). We also must preserve the texture coords data
+		std::array<int, 3> screenIndices = { 0,1,2 };
+		std::array<TexVertex, 3> fullyTransformed;
+		for (int i = 0; i < 3; ++i) fullyTransformed[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };
+
+		//we need to sort index list by triangle's screen Y (ascending), to later gather the pre-z-divide and fully transformed (to screen space) lists
+		std::sort(std::begin(screenIndices), std::end(screenIndices), [&](int a, int b) {return fullyTransformed[a].worldCoords.y < fullyTransformed[b].worldCoords.y; });
+
+		std::array<TexVertex, 3> worldSpace, screenSpace;
+		for (int i = 0; i < 3; ++i)
+		{
+			Vec3 off = ctr.doCamOffset(tv[screenIndices[i]].worldCoords);
+			Vec3 rot = ctr.rotate(off);
+			worldSpace[i] = { rot,tv[screenIndices[i]].textureCoords};
+			screenSpace[i] = { fullyTransformed[screenIndices[i]] };
+		}
 		
 		/*
 		Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b, 

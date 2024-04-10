@@ -164,6 +164,14 @@ struct Triangle
 
 	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer) const
 	{		
+		/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].worldCoords));
+		Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].worldCoords));
+		Vec3 v2 = ctr.rotate(ctr.doCamOffset(tv[2].worldCoords));
+		Vec3 cross = (v1 - v0).cross(v2 - v0);
+		Vec3 camPos = -ctr.doCamOffset(Vec3(0, 0, 0));
+		if (cross.dot(camPos) > 0) return;*/
+
+
 		std::array<int, 3> screenIndices = { 0,1,2 };
 		std::array<TexVertex, 3> fullyTransformed;
 		for (int i = 0; i < 3; ++i) fullyTransformed[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };

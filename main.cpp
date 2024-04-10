@@ -263,8 +263,16 @@ void main()
 	std::vector<std::vector<Vec3>> sectorVertices(sectors.size());
 	std::unordered_map<std::string, int> textureNameToIndexMap;
 
-	Vec3 camPos = { -45.9, 175.1, 145 };
-	Vec3 camAng = { 0,0.086, 0.518 };
+	Vec3 camPosAndAngArchieve[] = {
+		{ 0,0,0 }, {0,0,0},
+		{ 0.1,32.1,370 }, {0,0,0}, //default view
+		{ -45.9, 175.1, 145 }, { 0,0.086, 0.518 }, //buggy mess 1
+		{0.1, 124.1, 188}, {0,0.012, 0.349}, //buggy mess 2
+	};
+
+	int activeCamPosAndAngle = 3;
+	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
+	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 	//Vec3 camPos = { 0.1,32.1,370 };
 	//Vec3 camPos = { 0,0,0 };
 

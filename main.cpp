@@ -11,6 +11,7 @@
 #include "C_Input.h"
 #include "CoordinateTransformer.h"
 #include "Matrix3.h"
+#include "Texture.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -117,104 +118,6 @@ void loadPwad(std::string path)
 		filePtr += 16;
 	}
 }
-
-enum class TextureDebugMode
-{
-	NONE, //use textures defined in the map file
-	X_GRADIENT, //fill all textures with texture's x % 256 on all pixels
-	Y_GRADIENT, //fill all textures with texture's y % 256 on all pixels
-	XY_GRADIENT,
-	SOLID_WHITE, //fill with solid white color
-	COLORS, //fill with differing colors, based on texture's index (?)
-	CHECKERBOARD, //fill with checkerboard pattern
-};
-
-TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
-
-enum DebugColors
-{
-	WHITE = 0xFFFFFFFF,
-	GREY = 0x7F7F7FFF,
-	RED = 0xFF0000FF,
-	GREEN = 0x00FF00FF,
-	BLUE = 0x0000FFFF,
-	YELLOW = 0xFFFF00FF,
-};
-
-struct Texture
-{
-	SDL_Surface* surf;
-	std::string name;
-	Texture(std::string name)
-	{
-		this->name = name;
-
-		if (TEXTURE_DEBUG_MODE == TextureDebugMode::NONE)
-		{
-			std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
-			surf = IMG_Load(path.c_str());
-
-			SDL_Surface* old = surf;
-			surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
-			SDL_FreeSurface(old);
-		}
-		else
-		{
-			surf = SDL_CreateRGBSurfaceWithFormat(0, 1024, 1024, 32, SDL_PIXELFORMAT_ABGR32);
-			int tw = 1024, th = 1024;
-			Uint32 dbg_colors[] = { WHITE, GREY, RED, GREEN, BLUE, YELLOW };
-			static int textureNumber = 0;
-			for (int y = 0; y < tw; ++y)
-			{
-				for (int x = 0; x < th; ++x)
-				{
-					Uint32* px = (Uint32*)(surf->pixels);
-					Uint8 bx = x, by = y;
-					switch (TEXTURE_DEBUG_MODE)
-					{
-					case TextureDebugMode::NONE:
-						break;
-					case TextureDebugMode::X_GRADIENT:
-						px[by * tw + bx] = (bx << 24) + (bx << 16) + (bx << 8) + 255;
-						break;
-					case TextureDebugMode::Y_GRADIENT:
-						px[by * tw + bx] = (by << 24) + (by << 16) + (by << 8) + 255;
-						break;
-					case TextureDebugMode::XY_GRADIENT:
-						px[by * tw + bx] = (x << 24) + (y << 16) + 255;
-						break;
-					case TextureDebugMode::SOLID_WHITE:
-						px[y * tw + x] = 0xFFFFFFFF;
-						break;
-					case TextureDebugMode::COLORS:
-						px[y * tw + x] = dbg_colors[textureNumber % std::size(dbg_colors)];
-						break;
-					case TextureDebugMode::CHECKERBOARD:
-						px[y * tw + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0xFF : 0xFFFFFFFF;
-						break;
-					default:
-						break;
-					}
-				}
-			}
-			++textureNumber;
-		}
-	}
-	uint32_t getPixel(int x, int y)
-	{
-		x = abs(x);
-		y = abs(y);
-		x %= surf->w;
-		y %= surf->h;
-		uint32_t* px = (uint32_t*)surf->pixels;
-		return px[y * surf->w + x];
-	}
-
-	~Texture()
-	{
-		//SDL_FreeSurface(surf);
-	}
-};
 
 int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std::unordered_map<std::string, int>& textureNameToIndexMap)
 {
@@ -330,9 +233,10 @@ struct Triangle
 	}
 };
 
-
 void main()
 {
+	
+
 	SDL_Init(SDL_INIT_EVERYTHING);
 	loadPwad("D:/Games/GZDoom/STUPID.wad");
 

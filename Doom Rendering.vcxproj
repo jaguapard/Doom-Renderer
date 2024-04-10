@@ -138,11 +138,13 @@
     <ClCompile Include="C_Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Matrix3.cpp" />
+    <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CoordinateTransformer.h" />
     <ClInclude Include="C_Input.h" />
     <ClInclude Include="Matrix3.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Vec.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

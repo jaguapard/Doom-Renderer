@@ -8,8 +8,8 @@ ZBuffer::ZBuffer(int w, int h) : w(w), h(h)
 bool ZBuffer::testAndSet(int x, int y, double depth)
 {
 	if (x < 0 || y < 0 || x >= w || y >= h) return false;
-	bool cmp = depth < values[y * w + h];
-	if (cmp) values[y * w + h] = depth;
+	bool cmp = depth < values[y * w + x];
+	if (cmp) values[y * w + x] = depth;
 	return cmp;
 }
 

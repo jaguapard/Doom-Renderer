@@ -173,6 +173,7 @@ struct Triangle
 		Vec3 camPos = -ctr.doCamOffset(Vec3(0, 0, 0));
 		if (cross.dot(camPos) > 0) return;*/
 
+		double maxX = s->w, maxY = s->h;
 
 		std::array<int, 3> screenIndices = { 0,1,2 };
 		std::array<TexVertex, 3> fullyTransformed;
@@ -205,7 +206,9 @@ struct Triangle
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
 		Vec3 split_dividedUvEnd = naive_lerp(uvDividedByZ[0], uvDividedByZ[2], splitAlpha);
 
-		for (double y = y1; y < y2; ++y) //draw flat bottom part
+		double yBeg = std::max(0.0, y1);
+		double yEnd = std::min(maxY, y2);
+		for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 		{
 			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
 			double xLeft = naive_lerp(x1, x2, yp);
@@ -220,7 +223,9 @@ struct Triangle
 				std::swap(dividedUvLeft, dividedUvRight); //If we swap x, then uv also has to go.
 			}
 			
-			for (double x = xLeft; x < xRight; ++x)
+			double xBeg = std::max(0.0, xLeft);
+			double xEnd = std::min(maxX, xRight);
+			for (double x = xBeg; x < xEnd; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
 				Vec3 interpolatedDividedUv = naive_lerp(dividedUvLeft, dividedUvRight, xp);
@@ -233,7 +238,9 @@ struct Triangle
 			}
 		}
 
-		for (double y = y2; y < y3; ++y) //draw flat top part
+		yBeg = std::max(0.0, y2);
+		yEnd = std::min(maxY, y3);
+		for (double y = yBeg; y < yEnd; ++y) //draw flat top part
 		{
 			double yp = (y - y2) / (y3 - y2); //this is the "progress" along the flat top part, not whole triangle!
 			double xLeft = naive_lerp(x2, x3, yp);
@@ -248,7 +255,9 @@ struct Triangle
 				std::swap(dividedUvLeft, dividedUvRight); //If we swap x, then uv also has to go.
 			}
 
-			for (double x = xLeft; x < xRight; ++x)
+			double xBeg = std::max(0.0, xLeft);
+			double xEnd = std::min(maxX, xRight);
+			for (double x = xBeg; x < xEnd; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
 				Vec3 interpolatedDividedUv = naive_lerp(dividedUvLeft, dividedUvRight, xp);

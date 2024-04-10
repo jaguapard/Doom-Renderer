@@ -118,6 +118,29 @@ void loadPwad(std::string path)
 	}
 }
 
+enum class TextureDebugMode
+{
+	NONE, //use textures defined in the map file
+	X_GRADIENT, //fill all textures with texture's x % 256 on all pixels
+	Y_GRADIENT, //fill all textures with texture's y % 256 on all pixels
+	XY_GRADIENT,
+	SOLID_WHITE, //fill with solid white color
+	COLORS, //fill with differing colors, based on texture's index (?)
+	CHECKERBOARD, //fill with checkerboard pattern
+};
+
+TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
+
+enum DebugColors
+{
+	WHITE = 0xFFFFFFFF,
+	GREY = 0x7F7F7FFF,
+	RED = 0xFF0000FF,
+	GREEN = 0x00FF00FF,
+	BLUE = 0x0000FFFF,
+	YELLOW = 0xFFFF00FF,
+};
+
 struct Texture
 {
 	SDL_Surface* surf;
@@ -125,9 +148,8 @@ struct Texture
 	Texture(std::string name)
 	{
 		this->name = name;
-		constexpr bool DEBUG_TEXTURES = true;
 
-		if (!DEBUG_TEXTURES)
+		if (TEXTURE_DEBUG_MODE == TextureDebugMode::NONE)
 		{
 			std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
 			surf = IMG_Load(path.c_str());
@@ -139,17 +161,43 @@ struct Texture
 		else
 		{
 			surf = SDL_CreateRGBSurfaceWithFormat(0, 1024, 1024, 32, SDL_PIXELFORMAT_ABGR32);
-			for (int y = 0; y < 1024; ++y)
+			int tw = 1024, th = 1024;
+			Uint32 dbg_colors[] = { WHITE, GREY, RED, GREEN, BLUE, YELLOW };
+			static int textureNumber = 0;
+			for (int y = 0; y < tw; ++y)
 			{
-				for (int x = 0; x < 1024; ++x)
+				for (int x = 0; x < th; ++x)
 				{
 					Uint32* px = (Uint32*)(surf->pixels);
-					//px[y * 256 + x] = (x << 24) + (y << 16) + 255;
-					//px[y * 256 + x] = (x << 24) + (x << 16) + (x << 8) + 255;
-					//px[y * 256 + x] = (uint8_t(y) << 24) + (uint8_t(y) << 16) + (uint8_t(y) << 8) + 255;
-					px[y * 1024 + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0xFF : 0xFFFFFFFF; //checkerboard pattern
+					Uint8 bx = x, by = y;
+					switch (TEXTURE_DEBUG_MODE)
+					{
+					case TextureDebugMode::NONE:
+						break;
+					case TextureDebugMode::X_GRADIENT:
+						px[by * tw + bx] = (bx << 24) + (bx << 16) + (bx << 8) + 255;
+						break;
+					case TextureDebugMode::Y_GRADIENT:
+						px[by * tw + bx] = (by << 24) + (by << 16) + (by << 8) + 255;
+						break;
+					case TextureDebugMode::XY_GRADIENT:
+						px[by * tw + bx] = (x << 24) + (y << 16) + 255;
+						break;
+					case TextureDebugMode::SOLID_WHITE:
+						px[y * tw + x] = 0xFFFFFFFF;
+						break;
+					case TextureDebugMode::COLORS:
+						px[y * tw + x] = dbg_colors[textureNumber % std::size(dbg_colors)];
+						break;
+					case TextureDebugMode::CHECKERBOARD:
+						px[y * tw + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0xFF : 0xFFFFFFFF;
+						break;
+					default:
+						break;
+					}
 				}
 			}
+			++textureNumber;
 		}
 	}
 	uint32_t getPixel(int x, int y)
@@ -212,22 +260,12 @@ struct TexVertex
 	}
 };
 
-enum DebugColors
-{
-	WHITE = 0xFFFFFFFF,
-	GREY = 0x7F7F7FFF,
-	RED = 0xFF0000FF,
-	GREEN = 0x00FF00FF,
-	BLUE = 0x0000FFFF,
-	YELLOW = 0xFFFF00FF,
-};
-
 struct Triangle
 {
 	TexVertex tv[3];
 	int textureIndex;
 
-	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, std::vector<double>& zBuffer, int n = 0) const
+	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, std::vector<double>& zBuffer) const
 	{		
 		TexVertex screenSpace[3];
 		for (int i = 0; i < 3; ++i) screenSpace[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };
@@ -242,7 +280,6 @@ struct Triangle
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
 		double split_uend = naive_lerp(screenSpace[0].textureCoords.x, screenSpace[2].textureCoords.x, splitAlpha); //last u of splitting line
 
-		Uint32 dbg_colors[] = { WHITE, GREY, RED, GREEN, BLUE, YELLOW };
 		for (double y = y1; y < y2; ++y) //draw flat bottom part
 		{
 			double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
@@ -262,8 +299,7 @@ struct Triangle
 			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
-				//auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
-				auto c = dbg_colors[n];
+				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
 				setPixel(s, x, y, c);
 			}
 		}
@@ -287,8 +323,7 @@ struct Triangle
 			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
-				//auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
-				auto c = dbg_colors[n];
+				auto c = textures[textureIndex].getPixel(naive_lerp(uLeft, uRight, xp), v);
 				setPixel(s, x, y, c);
 			}
 		}
@@ -435,7 +470,7 @@ void main()
 
 		for (int i = 0; i < sectors.size(); ++i)
 		{
-			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, j % 5);
+			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer);
 			//for (const auto& t : sectorTriangles[i]) t.drawOn(framebuf, ctr, zBuffer);
 			/*for (const auto& p : sectorPrimitives[i])
 			{

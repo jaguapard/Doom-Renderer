@@ -1,4 +1,5 @@
 #include "Texture.h"
+#include <iostream>
 
 Texture::Texture(std::string name)
 {
@@ -9,9 +10,28 @@ Texture::Texture(std::string name)
 		std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
 		surf = IMG_Load(path.c_str());
 
-		SDL_Surface* old = surf;
-		surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
-		SDL_FreeSurface(old);
+		if (surf)
+		{
+			SDL_Surface* old = surf;
+			surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
+			SDL_FreeSurface(old);
+		}
+		else
+		{
+			std::cout << "Failed to load texture " << name << " from " << path << ": " << IMG_GetError() << "\n" <<
+				"Falling back to purple-black checkerboard.\n\n";
+			int w = 64, h = 64;
+
+			surf = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_ABGR32);
+			for (int y = 0; y < h; ++y)
+			{
+				for (int x = 0; x < w; ++x)
+				{
+					Uint32* ptr = (Uint32*)(surf->pixels);
+					ptr[y * w + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0xFF : 0xFF00FFFF;
+				}
+			}
+		}
 	}
 	else
 	{

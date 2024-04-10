@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <algorithm>
+#include <array>
 
 #include "C_Input.h"
 #include "CoordinateTransformer.h"
@@ -158,13 +159,13 @@ struct TexVertex
 
 struct Triangle
 {
-	TexVertex tv[3];
+	std::array<TexVertex, 3> tv;
 	int textureIndex;
 
 	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer) const
 	{		
-		TexVertex screenSpace[3];
-		for (int i = 0; i < 3; ++i) screenSpace[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };
+		auto screenSpace = tv;
+		for (int i = 0; i < 3; ++i) screenSpace[i].worldCoords = ctr.toScreenCoords(tv[i].worldCoords);
 		std::sort(std::begin(screenSpace), std::end(screenSpace)); //sort triangles by screen y (ascending, i.e. going from top to bottom). We also must preserve the texture coords data
 		
 		/*

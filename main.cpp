@@ -183,8 +183,8 @@ struct Triangle
 		std::array<Vec3, 3> uvDividedByZ;
 		for (int i = 0; i < 3; ++i)
 		{
-			double zInv = 1.0/worldSpace[i].worldCoords.z;
-			Vec2 dividedUv = worldSpace[i].textureCoords* zInv;
+			double zInv = 1.0 / worldSpace[i].worldCoords.z;
+			Vec2 dividedUv = worldSpace[i].textureCoords * zInv;
 			uvDividedByZ[i] = Vec3(dividedUv.x, dividedUv.y, zInv);
 		}
 		
@@ -195,7 +195,7 @@ struct Triangle
 		double x1 = screenSpace[0].worldCoords.x, x2 = screenSpace[1].worldCoords.x, x3 = screenSpace[2].worldCoords.x, y1 = screenSpace[0].worldCoords.y, y2 = screenSpace[1].worldCoords.y, y3 = screenSpace[2].worldCoords.y;
 		double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 		double split_xend = naive_lerp(x1, x3, splitAlpha); //last x of splitting line
-		Vec2 split_uvEnd = naive_lerp(screenSpace[0].textureCoords, screenSpace[2].textureCoords, splitAlpha);
+		Vec3 split_dividedUvEnd = naive_lerp(uvDividedByZ[0], uvDividedByZ[2], splitAlpha);
 
 		for (double y = y1; y < y2; ++y) //draw flat bottom part
 		{
@@ -217,8 +217,11 @@ struct Triangle
 				double xp = (x - xLeft) / (xRight - xLeft);
 				Vec3 interpolatedDividedUv = naive_lerp(dividedUvLeft, dividedUvRight, xp);
 				Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
-				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y);
-				setPixel(s, x, y, c);
+				if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
+				{
+					auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y);
+					setPixel(s, x, y, c);
+				}
 			}
 		}
 
@@ -228,21 +231,25 @@ struct Triangle
 			double xLeft = naive_lerp(x2, x3, yp);
 			double xRight = naive_lerp(split_xend, x3, yp);
 
-			Vec2 uvLeft = naive_lerp(screenSpace[1].textureCoords, screenSpace[2].textureCoords, yp);
-			Vec2 uvRight = naive_lerp(split_uvEnd, screenSpace[2].textureCoords, yp);
+			Vec3 dividedUvLeft = naive_lerp(uvDividedByZ[1], uvDividedByZ[2], yp);
+			Vec3 dividedUvRight = naive_lerp(split_dividedUvEnd, uvDividedByZ[2], yp);
 
 			if (xLeft > xRight)
 			{
 				std::swap(xLeft, xRight); //enforce non-decreasing x for next loop. TODO: make branchless
-				std::swap(uvLeft, uvRight); //this is not a mistake. If we swap x, then uv also has to go.
+				std::swap(dividedUvLeft, dividedUvRight); //this is not a mistake. If we swap x, then uv also has to go.
 			}
 
 			for (double x = xLeft; x < xRight; ++x)
 			{
 				double xp = (x - xLeft) / (xRight - xLeft);
-				Vec2 interpolatedUv = naive_lerp(uvLeft, uvRight, xp);
-				auto c = textures[textureIndex].getPixel(interpolatedUv.x, interpolatedUv.y);
-				setPixel(s, x, y, c);
+				Vec3 interpolatedDividedUv = naive_lerp(dividedUvLeft, dividedUvRight, xp);
+				Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
+				if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
+				{
+					auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y);
+					setPixel(s, x, y, c);
+				}
 			}
 		}
 	}

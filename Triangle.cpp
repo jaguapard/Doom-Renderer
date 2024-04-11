@@ -11,6 +11,9 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 
 	double maxX = s->w, maxY = s->h;
 
+	/*/std::array<Vec3, 3> camOffset;
+	for (int i = 0; i < 3; ++i) camOffset[i] = ctr.doCamOffset()*/
+
 	std::array<int, 3> screenIndices = { 0,1,2 };
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i) fullyTransformed[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };
@@ -19,10 +22,13 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 	std::sort(std::begin(screenIndices), std::end(screenIndices), [&](int a, int b) {return fullyTransformed[a].worldCoords.y < fullyTransformed[b].worldCoords.y; });
 
 	std::array<TexVertex, 3> worldSpace, screenSpace;
+	int badZvertices = 0;
 	for (int i = 0; i < 3; ++i)
 	{
 		Vec3 off = ctr.doCamOffset(tv[screenIndices[i]].worldCoords);
 		Vec3 rot = ctr.rotate(off);
+		badZvertices += rot.z > 1; //clipping plane. TODO: clarify if this should be > or <
+		if (badZvertices >= 3) return; //triangle is completely behind the clipping plane, discard it.
 		worldSpace[i] = { rot,tv[screenIndices[i]].textureCoords };
 		screenSpace[i] = { fullyTransformed[screenIndices[i]] };
 	}

@@ -226,8 +226,9 @@ void main()
 				double fh = sector.floorHeight;
 				double ch = sector.ceilingHeight;
 				bool sidedefIsBack = linedef.backSidedef == sidedefIndex;
-				Vec3 verts[4];
 
+				Vec3 verts[3][4];
+				int textureIndices[3];
 				
 				/*/p.vertices[0] = {double(sv.x), fh, double(sv.y)}; //z is supposed to be depth, so swap with y? i.e. Doom takes depth as y, height as z, we take y as height
 				p.vertices[1] = { double(ev.x), fh, double(sv.y) };
@@ -246,23 +247,26 @@ void main()
 				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
 				sectorPrimitives[nSector].push_back(p);*/
 
-				verts[0] = { double(sv.x), ch, double(sv.y) };
-				verts[1] = { double(ev.x), ch, double(ev.y) };
-				verts[2] = { double(sv.x), fh, double(sv.y) };
-				verts[3] = { double(ev.x), fh, double(ev.y) };
-				
-				int textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
-				for (int i = 0; i < 2; ++i)
+				verts[2][0] = { double(sv.x), ch, double(sv.y) };
+				verts[2][1] = { double(ev.x), ch, double(ev.y) };
+				verts[2][2] = { double(sv.x), fh, double(sv.y) };
+				verts[2][3] = { double(ev.x), fh, double(ev.y) };				
+				textureIndices[2] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
+
+				for (int quadNum = 0; quadNum < 3; ++quadNum)
 				{
-					Triangle t;
-					t.textureIndex = textureIndex;					
-					for (int j = 0; j < 3; ++j)
+					for (int i = 0; i < 2; ++i)
 					{
-						t.tv[j].worldCoords = verts[j + i];
-						Vec3 uv3 = verts[j + i] - verts[0];
-						t.tv[j].textureCoords = { uv3.x + sidedef.xTextureOffset, uv3.y + sidedef.yTextureOffset };
+						Triangle t;
+						t.textureIndex = textureIndices[quadNum];
+						for (int j = 0; j < 3; ++j)
+						{
+							t.tv[j].worldCoords = verts[quadNum][j + i];
+							Vec3 uv3 = verts[quadNum][j + i] - verts[quadNum][0];
+							t.tv[j].textureCoords = { uv3.x + sidedef.xTextureOffset, uv3.y + sidedef.yTextureOffset };
+						}
+						sectorTriangles[nSector].emplace_back(t);
 					}
-					sectorTriangles[nSector].emplace_back(t);
 				}
 			}
 		}

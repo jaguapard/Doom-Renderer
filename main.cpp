@@ -217,7 +217,7 @@ void main()
 				char nameBuf[9] = { 0 };
 				memset(nameBuf, 0, 9);
 				memcpy(nameBuf, sectorSidedefs[nSector][nSidedef]->middleTexture, 8);
-				if (!strcmp(nameBuf, "-")) break; //skip sidedef if it has no middle texture
+				if (!strcmp(nameBuf, "-")) continue; //skip sidedef if it has no middle texture
 
 				Linedef* ldf = sidedefLinedefs[nSidedef][nLinedef];
 				Vertex sv = vertices[ldf->startVertex];

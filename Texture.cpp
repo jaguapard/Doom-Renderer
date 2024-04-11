@@ -76,7 +76,7 @@ Texture::Texture(std::string name)
 	}
 }
 
-uint32_t Texture::getPixel(int x, int y)
+uint32_t Texture::getPixel(int x, int y) const
 {
 	x %= surf->w;
 	y %= surf->h;

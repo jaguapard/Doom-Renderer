@@ -141,13 +141,16 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Matrix3.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="Triangle.cpp" />
     <ClCompile Include="ZBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CoordinateTransformer.h" />
     <ClInclude Include="C_Input.h" />
+    <ClInclude Include="helpers.h" />
     <ClInclude Include="Matrix3.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="Triangle.h" />
     <ClInclude Include="Vec.h" />
     <ClInclude Include="ZBuffer.h" />
   </ItemGroup>

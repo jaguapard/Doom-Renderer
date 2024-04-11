@@ -30,7 +30,7 @@ struct Texture
 	std::string name;
 
 	Texture(std::string name);
-	uint32_t getPixel(int x, int y);
+	uint32_t getPixel(int x, int y) const;
 	~Texture();
 
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;

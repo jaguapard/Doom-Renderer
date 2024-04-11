@@ -32,5 +32,6 @@ struct Triangle
 
 	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const;
 private:
+	//WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 	void drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const;
 };

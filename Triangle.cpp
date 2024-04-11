@@ -2,9 +2,61 @@
 
 void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const
 {
-	drawInner(s, ctr, zBuffer, textures);
+	constexpr double planeZ = 1;
+	std::array<TexVertex,3> rot;
+	bool vertexOutside[3] = { false };
+	int outsideVertexCount = 0;
+	for (int i = 0; i < 3; ++i)
+	{
+		Vec3 off = ctr.doCamOffset(tv[i].worldCoords);
+		Vec3 rt = ctr.rotate(off);
+		rot[i] = { rt, tv[i].textureCoords };
+
+		if (rt.z > planeZ)
+		{
+			outsideVertexCount++;
+			if (outsideVertexCount == 3) return; //triangle is completely behind the clipping plane, discard
+			vertexOutside[i] = true;			
+		}
+	}
+	
+	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawInner and proceed
+	{
+		Triangle prepped = *this;
+		prepped.tv = rot;
+		return prepped.drawInner(s, ctr, zBuffer, textures); 
+	}
+
+	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
+	{
+		for (int i = 0; i < 3; ++i) //look for outside vertices and beat them into shape
+		{
+			if (!vertexOutside[i])
+			{
+				int v1_ind = i > 0 ? i - 1 : 2;
+				int v2_ind = i < 2 ? i + 1 : 0;
+				TexVertex v1 = rot[v1_ind];
+				TexVertex v2 = rot[v2_ind];
+				double alphaFrom_v1 = inverse_lerp(rot[i].worldCoords.z, v1.worldCoords.z, planeZ);
+				double alphaFrom_v2 = inverse_lerp(rot[i].worldCoords.z, v2.worldCoords.z, planeZ);
+				assert(alphaFrom_v1 >= 0 && alphaFrom_v1 <= 1);
+				assert(alphaFrom_v2 >= 0 && alphaFrom_v2 <= 1);
+				TexVertex clipped1 = lerp(v1, rot[i], alphaFrom_v1);
+				TexVertex clipped2 = lerp(v2, rot[i], alphaFrom_v2);
+
+				Triangle clipped = *this;
+				clipped.tv[v1_ind] = clipped1;
+				clipped.tv[v2_ind] = clipped2;
+				clipped.tv[i] = rot[i];
+				return clipped.drawInner(s, ctr, zBuffer, textures);
+			}
+		}
+		
+
+	}
 }
 
+//WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const
 {
 	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].worldCoords));

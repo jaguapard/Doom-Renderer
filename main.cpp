@@ -261,6 +261,7 @@ void main()
 				}
 				for (int quadNum = 0; quadNum < 3; ++quadNum)
 				{
+					bool isWall = quadNum == 2;
 					for (int i = 0; i < 2; ++i)
 					{
 						Triangle t;
@@ -269,8 +270,8 @@ void main()
 						{
 							t.tv[j].worldCoords = verts[quadNum][j + i];
 							Vec3 uv3_cand = verts[quadNum][j + i] - verts[quadNum][0];
-							Vec3 uv3 = { uv3_cand.x ? uv3_cand.x : uv3_cand.z, uv3_cand.y, uv3_cand. z ? uv3_cand.z : uv3_cand.x }; //TODO: fix wrong scaling of uv on false branches
-							t.tv[j].textureCoords = { uv3.x + sidedef.xTextureOffset, uv3.y + sidedef.yTextureOffset };
+							Vec3 uv2 = isWall ? Vec3(uv3_cand.x ? uv3_cand.x : uv3_cand.z, uv3_cand.y, 0) : Vec3(uv3_cand.x, uv3_cand.z, 0); //TODO: fix wrong scaling of uv on false branches
+							t.tv[j].textureCoords = { uv2.x + sidedef.xTextureOffset, uv2.y + sidedef.yTextureOffset };
 						}
 						sectorTriangles[nSector].emplace_back(t);
 					}

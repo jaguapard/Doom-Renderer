@@ -2,6 +2,11 @@
 
 void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const
 {
+	drawInner(s, ctr, zBuffer, textures);
+}
+
+void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const
+{
 	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].worldCoords));
 	Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].worldCoords));
 	Vec3 v2 = ctr.rotate(ctr.doCamOffset(tv[2].worldCoords));

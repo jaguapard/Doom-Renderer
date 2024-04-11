@@ -31,4 +31,6 @@ struct Triangle
 	int textureIndex;
 
 	void drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const;
+private:
+	void drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const;
 };

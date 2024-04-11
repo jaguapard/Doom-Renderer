@@ -230,27 +230,28 @@ void main()
 				Vec3 verts[3][4];
 				int textureIndices[3];
 				
-				/*/p.vertices[0] = {double(sv.x), fh, double(sv.y)}; //z is supposed to be depth, so swap with y? i.e. Doom takes depth as y, height as z, we take y as height
-				p.vertices[1] = { double(ev.x), fh, double(sv.y) };
-				p.vertices[2] = { double(ev.x), fh, double(ev.y) };
-				p.vertices[3] = { double(sv.x), fh, double(ev.y) };
-				memcpy(nameBuf, sectors[nSector].floorTexture, 8);
-				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
-				sectorPrimitives[nSector].push_back(p);
-
-				p.vertices[0] = { double(sv.x), ch, double(sv.y) };
-				p.vertices[1] = { double(ev.x), ch, double(sv.y) };
-				p.vertices[2] = { double(ev.x), ch, double(ev.y) };
-				p.vertices[3] = { double(sv.x), ch, double(ev.y) };
+				verts[0][0] = {double(sv.x), fh, double(sv.y)}; //z is supposed to be depth, so swap with y. Doom uses y for depth, height as z, we take y as height
+				verts[0][1] = { double(ev.x), fh, double(sv.y) };
+				verts[0][2] = { double(ev.x), fh, double(ev.y) };
+				verts[0][3] = { double(sv.x), fh, double(ev.y) };
 				memset(nameBuf, 0, 9);
-				memcpy(nameBuf, sectors[nSector].ceilingTexture, 8);
-				p.textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap);
-				sectorPrimitives[nSector].push_back(p);*/
+				memcpy(nameBuf, sector.floorTexture, 8);
+				textureIndices[0] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);				
+
+				verts[1][0] = { double(sv.x), ch, double(sv.y) };
+				verts[1][1] = { double(ev.x), ch, double(sv.y) };
+				verts[1][2] = { double(ev.x), ch, double(ev.y) };
+				verts[1][3] = { double(sv.x), ch, double(ev.y) };
+				memset(nameBuf, 0, 9);
+				memcpy(nameBuf, sector.ceilingTexture, 8);
+				textureIndices[1] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
 
 				verts[2][0] = { double(sv.x), ch, double(sv.y) };
 				verts[2][1] = { double(ev.x), ch, double(ev.y) };
 				verts[2][2] = { double(sv.x), fh, double(sv.y) };
-				verts[2][3] = { double(ev.x), fh, double(ev.y) };				
+				verts[2][3] = { double(ev.x), fh, double(ev.y) };	
+				memset(nameBuf, 0, 9);
+				memcpy(nameBuf, sidedef.middleTexture, 8);
 				textureIndices[2] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
 
 				for (int quadNum = 0; quadNum < 3; ++quadNum)

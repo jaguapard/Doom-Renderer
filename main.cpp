@@ -163,8 +163,8 @@ void main()
 {
 	auto textureNameTranslation = loadTextureTranslation();
 	SDL_Init(SDL_INIT_EVERYTHING);
-	//loadPwad("D:/Games/GZDoom/STUPID.wad");
-	loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
+	loadPwad("D:/Games/GZDoom/STUPID.wad");
+	//loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
 
 	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
 	std::vector<std::vector<Linedef*>> sidedefLinedefs(sidedefs.size());
@@ -179,7 +179,7 @@ void main()
 		{-96, 70, 784}, {0,0,0}, //doom 2 map 01 player start
 	};
 
-	int activeCamPosAndAngle = 4;
+	int activeCamPosAndAngle = 3;
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 	//Vec3 camPos = { 0.1,32.1,370 };

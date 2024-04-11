@@ -1,8 +1,9 @@
 #include "Triangle.h"
 
+constexpr double planeZ = -1;
+
 void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures) const
 {
-	constexpr double planeZ = -1;
 	std::array<TexVertex,3> rot;
 	bool vertexOutside[3] = { false };
 	int outsideVertexCount = 0;
@@ -26,7 +27,17 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 		prepped.tv = rot;
 		return prepped.drawInner(s, ctr, zBuffer, textures); 
 	}
-	//return;
+	
+	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			if (vertexOutside[i])
+			{
+
+			}
+		}
+	}
 
 	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
 	{
@@ -34,20 +45,12 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 		{
 			if (!vertexOutside[i])
 			{
-				int v1_ind = i > 0 ? i - 1 : 2;
-				int v2_ind = i < 2 ? i + 1 : 0;
-				TexVertex v1 = rot[v1_ind];
-				TexVertex v2 = rot[v2_ind];
-				double alphaFrom_v1 = inverse_lerp(v1.worldCoords.z, rot[i].worldCoords.z, planeZ);
-				double alphaFrom_v2 = inverse_lerp(v2.worldCoords.z, rot[i].worldCoords.z, planeZ);
-				assert(alphaFrom_v1 >= 0 && alphaFrom_v1 <= 1);
-				assert(alphaFrom_v2 >= 0 && alphaFrom_v2 <= 1);
-				TexVertex clipped1 = lerp(v1, rot[i], alphaFrom_v1);
-				TexVertex clipped2 = lerp(v2, rot[i], alphaFrom_v2);
+				int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds
+				int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
 
 				Triangle clipped = *this;
-				clipped.tv[v1_ind] = clipped1;
-				clipped.tv[v2_ind] = clipped2;
+				clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
+				clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 				clipped.tv[i] = rot[i];
 				return clipped.drawInner(s, ctr, zBuffer, textures);
 			}
@@ -165,4 +168,11 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			}
 		}
 	}
+}
+
+TexVertex TexVertex::getClipedToPlane(const TexVertex& dst) const
+{
+	double alpha = inverse_lerp(worldCoords.z, dst.worldCoords.z, planeZ);
+	assert(alpha >= 0 && alpha <= 1);
+	return lerp(*this, dst, alpha);
 }

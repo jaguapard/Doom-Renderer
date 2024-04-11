@@ -18,6 +18,8 @@ struct TexVertex
 	{
 		return worldCoords.y < b.worldCoords.y;
 	}
+
+	TexVertex getClipedToPlane(const TexVertex& dst) const;
 };
 
 inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, double amount)

@@ -68,28 +68,24 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 
 	double maxX = s->w, maxY = s->h;
 
-	/*/std::array<Vec3, 3> camOffset;
-	for (int i = 0; i < 3; ++i) camOffset[i] = ctr.doCamOffset()*/
-
-	std::array<int, 3> screenIndices = { 0,1,2 };
 	std::array<TexVertex, 3> fullyTransformed;
-	for (int i = 0; i < 3; ++i) fullyTransformed[i] = { ctr.toScreenCoords(tv[i].worldCoords), tv[i].textureCoords };
-
-	//we need to sort index list by triangle's screen Y (ascending), to later gather the pre-z-divide and fully transformed (to screen space) lists
-	std::sort(std::begin(screenIndices), std::end(screenIndices), [&](int a, int b) {return fullyTransformed[a].worldCoords.y < fullyTransformed[b].worldCoords.y; });
-
-	std::array<TexVertex, 3> worldSpace, screenSpace;
-	int badZvertices = 0;
 	for (int i = 0; i < 3; ++i)
 	{
-		Vec3 off = ctr.doCamOffset(tv[screenIndices[i]].worldCoords);
-		Vec3 rot = ctr.rotate(off);
-		badZvertices += rot.z > 1; //clipping plane. TODO: clarify if this should be > or <
-		if (badZvertices >= 3) return; //triangle is completely behind the clipping plane, discard it.
-		worldSpace[i] = { rot,tv[screenIndices[i]].textureCoords };
-		screenSpace[i] = { fullyTransformed[screenIndices[i]] };
+		//double zInv = 1.0 / zDivided[i].worldCoords.z;
+		Vec3 zDivided = tv[i].worldCoords / tv[i].worldCoords.z;
+		fullyTransformed[i] = { ctr.shift(zDivided), tv[i].textureCoords };
 	}
 
+	std::array<int, 3> screenIndices = { 0,1,2 };
+	//we need to sort index list by triangle's screen Y (ascending), to later gather the pre-z-divide and fully transformed (to screen space) lists
+	std::sort(std::begin(screenIndices), std::end(screenIndices), [&](int a, int b) {return fullyTransformed[a].worldCoords.y < fullyTransformed[b].worldCoords.y; });
+	std::array<TexVertex, 3> worldSpace, screenSpace;
+	for (int i = 0; i < 3; ++i)
+	{
+		worldSpace[i] = tv[screenIndices[i]];
+		screenSpace[i] = fullyTransformed[screenIndices[i]];
+	}
+	
 	std::array<Vec3, 3> uvDividedByZ;
 	for (int i = 0; i < 3; ++i)
 	{

@@ -160,10 +160,66 @@ std::unordered_map<std::string, std::string> loadTextureTranslation()
 	return ret;
 }
 
+double weirdoCross(Vec2 a, Vec2 b)
+{
+	return a.x * b.y - a.y * b.x;
+}
+
+//get angle between lines (middle -> start) and (middle -> end) in range -PI...PI
+double isConvex(Vertex start, Vertex middle, Vertex end)
+{
+	Vec2 s = { double(start.x), double(start.y) };
+	Vec2 m = { double(middle.x), double(middle.y) };
+	Vec2 e = { double(end.x), double(end.y) };
+
+	Vec2 ms = m - s;
+	Vec2 me = m - e;
+	/*/double dot = ms.dot(me);
+	double det = ms.x * me.x - ms.y * me.y;
+	return atan2(det, dot);*/
+	return weirdoCross(ms,me) > 0;
+}
+
+bool isPointInTriangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
+{
+	Vec2 ab = b - a;
+	Vec2 bc = c -b;
+	Vec2 ca = a - c;
+
+	Vec2 ap = p - a;
+	Vec2 bp = p - b;
+	Vec2 cp = p - c;
+
+	double c1 = weirdoCross(ab, ap);
+	double c2 = weirdoCross(bc, bp);
+	double c3 = weirdoCross(ca, cp);
+	return (c1 <= 0 && c2 <= 0 && c3 <= 0);
+}
+
 //returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 std::vector<Vec3> earClipping(std::vector<Linedef> sectorLinedefs)
 {
+	assert(sectorLinedefs.size() >= 3);
+	/*/for (auto& it : sectorLinedefs)
+		if (it.startVertex > it.endVertex) 
+			std::swap(it.startVertex, it.endVertex);
+
+	//sort linedefs by ascending vertex start
+	std::sort(sectorLinedefs.begin(), sectorLinedefs.end(), [](const Linedef& l1, const Linedef& l2) { return l1.startVertex < l2.startVertex; });
 	
+	for (int i = 1; i < sectorLinedefs.size(); ++i)
+	{
+		assert(sectorLinedefs[i].startVertex == sectorLinedefs[i - 1].endVertex, "Edges of the polygon must be connected to each other");
+
+	}*/
+
+	std::vector<Vertex> vs;
+	for (int i = 0; i < sectorLinedefs.size(); ++i)
+	{
+
+	}
+
+	return std::vector<Vec3>();
 }
 
 void main()
@@ -311,8 +367,8 @@ void main()
 				t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
 			}
 
-			sectorTriangles.emplace_back(t[0]);
-			sectorTriangles.emplace_back(t[1]);
+			sectorTriangles[nSector].push_back(t[0]);
+			sectorTriangles[nSector].push_back(t[1]);
 		}
 	}
 

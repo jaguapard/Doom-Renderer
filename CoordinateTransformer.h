@@ -7,6 +7,7 @@ public:
 	CoordinateTransformer(int w, int h);
 	void prepare(const Vec3& camPos, const Matrix3& rotation);
 	Vec3 toScreenCoords(const Vec3& v) const;
+	Vec3 screenSpaceToPixels(const Vec3& v) const;
 
 	Vec3 doCamOffset(const Vec3& v) const;
 	Vec3 rotate(const Vec3& v) const;

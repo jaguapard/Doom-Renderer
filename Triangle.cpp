@@ -73,7 +73,7 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 	{
 		//double zInv = 1.0 / zDivided[i].worldCoords.z;
 		Vec3 zDivided = tv[i].worldCoords / tv[i].worldCoords.z;
-		fullyTransformed[i] = { ctr.shift(zDivided), tv[i].textureCoords };
+		fullyTransformed[i] = { ctr.screenSpaceToPixels(zDivided), tv[i].textureCoords };
 	}
 
 	std::array<int, 3> screenIndices = { 0,1,2 };

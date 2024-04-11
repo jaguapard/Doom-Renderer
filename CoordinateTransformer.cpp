@@ -25,6 +25,11 @@ Vec3 CoordinateTransformer::toScreenCoords(const Vec3& v) const
 	return final;
 }
 
+Vec3 CoordinateTransformer::screenSpaceToPixels(const Vec3& v) const
+{
+	return (v + this->_shift) * h;
+}
+
 Vec3 CoordinateTransformer::doCamOffset(const Vec3& v) const
 {
 	return v - camPos;

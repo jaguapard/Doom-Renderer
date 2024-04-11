@@ -254,6 +254,11 @@ void main()
 				memcpy(nameBuf, sidedef.middleTexture, 8);
 				textureIndices[2] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
 
+				Vec3 spans[3];
+				for (int quadNum = 0; quadNum < 3; ++quadNum)
+				{
+
+				}
 				for (int quadNum = 0; quadNum < 3; ++quadNum)
 				{
 					for (int i = 0; i < 2; ++i)
@@ -263,7 +268,8 @@ void main()
 						for (int j = 0; j < 3; ++j)
 						{
 							t.tv[j].worldCoords = verts[quadNum][j + i];
-							Vec3 uv3 = verts[quadNum][j + i] - verts[quadNum][0];
+							Vec3 uv3_cand = verts[quadNum][j + i] - verts[quadNum][0];
+							Vec3 uv3 = { uv3_cand.x ? uv3_cand.x : uv3_cand.z, uv3_cand.y, uv3_cand. z ? uv3_cand.z : uv3_cand.x }; //TODO: fix wrong scaling of uv on false branches
 							t.tv[j].textureCoords = { uv3.x + sidedef.xTextureOffset, uv3.y + sidedef.yTextureOffset };
 						}
 						sectorTriangles[nSector].emplace_back(t);

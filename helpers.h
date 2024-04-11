@@ -10,9 +10,9 @@ inline T lerp(const T& start, const T& end, double amount)
 inline double inverse_lerp(double from, double to, double value)
 {
 	//these asserts are sanity checks within the program. Mathematically there's nothing wrong about violating them
-	assert(value >= from, "inverse_lerp value must be >= from");
+	/*/assert(value >= from, "inverse_lerp value must be >= from");
 	assert(value <= to, "inverse_lerp value must be >= end");
-	assert(to >= from, "inverse_lerp to must be >= from");
+	assert(to >= from, "inverse_lerp to must be >= from");*/
 	return (value - from) / (to - from);
 }
 

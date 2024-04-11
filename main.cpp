@@ -160,6 +160,12 @@ std::unordered_map<std::string, std::string> loadTextureTranslation()
 	return ret;
 }
 
+//returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
+std::vector<Vec3> earClipping(std::vector<Linedef> sectorLinedefs)
+{
+	
+}
+
 void main()
 {
 	auto textureNameTranslation = loadTextureTranslation();
@@ -211,12 +217,15 @@ void main()
 	for (int nSector = 0; nSector < sectors.size(); ++nSector)
 	{
 		const Sector& sector = sectors[nSector];
+		std::vector<Linedef> sectorLinedefs;
 		for (int sidedefIndex : sectorSidedefIndices[nSector])
 		{
 			const Sidedef& sidedef = sidedefs[sidedefIndex];
 			for (int linedefIndex : sidedefLinedefIndices[sidedefIndex])
 			{
 				const Linedef& linedef = linedefs[linedefIndex];
+				sectorLinedefs.push_back(linedef);
+
 				char nameBuf[9] = { 0 };
 				memcpy(nameBuf, sidedef.middleTexture, 8);
 				if (!strcmp(nameBuf, "-")) continue; //skip sidedef if it has no middle texture
@@ -277,6 +286,33 @@ void main()
 					}
 				}
 			}
+		}
+
+		auto polygonSplit = earClipping(sectorLinedefs);
+		double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
+		double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
+		Vec3 uvOffset = { minX, minZ, 0 };
+
+		char floorTextureName[9] = { 0 }, ceilingTextureName[9] = {0}; //8 symbols may be occupied
+		memcpy(floorTextureName, sector.floorTexture, 8);
+		memcpy(ceilingTextureName, sector.ceilingTexture, 8);
+		int floorTextureIndex = getTextureIndexByName(floorTextureName, textures, textureNameToIndexMap, textureNameTranslation);
+		int ceilingTextureIndex = getTextureIndexByName(ceilingTextureName, textures, textureNameToIndexMap, textureNameTranslation);
+		for (int i = 0; i < polygonSplit.size(); i += 3)
+		{
+			Triangle t[2];
+			for (int j = 0; j < 6; ++j)
+			{
+				bool isFloor = j < 3;
+				Vec3 uv = polygonSplit[i + j%3] - uvOffset;
+				t[j/3].tv[j%3].worldCoords = polygonSplit[i + j%3];
+				t[j/3].tv[j%3].worldCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
+				t[j/3].tv[j%3].textureCoords = { uv.x, uv.y };
+				t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
+			}
+
+			sectorTriangles.emplace_back(t[0]);
+			sectorTriangles.emplace_back(t[1]);
 		}
 	}
 

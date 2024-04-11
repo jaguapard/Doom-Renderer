@@ -34,7 +34,21 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 		{
 			if (vertexOutside[i])
 			{
+				int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds
+				int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
 
+				const TexVertex& v1 = rot[v1_ind];
+				const TexVertex& v2 = rot[v2_ind];
+				Triangle t1 = *this, t2 = *this;
+				TexVertex clipped1 = rot[i].getClipedToPlane(v1);
+				TexVertex clipped2 = rot[i].getClipedToPlane(v2);
+				
+				t1.tv = { v1,clipped1, v2 };
+				t2.tv = { clipped1, clipped2, v2};
+
+				t1.drawInner(s, ctr, zBuffer, textures);
+				t2.drawInner(s, ctr, zBuffer, textures);
+				return;
 			}
 		}
 	}

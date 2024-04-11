@@ -167,8 +167,8 @@ void main()
 	//loadPwad("D:/Games/GZDoom/STUPID.wad");
 	loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
 
-	std::vector<std::vector<Sidedef*>> sectorSidedefs(sectors.size());
-	std::vector<std::vector<Linedef*>> sidedefLinedefs(sidedefs.size());
+	std::vector<std::vector<int>> sectorSidedefIndices(sectors.size());
+	std::vector<std::vector<int>> sidedefLinedefIndices(sidedefs.size());
 	std::vector<std::vector<Vec3>> sectorVertices(sectors.size());
 	std::unordered_map<std::string, int> textureNameToIndexMap;
 
@@ -190,7 +190,7 @@ void main()
 		{
 			if (it.facingSector == i)
 			{
-				sectorSidedefs[i].push_back(&it);
+				sectorSidedefIndices[i].push_back(&it - &sidedefs.front());
 			}
 		}
 	}	
@@ -201,7 +201,7 @@ void main()
 		{
 			if (it.frontSidedef == i || it.backSidedef == i)
 			{
-				sidedefLinedefs[i].push_back(&it);
+				sidedefLinedefIndices[i].push_back(&it - &linedefs.front());
 			}
 		}
 	}

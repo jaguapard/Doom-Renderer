@@ -197,7 +197,7 @@ bool isPointInTriangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
 }
 
 //returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
-std::vector<Vec3> earClipping(std::vector<Linedef> sectorLinedefs)
+std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 {
 	assert(sectorLinedefs.size() >= 3);
 	/*/for (auto& it : sectorLinedefs)
@@ -213,12 +213,46 @@ std::vector<Vec3> earClipping(std::vector<Linedef> sectorLinedefs)
 
 	}*/
 
+	/*
+	The gyst: draw lines on a bitmap, then flood fill and turn all "pixels" into pairs of triangles.
+	*/
 	std::vector<Vertex> vs;
-	for (int i = 0; i < sectorLinedefs.size(); ++i)
+	int minX = INT32_MAX;
+	int maxX = INT32_MIN;
+	int minY = INT32_MAX;
+	int maxY = INT32_MIN;
+	for (const auto& it : sectorLinedefs) //scan all linedefs to find offsets and size for bitmap
 	{
-
+		Vertex sv = vertices[it.startVertex];
+		Vertex ev = vertices[it.endVertex];
+		minX = std::min<int>(minX, std::min(sv.x, ev.x));
+		minY = std::min<int>(minY, std::min(sv.y, ev.y));
+		maxX = std::max<int>(maxX, std::min(sv.x, ev.x));
+		maxY = std::max<int>(maxY, std::min(sv.y, ev.y));
 	}
 
+	int w = maxX - minX + 1;
+	int h = maxY - minY + 1;
+	std::vector<bool> bitmap(w * h, false);
+	for (const auto& it : sectorLinedefs)
+	{
+		Vertex isv = vertices[it.startVertex];
+		Vertex iev = vertices[it.endVertex];
+		Vec2 sv = { double(isv.x),double(isv.y) };
+		Vec2 ev = { double(iev.x),double(iev.y) };
+
+		Vec2 delta = ev - sv;
+		double lineLen = delta.len();
+		for (int i = 0; i < lineLen; ++i)
+		{
+			Vec2 point = sv + delta * (i / lineLen);
+			int x = point.x - minX, y = point.y - minY; //truncation is a must
+			bitmap[y * w + x] = true;
+		}
+	}
+
+	int c = std::count(bitmap.begin(), bitmap.end(), true);
+	int sz = w * h;
 	return std::vector<Vec3>();
 }
 
@@ -344,7 +378,7 @@ void main()
 			}
 		}
 
-		auto polygonSplit = earClipping(sectorLinedefs);
+		auto polygonSplit = orcishTriangulation(sectorLinedefs);
 		double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
 		double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
 		Vec3 uvOffset = { minX, minZ, 0 };

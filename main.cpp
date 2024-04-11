@@ -210,21 +210,22 @@ void main()
 
 	for (int nSector = 0; nSector < sectors.size(); ++nSector)
 	{
-		for (int nSidedef = 0; nSidedef < sectorSidedefs[nSector].size(); ++nSidedef)
+		const Sector& sector = sectors[nSector];
+		for (int sidedefIndex : sectorSidedefIndices[nSector])
 		{
-			for (int nLinedef = 0; nLinedef < sidedefLinedefs[nSidedef].size(); ++nLinedef)
+			const Sidedef& sidedef = sidedefs[sidedefIndex];
+			for (int linedefIndex : sidedefLinedefIndices[sidedefIndex])
 			{
+				const Linedef& linedef = linedefs[linedefIndex];
 				char nameBuf[9] = { 0 };
-				memset(nameBuf, 0, 9);
-				memcpy(nameBuf, sectorSidedefs[nSector][nSidedef]->middleTexture, 8);
+				memcpy(nameBuf, sidedef.middleTexture, 8);
 				if (!strcmp(nameBuf, "-")) continue; //skip sidedef if it has no middle texture
 
-				Linedef* ldf = sidedefLinedefs[nSidedef][nLinedef];
-				Vertex sv = vertices[ldf->startVertex];
-				Vertex ev = vertices[ldf->endVertex];
-				double fh = sectors[nSector].floorHeight;
-				double ch = sectors[nSector].ceilingHeight;
-				bool sidedefIsBack = ldf->backSidedef == nSidedef;
+				Vertex sv = vertices[linedef.startVertex];
+				Vertex ev = vertices[linedef.endVertex];
+				double fh = sector.floorHeight;
+				double ch = sector.ceilingHeight;
+				bool sidedefIsBack = linedef.backSidedef == sidedefIndex;
 				Vec3 verts[4];
 
 				
@@ -259,7 +260,7 @@ void main()
 					{
 						t.tv[j].worldCoords = verts[j + i];
 						Vec3 uv3 = verts[j + i] - verts[0];
-						t.tv[j].textureCoords = { uv3.x + sectorSidedefs[nSector][nSidedef]->xTextureOffset, uv3.y + sectorSidedefs[nSector][nSidedef]->yTextureOffset };
+						t.tv[j].textureCoords = { uv3.x + sidedef.xTextureOffset, uv3.y + sidedef.yTextureOffset };
 					}
 					sectorTriangles[nSector].emplace_back(t);
 				}

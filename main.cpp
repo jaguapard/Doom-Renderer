@@ -332,11 +332,11 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 
 		//now the range yRanges[yBeg, yEnd) has a chance of containing mergeable X ranges
 		SDL_Rect r = { myRange.minX, yBeg, myRange.maxX - myRange.minX, 1 };
-		for (int y = yBeg; y < yEnd; ++y)
+		for (int y = yBeg+1; y < yEnd; ++y)
 		{
 			std::set<int> toRemove;
 			int n = yRanges[y].size();			
-			for (int i = 0; i < n; ++i)
+			for (int i = 1; i < n; ++i)
 			{
 				const auto& it = yRanges[y][i];
 				if (it.minX <= myRange.minX && it.maxX >= myRange.maxX) //if range is good to merge, then do it and mark the other range for removal
@@ -356,6 +356,7 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 			else yRanges[y] = copy;
 		}
 		rects.push_back(r);
+		yRanges[yBeg].erase(yRanges[yBeg].begin()); //remove first element, since it was taken as the starting point
 	}
 	
 	for (const auto& it : rects)

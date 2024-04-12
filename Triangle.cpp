@@ -121,6 +121,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 
 	double yBeg = std::max(0.0, y1);
 	double yEnd = std::min(maxY, y2);
+	yBeg = ceil(yBeg - 0.5);
+	yEnd = ceil(yEnd - 0.5);
 	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
 		double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
@@ -138,6 +140,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 
 		double xBeg = std::max(0.0, xLeft);
 		double xEnd = std::min(maxX, xRight);
+		xBeg = ceil(xBeg - 0.5);
+		xEnd = ceil(xEnd - 0.5);
 		for (double x = xBeg; x < xEnd; ++x)
 		{
 			double xp = (x - xLeft) / (xRight - xLeft);
@@ -153,6 +157,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 
 	yBeg = std::max(0.0, y2);
 	yEnd = std::min(maxY, y3);
+	yBeg = ceil(yBeg - 0.5);
+	yEnd = ceil(yEnd - 0.5);
 	for (double y = yBeg; y < yEnd; ++y) //draw flat top part
 	{
 		double yp = (y - y2) / (y3 - y2); //this is the "progress" along the flat top part, not whole triangle!
@@ -170,6 +176,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 
 		double xBeg = std::max(0.0, xLeft);
 		double xEnd = std::min(maxX, xRight);
+		xBeg = ceil(xBeg - 0.5);
+		xEnd = ceil(xEnd - 0.5);
 		for (double x = xBeg; x < xEnd; ++x)
 		{
 			double xp = (x - xLeft) / (xRight - xLeft);

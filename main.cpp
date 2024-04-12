@@ -299,19 +299,28 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 		//a triangle will have two vertices from the affected linedef, and a third will be calculated from them to reside inside the sector and have right angle. 
 		// There are only 2 such possible arrangments
 		Vec2 candidate(sv.x, ev.y);
+		Vec3 v[3];
 		if (!isPointInsidePolygon(candidate, sectorLinedefs)) candidate = Vec2(ev.x, sv.y);
-		ret.push_back(Vec3(sv.x, 0, sv.y));
-		ret.push_back(Vec3(ev.x, 0, ev.y));
-		ret.push_back(Vec3(candidate.x, 0, candidate.y));
+		ret.push_back(v[0] = Vec3(sv.x, 0, sv.y));
+		ret.push_back(v[1] = Vec3(ev.x, 0, ev.y));
+		ret.push_back(v[2] = Vec3(candidate.x, 0, candidate.y));
 
-		int carve_xBeg = std::min(sv.x, ev.x) - minX;
-		int carve_yBeg = std::min(sv.y, ev.y) - minY;
-		int carve_xEnd = std::max(sv.x, ev.x) - minX;
-		int carve_yEnd = std::max(sv.y, ev.y) - minY;
-		for (int y = carve_yBeg; y < carve_yEnd; ++y) //TODO: seems like this doesn't work, need to properly clear out carved spaces
+		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.z < b.z; });
+		double span = v[2].z - v[0].z;
+		assert(span > 0);
+		bool leftStraight = v[0].x == v[2].x;
+		bool rightStraight = v[1].x == v[2].x;
+		for (double y = v[0].z; y < v[2].z; ++y)
 		{
-			for (int x = carve_xBeg; x < carve_xEnd; ++x)
-				bitmap[y * w + x] = false;
+			double yp = (y - v[0].z) / span;
+			assert(yp >= 0 && yp <= 1);
+			double xLeft = lerp(v[0].x, v[1].x, rightStraight ? 0 : leftStraight ? 1 : yp); //breaks if x0 == x2 and NOT rightStraight (always == 2)
+			double xRight = lerp(v[0].x, v[2].x, rightStraight ? 1 : yp); //and this also always == 0 if previous conditions are met
+			if (xLeft > xRight) std::swap(xLeft, xRight);
+			for (double x = xLeft; x < xRight+0.5; ++x)
+			{
+				bitmap[int(y - minY) * w + int(x - minX)] = false;
+			}
 		}
 	}
 
@@ -475,6 +484,7 @@ void main()
 			}
 		}
 
+		//if (nSector == 3) __debugbreak();
 		auto polygonSplit = orcishTriangulation(sectorLinedefs);
 		if (polygonSplit.empty()) continue; //TODO: this shouldn't really happen, but it does
 		std::cout << "Sector " << nSector << " got split into " << polygonSplit.size() / 3 << " triangles.\n";

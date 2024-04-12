@@ -224,25 +224,13 @@ bool isPointInsidePolygon(const Vec2& p, const std::vector<Linedef>& lines)
 
 struct XRange
 {
-	int minX, maxX; //[minX, maxX)
+	int y, minX, maxX; //[minX, maxX)
 };
 
 //returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 {
 	assert(sectorLinedefs.size() >= 3);
-	/*/for (auto& it : sectorLinedefs)
-		if (it.startVertex > it.endVertex) 
-			std::swap(it.startVertex, it.endVertex);
-
-	//sort linedefs by ascending vertex start
-	std::sort(sectorLinedefs.begin(), sectorLinedefs.end(), [](const Linedef& l1, const Linedef& l2) { return l1.startVertex < l2.startVertex; });
-	
-	for (int i = 1; i < sectorLinedefs.size(); ++i)
-	{
-		assert(sectorLinedefs[i].startVertex == sectorLinedefs[i - 1].endVertex, "Edges of the polygon must be connected to each other");
-
-	}*/
 
 	/*
 	The gyst: draw lines on a bitmap, then flood fill and turn all "pixels" into pairs of triangles.
@@ -275,7 +263,7 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 
 
 	std::vector<Vec3> ret;
-	std::map<int, std::vector<XRange>> yRanges;
+	std::deque<XRange> yRanges;
 	bool rangeFormingInProgress = false;
 	for (int y = 0; y < h; ++y)
 	{
@@ -286,77 +274,44 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 			{
 				if (rangeFormingInProgress)
 				{
-					yRanges[y].back().maxX++;
+					yRanges.back().maxX++;
 				}
 				else
 				{
 					rangeFormingInProgress = true;
-					yRanges[y].emplace_back(XRange({ x + minX, x + minX }));
+					yRanges.emplace_back(XRange({ y, x + minX, x + minX }));
 				}				
 			}
 			else rangeFormingInProgress = false;
 		}
 	}
 
-	std::set<std::pair<int, int>> consecutiveYspans;
+	std::vector<SDL_Rect> rects;
+	while (!yRanges.empty())
 	{
-		int start = yRanges.begin()->first;		
-		for (auto it = std::next(yRanges.begin()); it != yRanges.end(); ++it)
+		XRange myRange = yRanges.front();
+		SDL_Rect r = { myRange.minX, myRange.y, myRange.maxX - myRange.minX, 1 };
+		std::set<int> toRemove = { 0 }; //first element is myRange, and it will be deleted from processing after this iteration
+
+		for (int i = 1; i < yRanges.size(); ++i)
 		{
-
-		}
-	}
-
-
-	std::vector<SDL_Rect> rects; //there's nothing particular reason to use SDL_Rect, but it's 1 less struct in our code
-	bool rectFormingInProgress = false;
-	//int yBeg = yRanges.begin()->first;
-	
-
-	while (!yRanges.empty()) //the map is ordered by ascending Y
-	{
-		int currY = yRanges.begin()->first;
-		if (yRanges[currY].empty()) //all x ranges in this Y got processed, remove
-		{
-			yRanges.erase(currY);
-			continue;
+			const auto& next = yRanges[i];
+			assert(next.y >= myRange.y);
+			if (next.y == myRange.y) continue; //next is a line that is not connected to us, proceed
+			if (next.y != myRange.y + 1) break; //ran out of mergeable lines
+			if (next.minX <= myRange.minX && next.maxX >= myRange) //not gonna work: must split the bigger range in two new ones!
+			myRange.y++; //merge
+			r.h++;
+			toRemove.insert(i); //remember index to remove it from processing later
 		}
 
-		XRange myRange = yRanges[currY][0];
-		int yBeg = currY;
-		while (yRanges.find(currY + 1) != yRanges.end())
-		{
-			currY++;
-		}
-		int yEnd = currY+1; 
-
-		//now the range yRanges[yBeg, yEnd) has a chance of containing mergeable X ranges
-		SDL_Rect r = { myRange.minX, yBeg, myRange.maxX - myRange.minX, 1 };
-		for (int y = yBeg+1; y < yEnd; ++y)
-		{
-			std::set<int> toRemove;
-			int n = yRanges[y].size();			
-			for (int i = 1; i < n; ++i)
-			{
-				const auto& it = yRanges[y][i];
-				if (it.minX <= myRange.minX && it.maxX >= myRange.maxX) //if range is good to merge, then do it and mark the other range for removal
-				{
-					toRemove.insert(i);
-					r.h++;
-				}
-			}
-
-			//if (toRemove.empty()) //if no 
-			std::vector<XRange> copy;
-			for (int i = 0; i < n; ++i)
-			{
-				if (toRemove.find(i) == toRemove.end()) copy.push_back(yRanges[y][i]);
-			}
-			if (copy.empty()) yRanges.erase(y);
-			else yRanges[y] = copy;
-		}
 		rects.push_back(r);
-		yRanges[yBeg].erase(yRanges[yBeg].begin()); //remove first element, since it was taken as the starting point
+		std::deque<XRange> newDeque;
+		for (int i = 0; i < yRanges.size(); ++i)
+		{
+			if (toRemove.find(i) == toRemove.end()) newDeque.push_back(yRanges[i]);
+		}
+		yRanges = newDeque;
 	}
 	
 	for (const auto& it : rects)

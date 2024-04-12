@@ -196,6 +196,29 @@ bool isPointInTriangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
 	return (c1 <= 0 && c2 <= 0 && c3 <= 0);
 }
 
+//direction is assumed (1,0), i.e. straight line to the right (no y change)
+bool rayCrossesLine(const Vec2& p, const Linedef& line)
+{
+	Vertex sv = vertices[line.startVertex];
+	Vertex ev = vertices[line.endVertex];
+
+	double minX = std::min(sv.x, ev.x);
+	double minY = std::min(sv.y, ev.y);
+	double maxX = std::max(sv.x, ev.x);
+	double maxY = std::max(sv.y, ev.y);
+
+	if (p.y < minY || p.y > maxY || p.x > maxX) return false;
+	double xIntersect = minX + (p.y - minY) / (maxY - minY) * (maxX - minX);
+	return p.x <= xIntersect;
+}
+
+bool isPointInsidePolygon(const Vec2& p, const std::vector<Linedef>& lines)
+{
+	int intersections = 0;
+	for (const auto& it : lines) intersections += rayCrossesLine(p, it);
+	return intersections % 2 == 1;
+}
+
 //returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 {

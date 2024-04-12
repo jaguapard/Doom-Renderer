@@ -119,9 +119,11 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 	double split_xend = lerp(x1, x3, splitAlpha); //last x of splitting line
 	Vec3 split_dividedUvEnd = lerp(uvDividedByZ[0], uvDividedByZ[2], splitAlpha);
 
-	int yBeg = ceil(std::max(0.0, y1) - 0.5);
-	int yEnd = ceil(std::min(maxY, y2) - 0.5);
-	for (int y = yBeg; y < yEnd; ++y) //draw flat bottom part
+	double yBeg = std::max(0.0, y1);
+	double yEnd = std::min(maxY, y2);
+	yBeg = ceil(yBeg - 0.5);
+	yEnd = ceil(yEnd - 0.5);
+	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
 		double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
 		double xLeft = lerp(x1, x2, yp);
@@ -136,9 +138,11 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			std::swap(dividedUvLeft, dividedUvRight); //If we swap x, then uv also has to go.
 		}
 
-		int xBeg = ceil(std::max(0.0, xLeft) - 0.5);
-		int xEnd = ceil(std::min(maxX, xRight) - 0.5);
-		for (int x = xBeg; x < xEnd; ++x)
+		double xBeg = std::max(0.0, xLeft);
+		double xEnd = std::min(maxX, xRight);
+		xBeg = ceil(xBeg - 0.5);
+		xEnd = ceil(xEnd - 0.5);
+		for (double x = xBeg; x < xEnd; ++x)
 		{
 			double xp = (x - xLeft) / (xRight - xLeft);
 			Vec3 interpolatedDividedUv = lerp(dividedUvLeft, dividedUvRight, xp);
@@ -151,9 +155,11 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 		}
 	}
 
-	yBeg = ceil(std::max(0.0, y2) - 0.5);
-	yEnd = ceil(std::min(maxY, y3) - 0.5);
-	for (int y = yBeg; y < yEnd; ++y) //draw flat top part
+	yBeg = std::max(0.0, y2);
+	yEnd = std::min(maxY, y3);
+	yBeg = ceil(yBeg - 0.5);
+	yEnd = ceil(yEnd - 0.5);
+	for (double y = yBeg; y < yEnd; ++y) //draw flat top part
 	{
 		double yp = (y - y2) / (y3 - y2); //this is the "progress" along the flat top part, not whole triangle!
 		double xLeft = lerp(x2, x3, yp);
@@ -168,9 +174,11 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			std::swap(dividedUvLeft, dividedUvRight); //If we swap x, then uv also has to go.
 		}
 
-		int xBeg = ceil(std::max(0.0, xLeft) - 0.5);
-		int xEnd = ceil(std::min(maxX, xRight) - 0.5);
-		for (int x = xBeg; x < xEnd; ++x)
+		double xBeg = std::max(0.0, xLeft);
+		double xEnd = std::min(maxX, xRight);
+		xBeg = ceil(xBeg - 0.5);
+		xEnd = ceil(xEnd - 0.5);
+		for (double x = xBeg; x < xEnd; ++x)
 		{
 			double xp = (x - xLeft) / (xRight - xLeft);
 			Vec3 interpolatedDividedUv = lerp(dividedUvLeft, dividedUvRight, xp);

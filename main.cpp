@@ -219,6 +219,12 @@ bool isPointInsidePolygon(const Vec2& p, const std::vector<Linedef>& lines)
 	return intersections % 2 == 1;
 }
 
+struct XRange
+{
+	int y;
+	int minX, maxX; //[minX, maxX)
+};
+
 //returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 {
@@ -265,44 +271,41 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 		}
 	}
 
-	/*for (const auto& it : sectorLinedefs)
-	{
-		Vertex isv = vertices[it.startVertex];
-		Vertex iev = vertices[it.endVertex];
-		Vec2 sv = { double(isv.x),double(isv.y) };
-		Vec2 ev = { double(iev.x),double(iev.y) };
-
-		Vec2 delta = ev - sv;
-		double lineLen = delta.len();
-		for (int i = 0; i < lineLen; ++i)
-		{
-			Vec2 point = sv + delta * (i / lineLen);
-			int x = point.x - minX, y = point.y - minY; //truncation is a must
-			bitmap[y * w + x] = true;
-		}
-	}*/
 
 	std::vector<Vec3> ret;
-	//TODO: unite spans of pixels into rects
-	constexpr int tesselSize = 32;
-	for (int y = 0; y < h-tesselSize; y += tesselSize) //TODO: 32's here are to prevent renderer from shatting itself due to obnoxious amount of triangles it can generate.
+	std::vector<XRange> ranges;
+	bool rangeFormingInProgress = false;
+	for (int y = 0; y < h; ++y)
 	{
-		for (int x = 0; x < w-tesselSize; x += tesselSize)
+		rangeFormingInProgress = false;
+		for (int x = 0; x < w; ++x)
 		{
 			if (bitmap[y * w + x])
 			{
-				ret.push_back(Vec3(x + minX, 0, y + minY));
-				ret.push_back(Vec3(x + minX+tesselSize, 0, y + minY));
-				ret.push_back(Vec3(x + minX + tesselSize, 0, y + minY + tesselSize));
-
-				ret.push_back(Vec3(x + minX + tesselSize, 0, y + minY + tesselSize));
-				ret.push_back(Vec3(x + minX, 0, y + minY + tesselSize));
-				ret.push_back(Vec3(x + minX, 0, y + minY));
+				if (rangeFormingInProgress)
+				{
+					ranges.back().maxX++;
+				}
+				else
+				{
+					rangeFormingInProgress = true;
+					ranges.emplace_back(XRange({ y + minY, x + minX, x + minX }));
+				}				
 			}
+			else rangeFormingInProgress = false;
 		}
 	}
-	/*/int c = std::count(bitmap.begin(), bitmap.end(), true);
-	int sz = w * h;*/
+	
+	for (const auto& it : ranges)
+	{
+		ret.push_back(Vec3(it.minX, 0, it.y));
+		ret.push_back(Vec3(it.maxX, 0, it.y));
+		ret.push_back(Vec3(it.maxX, 0, it.y + 1));
+
+		ret.push_back(Vec3(it.maxX, 0, it.y + 1));
+		ret.push_back(Vec3(it.minX, 0, it.y + 1));
+		ret.push_back(Vec3(it.minX, 0, it.y));
+	}
 	return ret;
 }
 
@@ -379,22 +382,6 @@ void main()
 				Vec3 verts[3][4];
 				int textureIndices[3];
 				
-				verts[0][0] = {double(sv.x), fh, double(sv.y)}; //z is supposed to be depth, so swap with y. Doom uses y for depth, height as z, we take y as height
-				verts[0][1] = { double(ev.x), fh, double(sv.y) };
-				verts[0][2] = { double(ev.x), fh, double(ev.y) };
-				verts[0][3] = { double(sv.x), fh, double(ev.y) };
-				memset(nameBuf, 0, 9);
-				memcpy(nameBuf, sector.floorTexture, 8);
-				textureIndices[0] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);				
-
-				verts[1][0] = { double(sv.x), ch, double(sv.y) };
-				verts[1][1] = { double(ev.x), ch, double(sv.y) };
-				verts[1][2] = { double(ev.x), ch, double(ev.y) };
-				verts[1][3] = { double(sv.x), ch, double(ev.y) };
-				memset(nameBuf, 0, 9);
-				memcpy(nameBuf, sector.ceilingTexture, 8);
-				textureIndices[1] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
-
 				verts[2][0] = { double(sv.x), ch, double(sv.y) };
 				verts[2][1] = { double(ev.x), ch, double(ev.y) };
 				verts[2][2] = { double(sv.x), fh, double(sv.y) };
@@ -403,12 +390,7 @@ void main()
 				memcpy(nameBuf, sidedef.middleTexture, 8);
 				textureIndices[2] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
 
-				Vec3 spans[3];
-				for (int quadNum = 0; quadNum < 3; ++quadNum)
-				{
-
-				}
-				for (int quadNum = 0; quadNum < 3; ++quadNum)
+				for (int quadNum = 2; quadNum < 3; ++quadNum)
 				{
 					bool isWall = quadNum == 2;
 					for (int i = 0; i < 2; ++i)

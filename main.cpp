@@ -235,6 +235,21 @@ struct XRange
 	int y, minX, maxX; //[minX, maxX)
 };
 
+void saveBitmap(const std::vector<bool>& bitmap, int w, int h, std::string fName)
+{
+	std::vector<uint32_t> pixels(w * h);
+	for (int y = 0; y < h; ++y)
+	{
+		for (int x = 0; x < w; ++x)
+		{
+			pixels[y * w + x] = bitmap[y * w + x] ? 0xFFFFFFFF : 0x000000FF;
+		}
+	}
+	SDL_Surface* png = SDL_CreateRGBSurfaceWithFormatFrom(&pixels.front(), w, h, 32, w * 4, SDL_PIXELFORMAT_ABGR32);
+	IMG_SavePNG(png, fName.c_str());
+	SDL_FreeSurface(png);
+}
+
 //returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 {
@@ -271,17 +286,36 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 
 	static int count = -1;
 	++count;
-	std::string s = std::to_string(count) + ".png";
-	std::vector<uint32_t> pixels(w * h);
-	for (int y = 0; y < h; ++y)
+	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_initial.png");
+
+	std::vector<Vec3> ret;
+	//carve out right angle triangles
+	for (const auto& it : sectorLinedefs)
 	{
-		for (int x = 0; x < w; ++x)
+		Vertex sv = vertices[it.startVertex];
+		Vertex ev = vertices[it.endVertex];
+		if (sv.x == ev.x || sv.y == ev.y) continue; //it is a horizontal or vertical line, we want only slopes
+
+		//a triangle will have two vertices from the affected linedef, and a third will be calculated from them to reside inside the sector and have right angle. 
+		// There are only 2 such possible arrangments
+		Vec2 candidate(sv.x, ev.y);
+		if (!isPointInsidePolygon(candidate, sectorLinedefs)) candidate = Vec2(ev.x, sv.y);
+		ret.push_back(Vec3(sv.x, 0, sv.y));
+		ret.push_back(Vec3(ev.x, 0, ev.y));
+		ret.push_back(Vec3(candidate.x, 0, candidate.y));
+
+		int carve_xBeg = std::min(sv.x, ev.x) - minX;
+		int carve_yBeg = std::min(sv.y, ev.y) - minY;
+		int carve_xEnd = std::max(sv.x, ev.x) - minX;
+		int carve_yEnd = std::max(sv.y, ev.y) - minY;
+		for (int y = carve_yBeg; y < carve_yEnd; ++y) //TODO: seems like this doesn't work, need to properly clear out carved spaces
 		{
-			pixels[y * w + x] = bitmap[y * w + x] ? 0xFFFFFFFF : 0x000000FF;
+			for (int x = carve_xBeg; x < carve_xEnd; ++x)
+				bitmap[y * w + x] = false;
 		}
 	}
-	SDL_Surface* png = SDL_CreateRGBSurfaceWithFormatFrom(&pixels.front(), w, h, 32, w * 4, SDL_PIXELFORMAT_ABGR32);
-	IMG_SavePNG(png, s.c_str());
+
+	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_post_tri_carve.png");
 
 	std::vector<SDL_Rect> rects;
 	while (true)
@@ -325,7 +359,6 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 		rects.push_back(r);
 	}
 
-	std::vector<Vec3> ret;
 	for (const auto& it : rects)
 	{
 		ret.push_back(Vec3(it.x, 0, it.y));

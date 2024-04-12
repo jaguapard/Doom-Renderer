@@ -257,7 +257,15 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 	int w = maxX - minX + 1;
 	int h = maxY - minY + 1;
 	std::vector<bool> bitmap(w * h, false);
-	for (const auto& it : sectorLinedefs)
+	for (int y = 0; y < h; ++y)
+	{
+		for (int x = 0; x < w; ++x)
+		{
+			bitmap[y * w + x] = isPointInsidePolygon(Vec2(x + minX, y + minY), sectorLinedefs);
+		}
+	}
+
+	/*for (const auto& it : sectorLinedefs)
 	{
 		Vertex isv = vertices[it.startVertex];
 		Vertex iev = vertices[it.endVertex];
@@ -272,7 +280,7 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 			int x = point.x - minX, y = point.y - minY; //truncation is a must
 			bitmap[y * w + x] = true;
 		}
-	}
+	}*/
 
 	int c = std::count(bitmap.begin(), bitmap.end(), true);
 	int sz = w * h;

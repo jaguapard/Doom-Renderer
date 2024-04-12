@@ -470,9 +470,11 @@ void main()
 						for (int j = 0; j < 3; ++j)
 						{
 						t.tv[j].worldCoords = verts[j + i];
-						Vec3 uv3_cand = verts[j + i] - verts[0];
-						Vec3 uv2 = Vec3(uv3_cand.x ? uv3_cand.x : uv3_cand.z, uv3_cand.y, 0); //TODO: fix wrong scaling of uv on false branches
-						t.tv[j].textureCoords = { -uv2.x + sidedef.xTextureOffset, -uv2.y + sidedef.yTextureOffset };
+						Vec3 c = verts[j + i] - verts[0];
+						Vec2 uv2;
+						uv2.x = std::max(abs(c.x), abs(c.z)) == abs(c.x) ? c.x : c.z;
+						uv2.y = c.y;						
+						t.tv[j].textureCoords = { -uv2.x + sidedef.xTextureOffset, -uv2.y + sidedef.yTextureOffset }; //minuses are intentional
 						}
 						sectorTriangles[nSector].emplace_back(t);
 					}

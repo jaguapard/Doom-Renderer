@@ -284,11 +284,21 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 
 	std::vector<Vec3> ret;
 	//TODO: unite spans of pixels into rects
-	for (int y = 0; y < h-32; y += 32) //TODO: 32's here are to prevent renderer from shatting itself due to obnoxious amount of triangles it can generate.
+	constexpr int tesselSize = 32;
+	for (int y = 0; y < h-tesselSize; y += tesselSize) //TODO: 32's here are to prevent renderer from shatting itself due to obnoxious amount of triangles it can generate.
 	{
-		for (int x = 0; x < w-32; x += 32)
+		for (int x = 0; x < w-tesselSize; x += tesselSize)
 		{
-			if (bitmap[y * w + x]) ret.push_back(Vec3(x + minX, 0, y + minY));
+			if (bitmap[y * w + x])
+			{
+				ret.push_back(Vec3(x + minX, 0, y + minY));
+				ret.push_back(Vec3(x + minX+tesselSize, 0, y + minY));
+				ret.push_back(Vec3(x + minX + tesselSize, 0, y + minY + tesselSize));
+
+				ret.push_back(Vec3(x + minX + tesselSize, 0, y + minY + tesselSize));
+				ret.push_back(Vec3(x + minX, 0, y + minY + tesselSize));
+				ret.push_back(Vec3(x + minX, 0, y + minY));
+			}
 		}
 	}
 	/*/int c = std::count(bitmap.begin(), bitmap.end(), true);
@@ -419,6 +429,8 @@ void main()
 		}
 
 		auto polygonSplit = orcishTriangulation(sectorLinedefs);
+		if (polygonSplit.empty()) continue; //TODO: this shouldn't really happen, but it does
+
 		double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
 		double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
 		Vec3 uvOffset = { minX, minZ, 0 };
@@ -437,7 +449,7 @@ void main()
 				Vec3 uv = polygonSplit[i + j%3] - uvOffset;
 				t[j/3].tv[j%3].worldCoords = polygonSplit[i + j%3];
 				t[j/3].tv[j%3].worldCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
-				t[j/3].tv[j%3].textureCoords = { uv.x, uv.y };
+				t[j/3].tv[j%3].textureCoords = { uv.x, uv.z };
 				t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
 			}
 

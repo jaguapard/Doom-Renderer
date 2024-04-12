@@ -453,36 +453,30 @@ void main()
 				double ch = sector.ceilingHeight;
 				bool sidedefIsBack = linedef.backSidedef == sidedefIndex;
 
-				Vec3 verts[3][4];
-				int textureIndices[3];
-				
-				verts[2][0] = { double(sv.x), ch, double(sv.y) };
-				verts[2][1] = { double(ev.x), ch, double(ev.y) };
-				verts[2][2] = { double(sv.x), fh, double(sv.y) };
-				verts[2][3] = { double(ev.x), fh, double(ev.y) };	
+				Vec3 verts[4];
+				verts[0] = { double(sv.x), ch, double(sv.y) };
+				verts[1] = { double(ev.x), ch, double(ev.y) };
+				verts[2] = { double(sv.x), fh, double(sv.y) };
+				verts[3] = { double(ev.x), fh, double(ev.y) };	
 				memset(nameBuf, 0, 9);
 				memcpy(nameBuf, sidedef.middleTexture, 8);
-				textureIndices[2] = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
+				int textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
 
-				for (int quadNum = 2; quadNum < 3; ++quadNum)
-				{
-					bool isWall = quadNum == 2;
 					for (int i = 0; i < 2; ++i)
 					{
 						Triangle t;
-						t.textureIndex = textureIndices[quadNum];
+					t.textureIndex = textureIndex;
 						for (int j = 0; j < 3; ++j)
 						{
-							t.tv[j].worldCoords = verts[quadNum][j + i];
-							Vec3 uv3_cand = verts[quadNum][j + i] - verts[quadNum][0];
-							Vec3 uv2 = isWall ? Vec3(uv3_cand.x ? uv3_cand.x : uv3_cand.z, uv3_cand.y, 0) : Vec3(uv3_cand.x, uv3_cand.z, 0); //TODO: fix wrong scaling of uv on false branches
-							t.tv[j].textureCoords = { uv2.x + sidedef.xTextureOffset, uv2.y + sidedef.yTextureOffset };
+						t.tv[j].worldCoords = verts[j + i];
+						Vec3 uv3_cand = verts[j + i] - verts[0];
+						Vec3 uv2 = Vec3(uv3_cand.x ? uv3_cand.x : uv3_cand.z, uv3_cand.y, 0); //TODO: fix wrong scaling of uv on false branches
+						t.tv[j].textureCoords = { -uv2.x + sidedef.xTextureOffset, -uv2.y + sidedef.yTextureOffset };
 						}
 						sectorTriangles[nSector].emplace_back(t);
 					}
 				}
 			}
-		}
 
 		//if (nSector == 3) __debugbreak();
 		auto polygonSplit = orcishTriangulation(sectorLinedefs);

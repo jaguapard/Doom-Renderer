@@ -420,7 +420,7 @@ void main()
 
 		auto polygonSplit = orcishTriangulation(sectorLinedefs);
 		if (polygonSplit.empty()) continue; //TODO: this shouldn't really happen, but it does
-		std::cout << "Sector " << nSector << " got split into " << polygonSplit.size() / 2 << " triangles.\n"; //TODO: this assumes that the returned polygons are all tessellated rectangles. Fix!
+		std::cout << "Sector " << nSector << " got split into " << polygonSplit.size() / 3 << " triangles.\n";
 
 		double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
 		double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;

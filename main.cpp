@@ -261,65 +261,49 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 		}
 	}
 
+	std::vector<SDL_Rect> rects;
+	while (true)
+	{
+		auto firstFreeIt = std::find(bitmap.begin(), bitmap.end(), true);
+		if (firstFreeIt == bitmap.end()) break;
+
+		int firstFreePos = firstFreeIt - bitmap.begin();		
+
+		SDL_Point startingPoint = { firstFreePos % w, firstFreePos / w };
+		int initialWidth = std::find(firstFreeIt, bitmap.begin() + (startingPoint.y+1) * w, false) - firstFreeIt;
+		assert(initialWidth > 0);
+		int endX = startingPoint.x + initialWidth;
+		std::fill(firstFreeIt, firstFreeIt + initialWidth, false);
+
+		SDL_Rect r = { startingPoint.x, startingPoint.y, initialWidth, 1 };
+		for (int y = startingPoint.y + 1; y < h; ++y)
+		{
+			bool lineGoodForExpansion = true;
+			for (int x = startingPoint.x; x < endX; ++x)
+			{
+				if (!bitmap[y * w + x])
+				{
+					lineGoodForExpansion = false;
+					break;
+				}
+			}
+
+			if (lineGoodForExpansion)
+			{
+				r.h++;
+				std::fill(bitmap.begin() + y * w + startingPoint.x, bitmap.begin() + y * w + endX, false);
+			}
+			else
+			{
+				r.x += minX;
+				r.y += minY;
+				rects.push_back(r);
+				break;
+			}				
+		}
+	}
 
 	std::vector<Vec3> ret;
-	std::deque<XRange> yRanges;
-	bool rangeFormingInProgress = false;
-	for (int y = 0; y < h; ++y)
-	{
-		rangeFormingInProgress = false;
-		for (int x = 0; x < w; ++x)
-		{
-			if (bitmap[y * w + x])
-			{
-				if (rangeFormingInProgress)
-				{
-					yRanges.back().maxX++;
-				}
-				else
-				{
-					rangeFormingInProgress = true;
-					yRanges.emplace_back(XRange({ y, x + minX, x + minX }));
-				}				
-			}
-			else rangeFormingInProgress = false;
-		}
-	}
-
-	std::vector<SDL_Rect> rects;
-	while (!yRanges.empty())
-	{
-		XRange myRange = yRanges.front();
-		SDL_Rect r = { myRange.minX, myRange.y, myRange.maxX - myRange.minX, 1 };
-		std::set<int> toRemove = { 0 }; //first element is myRange, and it will be deleted from processing after this iteration
-
-		for (int i = 1; i < yRanges.size(); ++i)
-		{
-			const auto& next = yRanges[i];
-			assert(next.y >= myRange.y);
-			if (next.y == myRange.y) continue; //next is a line that is not connected to us, proceed
-			if (next.y != myRange.y + 1) break; //ran out of mergeable lines
-			if (next.minX <= myRange.minX && next.maxX >= myRange.maxX) //not gonna work: must split the bigger range in two new ones!
-			{
-				myRange.y++; //merge
-				r.h++;
-				toRemove.insert(i); //remember index to remove it from processing later
-				if (next.minX < myRange.minX) yRanges.push_back({ myRange.y, next.minX, myRange.minX });
-				if (next.maxX > myRange.minX) yRanges.push_back({ myRange.y, myRange.maxX, next.maxX });
-			}
-		}
-
-		rects.push_back(r);
-		std::deque<XRange> newDeque;
-		for (int i = 0; i < yRanges.size(); ++i)
-		{
-			if (toRemove.find(i) == toRemove.end()) newDeque.push_back(yRanges[i]);
-		}
-
-		std::sort(newDeque.begin(), newDeque.end(), [](const XRange& r1, const XRange& r2) {return r1.y < r2.y; });
-		yRanges = newDeque;
-	}
-	
 	for (const auto& it : rects)
 	{
 		ret.push_back(Vec3(it.x, 0, it.y));

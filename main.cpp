@@ -386,7 +386,8 @@ void main()
 	auto textureNameTranslation = loadTextureTranslation();
 	SDL_Init(SDL_INIT_EVERYTHING);
 	//loadPwad("D:/Games/GZDoom/STUPID.wad");
-	loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
+	//loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
+	loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP15.wad");
 	//loadPwad("D:/Games/GZDoom/MappingTests/HEXAGON.wad");
 	//loadPwad("D:/Games/GZDoom/MappingTests/RECT.wad");
 

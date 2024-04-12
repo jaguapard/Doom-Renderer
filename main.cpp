@@ -282,9 +282,18 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 		}
 	}*/
 
-	int c = std::count(bitmap.begin(), bitmap.end(), true);
-	int sz = w * h;
-	return std::vector<Vec3>();
+	std::vector<Vec3> ret;
+	//TODO: unite spans of pixels into rects
+	for (int y = 0; y < h-32; y += 32) //TODO: 32's here are to prevent renderer from shatting itself due to obnoxious amount of triangles it can generate.
+	{
+		for (int x = 0; x < w-32; x += 32)
+		{
+			if (bitmap[y * w + x]) ret.push_back(Vec3(x + minX, 0, y + minY));
+		}
+	}
+	/*/int c = std::count(bitmap.begin(), bitmap.end(), true);
+	int sz = w * h;*/
+	return ret;
 }
 
 void main()

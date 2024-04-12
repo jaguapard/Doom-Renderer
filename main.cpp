@@ -8,6 +8,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <array>
+#include <deque>
+#include <map>
+#include <set>
 
 #include <adm/strings.h>
 
@@ -221,7 +224,6 @@ bool isPointInsidePolygon(const Vec2& p, const std::vector<Linedef>& lines)
 
 struct XRange
 {
-	int y;
 	int minX, maxX; //[minX, maxX)
 };
 
@@ -273,7 +275,7 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 
 
 	std::vector<Vec3> ret;
-	std::vector<XRange> ranges;
+	std::map<int, std::vector<XRange>> yRanges;
 	bool rangeFormingInProgress = false;
 	for (int y = 0; y < h; ++y)
 	{
@@ -284,27 +286,87 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 			{
 				if (rangeFormingInProgress)
 				{
-					ranges.back().maxX++;
+					yRanges[y].back().maxX++;
 				}
 				else
 				{
 					rangeFormingInProgress = true;
-					ranges.emplace_back(XRange({ y + minY, x + minX, x + minX }));
+					yRanges[y].emplace_back(XRange({ x + minX, x + minX }));
 				}				
 			}
 			else rangeFormingInProgress = false;
 		}
 	}
-	
-	for (const auto& it : ranges)
-	{
-		ret.push_back(Vec3(it.minX, 0, it.y));
-		ret.push_back(Vec3(it.maxX, 0, it.y));
-		ret.push_back(Vec3(it.maxX, 0, it.y + 1));
 
-		ret.push_back(Vec3(it.maxX, 0, it.y + 1));
-		ret.push_back(Vec3(it.minX, 0, it.y + 1));
-		ret.push_back(Vec3(it.minX, 0, it.y));
+	std::set<std::pair<int, int>> consecutiveYspans;
+	{
+		int start = yRanges.begin()->first;		
+		for (auto it = std::next(yRanges.begin()); it != yRanges.end(); ++it)
+		{
+
+		}
+	}
+
+
+	std::vector<SDL_Rect> rects; //there's nothing particular reason to use SDL_Rect, but it's 1 less struct in our code
+	bool rectFormingInProgress = false;
+	//int yBeg = yRanges.begin()->first;
+	
+
+	while (!yRanges.empty()) //the map is ordered by ascending Y
+	{
+		int currY = yRanges.begin()->first;
+		if (yRanges[currY].empty()) //all x ranges in this Y got processed, remove
+		{
+			yRanges.erase(currY);
+			continue;
+		}
+
+		XRange myRange = yRanges[currY][0];
+		int yBeg = currY;
+		while (yRanges.find(currY + 1) != yRanges.end())
+		{
+			currY++;
+		}
+		int yEnd = currY+1; 
+
+		//now the range yRanges[yBeg, yEnd) has a chance of containing mergeable X ranges
+		SDL_Rect r = { myRange.minX, yBeg, myRange.maxX - myRange.minX, 1 };
+		for (int y = yBeg; y < yEnd; ++y)
+		{
+			std::set<int> toRemove;
+			int n = yRanges[y].size();			
+			for (int i = 0; i < n; ++i)
+			{
+				const auto& it = yRanges[y][i];
+				if (it.minX <= myRange.minX && it.maxX >= myRange.maxX) //if range is good to merge, then do it and mark the other range for removal
+				{
+					toRemove.insert(i);
+					r.h++;
+				}
+			}
+
+			//if (toRemove.empty()) //if no 
+			std::vector<XRange> copy;
+			for (int i = 0; i < n; ++i)
+			{
+				if (toRemove.find(i) == toRemove.end()) copy.push_back(yRanges[y][i]);
+			}
+			if (copy.empty()) yRanges.erase(y);
+			else yRanges[y] = copy;
+		}
+		rects.push_back(r);
+	}
+	
+	for (const auto& it : rects)
+	{
+		ret.push_back(Vec3(it.x, 0, it.y));
+		ret.push_back(Vec3(it.x + it.w, 0, it.y));
+		ret.push_back(Vec3(it.x + it.w, 0, it.y + it.h));
+
+		ret.push_back(Vec3(it.x + it.w, 0, it.y + it.h));
+		ret.push_back(Vec3(it.x, 0, it.y + it.h));
+		ret.push_back(Vec3(it.x, 0, it.y));
 	}
 	return ret;
 }
@@ -412,6 +474,7 @@ void main()
 
 		auto polygonSplit = orcishTriangulation(sectorLinedefs);
 		if (polygonSplit.empty()) continue; //TODO: this shouldn't really happen, but it does
+		std::cout << "Sector " << nSector << " got split into " << polygonSplit.size() / 2 << " triangles.\n"; //TODO: this assumes that the returned polygons are all tessellated rectangles. Fix!
 
 		double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
 		double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;

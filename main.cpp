@@ -299,10 +299,14 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 			assert(next.y >= myRange.y);
 			if (next.y == myRange.y) continue; //next is a line that is not connected to us, proceed
 			if (next.y != myRange.y + 1) break; //ran out of mergeable lines
-			if (next.minX <= myRange.minX && next.maxX >= myRange) //not gonna work: must split the bigger range in two new ones!
-			myRange.y++; //merge
-			r.h++;
-			toRemove.insert(i); //remember index to remove it from processing later
+			if (next.minX <= myRange.minX && next.maxX >= myRange.maxX) //not gonna work: must split the bigger range in two new ones!
+			{
+				myRange.y++; //merge
+				r.h++;
+				toRemove.insert(i); //remember index to remove it from processing later
+				if (next.minX < myRange.minX) yRanges.push_back({ myRange.y, next.minX, myRange.minX });
+				if (next.maxX > myRange.minX) yRanges.push_back({ myRange.y, myRange.maxX, next.maxX });
+			}
 		}
 
 		rects.push_back(r);
@@ -311,6 +315,8 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 		{
 			if (toRemove.find(i) == toRemove.end()) newDeque.push_back(yRanges[i]);
 		}
+
+		std::sort(newDeque.begin(), newDeque.end(), [](const XRange& r1, const XRange& r2) {return r1.y < r2.y; });
 		yRanges = newDeque;
 	}
 	

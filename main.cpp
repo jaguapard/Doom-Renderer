@@ -262,6 +262,20 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 		}
 	}
 
+	static int count = -1;
+	++count;
+	std::string s = std::to_string(count) + ".png";
+	std::vector<uint32_t> pixels(w * h);
+	for (int y = 0; y < h; ++y)
+	{
+		for (int x = 0; x < w; ++x)
+		{
+			pixels[y * w + x] = bitmap[y * w + x] ? 0xFFFFFFFF : 0x000000FF;
+		}
+	}
+	SDL_Surface* png = SDL_CreateRGBSurfaceWithFormatFrom(&pixels.front(), w, h, 32, w * 4, SDL_PIXELFORMAT_ABGR32);
+	IMG_SavePNG(png, s.c_str());
+
 	std::vector<SDL_Rect> rects;
 	while (true)
 	{

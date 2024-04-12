@@ -202,17 +202,24 @@ bool isPointInTriangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
 //direction is assumed (1,0), i.e. straight line to the right (no y change)
 bool rayCrossesLine(const Vec2& p, const Linedef& line)
 {
-	Vertex sv = vertices[line.startVertex];
-	Vertex ev = vertices[line.endVertex];
+	Vertex _sv = vertices[line.startVertex];
+	Vertex _ev = vertices[line.endVertex];
 
-	double minX = std::min(sv.x, ev.x);
-	double minY = std::min(sv.y, ev.y);
-	double maxX = std::max(sv.x, ev.x);
-	double maxY = std::max(sv.y, ev.y);
+	Vec2 sv = { double(_sv.x),double(_sv.y) };
+	Vec2 ev = Vec2(double(_ev.x),double(_ev.y)) - Vec2(1e-3,1e-3);
 
-	if (p.y < minY || p.y > maxY || p.x > maxX) return false;
-	double xIntersect = minX + (p.y - minY) / (maxY - minY) * (maxX - minX);
-	return p.x <= xIntersect;
+	Vec2 v1 = p - sv;
+	Vec2 v2 = ev - sv;
+	Vec2 v3(-1e-6, 1);
+	double dot = v2.dot(v3);
+	if (abs(dot) < 1e-9) return false;
+
+	double t1 = weirdoCross(v2,v1) / dot;
+	double t2 = v1.dot(v3) / dot;
+
+	if (t1 >= 0.0 && (t2 >= 0.0 && t2 <= 1.0))
+		return true;
+	return false;
 }
 
 bool isPointInsidePolygon(const Vec2& p, const std::vector<Linedef>& lines)
@@ -247,8 +254,8 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 		Vertex ev = vertices[it.endVertex];
 		minX = std::min<int>(minX, std::min(sv.x, ev.x));
 		minY = std::min<int>(minY, std::min(sv.y, ev.y));
-		maxX = std::max<int>(maxX, std::min(sv.x, ev.x));
-		maxY = std::max<int>(maxY, std::min(sv.y, ev.y));
+		maxX = std::max<int>(maxX, std::max(sv.x, ev.x));
+		maxY = std::max<int>(maxY, std::max(sv.y, ev.y));
 	}
 
 	int w = maxX - minX + 1;
@@ -258,7 +265,7 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 	{
 		for (int x = 0; x < w; ++x)
 		{
-			bitmap[y * w + x] = isPointInsidePolygon(Vec2(x + minX, y + minY), sectorLinedefs);
+			bitmap[y * w + x] = isPointInsidePolygon(Vec2(x + minX, y + minY), sectorLinedefs); 
 		}
 	}
 
@@ -338,6 +345,8 @@ void main()
 	SDL_Init(SDL_INIT_EVERYTHING);
 	//loadPwad("D:/Games/GZDoom/STUPID.wad");
 	loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
+	//loadPwad("D:/Games/GZDoom/MappingTests/HEXAGON.wad");
+	//loadPwad("D:/Games/GZDoom/MappingTests/RECT.wad");
 
 	std::vector<std::vector<int>> sectorSidedefIndices(sectors.size());
 	std::vector<std::vector<int>> sidedefLinedefIndices(sidedefs.size());

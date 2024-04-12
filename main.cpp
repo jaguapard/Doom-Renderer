@@ -217,6 +217,7 @@ bool rayCrossesLine(const Vec2& p, const Linedef& line)
 
 bool isPointInsidePolygon(const Vec2& p, const std::vector<Linedef>& lines)
 {
+	//return true; this stupid thing works amazingly well, probably because it's how Doom does it?
 	int intersections = 0;
 	for (const auto& it : lines) intersections += rayCrossesLine(p, it);
 	return intersections % 2 == 1;
@@ -295,12 +296,12 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 			}
 			else
 			{
-				r.x += minX;
-				r.y += minY;
-				rects.push_back(r);
 				break;
 			}				
 		}
+		r.x += minX;
+		r.y += minY;
+		rects.push_back(r);
 	}
 
 	std::vector<Vec3> ret;

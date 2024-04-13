@@ -29,7 +29,7 @@ const Texture& TextureManager::getTextureByIndex(int index) const
 std::unordered_map<std::string, std::string> TextureManager::loadTextureTranslation()
 {
 	std::unordered_map<std::string, std::string> ret;
-	std::ifstream f("D:/Games/GZDoom/MappingTests/TEXTURES.txt");
+	std::ifstream f("data/TEXTURES_DOOM2.txt");
 
 	std::string line, textureName, fileName;
 	while (std::getline(f, line))

@@ -102,11 +102,11 @@ void main()
 	TextureManager textureManager;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
-	//loadWad("D:/Games/GZDoom/STUPID.wad");
+	//loadWad("data/test_maps/STUPID.wad");
 	//loadWad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
 	loadWad("D:/Games/GZDoom/MappingTests/D2_MAP15.wad");
-	//loadWad("D:/Games/GZDoom/MappingTests/HEXAGON.wad");
-	//loadWad("D:/Games/GZDoom/MappingTests/RECT.wad");
+	//loadWad("data/test_maps/HEXAGON.wad");
+	//loadWad("data/test_maps/RECT.wad");
 
 
 	Vec3 camPosAndAngArchieve[] = {

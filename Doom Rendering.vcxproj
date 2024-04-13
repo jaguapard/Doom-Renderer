@@ -136,6 +136,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Color.cpp" />
     <ClCompile Include="CoordinateTransformer.cpp" />
     <ClCompile Include="C_Input.cpp" />
     <ClCompile Include="main.cpp" />
@@ -145,6 +146,7 @@
     <ClCompile Include="ZBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Color.h" />
     <ClInclude Include="CoordinateTransformer.h" />
     <ClInclude Include="C_Input.h" />
     <ClInclude Include="helpers.h" />

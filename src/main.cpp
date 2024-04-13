@@ -60,7 +60,7 @@ std::vector<T> getVectorFromWad(int32_t lumpDataOffset, int32_t lumpSizeBytes, c
 	return ret;
 }
 
-void loadPwad(std::string path)
+void loadWad(std::string path)
 {
 	std::ifstream f(path, std::ios::binary);
 	std::vector<char> wadBytes;
@@ -71,8 +71,9 @@ void loadPwad(std::string path)
 		wadBytes.push_back(b);
 	}
 
-	if (memcmp(&wadBytes.front(), "PWAD", 4))
-		throw std::exception("Invalid PWAD file: header mismatch");
+	std::string header = wadStrToStd(&wadBytes.front(), 4);
+	if (header != "IWAD" && header != "PWAD")
+		throw std::exception("Invalid WAD file: header mismatch");
 
 	int32_t numFiles = readRaw<int32_t>(&wadBytes[4]);
 	int32_t FAToffset = readRaw<int32_t>(&wadBytes[8]);
@@ -101,11 +102,11 @@ void main()
 	TextureManager textureManager;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
-	//loadPwad("D:/Games/GZDoom/STUPID.wad");
-	//loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
-	loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP15.wad");
-	//loadPwad("D:/Games/GZDoom/MappingTests/HEXAGON.wad");
-	//loadPwad("D:/Games/GZDoom/MappingTests/RECT.wad");
+	//loadWad("D:/Games/GZDoom/STUPID.wad");
+	//loadWad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
+	loadWad("D:/Games/GZDoom/MappingTests/D2_MAP15.wad");
+	//loadWad("D:/Games/GZDoom/MappingTests/HEXAGON.wad");
+	//loadWad("D:/Games/GZDoom/MappingTests/RECT.wad");
 
 
 	Vec3 camPosAndAngArchieve[] = {

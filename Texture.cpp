@@ -5,6 +5,7 @@
 Texture::Texture(std::string name)
 {
 	this->name = name;
+	SDL_Surface* surf;
 
 	if (TEXTURE_DEBUG_MODE == TextureDebugMode::NONE)
 	{
@@ -75,28 +76,29 @@ Texture::Texture(std::string name)
 		}
 		++textureNumber;
 	}
+
+	w = surf->w;
+	h = surf->h;
+	Uint32* surfPixels = (Uint32*)(surf->pixels);
+	pixels.resize(w * h);
+	for (int y = 0; y < h; ++y)
+	{
+		for (int x = 0; x < w; ++x)
+			pixels.emplace_back(surfPixels[y * w + x]);
+	}
+	SDL_FreeSurface(surf);
 }
 
-uint32_t Texture::getPixel(int x, int y, double lightMult) const
+Color Texture::getPixel(int x, int y, double lightMult) const
 {
-	x %= surf->w;
-	y %= surf->h;
-	if (x < 0) x += surf->w; //this adds prevent reflection of wrapped coordinates around 0 
-	if (y < 0) y += surf->h;
+	x %= w;
+	y %= h;
+	if (x < 0) x += w; //this adds prevent reflection of wrapped coordinates around 0 
+	if (y < 0) y += h;
 
-	uint32_t* px = (uint32_t*)surf->pixels;
-	uint32_t texturePixel = px[y * surf->w + x];
-
-	Vec3 col = Vec3((texturePixel & 0xFF00) >> 8, (texturePixel & 0xFF0000) >> 16, (texturePixel & 0xFF000000) >> 24);
-	col *= lightMult;
-	int r = col.x;
-	int g = col.y;
-	int b = col.z;
-	int a = texturePixel & 0xFF;
-	return (r << 8) | (g << 16) | (b << 24) | a;
-}
-
-Texture::~Texture()
-{
-	//SDL_FreeSurface(surf);
+	Color c = pixels[y * w + x];
+	c.r *= lightMult;
+	c.g *= lightMult;
+	c.b *= lightMult;
+	return c;
 }

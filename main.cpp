@@ -385,6 +385,13 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 
 Statsman statsman;
 
+std::string wadStrToStd(const char* wadStr)
+{
+	char buf[9] = { 0 };
+	memcpy(buf, wadStr, 8);
+	return std::string(buf);
+}
+
 void main()
 {
 	double gamma = 1.3;
@@ -396,9 +403,6 @@ void main()
 	//loadPwad("D:/Games/GZDoom/MappingTests/HEXAGON.wad");
 	//loadPwad("D:/Games/GZDoom/MappingTests/RECT.wad");
 
-	std::vector<std::vector<int>> sectorSidedefIndices(sectors.size());
-	std::vector<std::vector<int>> sidedefLinedefIndices(sidedefs.size());
-	std::vector<std::vector<Vec3>> sectorVertices(sectors.size());
 	std::unordered_map<std::string, int> textureNameToIndexMap;
 
 	Vec3 camPosAndAngArchieve[] = {
@@ -413,111 +417,116 @@ void main()
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
-	for (int i = 0; i < sectors.size(); ++i)
-	{
-		for (auto& it : sidedefs)
-		{
-			if (it.facingSector == i)
-			{
-				sectorSidedefIndices[i].push_back(&it - &sidedefs.front());
-			}
-		}
-	}	
-
-	for (int i = 0; i < sidedefs.size(); ++i)
-	{
-		for (auto& it : linedefs)
-		{
-			if (it.frontSidedef == i || it.backSidedef == i)
-			{
-				sidedefLinedefIndices[i].push_back(&it - &linedefs.front());
-			}
-		}
-	}
-
 	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
 
-	for (int nSector = 0; nSector < sectors.size(); ++nSector)
+	for (const auto& linedef : linedefs)
 	{
-		const Sector& sector = sectors[nSector];
-		std::vector<Linedef> sectorLinedefs;
-		for (int sidedefIndex : sectorSidedefIndices[nSector])
+		Vertex sv = vertices[linedef.startVertex];
+		Vertex ev = vertices[linedef.endVertex];
+
+		std::array<Vec3, 6> linedef3dVerts;
+		linedef3dVerts[0] = { double(sv.x), 0, double(sv.y) }; //quads originated by a linedef will always only differ in height
+		linedef3dVerts[1] = { double(ev.x), 0, double(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
+		linedef3dVerts[2] = { double(sv.x), -1, double(sv.y) }; //-1 = lower
+
+		linedef3dVerts[3] = { double(ev.x), 0, double(ev.y) };
+		linedef3dVerts[4] = { double(sv.x), -1, double(sv.y) };
+		linedef3dVerts[5] = { double(ev.x), -1, double(ev.y) };
+
+		struct SectorInfo //info about the sector in relation to linedef being processed
 		{
-			const Sidedef& sidedef = sidedefs[sidedefIndex];
-			for (int linedefIndex : sidedefLinedefIndices[sidedefIndex])
+			int sidedefNumber, floorHeight, ceilingHeight, sectorNumber, xTextureOffset, yTextureOffset;
+			std::string upperTexture, middleTexture, lowerTexture;
+			std::vector<Triangle> triangles;
+		};
+
+		std::array<int, 2> sidedefNumbers = {linedef.frontSidedef, linedef.backSidedef};
+		std::vector<SectorInfo> linedefSectors; //gather info about sectors this linedef separates to build triangles later
+		for (int i = 0; i < 2; ++i)
+		{
+			int nSidedef = sidedefNumbers[i];
+			if (nSidedef == -1) continue; //1 sided linedef
+
+			const Sidedef& sidedef = sidedefs[nSidedef];
+			int nSector = sidedef.facingSector;
+			const Sector& sector = sectors[nSector];
+			
+			SectorInfo sectorInfo;
+			sectorInfo.floorHeight = sector.floorHeight;
+			sectorInfo.ceilingHeight = sector.ceilingHeight;
+			sectorInfo.sectorNumber = nSector;
+
+			sectorInfo.lowerTexture = wadStrToStd(sidedef.lowerTexture);
+			sectorInfo.middleTexture = wadStrToStd(sidedef.middleTexture);
+			sectorInfo.upperTexture = wadStrToStd(sidedef.upperTexture);
+
+			sectorInfo.xTextureOffset = sidedef.xTextureOffset;
+			sectorInfo.yTextureOffset = sidedef.yTextureOffset;
+
+			linedefSectors.push_back(sectorInfo);
+		}
+
+		std::vector<Triangle> triangles;
+		if (linedefSectors.size() == 1) //if there's only 1 sector, then just add the triangles to the list
+		{
+			double fh = linedefSectors[0].floorHeight;
+			double ch = linedefSectors[0].ceilingHeight;
+
+			for (int i = 0; i < 2; ++i)
 			{
-				const Linedef& linedef = linedefs[linedefIndex];
-				sectorLinedefs.push_back(linedef);
-
-				char nameBuf[9] = { 0 };
-				memcpy(nameBuf, sidedef.middleTexture, 8);
-				if (!strcmp(nameBuf, "-")) continue; //skip sidedef if it has no middle texture
-
-				Vertex sv = vertices[linedef.startVertex];
-				Vertex ev = vertices[linedef.endVertex];
-				double fh = sector.floorHeight;
-				double ch = sector.ceilingHeight;
-				bool sidedefIsBack = linedef.backSidedef == sidedefIndex;
-				
-				Vec3 verts[4];
-				verts[0] = { double(sv.x), ch, double(sv.y) };
-				verts[1] = { double(ev.x), ch, double(ev.y) };
-				verts[2] = { double(sv.x), fh, double(sv.y) };
-				verts[3] = { double(ev.x), fh, double(ev.y) };	
-				memset(nameBuf, 0, 9);
-				memcpy(nameBuf, sidedef.middleTexture, 8);
-				int textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
-
-				for (int i = 0; i < 2; ++i)
+				Triangle t;
+				for (int j = 0; j < 3; ++j)
 				{
-					Triangle t;
-					t.textureIndex = textureIndex;
-					for (int j = 0; j < 3; ++j)
-					{
-						t.tv[j].worldCoords = verts[j + i];
-						Vec3 c = verts[j + i] - verts[0];
-						Vec2 uv2;
-						uv2.x = std::max(abs(c.x), abs(c.z)) == abs(c.x) ? c.x : c.z;
-						uv2.y = c.y;						
-						t.tv[j].textureCoords = { -uv2.x + sidedef.xTextureOffset, -uv2.y + sidedef.yTextureOffset }; //minuses are intentional
-					}
-					sectorTriangles[nSector].emplace_back(t);
+					Vec3 cookedVert = linedef3dVerts[i * 3 + j];
+					cookedVert.y = cookedVert.y == 0 ? ch : fh;
+					t.tv[j].worldCoords = cookedVert;
+
+					Vec3 worldOffset = t.tv[j].worldCoords - t.tv[0].worldCoords;
+					Vec2 uvPrefab;
+					uvPrefab.x = std::max(abs(worldOffset.x), abs(worldOffset.z)) == abs(worldOffset.x) ? worldOffset.x : worldOffset.z;
+					uvPrefab.y = worldOffset.y;
+					Vec2 uv = Vec2(linedefSectors[0].xTextureOffset, linedefSectors[0].yTextureOffset) - uvPrefab;
+					t.tv[j].textureCoords = uv;
+
+					t.textureIndex = getTextureIndexByName(linedefSectors[0].middleTexture, textures, textureNameToIndexMap, textureNameTranslation);					
 				}
+				sectorTriangles[linedefSectors[0].sectorNumber].push_back(t);
 			}
 		}
-
-		//if (nSector == 3) __debugbreak();
-		auto polygonSplit = orcishTriangulation(sectorLinedefs);
-		if (polygonSplit.empty()) continue; //TODO: this shouldn't really happen, but it does
-		std::cout << "Sector " << nSector << " got split into " << polygonSplit.size() / 3 << " triangles.\n";
-
-		double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
-		double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
-		Vec3 uvOffset = { minX, minZ, 0 };
-
-		char floorTextureName[9] = { 0 }, ceilingTextureName[9] = {0}; //8 symbols may be occupied, and 0 terminator may not be present
-		memcpy(floorTextureName, sector.floorTexture, 8);
-		memcpy(ceilingTextureName, sector.ceilingTexture, 8);
-		int floorTextureIndex = getTextureIndexByName(floorTextureName, textures, textureNameToIndexMap, textureNameTranslation);
-		int ceilingTextureIndex = getTextureIndexByName(ceilingTextureName, textures, textureNameToIndexMap, textureNameTranslation);
-		for (int i = 0; i < polygonSplit.size(); i += 3)
-		{
-			Triangle t[2];
-			for (int j = 0; j < 6; ++j)
-			{
-				bool isFloor = j < 3;
-				Vec3 uv = polygonSplit[i + j%3] - uvOffset;
-				t[j/3].tv[j%3].worldCoords = polygonSplit[i + j%3];
-				t[j/3].tv[j%3].worldCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
-				t[j/3].tv[j%3].textureCoords = { uv.x, uv.z };
-				t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
-			}
-
-			sectorTriangles[nSector].push_back(t[0]);
-			sectorTriangles[nSector].push_back(t[1]);
-		}
+		int a = 0;
 	}
+	
+	/*
+	//if (nSector == 3) __debugbreak();
+	auto polygonSplit = orcishTriangulation(sectorLinedefs);
+	if (polygonSplit.empty()) continue; //TODO: this shouldn't really happen, but it does
+	std::cout << "Sector " << nSector << " got split into " << polygonSplit.size() / 3 << " triangles.\n";
 
+	double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
+	double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
+	Vec3 uvOffset = { minX, minZ, 0 };
+
+	char floorTextureName[9] = { 0 }, ceilingTextureName[9] = {0}; //8 symbols may be occupied, and 0 terminator may not be present
+	memcpy(floorTextureName, sector.floorTexture, 8);
+	memcpy(ceilingTextureName, sector.ceilingTexture, 8);
+	int floorTextureIndex = getTextureIndexByName(floorTextureName, textures, textureNameToIndexMap, textureNameTranslation);
+	int ceilingTextureIndex = getTextureIndexByName(ceilingTextureName, textures, textureNameToIndexMap, textureNameTranslation);
+	for (int i = 0; i < polygonSplit.size(); i += 3)
+	{
+		Triangle t[2];
+		for (int j = 0; j < 6; ++j)
+		{
+			bool isFloor = j < 3;
+			Vec3 uv = polygonSplit[i + j%3] - uvOffset;
+			t[j/3].tv[j%3].worldCoords = polygonSplit[i + j%3];
+			t[j/3].tv[j%3].worldCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
+			t[j/3].tv[j%3].textureCoords = { uv.x, uv.z };
+			t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
+		}
+
+		sectorTriangles[nSector].push_back(t[0]);
+		sectorTriangles[nSector].push_back(t[1]);
+	}*/
 
 	int framebufW = 2560;
 	int framebufH = 1440;

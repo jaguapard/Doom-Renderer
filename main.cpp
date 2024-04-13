@@ -564,9 +564,26 @@ void main()
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 
+		if (false) //pathetic attempt at making fog effect
+		{
+			double* zBuffPixels = zBuffer.getRawPixels();
+			Color* framebufPixels = framebuf.getRawPixels();
+			int pxCount = framebufW * framebufH;
+			for (int i = 0; i < pxCount; ++i)
+			{
+				double depth = -zBuffPixels[i];
+				Color c = framebufPixels[i];
+				double lerpT = std::clamp(depth, 0.0, 1.0);
+				c.r = lerp(c.r, 1.0, lerpT);
+				c.g = lerp(c.r, 1.0, lerpT);
+				c.b = lerp(c.r, 1.0, lerpT);
+				framebufPixels[i] = c;
+			}
+		}
+
 		Uint32* px = (Uint32*)(wndSurf->pixels);
 		auto* wf = wndSurf->format;
-		uint32_t shifts[4] = { wf->Rshift, wf->Gshift, wf->Bshift, 32 }; //window does not support transparency, so kill alpha by shifting it outside
+		uint32_t shifts[4] = { wf->Rshift, wf->Gshift, wf->Bshift, 32 }; //window does not support transparency, so kill alpha by shifting it out of range of uint32
 		for (int y = 0; y < screenH; ++y)
 		{
 			for (int x = 0; x < screenW; ++x)

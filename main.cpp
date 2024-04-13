@@ -288,7 +288,7 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 	++count;
 	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_initial.png");
 
-	std::vector<Vec3> ret;
+	std::vector<Vec3> ret;	
 	//carve out right angle triangles
 	for (const auto& it : sectorLinedefs)
 	{
@@ -453,7 +453,7 @@ void main()
 				double fh = sector.floorHeight;
 				double ch = sector.ceilingHeight;
 				bool sidedefIsBack = linedef.backSidedef == sidedefIndex;
-
+				
 				Vec3 verts[4];
 				verts[0] = { double(sv.x), ch, double(sv.y) };
 				verts[1] = { double(ev.x), ch, double(ev.y) };
@@ -463,23 +463,23 @@ void main()
 				memcpy(nameBuf, sidedef.middleTexture, 8);
 				int textureIndex = getTextureIndexByName(nameBuf, textures, textureNameToIndexMap, textureNameTranslation);
 
-					for (int i = 0; i < 2; ++i)
-					{
-						Triangle t;
+				for (int i = 0; i < 2; ++i)
+				{
+					Triangle t;
 					t.textureIndex = textureIndex;
-						for (int j = 0; j < 3; ++j)
-						{
+					for (int j = 0; j < 3; ++j)
+					{
 						t.tv[j].worldCoords = verts[j + i];
 						Vec3 c = verts[j + i] - verts[0];
 						Vec2 uv2;
 						uv2.x = std::max(abs(c.x), abs(c.z)) == abs(c.x) ? c.x : c.z;
 						uv2.y = c.y;						
 						t.tv[j].textureCoords = { -uv2.x + sidedef.xTextureOffset, -uv2.y + sidedef.yTextureOffset }; //minuses are intentional
-						}
-						sectorTriangles[nSector].emplace_back(t);
 					}
+					sectorTriangles[nSector].emplace_back(t);
 				}
 			}
+		}
 
 		//if (nSector == 3) __debugbreak();
 		auto polygonSplit = orcishTriangulation(sectorLinedefs);
@@ -515,11 +515,11 @@ void main()
 
 
 	
-	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
+	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 2560, 1440, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
-	int framebufW = 320;
-	int framebufH = 180;
+	int framebufW = 2560;
+	int framebufH = 1440;
 	SDL_Surface* framebuf = SDL_CreateRGBSurface(0, framebufW, framebufH, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0xFF);
 	C_Input input;
 	CoordinateTransformer ctr(framebufW, framebufH);

@@ -72,17 +72,17 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto newTris = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, high.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto newTris = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
 				auto& target = sectorTriangles[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.insert(target.end(), newTris.begin(), newTris.end());
 			}
 
 			std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.ceilingHeight < si2.ceilingHeight; });
-			{
+			{   //upper sections
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto newTris = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, low.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto newTris = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
 				auto& target = sectorTriangles[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.insert(target.end(), newTris.begin(), newTris.end());
 			}
@@ -326,6 +326,7 @@ std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(con
 {
 	std::vector<Triangle> ret;
 	auto polygonSplit = orcishTriangulation(sectorLinedefs, vertices, tesselSize);	
+	if (polygonSplit.empty()) return ret;
 
 	double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
 	double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;

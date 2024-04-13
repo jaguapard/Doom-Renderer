@@ -94,39 +94,6 @@ void loadPwad(std::string path)
 	}
 }
 
-
-/*
-//get angle between lines (middle -> start) and (middle -> end) in range -PI...PI
-double isConvex(Vertex start, Vertex middle, Vertex end)
-{
-	Vec2 s = { double(start.x), double(start.y) };
-	Vec2 m = { double(middle.x), double(middle.y) };
-	Vec2 e = { double(end.x), double(end.y) };
-
-	Vec2 ms = m - s;
-	Vec2 me = m - e;
-	double dot = ms.dot(me);
-	double det = ms.x * me.x - ms.y * me.y;
-	return atan2(det, dot);
-	return scalarCross2d(ms,me) > 0;
-}
-
-bool isPointInTriangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
-{
-	Vec2 ab = b - a;
-	Vec2 bc = c -b;
-	Vec2 ca = a - c;
-
-	Vec2 ap = p - a;
-	Vec2 bp = p - b;
-	Vec2 cp = p - c;
-
-	double c1 = scalarCross2d(ab, ap);
-	double c2 = scalarCross2d(bc, bp);
-	double c3 = scalarCross2d(ca, cp);
-	return (c1 <= 0 && c2 <= 0 && c3 <= 0);
-}
-*/
 Statsman statsman;
 
 void main()

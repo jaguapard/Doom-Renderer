@@ -19,7 +19,8 @@ public:
 		uint64_t
 			tripleVerticeOutOfScreenDiscards = 0,
 			doubleVertexOutOfScreenSplits = 0,
-			singleVertexOutOfScreenSplits = 0;
+			singleVertexOutOfScreenSplits = 0,
+			zeroVerticesOutsideDraws = 0;
 	};
 	struct Textures
 	{
@@ -34,3 +35,6 @@ private:
 };
 
 extern Statsman statsman;
+
+#define StatCount(expression) if (Statsman::enabled) {expression;}
+//#define StatCount(expression, ) if (Statsman::enabled) {expression;}

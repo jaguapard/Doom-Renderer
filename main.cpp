@@ -20,6 +20,7 @@
 #include "Texture.h"
 #include "ZBuffer.h"
 #include "Triangle.h"
+#include "Statsman.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -381,6 +382,8 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 	}
 	return ret;
 }
+
+Statsman statsman;
 
 void main()
 {

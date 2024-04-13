@@ -1,6 +1,7 @@
 #include "Texture.h"
 #include <iostream>
 #include "Vec.h"
+#include "Statsman.h"
 
 Texture::Texture(std::string name)
 {
@@ -91,6 +92,7 @@ Texture::Texture(std::string name)
 
 Color Texture::getPixel(int x, int y, double lightMult) const
 {
+	StatCount(statsman.textures.pixelFetches++);
 	int w = pixels.getW();
 	int h = pixels.getH();
 	x %= w;

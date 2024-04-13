@@ -1,4 +1,5 @@
 #include "Triangle.h"
+#include "Statsman.h"
 
 constexpr double planeZ = -1;
 
@@ -16,13 +17,18 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 		if (rt.z > planeZ)
 		{
 			outsideVertexCount++;
-			if (outsideVertexCount == 3) return; //triangle is completely behind the clipping plane, discard
+			if (outsideVertexCount == 3) 
+			{
+				if (Statsman::enabled) statsman.triangles.tripleVerticeOutOfScreenDiscards++;
+				return; //triangle is completely behind the clipping plane, discard
+			}
 			vertexOutside[i] = true;			
 		}
 	}
 	
 	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawInner and proceed
 	{
+		if (Statsman::enabled) statsman.triangles.zeroVerticesOutsideDraws++;
 		Triangle prepped = *this;
 		prepped.tv = rot;
 		return prepped.drawInner(buf, ctr, zBuffer, textures, lightMult); 
@@ -30,6 +36,7 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 	
 	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
 	{
+		if (Statsman::enabled) statsman.triangles.singleVertexOutOfScreenSplits++;
 		for (int i = 0; i < 3; ++i)
 		{
 			if (vertexOutside[i])
@@ -55,6 +62,7 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 
 	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
 	{
+		if (Statsman::enabled) statsman.triangles.doubleVertexOutOfScreenSplits++;
 		for (int i = 0; i < 3; ++i) //look for outside vertices and beat them into shape
 		{
 			if (!vertexOutside[i])

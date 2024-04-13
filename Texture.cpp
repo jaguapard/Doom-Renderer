@@ -77,26 +77,28 @@ Texture::Texture(std::string name)
 		++textureNumber;
 	}
 
-	w = surf->w;
-	h = surf->h;
+	int w = surf->w;
+	int h = surf->h;
 	Uint32* surfPixels = (Uint32*)(surf->pixels);
-	pixels.resize(w * h);
-	for (int y = 0; y < h; ++y)
+	this->pixels = PixelBuffer<Color>(w, h);
+	for (int y = 0; y < h; ++y) //convert SDL surface to buffer of floats and free the surface
 	{
 		for (int x = 0; x < w; ++x)
-			pixels.emplace_back(surfPixels[y * w + x]);
+			this->pixels.setPixelUnsafe(x, y, Color(surfPixels[y * w + h]));
 	}
 	SDL_FreeSurface(surf);
 }
 
 Color Texture::getPixel(int x, int y, double lightMult) const
 {
+	int w = pixels.getW();
+	int h = pixels.getH();
 	x %= w;
 	y %= h;
 	if (x < 0) x += w; //this adds prevent reflection of wrapped coordinates around 0 
 	if (y < 0) y += h;
 
-	Color c = pixels[y * w + x];
+	Color c = pixels.getPixelUnsafe(x, y); //due to manipulations with input x and y, it should never go out of bounds
 	c.r *= lightMult;
 	c.g *= lightMult;
 	c.b *= lightMult;

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Color.h"
+#include "PixelBuffer.h"
 
 enum class TextureDebugMode
 {
@@ -27,15 +28,14 @@ enum DebugColors
 	YELLOW = 0xFFFF00FF,
 };
 
-struct Texture
+class Texture
 {
-	std::vector<Color> pixels;
-	int w, h;
-	std::string name;
-
+public:
 	Texture(std::string name);
 	Color getPixel(int x, int y, double lightMult) const;
-	~Texture();
 
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
+private:
+	PixelBuffer<Color> pixels;
+	std::string name;
 };

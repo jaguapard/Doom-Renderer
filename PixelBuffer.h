@@ -21,6 +21,7 @@ public:
 	bool isInBounds(int x, int y) const;
 
 	void clear(T value = T(0));
+	T* getRawPixels();
 protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
@@ -91,6 +92,12 @@ template<typename T>
 inline void PixelBuffer<T>::clear(T value)
 {
 	for (auto& it : store) it = value;
+}
+
+template<typename T>
+inline T* PixelBuffer<T>::getRawPixels()
+{
+	return &store.front();
 }
 
 template<typename T>

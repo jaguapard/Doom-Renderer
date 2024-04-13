@@ -94,42 +94,6 @@ void loadPwad(std::string path)
 	}
 }
 
-int getTextureIndexByName(std::string name, std::vector<Texture>& textures, std::unordered_map<std::string, int>& textureNameToIndexMap, const std::unordered_map<std::string,std::string>& textureNameTranslation)
-{
-	auto it = textureNameTranslation.find(name);
-	std::string fileName = it == textureNameTranslation.end() ? name : it->second;
-	if (textureNameToIndexMap.find(fileName) != textureNameToIndexMap.end()) return textureNameToIndexMap[fileName]; //find by file name
-
-	textures.emplace_back(fileName);
-	textureNameToIndexMap[fileName] = textures.size() - 1;
-	return textures.size() - 1;
-}
-
-std::vector<Texture> textures;
-
-std::unordered_map<std::string, std::string> loadTextureTranslation()
-{
-	std::unordered_map<std::string, std::string> ret;
-	std::ifstream f("D:/Games/GZDoom/MappingTests/TEXTURES.txt");
-
-	std::string line, textureName, fileName;
-	while (std::getline(f, line))
-	{
-		if (line.empty() || line[0] == '/') continue;
-
-		auto parts = adm::strings::split_copy(line, " ");
-		if (parts[0] == "WallTexture") textureName = std::string(parts[1], 1, parts[1].length() - 3);
-		if (parts[0].find("Patch") != parts[0].npos)
-		{
-			fileName = std::string(parts[1], 1, parts[1].length() - 3);
-			ret[textureName] = fileName;
-		}
-		int a = 1;
-	}
-
-	return ret;
-}
-
 double weirdoCross(Vec2 a, Vec2 b)
 {
 	return a.x * b.y - a.y * b.x;
@@ -354,7 +318,8 @@ Statsman statsman;
 void main()
 {
 	double gamma = 1.3;
-	auto textureNameTranslation = loadTextureTranslation();
+	TextureManager textureManager;
+
 	SDL_Init(SDL_INIT_EVERYTHING);
 	//loadPwad("D:/Games/GZDoom/STUPID.wad");
 	//loadPwad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");

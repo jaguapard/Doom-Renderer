@@ -1,11 +1,13 @@
 #include "DoomWorldLoader.h"
 #include "DoomStructs.h"
+#include "TextureManager.h"
 
 std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
-	const std::vector<Linedef>& linedefs, 
-	const std::vector<Vertex>& vertices, 
-	const std::vector<Sidedef>& sidedefs, 
-	const std::vector<Sector>& sectors
+	const std::vector<Linedef>& linedefs,
+	const std::vector<Vertex>& vertices,
+	const std::vector<Sidedef>& sidedefs,
+	const std::vector<Sector>& sectors,
+	TextureManager& textureManager
 )
 {
 	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
@@ -56,7 +58,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 			const SectorInfo& si = linedefSectors[0];
 			double bottom = si.floorHeight;
 			double top = si.ceilingHeight;
-			for (auto& it : getTrianglesForSectorQuads(bottom, top, linedef3dVerts, linedefSectors[0], si.middleTexture))
+			for (auto& it : getTrianglesForSectorQuads(bottom, top, linedef3dVerts, linedefSectors[0], si.middleTexture, textureManager))
 				sectorTriangles[si.sectorNumber].push_back(it);
 		}		
 	}
@@ -64,7 +66,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 	return sectorTriangles;
 }
 
-std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName)
+std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
 {
 	std::vector<Triangle> ret;
 
@@ -84,7 +86,7 @@ std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorQuads(double bottomH
 			Vec2 uv = Vec2(sectorInfo.xTextureOffset, sectorInfo.yTextureOffset) - uvPrefab;
 			t.tv[j].textureCoords = uv;
 
-			t.textureIndex = getTextureIndexByName(textureName, textures, textureNameToIndexMap, textureNameTranslation);
+			t.textureIndex = textureManager.getTextureIndexByName(textureName);
 		}
 	}
 	return ret;

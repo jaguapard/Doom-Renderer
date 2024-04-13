@@ -209,6 +209,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Matrix3.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="Triangle.cpp" />
     <ClCompile Include="ZBuffer.cpp" />
   </ItemGroup>
@@ -223,6 +224,7 @@
     <ClInclude Include="PixelBuffer.h" />
     <ClInclude Include="Statsman.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureManager.h" />
     <ClInclude Include="Triangle.h" />
     <ClInclude Include="Vec.h" />
     <ClInclude Include="ZBuffer.h" />

@@ -109,7 +109,11 @@ Color Texture::getPixel(int x, int y, double lightMult) const
 	
 	
 
-	if (wMask >= 0) x &= wMask;
+	if (wMask >= 0)
+	{
+		StatCount(statsman.textures.optimizedX++);
+		x &= wMask;
+	}
 	else
 	{
 		int w = pixels.getW();
@@ -117,7 +121,11 @@ Color Texture::getPixel(int x, int y, double lightMult) const
 		if (x < 0) x += w; //this adds prevent reflection of wrapped coordinates around 0 
 	}
 
-	if (hMask >= 0) y &= hMask;
+	if (hMask >= 0)
+	{
+		y &= hMask;
+		StatCount(statsman.textures.optimizedY++);
+	}
 	else
 	{
 		int h = pixels.getH();

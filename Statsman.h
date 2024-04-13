@@ -25,7 +25,9 @@ public:
 	struct Textures
 	{
 		uint64_t
-			pixelFetches = 0;
+			pixelFetches = 0,
+			optimizedX = 0,
+			optimizedY = 0;
 	};
 
 	ZBuffer zBuffer;

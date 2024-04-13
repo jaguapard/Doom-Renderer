@@ -514,13 +514,15 @@ void main()
 	}
 
 
-	
-	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 2560, 1440, 0);
-	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
-
 	int framebufW = 2560;
 	int framebufH = 1440;
-	SDL_Surface* framebuf = SDL_CreateRGBSurface(0, framebufW, framebufH, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0xFF);
+	int screenW = 2560;
+	int screenH = 1440;
+	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenW, screenH, 0);
+	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
+
+	PixelBuffer<Color> framebuf(framebufW, framebufH);
+
 	C_Input input;
 	CoordinateTransformer ctr(framebufW, framebufH);
 
@@ -528,7 +530,7 @@ void main()
 	uint64_t frames = 0;
 	while (true)
 	{
-		SDL_FillRect(framebuf, nullptr, 0);
+		framebuf.clear();
 		SDL_FillRect(wndSurf, nullptr, 0);
 		zBuffer.clear();
 

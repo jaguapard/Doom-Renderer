@@ -51,16 +51,15 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 			linedefSectors.push_back(sectorInfo);
 		}
 
-		std::vector<Triangle> triangles;
-
-		if (linedefSectors.size() == 1) //if there's only 1 sector, then just add the triangles to the list
+		std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.floorHeight < si2.floorHeight; });
+		for (const auto& si : linedefSectors) //first add middle sections of walls 
 		{
-			const SectorInfo& si = linedefSectors[0];
-			double bottom = si.floorHeight;
-			double top = si.ceilingHeight;
-			for (auto& it : getTrianglesForSectorQuads(bottom, top, linedef3dVerts, linedefSectors[0], si.middleTexture, textureManager))
-				sectorTriangles[si.sectorNumber].push_back(it);
-		}		
+			auto newTris = getTrianglesForSectorQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
+			auto& target = sectorTriangles[si.sectorNumber];
+			target.insert(target.end(), newTris.begin(), newTris.end());
+		}
+
+
 	}
 
 	return sectorTriangles;
@@ -69,8 +68,12 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
 {
 	std::vector<Triangle> ret;
-	Vec3 origin;
+	if (textureName.empty() || textureName == "-" || bottomHeight == topHeight) return ret; //nonsensical arrangement or undefined texture
 
+	Vec3 origin;
+	if (bottomHeight > topHeight) std::swap(bottomHeight, topHeight);
+
+	//TODO: add some kind of Z figting prevention for double-sided linedefs
 	for (int i = 0; i < 2; ++i)
 	{
 		Triangle t;

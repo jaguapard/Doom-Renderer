@@ -80,6 +80,19 @@ Texture::Texture(std::string name)
 
 	int w = surf->w;
 	int h = surf->h;
+	double pw = log2(w);
+	double ph = log2(h);
+	if (pw == floor(pw))
+	{
+		wMask = 0;
+		for (int i = 0; i < pw; ++i) wMask |= 1 << i;
+	}
+	if (ph == floor(ph))
+	{
+		hMask = 0;
+		for (int i = 0; i < pw; ++i) hMask |= 1 << i;
+	}
+
 	Uint32* surfPixels = (Uint32*)(surf->pixels);
 	this->pixels = PixelBuffer<Color>(w, h);
 	for (int y = 0; y < h; ++y) //convert SDL surface to buffer of floats and free the surface
@@ -93,12 +106,24 @@ Texture::Texture(std::string name)
 Color Texture::getPixel(int x, int y, double lightMult) const
 {
 	StatCount(statsman.textures.pixelFetches++);
-	int w = pixels.getW();
-	int h = pixels.getH();
-	x %= w;
-	y %= h;
-	if (x < 0) x += w; //this adds prevent reflection of wrapped coordinates around 0 
-	if (y < 0) y += h;
+	
+	
+
+	if (wMask >= 0) x &= wMask;
+	else
+	{
+		int w = pixels.getW();
+		x %= w;
+		if (x < 0) x += w; //this adds prevent reflection of wrapped coordinates around 0 
+	}
+
+	if (hMask >= 0) y &= hMask;
+	else
+	{
+		int h = pixels.getH();
+		y %= h;
+		if (y < 0) y += h; //this adds prevent reflection of wrapped coordinates around 0 
+	}
 
 	Color c = pixels.getPixelUnsafe(x, y); //due to manipulations with input x and y, it should never go out of bounds
 	c.r *= lightMult;

@@ -38,4 +38,5 @@ public:
 private:
 	PixelBuffer<Color> pixels;
 	std::string name;
+	int wMask = -1, hMask = -1;
 };

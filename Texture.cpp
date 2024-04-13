@@ -1,10 +1,12 @@
 #include "Texture.h"
 #include <iostream>
 #include "Vec.h"
+#include "Statsman.h"
 
 Texture::Texture(std::string name)
 {
 	this->name = name;
+	SDL_Surface* surf;
 
 	if (TEXTURE_DEBUG_MODE == TextureDebugMode::NONE)
 	{
@@ -14,7 +16,7 @@ Texture::Texture(std::string name)
 		if (surf)
 		{
 			SDL_Surface* old = surf;
-			surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_ABGR32, 0);
+			surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_RGBA32, 0);
 			SDL_FreeSurface(old);
 		}
 		else
@@ -23,7 +25,7 @@ Texture::Texture(std::string name)
 				"Falling back to purple-grey checkerboard.\n\n";
 			int w = 64, h = 64;
 
-			surf = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_ABGR32);
+			surf = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA32);
 			for (int y = 0; y < h; ++y)
 			{
 				for (int x = 0; x < w; ++x)
@@ -36,7 +38,7 @@ Texture::Texture(std::string name)
 	}
 	else
 	{
-		surf = SDL_CreateRGBSurfaceWithFormat(0, 1024, 1024, 32, SDL_PIXELFORMAT_ABGR32);
+		surf = SDL_CreateRGBSurfaceWithFormat(0, 1024, 1024, 32, SDL_PIXELFORMAT_RGBA32);
 		int tw = 1024, th = 1024;
 		Uint32 dbg_colors[] = { WHITE, GREY, RED, GREEN, BLUE, YELLOW };
 		static int textureNumber = 0;
@@ -46,7 +48,7 @@ Texture::Texture(std::string name)
 			{
 				Uint32* px = (Uint32*)(surf->pixels);
 				Uint8 bx = x, by = y;
-				switch (TEXTURE_DEBUG_MODE)
+				switch (TEXTURE_DEBUG_MODE) //TODO: this colors are now broken after switching to SDL_PIXELFORMAT_RGBA32 everywhere. fix
 				{
 				case TextureDebugMode::NONE:
 					break;
@@ -75,27 +77,63 @@ Texture::Texture(std::string name)
 		}
 		++textureNumber;
 	}
+
+	int w = surf->w;
+	int h = surf->h;
+	double pw = log2(w);
+	double ph = log2(h);
+	if (pw == floor(pw))
+	{
+		wMask = 0;
+		for (int i = 0; i < pw; ++i) wMask |= 1 << i;
+	}
+	if (ph == floor(ph))
+	{
+		hMask = 0;
+		for (int i = 0; i < pw; ++i) hMask |= 1 << i;
+	}
+
+	Uint32* surfPixels = (Uint32*)(surf->pixels);
+	this->pixels = PixelBuffer<Color>(w, h);
+	for (int y = 0; y < h; ++y) //convert SDL surface to buffer of floats and free the surface
+	{
+		for (int x = 0; x < w; ++x)
+			this->pixels.setPixelUnsafe(x, y, Color(surfPixels[y * w + x]));
+	}
+	SDL_FreeSurface(surf);
 }
 
-SDL_Color Texture::getPixel(int x, int y, double lightMult) const
+Color Texture::getPixel(int x, int y, double lightMult) const
 {
-	x %= surf->w;
-	y %= surf->h;
-	if (x < 0) x += surf->w; //this adds prevent reflection of wrapped coordinates around 0 
-	if (y < 0) y += surf->h;
+	StatCount(statsman.textures.pixelFetches++);
 
-	uint32_t* px = (uint32_t*)surf->pixels;
-	//uint32_t texturePixel = px[y * surf->w + x];
+	if (wMask >= 0)
+	{
+		StatCount(statsman.textures.optimizedXreads++);
+		x &= wMask;
+	}
+	else
+	{
+		int w = pixels.getW();
+		x %= w;
+		if (x < 0) x += w; //this adds prevent reflection of wrapped coordinates around 0 
+	}
 
-	SDL_Color texturePixel = *(SDL_Color*)(&px[y * surf->w + x]);
-	int mul = lightMult * 255;
-	texturePixel.r = (mul*texturePixel.r) >> 8;
-	texturePixel.g = (mul*texturePixel.g) >> 8;
-	texturePixel.b = (mul*texturePixel.b) >> 8;
-	return texturePixel;
-}
+	if (hMask >= 0)
+	{
+		y &= hMask;
+		StatCount(statsman.textures.optimizedYreads++);
+	}
+	else
+	{
+		int h = pixels.getH();
+		y %= h;
+		if (y < 0) y += h; //this adds prevent reflection of wrapped coordinates around 0 
+	}
 
-Texture::~Texture()
-{
-	//SDL_FreeSurface(surf);
+	Color c = pixels.getPixelUnsafe(x, y); //due to manipulations with input x and y, it should never go out of bounds
+	c.r *= lightMult;
+	c.g *= lightMult;
+	c.b *= lightMult;
+	return c;
 }

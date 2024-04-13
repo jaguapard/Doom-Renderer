@@ -1,8 +1,9 @@
 #include "Triangle.h"
+#include "Statsman.h"
 
 constexpr double planeZ = -1;
 
-void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const
+void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, TextureManager& textureManager, double lightMult) const
 {
 	std::array<TexVertex,3> rot;
 	bool vertexOutside[3] = { false };
@@ -16,20 +17,26 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 		if (rt.z > planeZ)
 		{
 			outsideVertexCount++;
-			if (outsideVertexCount == 3) return; //triangle is completely behind the clipping plane, discard
+			if (outsideVertexCount == 3) 
+			{
+				if (Statsman::enabled) statsman.triangles.tripleVerticeOutOfScreenDiscards++;
+				return; //triangle is completely behind the clipping plane, discard
+			}
 			vertexOutside[i] = true;			
 		}
 	}
 	
 	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawInner and proceed
 	{
+		if (Statsman::enabled) statsman.triangles.zeroVerticesOutsideDraws++;
 		Triangle prepped = *this;
 		prepped.tv = rot;
-		return prepped.drawInner(s, ctr, zBuffer, textures, lightMult); 
+		return prepped.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
 	}
 	
 	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
 	{
+		if (Statsman::enabled) statsman.triangles.singleVertexOutOfScreenSplits++;
 		for (int i = 0; i < 3; ++i)
 		{
 			if (vertexOutside[i])
@@ -46,8 +53,8 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 				t1.tv = { v1,clipped1, v2 };
 				t2.tv = { clipped1, clipped2, v2};
 
-				t1.drawInner(s, ctr, zBuffer, textures, lightMult);
-				t2.drawInner(s, ctr, zBuffer, textures, lightMult);
+				t1.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
+				t2.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
 				return;
 			}
 		}
@@ -55,6 +62,7 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 
 	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
 	{
+		if (Statsman::enabled) statsman.triangles.doubleVertexOutOfScreenSplits++;
 		for (int i = 0; i < 3; ++i) //look for outside vertices and beat them into shape
 		{
 			if (!vertexOutside[i])
@@ -66,7 +74,7 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 				clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 				clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 				clipped.tv[i] = rot[i];
-				return clipped.drawInner(s, ctr, zBuffer, textures, lightMult);
+				return clipped.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
 			}
 		}
 		
@@ -75,7 +83,7 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 }
 
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const
+void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, TextureManager& textureManager, double lightMult) const
 {
 	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].worldCoords));
 	Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].worldCoords));
@@ -84,7 +92,7 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 	Vec3 camPos = -ctr.doCamOffset(Vec3(0, 0, 0));
 	if (cross.dot(camPos) > 0) return;*/
 
-	double maxX = s->w, maxY = s->h;
+	double maxX = buf.getW(), maxY = buf.getH();
 
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
@@ -121,6 +129,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 
 	double yBeg = std::max(0.0, y1);
 	double yEnd = std::min(maxY, y2);
+	const Texture& texture = textureManager.getTextureByIndex(this->textureIndex);
+
 	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
 		double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
@@ -147,9 +157,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
-				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
-				SDL_Color* px = reinterpret_cast<SDL_Color*>(s->pixels);
-				px[int(y) * s->w + int(x)] = c;
+				auto c = texture.getPixel(uvCorrected.x, uvCorrected.y, lightMult);
+				buf.setPixelUnsafe(x, y, c);
 			}
 		}
 	}
@@ -182,9 +191,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
-				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
-				SDL_Color* px = reinterpret_cast<SDL_Color*>(s->pixels);
-				px[int(y) * s->w + int(x)] = c;
+				auto c = texture.getPixel(uvCorrected.x, uvCorrected.y, lightMult);
+				buf.setPixelUnsafe(x, y, c);
 			}
 		}
 	}

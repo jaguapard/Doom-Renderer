@@ -1,18 +1,22 @@
 #include "ZBuffer.h"
+#include "Statsman.h"
 
-ZBuffer::ZBuffer(int w, int h) : w(w), h(h)
+ZBuffer::ZBuffer(int w, int h) : PixelBuffer<double>(w, h)
 {
-	values.resize(w * h);
 }
 
 bool ZBuffer::testAndSet(int x, int y, double depth)
 {
-	bool cmp = depth < values[y * w + x];
-	if (cmp) values[y * w + x] = depth;
+	StatCount(statsman.zBuffer.depthTests++);
+	bool cmp = depth < this->getPixelUnsafe(x, y);
+	if (cmp)
+	{
+		StatCount(statsman.zBuffer.writes++);
+		this->setPixelUnsafe(x, y, depth);
+	}
+	else
+	{
+		StatCount(statsman.zBuffer.occlusionDiscards++);
+	}
 	return cmp;
-}
-
-void ZBuffer::clear()
-{
-	for (auto& it : values) it = std::numeric_limits<double>::infinity();
 }

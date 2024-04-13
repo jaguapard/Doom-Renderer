@@ -2,6 +2,10 @@
 #include <string>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
+#include <vector>
+
+#include "Color.h"
+#include "PixelBuffer.h"
 
 enum class TextureDebugMode
 {
@@ -24,14 +28,15 @@ enum DebugColors
 	YELLOW = 0xFFFF00FF,
 };
 
-struct Texture
+class Texture
 {
-	SDL_Surface* surf;
-	std::string name;
-
+public:
 	Texture(std::string name);
-	SDL_Color getPixel(int x, int y, double lightMult) const;
-	~Texture();
+	Color getPixel(int x, int y, double lightMult) const;
 
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
+private:
+	PixelBuffer<Color> pixels;
+	std::string name;
+	int wMask = -1, hMask = -1;
 };

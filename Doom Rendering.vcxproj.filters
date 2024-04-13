@@ -39,6 +39,9 @@
     <ClCompile Include="Color.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DoomWorldLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Matrix3.h">
@@ -72,6 +75,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Statsman.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DoomWorldLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DoomStructs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

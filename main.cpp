@@ -22,48 +22,14 @@
 #include "Triangle.h"
 #include "Statsman.h"
 
+#include "DoomStructs.h"
+#include "DoomWorldLoader.h"
+
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
 #undef main
 
-#pragma pack(push, 1)
-struct Vertex
-{
-	int16_t x, y;
-};
 
-struct Linedef
-{
-	int16_t startVertex;
-	int16_t endVertex;
-	int16_t flags;
-	int16_t specialType;
-	int16_t sectorTag;
-	int16_t frontSidedef;
-	int16_t backSidedef;
-};
-
-struct Sidedef
-{
-	int16_t xTextureOffset;
-	int16_t yTextureOffset;
-	char upperTexture[8];
-	char lowerTexture[8];
-	char middleTexture[8];
-	int16_t facingSector;
-};
-
-struct Sector
-{
-	int16_t floorHeight;
-	int16_t ceilingHeight;
-	char floorTexture[8];
-	char ceilingTexture[8];
-	int16_t lightLevel;
-	int16_t specialType;
-	int16_t tagNumber;
-};
-#pragma pack(pop)
 
 std::vector<Vertex> vertices;
 std::vector<Linedef> linedefs;
@@ -385,13 +351,6 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 
 Statsman statsman;
 
-std::string wadStrToStd(const char* wadStr)
-{
-	char buf[9] = { 0 };
-	memcpy(buf, wadStr, 8);
-	return std::string(buf);
-}
-
 void main()
 {
 	double gamma = 1.3;
@@ -417,84 +376,10 @@ void main()
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
+	//std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
 	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
 
-	for (const auto& linedef : linedefs)
-	{
-		Vertex sv = vertices[linedef.startVertex];
-		Vertex ev = vertices[linedef.endVertex];
-
-		std::array<Vec3, 6> linedef3dVerts;
-		linedef3dVerts[0] = { double(sv.x), 0, double(sv.y) }; //quads originated by a linedef will always only differ in height
-		linedef3dVerts[1] = { double(ev.x), 0, double(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
-		linedef3dVerts[2] = { double(sv.x), -1, double(sv.y) }; //-1 = lower
-
-		linedef3dVerts[3] = { double(ev.x), 0, double(ev.y) };
-		linedef3dVerts[4] = { double(sv.x), -1, double(sv.y) };
-		linedef3dVerts[5] = { double(ev.x), -1, double(ev.y) };
-
-		struct SectorInfo //info about the sector in relation to linedef being processed
-		{
-			int sidedefNumber, floorHeight, ceilingHeight, sectorNumber, xTextureOffset, yTextureOffset;
-			std::string upperTexture, middleTexture, lowerTexture;
-			std::vector<Triangle> triangles;
-		};
-
-		std::array<int, 2> sidedefNumbers = {linedef.frontSidedef, linedef.backSidedef};
-		std::vector<SectorInfo> linedefSectors; //gather info about sectors this linedef separates to build triangles later
-		for (int i = 0; i < 2; ++i)
-		{
-			int nSidedef = sidedefNumbers[i];
-			if (nSidedef == -1) continue; //1 sided linedef
-
-			const Sidedef& sidedef = sidedefs[nSidedef];
-			int nSector = sidedef.facingSector;
-			const Sector& sector = sectors[nSector];
-			
-			SectorInfo sectorInfo;
-			sectorInfo.floorHeight = sector.floorHeight;
-			sectorInfo.ceilingHeight = sector.ceilingHeight;
-			sectorInfo.sectorNumber = nSector;
-
-			sectorInfo.lowerTexture = wadStrToStd(sidedef.lowerTexture);
-			sectorInfo.middleTexture = wadStrToStd(sidedef.middleTexture);
-			sectorInfo.upperTexture = wadStrToStd(sidedef.upperTexture);
-
-			sectorInfo.xTextureOffset = sidedef.xTextureOffset;
-			sectorInfo.yTextureOffset = sidedef.yTextureOffset;
-
-			linedefSectors.push_back(sectorInfo);
-		}
-
-		std::vector<Triangle> triangles;
-		if (linedefSectors.size() == 1) //if there's only 1 sector, then just add the triangles to the list
-		{
-			double fh = linedefSectors[0].floorHeight;
-			double ch = linedefSectors[0].ceilingHeight;
-
-			for (int i = 0; i < 2; ++i)
-			{
-				Triangle t;
-				for (int j = 0; j < 3; ++j)
-				{
-					Vec3 cookedVert = linedef3dVerts[i * 3 + j];
-					cookedVert.y = cookedVert.y == 0 ? ch : fh;
-					t.tv[j].worldCoords = cookedVert;
-
-					Vec3 worldOffset = t.tv[j].worldCoords - t.tv[0].worldCoords;
-					Vec2 uvPrefab;
-					uvPrefab.x = std::max(abs(worldOffset.x), abs(worldOffset.z)) == abs(worldOffset.x) ? worldOffset.x : worldOffset.z;
-					uvPrefab.y = worldOffset.y;
-					Vec2 uv = Vec2(linedefSectors[0].xTextureOffset, linedefSectors[0].yTextureOffset) - uvPrefab;
-					t.tv[j].textureCoords = uv;
-
-					t.textureIndex = getTextureIndexByName(linedefSectors[0].middleTexture, textures, textureNameToIndexMap, textureNameTranslation);					
-				}
-				sectorTriangles[linedefSectors[0].sectorNumber].push_back(t);
-			}
-		}
-		int a = 0;
-	}
+	
 	
 	/*
 	//if (nSector == 3) __debugbreak();

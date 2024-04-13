@@ -205,6 +205,7 @@
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="CoordinateTransformer.cpp" />
     <ClCompile Include="C_Input.cpp" />
+    <ClCompile Include="DoomWorldLoader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Matrix3.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -215,6 +216,8 @@
     <ClInclude Include="Color.h" />
     <ClInclude Include="CoordinateTransformer.h" />
     <ClInclude Include="C_Input.h" />
+    <ClInclude Include="DoomStructs.h" />
+    <ClInclude Include="DoomWorldLoader.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="Matrix3.h" />
     <ClInclude Include="PixelBuffer.h" />

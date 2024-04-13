@@ -148,7 +148,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
 				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
-				setPixel(s, x, y, c);
+				SDL_Color* px = reinterpret_cast<SDL_Color*>(s->pixels);
+				px[int(y) * s->w + int(x)] = c;
 			}
 		}
 	}
@@ -182,7 +183,8 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
 				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
-				setPixel(s, x, y, c);
+				SDL_Color* px = reinterpret_cast<SDL_Color*>(s->pixels);
+				px[int(y) * s->w + int(x)] = c;
 			}
 		}
 	}

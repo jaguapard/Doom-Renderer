@@ -253,6 +253,7 @@ void saveBitmap(const std::vector<bool>& bitmap, int w, int h, std::string fName
 //returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 {
+	return std::vector<Vec3>();
 	assert(sectorLinedefs.size() >= 3);
 
 	/*

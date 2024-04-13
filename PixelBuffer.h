@@ -21,7 +21,7 @@ public:
 	bool isInBounds(int x, int y) const;
 
 	void clear(T value = T(0));
-private:
+protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
 	std::vector<T> store;
@@ -78,7 +78,7 @@ inline void PixelBuffer<T>::setPixelUnsafe(int x, int y, const T& px)
 template<typename T>
 inline bool PixelBuffer<T>::isOutOfBounds(int x, int y) const
 {
-	return !isInBounds();
+	return !isInBounds(x, y);
 }
 
 template<typename T>

@@ -218,6 +218,7 @@
     <ClInclude Include="helpers.h" />
     <ClInclude Include="Matrix3.h" />
     <ClInclude Include="PixelBuffer.h" />
+    <ClInclude Include="Statsman.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Triangle.h" />
     <ClInclude Include="Vec.h" />

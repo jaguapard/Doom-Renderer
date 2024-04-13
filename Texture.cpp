@@ -106,12 +106,10 @@ Texture::Texture(std::string name)
 Color Texture::getPixel(int x, int y, double lightMult) const
 {
 	StatCount(statsman.textures.pixelFetches++);
-	
-	
 
 	if (wMask >= 0)
 	{
-		StatCount(statsman.textures.optimizedX++);
+		StatCount(statsman.textures.optimizedXreads++);
 		x &= wMask;
 	}
 	else
@@ -124,7 +122,7 @@ Color Texture::getPixel(int x, int y, double lightMult) const
 	if (hMask >= 0)
 	{
 		y &= hMask;
-		StatCount(statsman.textures.optimizedY++);
+		StatCount(statsman.textures.optimizedYreads++);
 	}
 	else
 	{

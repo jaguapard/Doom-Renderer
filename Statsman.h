@@ -26,8 +26,8 @@ public:
 	{
 		uint64_t
 			pixelFetches = 0,
-			optimizedX = 0,
-			optimizedY = 0;
+			optimizedXreads = 0,
+			optimizedYreads = 0;
 	};
 
 	ZBuffer zBuffer;

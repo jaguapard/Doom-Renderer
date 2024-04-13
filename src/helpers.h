@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <string>
+#include <vector>
 
 template <typename T>
 inline T lerp(const T& start, const T& end, double amount)
@@ -22,9 +23,9 @@ inline void setPixel(SDL_Surface* s, int x, int y, uint32_t color)
 	}
 }
 
-inline std::string wadStrToStd(const char* wadStr)
+inline std::string wadStrToStd(const char* wadStr, int maxLen = 8)
 {
-	char buf[9] = { 0 };
-	memcpy(buf, wadStr, 8);
-	return std::string(buf);
+	std::vector<char> buf(maxLen + 1, 0);
+	memcpy(&buf.front(), wadStr, maxLen);
+	return std::string(&buf.front()); 
 }

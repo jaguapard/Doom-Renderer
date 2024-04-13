@@ -1,5 +1,6 @@
 #include "Texture.h"
 #include <iostream>
+#include "Vec.h"
 
 Texture::Texture(std::string name)
 {
@@ -76,7 +77,7 @@ Texture::Texture(std::string name)
 	}
 }
 
-uint32_t Texture::getPixel(int x, int y) const
+uint32_t Texture::getPixel(int x, int y, double lightMult) const
 {
 	x %= surf->w;
 	y %= surf->h;
@@ -84,7 +85,15 @@ uint32_t Texture::getPixel(int x, int y) const
 	if (y < 0) y += surf->h;
 
 	uint32_t* px = (uint32_t*)surf->pixels;
-	return px[y * surf->w + x];
+	uint32_t texturePixel = px[y * surf->w + x];
+
+	Vec3 col = Vec3((texturePixel & 0xFF00) >> 8, (texturePixel & 0xFF0000) >> 16, (texturePixel & 0xFF000000) >> 24);
+	col *= lightMult;
+	int r = col.x;
+	int g = col.y;
+	int b = col.z;
+	int a = texturePixel & 0xFF;
+	return (r << 8) | (g << 16) | (b << 24) | a;
 }
 
 Texture::~Texture()

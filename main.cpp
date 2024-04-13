@@ -317,7 +317,7 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 			double xLeft = lerp(v[0].x, v[1].x, rightStraight ? 0 : leftStraight ? 1 : yp); //breaks if x0 == x2 and NOT rightStraight (always == 2)
 			double xRight = lerp(v[0].x, v[2].x, rightStraight ? 1 : yp); //and this also always == 0 if previous conditions are met
 			if (xLeft > xRight) std::swap(xLeft, xRight);
-			for (double x = xLeft; x < xRight+0.5; ++x)
+			for (double x = xLeft; x < xRight; ++x)
 			{
 				bitmap[int(y - minY) * w + int(x - minX)] = false;
 			}
@@ -556,7 +556,7 @@ void main()
 		for (int i = 0; i < sectors.size(); ++i)
 		{
 			//Vec3 testTri[3] = {{10,15,20}, {7, 20, 10}, {12, 11, 24}};
-			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textures);
+			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textures, sectors[i].lightLevel / 256.0);
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 

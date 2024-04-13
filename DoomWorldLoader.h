@@ -17,5 +17,5 @@ private:
 		std::vector<Triangle> triangles;
 	};
 
-	static std::vector<Triangle> getTrianglesForSectorQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager);
+	static std::vector<Triangle> getTrianglesForSectorWallQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager);
 };

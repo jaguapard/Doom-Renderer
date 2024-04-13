@@ -54,18 +54,38 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 		std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.floorHeight < si2.floorHeight; });
 		for (const auto& si : linedefSectors) //first add middle sections of walls 
 		{
-			auto newTris = getTrianglesForSectorQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
+			auto newTris = getTrianglesForSectorWallQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
 			auto& target = sectorTriangles[si.sectorNumber];
 			target.insert(target.end(), newTris.begin(), newTris.end());
 		}
 
+		if (linedefSectors.size() > 1)
+		{
+			{	//lower sections
+				SectorInfo low = linedefSectors[0];
+				SectorInfo high = linedefSectors[1];
 
+				auto newTris = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, high.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto& target = sectorTriangles[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
+				target.insert(target.end(), newTris.begin(), newTris.end());
+			}
+
+			std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.ceilingHeight < si2.ceilingHeight; });
+			{
+				SectorInfo low = linedefSectors[0];
+				SectorInfo high = linedefSectors[1];
+
+				auto newTris = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, low.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto& target = sectorTriangles[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
+				target.insert(target.end(), newTris.begin(), newTris.end());
+			}
+		}
 	}
 
 	return sectorTriangles;
 }
 
-std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
+std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
 {
 	std::vector<Triangle> ret;
 	if (textureName.empty() || textureName == "-" || bottomHeight == topHeight) return ret; //nonsensical arrangement or undefined texture

@@ -19,6 +19,8 @@ public:
 
 	bool isOutOfBounds(int x, int y) const;
 	bool isInBounds(int x, int y) const;
+
+	void clear(T value = T(0));
 private:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
@@ -83,6 +85,12 @@ template<typename T>
 inline bool PixelBuffer<T>::isInBounds(int x, int y) const
 {
 	return x >= 0 && y >= 0 && x < w && y < h;
+}
+
+template<typename T>
+inline void PixelBuffer<T>::clear(T value)
+{
+	for (auto& it : store) it = value;
 }
 
 template<typename T>

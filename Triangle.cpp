@@ -2,7 +2,7 @@
 
 constexpr double planeZ = -1;
 
-void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const
+void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const
 {
 	std::array<TexVertex,3> rot;
 	bool vertexOutside[3] = { false };
@@ -25,7 +25,7 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 	{
 		Triangle prepped = *this;
 		prepped.tv = rot;
-		return prepped.drawInner(s, ctr, zBuffer, textures, lightMult); 
+		return prepped.drawInner(buf, ctr, zBuffer, textures, lightMult); 
 	}
 	
 	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
@@ -46,8 +46,8 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 				t1.tv = { v1,clipped1, v2 };
 				t2.tv = { clipped1, clipped2, v2};
 
-				t1.drawInner(s, ctr, zBuffer, textures, lightMult);
-				t2.drawInner(s, ctr, zBuffer, textures, lightMult);
+				t1.drawInner(buf, ctr, zBuffer, textures, lightMult);
+				t2.drawInner(buf, ctr, zBuffer, textures, lightMult);
 				return;
 			}
 		}
@@ -66,7 +66,7 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 				clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 				clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 				clipped.tv[i] = rot[i];
-				return clipped.drawInner(s, ctr, zBuffer, textures, lightMult);
+				return clipped.drawInner(buf, ctr, zBuffer, textures, lightMult);
 			}
 		}
 		
@@ -75,7 +75,7 @@ void Triangle::drawOn(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer&
 }
 
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const
+void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const
 {
 	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].worldCoords));
 	Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].worldCoords));
@@ -84,7 +84,7 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 	Vec3 camPos = -ctr.doCamOffset(Vec3(0, 0, 0));
 	if (cross.dot(camPos) > 0) return;*/
 
-	double maxX = s->w, maxY = s->h;
+	double maxX = buf.getW(), maxY = buf.getH();
 
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
@@ -148,7 +148,7 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
 				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
-				setPixel(s, x, y, c);
+				buf.setPixel(x, y, c);
 			}
 		}
 	}
@@ -182,7 +182,7 @@ void Triangle::drawInner(SDL_Surface* s, const CoordinateTransformer& ctr, ZBuff
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
 				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
-				setPixel(s, x, y, c);
+				buf.setPixel(x, y, c);
 			}
 		}
 	}

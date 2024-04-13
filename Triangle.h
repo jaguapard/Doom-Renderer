@@ -8,6 +8,7 @@
 #include "CoordinateTransformer.h"
 #include "ZBuffer.h"
 #include "Texture.h"
+#include "TextureManager.h"
 
 struct TexVertex
 {
@@ -32,8 +33,8 @@ struct Triangle
 	std::array<TexVertex, 3> tv;
 	int textureIndex;
 
-	void drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const;
+	void drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, TextureManager& textureManager, double lightMult) const;
 private:
 	//WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	void drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const;
+	void drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, TextureManager& textureManager, double lightMult) const;
 };

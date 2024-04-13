@@ -69,6 +69,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
 {
 	std::vector<Triangle> ret;
+	Vec3 origin;
 
 	for (int i = 0; i < 2; ++i)
 	{
@@ -78,16 +79,17 @@ std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorQuads(double bottomH
 			Vec3 cookedVert = quadVerts[i * 3 + j];
 			cookedVert.y = cookedVert.y == 0 ? topHeight : bottomHeight;
 			t.tv[j].worldCoords = cookedVert;
+			if (i * 3 + j == 0) origin = cookedVert; //if this is the first vertice processed, then save it as an origin for following texture coordinate calculation
 
-			Vec3 worldOffset = t.tv[j].worldCoords - t.tv[0].worldCoords;
+			Vec3 worldOffset = t.tv[j].worldCoords - origin;
 			Vec2 uvPrefab;
 			uvPrefab.x = std::max(abs(worldOffset.x), abs(worldOffset.z)) == abs(worldOffset.x) ? worldOffset.x : worldOffset.z;
 			uvPrefab.y = worldOffset.y;
 			Vec2 uv = Vec2(sectorInfo.xTextureOffset, sectorInfo.yTextureOffset) - uvPrefab;
-			t.tv[j].textureCoords = uv;
-
-			t.textureIndex = textureManager.getTextureIndexByName(textureName);
+			t.tv[j].textureCoords = uv;			
 		}
+		t.textureIndex = textureManager.getTextureIndexByName(textureName);
+		ret.push_back(t);
 	}
 	return ret;
 }

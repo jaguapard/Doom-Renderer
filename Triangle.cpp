@@ -3,7 +3,7 @@
 
 constexpr double planeZ = -1;
 
-void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const
+void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, TextureManager& textureManager, double lightMult) const
 {
 	std::array<TexVertex,3> rot;
 	bool vertexOutside[3] = { false };
@@ -31,7 +31,7 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 		if (Statsman::enabled) statsman.triangles.zeroVerticesOutsideDraws++;
 		Triangle prepped = *this;
 		prepped.tv = rot;
-		return prepped.drawInner(buf, ctr, zBuffer, textures, lightMult); 
+		return prepped.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
 	}
 	
 	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
@@ -53,8 +53,8 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 				t1.tv = { v1,clipped1, v2 };
 				t2.tv = { clipped1, clipped2, v2};
 
-				t1.drawInner(buf, ctr, zBuffer, textures, lightMult);
-				t2.drawInner(buf, ctr, zBuffer, textures, lightMult);
+				t1.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
+				t2.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
 				return;
 			}
 		}
@@ -74,7 +74,7 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 				clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 				clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 				clipped.tv[i] = rot[i];
-				return clipped.drawInner(buf, ctr, zBuffer, textures, lightMult);
+				return clipped.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
 			}
 		}
 		
@@ -83,7 +83,7 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 }
 
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, const std::vector<Texture>& textures, double lightMult) const
+void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, TextureManager& textureManager, double lightMult) const
 {
 	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].worldCoords));
 	Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].worldCoords));
@@ -129,6 +129,8 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 
 	double yBeg = std::max(0.0, y1);
 	double yEnd = std::min(maxY, y2);
+	const Texture& texture = textureManager.getTextureByIndex(this->textureIndex);
+
 	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
 		double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
@@ -155,7 +157,7 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
-				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
+				auto c = texture.getPixel(uvCorrected.x, uvCorrected.y, lightMult);
 				buf.setPixelUnsafe(x, y, c);
 			}
 		}
@@ -189,7 +191,7 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
-				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
+				auto c = texture.getPixel(uvCorrected.x, uvCorrected.y, lightMult);
 				buf.setPixelUnsafe(x, y, c);
 			}
 		}

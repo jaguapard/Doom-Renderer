@@ -327,7 +327,6 @@ void main()
 	//loadPwad("D:/Games/GZDoom/MappingTests/HEXAGON.wad");
 	//loadPwad("D:/Games/GZDoom/MappingTests/RECT.wad");
 
-	std::unordered_map<std::string, int> textureNameToIndexMap;
 
 	Vec3 camPosAndAngArchieve[] = {
 		{ 0,0,0 }, {0,0,0},
@@ -342,7 +341,7 @@ void main()
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
 	//std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
-	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
+	std::vector<std::vector<Triangle>> sectorTriangles = DoomWorldLoader::loadTriangles(linedefs, vertices, sidedefs, sectors, textureManager);
 
 	
 	
@@ -422,7 +421,7 @@ void main()
 
 		for (int i = 0; i < sectors.size(); ++i)
 		{
-			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textures, pow(sectors[i].lightLevel / 256.0, gamma));
+			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textureManager, pow(sectors[i].lightLevel / 256.0, gamma));
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 

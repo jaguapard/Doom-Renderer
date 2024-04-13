@@ -7,7 +7,7 @@
 
 TextureManager::TextureManager()
 {
-	this->loadTextureTranslation();
+	this->textureNameTranslation = this->loadTextureTranslation();
 }
 
 int TextureManager::getTextureIndexByName(std::string name)
@@ -21,7 +21,7 @@ int TextureManager::getTextureIndexByName(std::string name)
 	return textures.size() - 1;
 }
 
-const Texture& TextureManager::getTexture(int index)
+const Texture& TextureManager::getTextureByIndex(int index) const
 {
 	return textures[index];
 }

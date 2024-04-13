@@ -384,6 +384,7 @@ std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 
 void main()
 {
+	double gamma = 1.3;
 	auto textureNameTranslation = loadTextureTranslation();
 	SDL_Init(SDL_INIT_EVERYTHING);
 	//loadPwad("D:/Games/GZDoom/STUPID.wad");
@@ -552,14 +553,14 @@ void main()
 		camAng -= { 3e-2 * input.isButtonHeld(SDL_SCANCODE_F), 3e-2 * input.isButtonHeld(SDL_SCANCODE_G), 3e-2 * input.isButtonHeld(SDL_SCANCODE_H)};
 		if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
 		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
+		gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
 
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
 		ctr.prepare(camPos, transformMatrix);
 
 		for (int i = 0; i < sectors.size(); ++i)
 		{
-			//Vec3 testTri[3] = {{10,15,20}, {7, 20, 10}, {12, 11, 24}};
-			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textures, sectors[i].lightLevel / 256.0);
+			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textures, pow(sectors[i].lightLevel / 256.0, gamma));
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 

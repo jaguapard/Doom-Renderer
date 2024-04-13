@@ -148,7 +148,7 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
 				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
-				buf.setPixel(x, y, c);
+				buf.setPixelUnsafe(x, y, c);
 			}
 		}
 	}
@@ -182,7 +182,7 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
 			{
 				auto c = textures[textureIndex].getPixel(uvCorrected.x, uvCorrected.y, lightMult);
-				buf.setPixel(x, y, c);
+				buf.setPixelUnsafe(x, y, c);
 			}
 		}
 	}

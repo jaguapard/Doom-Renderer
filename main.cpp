@@ -253,6 +253,7 @@ void saveBitmap(const std::vector<bool>& bitmap, int w, int h, std::string fName
 //returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 std::vector<Vec3> orcishTriangulation(std::vector<Linedef> sectorLinedefs)
 {
+	return std::vector<Vec3>();
 	assert(sectorLinedefs.size() >= 3);
 
 	/*
@@ -490,7 +491,7 @@ void main()
 		double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
 		Vec3 uvOffset = { minX, minZ, 0 };
 
-		char floorTextureName[9] = { 0 }, ceilingTextureName[9] = {0}; //8 symbols may be occupied
+		char floorTextureName[9] = { 0 }, ceilingTextureName[9] = {0}; //8 symbols may be occupied, and 0 terminator may not be present
 		memcpy(floorTextureName, sector.floorTexture, 8);
 		memcpy(ceilingTextureName, sector.ceilingTexture, 8);
 		int floorTextureIndex = getTextureIndexByName(floorTextureName, textures, textureNameToIndexMap, textureNameTranslation);
@@ -562,9 +563,19 @@ void main()
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 
-		SDL_UpperBlitScaled(framebuf, nullptr, wndSurf, nullptr);
+		Uint32* px = (Uint32*)(wndSurf->pixels);
+		auto* wf = wndSurf->format;
+		uint32_t shifts[4] = { wf->Rshift, wf->Gshift, wf->Bshift, 32 }; //window does not support transparency, so kill alpha by shifting it outside
+		for (int y = 0; y < screenH; ++y)
+		{
+			for (int x = 0; x < screenW; ++x)
+			{
+				double fx = double(x) / screenW * framebufW;
+				double fy = double(y) / screenH * framebufH;
+				px[y * screenW + x] = framebuf.getPixel(fx, fy).toSDL_Uint32(shifts);
+			}
+		}
 		SDL_UpdateWindowSurface(wnd);
-		SDL_Delay(10);
 	}
 
 	system("pause");

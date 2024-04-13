@@ -102,5 +102,5 @@ inline T& PixelBuffer<T>::at(int x, int y)
 template<typename T>
 inline const T& PixelBuffer<T>::at(int x, int y) const
 {
-	return store[y * w + h];
+	return store[y * w + x];
 }

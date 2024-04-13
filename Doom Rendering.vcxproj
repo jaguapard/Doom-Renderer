@@ -26,6 +26,34 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Color.cpp" />
+    <ClCompile Include="src\CoordinateTransformer.cpp" />
+    <ClCompile Include="src\C_Input.cpp" />
+    <ClCompile Include="src\DoomWorldLoader.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Matrix3.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\TextureManager.cpp" />
+    <ClCompile Include="src\Triangle.cpp" />
+    <ClCompile Include="src\ZBuffer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Color.h" />
+    <ClInclude Include="src\CoordinateTransformer.h" />
+    <ClInclude Include="src\C_Input.h" />
+    <ClInclude Include="src\DoomStructs.h" />
+    <ClInclude Include="src\DoomWorldLoader.h" />
+    <ClInclude Include="src\helpers.h" />
+    <ClInclude Include="src\Matrix3.h" />
+    <ClInclude Include="src\PixelBuffer.h" />
+    <ClInclude Include="src\Statsman.h" />
+    <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\TextureManager.h" />
+    <ClInclude Include="src\Triangle.h" />
+    <ClInclude Include="src\Vec.h" />
+    <ClInclude Include="src\ZBuffer.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -201,34 +229,6 @@
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Color.cpp" />
-    <ClCompile Include="CoordinateTransformer.cpp" />
-    <ClCompile Include="C_Input.cpp" />
-    <ClCompile Include="DoomWorldLoader.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Matrix3.cpp" />
-    <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="TextureManager.cpp" />
-    <ClCompile Include="Triangle.cpp" />
-    <ClCompile Include="ZBuffer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Color.h" />
-    <ClInclude Include="CoordinateTransformer.h" />
-    <ClInclude Include="C_Input.h" />
-    <ClInclude Include="DoomStructs.h" />
-    <ClInclude Include="DoomWorldLoader.h" />
-    <ClInclude Include="helpers.h" />
-    <ClInclude Include="Matrix3.h" />
-    <ClInclude Include="PixelBuffer.h" />
-    <ClInclude Include="Statsman.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="TextureManager.h" />
-    <ClInclude Include="Triangle.h" />
-    <ClInclude Include="Vec.h" />
-    <ClInclude Include="ZBuffer.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

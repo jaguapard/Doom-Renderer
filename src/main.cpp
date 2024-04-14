@@ -171,19 +171,21 @@ void main()
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 
-		if (false) //pathetic attempt at making fog effect
+		if (true)
 		{
 			double* zBuffPixels = zBuffer.getRawPixels();
 			Color* framebufPixels = framebuf.getRawPixels();
 			int pxCount = framebufW * framebufH;
+
+			double fogMaxIntensityDist = 600;
 			for (int i = 0; i < pxCount; ++i)
 			{
 				double depth = -zBuffPixels[i];
 				Color c = framebufPixels[i];
-				double lerpT = std::clamp(depth, 0.0, 1.0);
+				double lerpT = std::clamp((1.0/depth) / fogMaxIntensityDist, 0.0, 1.0); //z buffer stores 1/z, so need to get the real z
 				c.r = lerp(c.r, 1.0, lerpT);
-				c.g = lerp(c.r, 1.0, lerpT);
-				c.b = lerp(c.r, 1.0, lerpT);
+				c.g = lerp(c.g, 1.0, lerpT);
+				c.b = lerp(c.b, 1.0, lerpT);
 				framebufPixels[i] = c;
 			}
 		}

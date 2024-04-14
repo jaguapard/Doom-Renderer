@@ -137,6 +137,7 @@ void main()
 
 	ZBuffer zBuffer(framebufW, framebufH);
 	uint64_t frames = 0;
+	double flySpeed = 15;
 	while (true)
 	{
 		framebuf.clear();
@@ -151,6 +152,10 @@ void main()
 			{
 				camAng += { 0, ev.motion.xrel * 1e-3, ev.motion.yrel * -1e-3};
 			}
+			if (ev.type == SDL_MOUSEWHEEL)
+			{
+				flySpeed *= pow(1.05, ev.wheel.y);
+			}
 		}
 
 		
@@ -161,8 +166,8 @@ void main()
 		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
 		gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
 
-		Vec3 camAdd = -Vec3({ 15.0 * input.isButtonHeld(SDL_SCANCODE_D), 15.0 * input.isButtonHeld(SDL_SCANCODE_X), 15.0 * input.isButtonHeld(SDL_SCANCODE_W) });
-		camAdd += { 15.0 * input.isButtonHeld(SDL_SCANCODE_A), 15.0 * input.isButtonHeld(SDL_SCANCODE_Z), 15.0 * input.isButtonHeld(SDL_SCANCODE_S)};
+		Vec3 camAdd = -Vec3({ double(input.isButtonHeld(SDL_SCANCODE_D)), double(input.isButtonHeld(SDL_SCANCODE_X)), double(input.isButtonHeld(SDL_SCANCODE_W)) });
+		camAdd += { double(input.isButtonHeld(SDL_SCANCODE_A)), double(input.isButtonHeld(SDL_SCANCODE_Z)), double(input.isButtonHeld(SDL_SCANCODE_S))};
 
 
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
@@ -170,7 +175,7 @@ void main()
 		{
 			camAdd /= camAdd.len();
 			camAdd = getRotationMatrix(-camAng) * camAdd;
-			camPos += camAdd;
+			camPos += camAdd * flySpeed;
 		}
 		ctr.prepare(camPos, transformMatrix);
 

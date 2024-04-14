@@ -31,9 +31,16 @@ public:
 			optimizedYreads = 0;
 	};
 
+	struct Pixels
+	{
+		uint64_t
+			nonOpaqueDraws = 0;
+	};
+
 	ZBuffer zBuffer;
 	Triangles triangles;
 	Textures textures;
+	Pixels pixels;
 private:
 };
 

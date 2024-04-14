@@ -12,10 +12,11 @@ bool ZBuffer::test(int x, int y, double depth)
 	return cmp;
 }
 
-bool ZBuffer::testAndSet(int x, int y, double depth)
+bool ZBuffer::testAndSet(int x, int y, double depth, bool doWrite)
 {
 	bool cmp = test(x, y, depth);
-	if (cmp)
+	if (!doWrite) StatCount(statsman.zBuffer.writeDisabledTests++);
+	if (cmp && doWrite)
 	{
 		StatCount(statsman.zBuffer.writes++);
 		this->setPixelUnsafe(x, y, depth);

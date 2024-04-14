@@ -12,7 +12,8 @@ public:
 			negativeDepthDiscards = 0,
 			outOfBoundsAccesses = 0,
 			occlusionDiscards = 0,
-			writes = 0;
+			writes = 0,
+			writeDisabledTests = 0;
 	};
 	struct Triangles
 	{

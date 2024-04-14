@@ -106,7 +106,14 @@ Texture::Texture(std::string name)
 Color Texture::getPixel(int x, int y, double lightMult) const
 {
 	StatCount(statsman.textures.pixelFetches++);
-
+	
+	int w = pixels.getW();
+	int h = pixels.getH();
+	x %= pixels.getW();
+	y %= pixels.getH();
+	x += (x < 0) ? w : 0;
+	y += (y < 0) ? h : 0;
+	/*
 	if (wMask >= 0)
 	{
 		StatCount(statsman.textures.optimizedXreads++);
@@ -129,7 +136,7 @@ Color Texture::getPixel(int x, int y, double lightMult) const
 		int h = pixels.getH();
 		y %= h;
 		if (y < 0) y += h; //this adds prevent reflection of wrapped coordinates around 0 
-	}
+	}*/
 
 	Color c = pixels.getPixelUnsafe(x, y); //due to manipulations with input x and y, it should never go out of bounds
 	c.r *= lightMult;

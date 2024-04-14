@@ -153,8 +153,7 @@ void main()
 			}
 		}
 
-		camPos -= { 15.0 * input.isButtonHeld(SDL_SCANCODE_D), 15.0 * input.isButtonHeld(SDL_SCANCODE_X), 15.0 * input.isButtonHeld(SDL_SCANCODE_W)};
-		camPos += { 15.0 * input.isButtonHeld(SDL_SCANCODE_A), 15.0 * input.isButtonHeld(SDL_SCANCODE_Z), 15.0 * input.isButtonHeld(SDL_SCANCODE_S)};
+		
 
 		camAng += { 3e-2 * input.isButtonHeld(SDL_SCANCODE_R), 3e-2 * input.isButtonHeld(SDL_SCANCODE_T), 3e-2 * input.isButtonHeld(SDL_SCANCODE_Y)};
 		camAng -= { 3e-2 * input.isButtonHeld(SDL_SCANCODE_F), 3e-2 * input.isButtonHeld(SDL_SCANCODE_G), 3e-2 * input.isButtonHeld(SDL_SCANCODE_H)};
@@ -162,7 +161,17 @@ void main()
 		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
 		gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
 
+		Vec3 camAdd = -Vec3({ 15.0 * input.isButtonHeld(SDL_SCANCODE_D), 15.0 * input.isButtonHeld(SDL_SCANCODE_X), 15.0 * input.isButtonHeld(SDL_SCANCODE_W) });
+		camAdd += { 15.0 * input.isButtonHeld(SDL_SCANCODE_A), 15.0 * input.isButtonHeld(SDL_SCANCODE_Z), 15.0 * input.isButtonHeld(SDL_SCANCODE_S)};
+
+
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
+		if (double l = camAdd.len() > 0)
+		{
+			camAdd /= camAdd.len();
+			camAdd = getRotationMatrix(-camAng) * camAdd;
+			camPos += camAdd;
+		}
 		ctr.prepare(camPos, transformMatrix);
 
 		for (int i = 0; i < sectors.size(); ++i)

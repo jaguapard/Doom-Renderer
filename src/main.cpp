@@ -123,10 +123,10 @@ void main()
 
 	std::vector<std::vector<Triangle>> sectorTriangles = DoomWorldLoader::loadTriangles(linedefs, vertices, sidedefs, sectors, textureManager);
 
-	int framebufW = 2560;
-	int framebufH = 1440;
-	int screenW = 2560;
-	int screenH = 1440;
+	int framebufW = 1280;
+	int framebufH = 720;
+	int screenW = 1280;
+	int screenH = 720;
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenW, screenH, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 

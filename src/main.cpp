@@ -184,6 +184,8 @@ void main()
 		{
 			double* zBuffPixels = zBuffer.getRawPixels();
 			Color* framebufPixels = framebuf.getRawPixels();
+			//Color fogColor = { 0.6, 0, 0.15, 1 };
+			Color fogColor = { 1,1,1, 1 };
 			int pxCount = framebufW * framebufH;
 
 			double fogMaxIntensityDist = 600;
@@ -192,9 +194,9 @@ void main()
 				double depth = -zBuffPixels[i];
 				Color c = framebufPixels[i];
 				double lerpT = depth == 0.0 ? 1 : std::clamp((1.0/depth) / fogMaxIntensityDist, 0.0, 1.0); //z buffer stores 1/z, so need to get the real z
-				c.r = lerp(c.r, 1.0, lerpT);
-				c.g = lerp(c.g, 1.0, lerpT);
-				c.b = lerp(c.b, 1.0, lerpT);
+				c.r = lerp(c.r, fogColor.r, lerpT);
+				c.g = lerp(c.g, fogColor.g, lerpT);
+				c.b = lerp(c.b, fogColor.b, lerpT);
 				framebufPixels[i] = c;
 			}
 		}

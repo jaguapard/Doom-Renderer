@@ -92,7 +92,13 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 	for (int nSector = 0; nSector < sectors.size(); ++nSector)
 	{
 		//tessel size of 1 causes a ton of flickering and floor/ceiling disappearing depending on camera movement. TODO: implement varying sizes in orcishTriangulation()
-		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, 1);
+#ifdef NDEBUG
+		bool debugEnabled = false;
+#else
+		bool debugEnabled = true;
+#endif
+
+		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled ? -1 : 1); //too slow in debug mode
 		auto& target = sectorTriangles[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
 		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";

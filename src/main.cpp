@@ -185,12 +185,12 @@ void main()
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 
-		if (true)
+		if (false)
 		{
 			double* zBuffPixels = zBuffer.getRawPixels();
 			Color* framebufPixels = framebuf.getRawPixels();
-			//Color fogColor = { 0.6, 0, 0.15, 1 };
-			Color fogColor = { 1,1,1, 1 };
+			//Color fogColor = { 150, 42, 36 255 };
+			Color fogColor = { 255,255,255, 255 };
 			int pxCount = framebufW * framebufH;
 
 			double fogMaxIntensityDist = 600;
@@ -216,6 +216,7 @@ void main()
 				double fx = double(x) / screenW * framebufW;
 				double fy = double(y) / screenH * framebufH;
 				px[y * screenW + x] = framebuf.getPixel(fx, fy).toSDL_Uint32(shifts);
+				//px[y * screenW + x] = framebuf.getPixel(fx, fy);
 			}
 		}
 		SDL_UpdateWindowSurface(wnd);

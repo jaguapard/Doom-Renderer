@@ -112,11 +112,16 @@ void loadWad(std::string path)
 Statsman statsman;
 std::vector<std::vector<Triangle>> sectorTriangles;
 TextureManager textureManager;
+Map* currentMap = nullptr;
 void loadMap(std::string mapName)
 {
-	const Map& m = maps[mapName];
+	Map& m = maps[mapName];
 	sectorTriangles = DoomWorldLoader::loadTriangles(m.linedefs, m.vertices, m.sidedefs, m.sectors, textureManager);
+	currentMap = &m;
 }
+
+
+
 void main()
 {
 	double gamma = 1.3;
@@ -214,9 +219,13 @@ void main()
 		}
 		ctr.prepare(camPos, transformMatrix);
 
-		for (int i = 0; i < sectorTriangles.size(); ++i)
+		if (currentMap)
 		{
-			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textureManager, 1.0);// pow(sectors[i].lightLevel / 256.0, gamma));
+			for (int i = 0; i < sectorTriangles.size(); ++i)
+			{
+				for (int j = 0; j < sectorTriangles[i].size(); ++j)
+					sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textureManager, pow(currentMap->sectors[i].lightLevel / 256.0, gamma));
+			}
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 

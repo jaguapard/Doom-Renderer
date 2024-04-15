@@ -2,28 +2,24 @@
 #include "Color.h"
 #include <cassert>
 
+static_assert(sizeof(Color) == sizeof(Uint32), "Color must have the same size as SDL's Uint32");
+
 Color::Color(uint32_t u)
 {
-	/*/r = ((u & 0xFF00) >> 8) / 255.0;
-	g = ((u & 0xFF0000) >> 16) / 255.0;
-	b = ((u & 0xFF000000) >> 24) / 255.0;
-	a = (u & 0xFF) / 255.0;*/
-
-	uint32_t ic[4];
-	for (int i = 0; i < 4; ++i) ic[i] = (u & _masks[i]) >> _shift[i];
-	r = ic[0] / 255.0;
-	g = ic[1] / 255.0;
-	b = ic[2] / 255.0;
-	a = ic[3] / 255.0;
-
-	assert(r >= 0 && r <= 1);
-	assert(g >= 0 && g <= 1);
-	assert(b >= 0 && b <= 1);
-	assert(a >= 0 && a <= 1);
+	*this = *reinterpret_cast<const Color*>(&u);
 }
 
-Color::Color(double r, double g, double b, double a) :r(r), g(g), b(b), a(a)
+Color::Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
+	this->r = r;
+	this->g = g;
+	this->b = b;
+	this->a = a;
+}
+
+Color::operator uint32_t() const
+{
+	return *reinterpret_cast<const uint32_t*>(this);
 }
 
 Uint32 Color::toSDL_Uint32(const uint32_t* shifts) const

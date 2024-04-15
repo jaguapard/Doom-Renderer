@@ -18,26 +18,17 @@ enum class TextureDebugMode
 	CHECKERBOARD, //fill with checkerboard pattern
 };
 
-enum DebugColors
-{
-	WHITE = 0xFFFFFFFF,
-	GREY = 0x7F7F7FFF,
-	RED = 0xFF0000FF,
-	GREEN = 0x00FF00FF,
-	BLUE = 0x0000FFFF,
-	YELLOW = 0xFFFF00FF,
-};
-
 class Texture
 {
 public:
 	Texture(std::string name);
 	Color getPixel(int x, int y) const;
-	Color getPixel(int x, int y, double lightMult) const;
 
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
 private:
 	PixelBuffer<Color> pixels;
 	std::string name;
 	int wMask = -1, hMask = -1;
+
+	void constructDebugTexture();
 };

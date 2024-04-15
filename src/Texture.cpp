@@ -6,100 +6,50 @@
 Texture::Texture(std::string name)
 {
 	this->name = name;
-	SDL_Surface* surf;
-
-	if (TEXTURE_DEBUG_MODE == TextureDebugMode::NONE)
+	if (TEXTURE_DEBUG_MODE != TextureDebugMode::NONE)
 	{
-		std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
-		surf = IMG_Load(path.c_str());
+		this->constructDebugTexture();
+		return;
+	}
 
-		if (surf)
-		{
-			SDL_Surface* old = surf;
-			surf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_RGBA32, 0);
-			SDL_FreeSurface(old);
-		}
-		else
-		{
-			std::cout << "Failed to load texture " << name << " from " << path << ": " << IMG_GetError() << "\n" <<
-				"Falling back to purple-grey checkerboard.\n\n";
-			int w = 64, h = 64;
+	std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
+	SDL_Surface* surf = IMG_Load(path.c_str());
 
-			surf = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA32);
-			for (int y = 0; y < h; ++y)
+	if (surf)
+	{
+		SDL_Surface* nSurf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_RGBA32, 0); //force convert into this format, since that's the only one we support
+		Uint32* surfPixels = reinterpret_cast<Uint32*>(nSurf->pixels);
+		int w = nSurf->w;
+		int h = nSurf->h;
+		this->pixels = PixelBuffer<Color>(w, h);
+
+		for (int y = 0; y < h; ++y)
+		{
+			for (int x = 0; x < w; ++x)
 			{
-				for (int x = 0; x < w; ++x)
-				{
-					Uint32* ptr = (Uint32*)(surf->pixels);
-					ptr[y * w + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0x7F7F7FFF : 0xFF00FFFF;
-				}
+				this->pixels.setPixelUnsafe(x, y, surfPixels[y * w + x]);
 			}
 		}
+		
+		SDL_FreeSurface(nSurf);
 	}
 	else
 	{
-		surf = SDL_CreateRGBSurfaceWithFormat(0, 1024, 1024, 32, SDL_PIXELFORMAT_RGBA32);
-		int tw = 1024, th = 1024;
-		Uint32 dbg_colors[] = { WHITE, GREY, RED, GREEN, BLUE, YELLOW };
-		static int textureNumber = 0;
-		for (int y = 0; y < tw; ++y)
+		std::cout << "Failed to load texture " << name << " from " << path << ": " << IMG_GetError() << "\n" <<
+			"Falling back to purple-black checkerboard.\n\n";
+		int w = 64, h = 64;
+
+		this->pixels = PixelBuffer<Color>(w, h);
+		for (int y = 0; y < h; ++y)
 		{
-			for (int x = 0; x < th; ++x)
+			for (int x = 0; x < w; ++x)
 			{
-				Uint32* px = (Uint32*)(surf->pixels);
-				Uint8 bx = x, by = y;
-				switch (TEXTURE_DEBUG_MODE) //TODO: this colors are now broken after switching to SDL_PIXELFORMAT_RGBA32 everywhere. fix
-				{
-				case TextureDebugMode::NONE:
-					break;
-				case TextureDebugMode::X_GRADIENT:
-					px[by * tw + bx] = (bx << 24) + (bx << 16) + (bx << 8) + 255;
-					break;
-				case TextureDebugMode::Y_GRADIENT:
-					px[by * tw + bx] = (by << 24) + (by << 16) + (by << 8) + 255;
-					break;
-				case TextureDebugMode::XY_GRADIENT:
-					px[by * tw + bx] = (x << 24) + (y << 16) + 255;
-					break;
-				case TextureDebugMode::SOLID_WHITE:
-					px[y * tw + x] = 0xFFFFFFFF;
-					break;
-				case TextureDebugMode::COLORS:
-					px[y * tw + x] = dbg_colors[textureNumber % std::size(dbg_colors)];
-					break;
-				case TextureDebugMode::CHECKERBOARD:
-					px[y * tw + x] = (x % 16 < 8) ^ (y % 16 < 8) ? 0xFF : 0xFFFFFFFF;
-					break;
-				default:
-					break;
-				}
+				Color c = (x % 16 < 8) ^ (y % 16 < 8) ? Color(0, 0, 0) : Color(255, 0, 255);
+				this->pixels.setPixel(x, y, c); 
 			}
 		}
-		++textureNumber;
 	}
 
-	int w = surf->w;
-	int h = surf->h;
-	double pw = log2(w);
-	double ph = log2(h);
-	if (pw == floor(pw))
-	{
-		wMask = 0;
-		for (int i = 0; i < pw; ++i) wMask |= 1 << i;
-	}
-	if (ph == floor(ph))
-	{
-		hMask = 0;
-		for (int i = 0; i < pw; ++i) hMask |= 1 << i;
-	}
-
-	Uint32* surfPixels = (Uint32*)(surf->pixels);
-	this->pixels = PixelBuffer<Color>(w, h);
-	for (int y = 0; y < h; ++y) //convert SDL surface to buffer of floats and free the surface
-	{
-		for (int x = 0; x < w; ++x)
-			this->pixels.setPixelUnsafe(x, y, Color(surfPixels[y * w + x]));
-	}
 	SDL_FreeSurface(surf);
 }
 
@@ -109,9 +59,53 @@ Color Texture::getPixel(int x, int y) const
 	
 	int w = pixels.getW();
 	int h = pixels.getH();
-	x %= pixels.getW();
+	x %= pixels.getW(); //TODO: this is very slow. Our textures do not change size, so it can be optimized by fast integer modulo techiques
 	y %= pixels.getH();
 	x += (x < 0) ? w : 0;
 	y += (y < 0) ? h : 0;
 	return pixels.getPixelUnsafe(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
+}
+
+void Texture::constructDebugTexture()
+{
+	int tw = 1024, th = 1024;
+	this->pixels = PixelBuffer<Color>(tw, th);
+
+	//WHITE, GREY, RED, GREEN, BLUE, YELLOW
+	Color dbg_colors[] = { {255,255,255}, {127,127,127}, {255,0,0}, {0,255,0}, {0,0,255}, {255,255,0} };
+	static int textureNumber = 0;
+	for (int y = 0; y < tw; ++y)
+	{
+		for (int x = 0; x < th; ++x)
+		{
+			switch (TEXTURE_DEBUG_MODE)
+			{
+			case TextureDebugMode::NONE:
+				assert(false, "Debug texture build attempted without debug texture mode set");
+				return;
+			case TextureDebugMode::X_GRADIENT:
+				pixels.setPixelUnsafe(x, y, Color(x, x, x, SDL_ALPHA_OPAQUE));
+				break;
+			case TextureDebugMode::Y_GRADIENT:
+				pixels.setPixelUnsafe(x, y, Color(y, y, y, SDL_ALPHA_OPAQUE));
+				break;
+			case TextureDebugMode::XY_GRADIENT:
+				pixels.setPixelUnsafe(x, y, Color(x, y, 0, SDL_ALPHA_OPAQUE));
+				break;
+			case TextureDebugMode::SOLID_WHITE:
+				pixels.setPixelUnsafe(x, y, Color(255, 255, 255, SDL_ALPHA_OPAQUE));
+				break;
+			case TextureDebugMode::COLORS:
+				pixels.setPixelUnsafe(x, y, dbg_colors[textureNumber % std::size(dbg_colors)]);
+				break;
+			case TextureDebugMode::CHECKERBOARD:
+				Color c = (x % 16 < 8) ^ (y % 16 < 8) ? Color(0, 0, 0) : Color(255, 255, 255);
+				pixels.setPixelUnsafe(x, y, c);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	++textureNumber;
 }

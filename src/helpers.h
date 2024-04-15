@@ -29,3 +29,9 @@ inline std::string wadStrToStd(const char* wadStr, int maxLen = 8)
 	memcpy(&buf.front(), wadStr, maxLen);
 	return std::string(&buf.front()); 
 }
+
+template <typename T>
+bool isInRange(T val, T min, T max)
+{
+	return val >= min && val <= max;
+}

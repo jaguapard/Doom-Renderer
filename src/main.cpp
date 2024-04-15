@@ -110,11 +110,16 @@ void loadWad(std::string path)
 }
 
 Statsman statsman;
-
+std::vector<std::vector<Triangle>> sectorTriangles;
+TextureManager textureManager;
+void loadMap(std::string mapName)
+{
+	const Map& m = maps[mapName];
+	sectorTriangles = DoomWorldLoader::loadTriangles(m.linedefs, m.vertices, m.sidedefs, m.sectors, textureManager);
+}
 void main()
 {
 	double gamma = 1.3;
-	TextureManager textureManager;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
 	loadWad("D:/Games/GZDoom/DOOM2.wad");
@@ -137,8 +142,6 @@ void main()
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
-	std::vector<std::vector<Triangle>> sectorTriangles = DoomWorldLoader::loadTriangles(linedefs, vertices, sidedefs, sectors, textureManager);
-
 	int framebufW = 1280;
 	int framebufH = 720;
 	int screenW = 1280;
@@ -154,6 +157,8 @@ void main()
 	ZBuffer zBuffer(framebufW, framebufH);
 	uint64_t frames = 0;
 	double flySpeed = 15;
+	std::string warpTo;
+
 	while (true)
 	{
 		framebuf.clear();
@@ -171,6 +176,20 @@ void main()
 			if (ev.type == SDL_MOUSEWHEEL)
 			{
 				flySpeed *= pow(1.05, ev.wheel.y);
+			}
+
+			if (ev.type == SDL_KEYDOWN)
+			{
+				auto scancode = ev.key.keysym.scancode;
+				if (isInRange(scancode, SDL_SCANCODE_1, SDL_SCANCODE_0)) //TODO: very dirty, assumes than scancodes are sequential
+				{
+					warpTo += (scancode == SDL_SCANCODE_0) ? '0' : (scancode - SDL_SCANCODE_1 + '1');
+					if (warpTo.length() == 2)
+					{
+						loadMap("MAP" + warpTo);
+						warpTo.clear();
+					}
+				}
 			}
 		}
 
@@ -195,9 +214,9 @@ void main()
 		}
 		ctr.prepare(camPos, transformMatrix);
 
-		for (int i = 0; i < sectors.size(); ++i)
+		for (int i = 0; i < sectorTriangles.size(); ++i)
 		{
-			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textureManager, pow(sectors[i].lightLevel / 256.0, gamma));
+			for (int j = 0; j < sectorTriangles[i].size(); ++j) sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textureManager, 1.0);// pow(sectors[i].lightLevel / 256.0, gamma));
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 

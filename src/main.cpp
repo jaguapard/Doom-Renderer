@@ -123,10 +123,10 @@ void main()
 
 	std::vector<std::vector<Triangle>> sectorTriangles = DoomWorldLoader::loadTriangles(linedefs, vertices, sidedefs, sectors, textureManager);
 
-	int framebufW = 2560;
-	int framebufH = 1440;
-	int screenW = 2560;
-	int screenH = 1440;
+	int framebufW = 1280;
+	int framebufH = 720;
+	int screenW = 1280;
+	int screenH = 720;
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenW, screenH, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
@@ -137,6 +137,7 @@ void main()
 
 	ZBuffer zBuffer(framebufW, framebufH);
 	uint64_t frames = 0;
+	double flySpeed = 15;
 	while (true)
 	{
 		framebuf.clear();
@@ -151,10 +152,13 @@ void main()
 			{
 				camAng += { 0, ev.motion.xrel * 1e-3, ev.motion.yrel * -1e-3};
 			}
+			if (ev.type == SDL_MOUSEWHEEL)
+			{
+				flySpeed *= pow(1.05, ev.wheel.y);
+			}
 		}
 
-		camPos -= { 15.0 * input.isButtonHeld(SDL_SCANCODE_D), 15.0 * input.isButtonHeld(SDL_SCANCODE_X), 15.0 * input.isButtonHeld(SDL_SCANCODE_W)};
-		camPos += { 15.0 * input.isButtonHeld(SDL_SCANCODE_A), 15.0 * input.isButtonHeld(SDL_SCANCODE_Z), 15.0 * input.isButtonHeld(SDL_SCANCODE_S)};
+		
 
 		camAng += { 3e-2 * input.isButtonHeld(SDL_SCANCODE_R), 3e-2 * input.isButtonHeld(SDL_SCANCODE_T), 3e-2 * input.isButtonHeld(SDL_SCANCODE_Y)};
 		camAng -= { 3e-2 * input.isButtonHeld(SDL_SCANCODE_F), 3e-2 * input.isButtonHeld(SDL_SCANCODE_G), 3e-2 * input.isButtonHeld(SDL_SCANCODE_H)};
@@ -162,7 +166,17 @@ void main()
 		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
 		gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
 
+		Vec3 camAdd = -Vec3({ double(input.isButtonHeld(SDL_SCANCODE_D)), double(input.isButtonHeld(SDL_SCANCODE_X)), double(input.isButtonHeld(SDL_SCANCODE_W)) });
+		camAdd += { double(input.isButtonHeld(SDL_SCANCODE_A)), double(input.isButtonHeld(SDL_SCANCODE_Z)), double(input.isButtonHeld(SDL_SCANCODE_S))};
+
+
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
+		if (double l = camAdd.len() > 0)
+		{
+			camAdd /= camAdd.len();
+			camAdd = getRotationMatrix(-camAng) * camAdd;
+			camPos += camAdd * flySpeed;
+		}
 		ctr.prepare(camPos, transformMatrix);
 
 		for (int i = 0; i < sectors.size(); ++i)
@@ -171,19 +185,23 @@ void main()
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 
-		if (false) //pathetic attempt at making fog effect
+		if (true)
 		{
 			double* zBuffPixels = zBuffer.getRawPixels();
 			Color* framebufPixels = framebuf.getRawPixels();
+			//Color fogColor = { 0.6, 0, 0.15, 1 };
+			Color fogColor = { 1,1,1, 1 };
 			int pxCount = framebufW * framebufH;
+
+			double fogMaxIntensityDist = 600;
 			for (int i = 0; i < pxCount; ++i)
 			{
 				double depth = -zBuffPixels[i];
 				Color c = framebufPixels[i];
-				double lerpT = std::clamp(depth, 0.0, 1.0);
-				c.r = lerp(c.r, 1.0, lerpT);
-				c.g = lerp(c.r, 1.0, lerpT);
-				c.b = lerp(c.r, 1.0, lerpT);
+				double lerpT = depth == 0.0 ? 1 : std::clamp((1.0/depth) / fogMaxIntensityDist, 0.0, 1.0); //z buffer stores 1/z, so need to get the real z
+				c.r = lerp(c.r, fogColor.r, lerpT);
+				c.g = lerp(c.g, fogColor.g, lerpT);
+				c.b = lerp(c.b, fogColor.b, lerpT);
 				framebufPixels[i] = c;
 			}
 		}

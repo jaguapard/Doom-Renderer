@@ -29,13 +29,6 @@
 #pragma comment(lib,"SDL2_image.lib")
 #undef main
 
-
-
-std::vector<Vertex> vertices;
-std::vector<Linedef> linedefs;
-std::vector<Sidedef> sidedefs;
-std::vector<Sector> sectors;
-
 template <typename T>
 void readRaw(T& ret, const void* bytes)
 {
@@ -60,6 +53,18 @@ std::vector<T> getVectorFromWad(int32_t lumpDataOffset, int32_t lumpSizeBytes, c
 	return ret;
 }
 
+class Map
+{
+public:
+	Map() = default;
+	std::vector<Vertex> vertices;
+	std::vector<Linedef> linedefs;
+	std::vector<Sidedef> sidedefs;
+	std::vector<Sector> sectors;
+};
+
+std::map<std::string, Map> maps;
+
 void loadWad(std::string path)
 {
 	std::ifstream f(path, std::ios::binary);
@@ -79,17 +84,27 @@ void loadWad(std::string path)
 	int32_t FAToffset = readRaw<int32_t>(&wadBytes[8]);
 
 	int32_t filePtr = FAToffset;
+	std::string mapName = "";
+	Map map;
 	for (int i = 0; i < numFiles; ++i)
 	{
 		int32_t lumpDataOffset = readRaw<int32_t>(&wadBytes[filePtr]);
 		int32_t lumpSizeBytes = readRaw<int32_t>(&wadBytes[filePtr + 4]);
 		std::string name = wadStrToStd(&wadBytes[filePtr + 8]);
-		std::cout << "Found WAD file: " << name << ", data offset: " << lumpDataOffset << ", size: " << lumpSizeBytes << "\n";
+		std::cout << "Found file: " << name << ", data offset: " << lumpDataOffset << ", size: " << lumpSizeBytes << "\n";
 
-		if (name == "VERTEXES") vertices = getVectorFromWad<Vertex>(lumpDataOffset, lumpSizeBytes, wadBytes);
-		if (name == "LINEDEFS") linedefs = getVectorFromWad<Linedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
-		if (name == "SIDEDEFS") sidedefs = getVectorFromWad<Sidedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
-		if (name == "SECTORS") sectors = getVectorFromWad<Sector>(lumpDataOffset, lumpSizeBytes, wadBytes);
+		bool isEpisodicMap = name.length() >= 4 && name[0] == 'E' && name[2] == 'M';
+		bool isNonEpisodicMap = name.length() >= 5 && std::string(name.begin(), name.begin() + 3) == "MAP";
+		if (isEpisodicMap || isNonEpisodicMap)
+		{
+			if (mapName != name && mapName != "") maps[mapName] = map; //if map was in progress of being read, then save it
+			mapName = name;
+		}
+
+		if (name == "VERTEXES") map.vertices = getVectorFromWad<Vertex>(lumpDataOffset, lumpSizeBytes, wadBytes);
+		if (name == "LINEDEFS") map.linedefs = getVectorFromWad<Linedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
+		if (name == "SIDEDEFS") map.sidedefs = getVectorFromWad<Sidedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
+		if (name == "SECTORS") map.sectors = getVectorFromWad<Sector>(lumpDataOffset, lumpSizeBytes, wadBytes);
 		filePtr += 16;
 	}
 }
@@ -102,9 +117,10 @@ void main()
 	TextureManager textureManager;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
+	loadWad("D:/Games/GZDoom/DOOM2.wad");
 	//loadWad("data/test_maps/STUPID.wad");
 	//loadWad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
-	loadWad("D:/Games/GZDoom/MappingTests/D2_MAP15.wad");
+	//loadWad("D:/Games/GZDoom/MappingTests/D2_MAP15.wad");
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");
 

@@ -145,9 +145,12 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 			double xp = (x - xLeft) / (xRight - xLeft);
 			Vec3 interpolatedDividedUv = lerp(dividedUvLeft, dividedUvRight, xp);
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
-			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
+
+			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
+			bool notFullyTransparent = texturePixel.a > 0;
+			if (notFullyTransparent && zBuffer.testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing
 			{
-				auto c = texture.getPixel(uvCorrected.x, uvCorrected.y, lightMult);
+				Color c = texturePixel.multipliedByLight(lightMult);
 				buf.setPixelUnsafe(x, y, c);
 			}
 		}
@@ -179,9 +182,12 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 			double xp = (x - xLeft) / (xRight - xLeft);
 			Vec3 interpolatedDividedUv = lerp(dividedUvLeft, dividedUvRight, xp);
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
-			if (zBuffer.testAndSet(x, y, interpolatedDividedUv.z))
+
+			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
+			bool notFullyTransparent = texturePixel.a > 0;
+			if (notFullyTransparent && zBuffer.testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing 
 			{
-				auto c = texture.getPixel(uvCorrected.x, uvCorrected.y, lightMult);
+				Color c = texturePixel.multipliedByLight(lightMult);
 				buf.setPixelUnsafe(x, y, c);
 			}
 		}

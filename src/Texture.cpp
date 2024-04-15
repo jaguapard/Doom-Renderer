@@ -103,7 +103,7 @@ Texture::Texture(std::string name)
 	SDL_FreeSurface(surf);
 }
 
-Color Texture::getPixel(int x, int y, double lightMult) const
+Color Texture::getPixel(int x, int y) const
 {
 	StatCount(statsman.textures.pixelFetches++);
 	
@@ -113,34 +113,5 @@ Color Texture::getPixel(int x, int y, double lightMult) const
 	y %= pixels.getH();
 	x += (x < 0) ? w : 0;
 	y += (y < 0) ? h : 0;
-	/*
-	if (wMask >= 0)
-	{
-		StatCount(statsman.textures.optimizedXreads++);
-		x &= wMask;
-	}
-	else
-	{
-		int w = pixels.getW();
-		x %= w;
-		if (x < 0) x += w; //this adds prevent reflection of wrapped coordinates around 0 
-	}
-
-	if (hMask >= 0)
-	{
-		y &= hMask;
-		StatCount(statsman.textures.optimizedYreads++);
-	}
-	else
-	{
-		int h = pixels.getH();
-		y %= h;
-		if (y < 0) y += h; //this adds prevent reflection of wrapped coordinates around 0 
-	}*/
-
-	Color c = pixels.getPixelUnsafe(x, y); //due to manipulations with input x and y, it should never go out of bounds
-	c.r *= lightMult;
-	c.g *= lightMult;
-	c.b *= lightMult;
-	return c;
+	return pixels.getPixelUnsafe(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
 }

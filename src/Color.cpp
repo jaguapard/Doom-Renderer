@@ -2,7 +2,17 @@
 #include "Color.h"
 #include <cassert>
 
+//A bunch of sanity checks. The code in this project assumes all of this
 static_assert(sizeof(Color) == sizeof(Uint32), "Color must have the same size as SDL's Uint32");
+static_assert(offsetof(Color, r) == offsetof(SDL_Color, r));
+static_assert(offsetof(Color, g) == offsetof(SDL_Color, g));
+static_assert(offsetof(Color, b) == offsetof(SDL_Color, b));
+static_assert(offsetof(Color, a) == offsetof(SDL_Color, a));
+
+static_assert(offsetof(Color, r) == 0);
+static_assert(offsetof(Color, g) == 1);
+static_assert(offsetof(Color, b) == 2);
+static_assert(offsetof(Color, a) == 3);
 
 Color::Color(uint32_t u)
 {

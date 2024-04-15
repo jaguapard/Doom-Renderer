@@ -11,8 +11,7 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 	for (int i = 0; i < 3; ++i)
 	{
 		Vec3 off = ctr.doCamOffset(tv[i].worldCoords);
-		Vec3 rt = ctr.rotate(off);
-		rot[i] = { rt, tv[i].textureCoords };
+		Vec3 rt = ctr.rotate(off);		
 
 		if (rt.z > planeZ)
 		{
@@ -24,6 +23,7 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 			}
 			vertexOutside[i] = true;			
 		}
+		rot[i] = { rt, tv[i].textureCoords };
 	}
 	
 	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawInner and proceed

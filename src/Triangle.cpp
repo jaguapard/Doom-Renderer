@@ -95,18 +95,28 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 	std::sort(fullyTransformed.begin(), fullyTransformed.end());
-	
+
 	std::array<Vec3, 3> uvDividedByZ;
 	for (int i = 0; i < 3; ++i)
 	{
 		double zInv = fullyTransformed[i].worldCoords.z;
 		Vec2 dividedUv = fullyTransformed[i].textureCoords * zInv;
-		uvDividedByZ[i] = Vec3(dividedUv.x, dividedUv.y, zInv);
+		fullyTransformed[i].textureCoords = Vec3(dividedUv.x, dividedUv.y, zInv);
 	}
 
-	//double splitAlpha = (screenSpace[1].worldCoords.y - screenSpace[0].worldCoords.y) / (screenSpace[2].worldCoords.y - screenSpace[2].worldCoords.y);
-	//TexVertex splitVertex = 
-	Triangle flatBottom;
+	double splitAlpha = (fullyTransformed[1].worldCoords.y - fullyTransformed[0].worldCoords.y) / (fullyTransformed[2].worldCoords.y - fullyTransformed[2].worldCoords.y);
+	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
+	
+	Triangle flatBottom;// = { {fullyTransformed[0], fullyTransformed[1], splitVertex}, {fullyTransformed[1], splitVertex, fullyTransformed[2]} }, this->textureIndex
+	flatBottom.tv = { fullyTransformed[0], fullyTransformed[1], splitVertex };
+	flatBottom.textureIndex = this->textureIndex;
+	
+	Triangle flatTop;
+	flatTop = { fullyTransformed[1], fullyTransformed[2], splitVertex };
+	flatTop.textureIndex = this->textureIndex;
+
+	flatTop.drawScreenSpaceAndUvDividedPrepped(context);
+	return flatBottom.drawScreenSpaceAndUvDividedPrepped(context);
 
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */

@@ -13,7 +13,7 @@
 struct TexVertex
 {
 	Vec3 worldCoords;
-	Vec2 textureCoords;
+	Vec3 textureCoords;
 
 	bool operator<(const TexVertex& b) const
 	{

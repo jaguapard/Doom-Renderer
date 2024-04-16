@@ -16,6 +16,7 @@ void CoordinateTransformer::prepare(const Vec3& camPos, const Matrix3& rotation)
 
 Vec3 CoordinateTransformer::toScreenCoords(const Vec3& v) const
 {
+	assert(this->_shift.z == 0.0); //ensure to not touch z
 	Vec3 camOffset = v - camPos;
 	Vec3 rot = rotation * camOffset;
 	Vec3 perspective = rot / rot.z; //screen space coords of vector
@@ -27,6 +28,7 @@ Vec3 CoordinateTransformer::toScreenCoords(const Vec3& v) const
 
 Vec3 CoordinateTransformer::screenSpaceToPixels(const Vec3& v) const
 {
+	assert(this->_shift.z == 0.0); //ensure to not touch z
 	return (v + this->_shift) * h;
 }
 
@@ -42,5 +44,6 @@ Vec3 CoordinateTransformer::rotate(const Vec3& v) const
 
 Vec3 CoordinateTransformer::shift(const Vec3& v) const
 {
+	assert(this->_shift.z == 0.0); //ensure to not touch z
 	return v + this->_shift;
 }

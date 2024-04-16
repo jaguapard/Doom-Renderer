@@ -3,15 +3,15 @@
 
 constexpr double planeZ = -1;
 
-void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, TextureManager& textureManager, double lightMult) const
+void Triangle::drawOn(const TriangleRenderContext& context) const
 {
 	std::array<TexVertex,3> rot;
 	bool vertexOutside[3] = { false };
 	int outsideVertexCount = 0;
 	for (int i = 0; i < 3; ++i)
 	{
-		Vec3 off = ctr.doCamOffset(tv[i].worldCoords);
-		Vec3 rt = ctr.rotate(off);		
+		Vec3 off = context.ctr->doCamOffset(tv[i].worldCoords);
+		Vec3 rt = context.ctr->rotate(off);
 
 		if (rt.z > planeZ)
 		{
@@ -26,12 +26,12 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 		rot[i] = { rt, tv[i].textureCoords };
 	}
 	
-	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawInner and proceed
+	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
 	{
 		StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
 		Triangle prepped = *this;
 		prepped.tv = rot;
-		return prepped.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
+		return prepped.drawRotationPrepped(context);
 	}
 	
 	auto itBeg = std::begin(vertexOutside);
@@ -52,8 +52,8 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 		t1.tv = { v1,clipped1, v2 };
 		t2.tv = { clipped1, clipped2, v2};
 
-		t1.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
-		t2.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
+		t1.drawRotationPrepped(context);
+		t2.drawRotationPrepped(context);
 		return;
 	}
 
@@ -68,12 +68,12 @@ void Triangle::drawOn(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr,
 		clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 		clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 		clipped.tv[i] = rot[i];
-		return clipped.drawInner(buf, ctr, zBuffer, textureManager, lightMult);
+		return clipped.drawRotationPrepped(context);
 	}
 }
 
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& ctr, ZBuffer& zBuffer, TextureManager& textureManager, double lightMult) const
+void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 {
 	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].worldCoords));
 	Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].worldCoords));
@@ -82,14 +82,14 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 	Vec3 camPos = -ctr.doCamOffset(Vec3(0, 0, 0));
 	if (cross.dot(camPos) > 0) return;*/
 
-	double maxX = buf.getW(), maxY = buf.getH();
+	double maxX = context.framebufW, maxY = context.framebufH;
 
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
 	{
 		//double zInv = 1.0 / zDivided[i].worldCoords.z;
 		Vec3 zDivided = tv[i].worldCoords / tv[i].worldCoords.z;
-		fullyTransformed[i] = { ctr.screenSpaceToPixels(zDivided), tv[i].textureCoords };
+		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDivided), tv[i].textureCoords };
 	}
 
 	std::array<int, 3> screenIndices = { 0,1,2 };
@@ -119,7 +119,7 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 
 	double yBeg = std::max(0.0, y1);
 	double yEnd = std::min(maxY, y2);
-	const Texture& texture = textureManager.getTextureByIndex(this->textureIndex);
+	const Texture& texture = context.textureManager->getTextureByIndex(this->textureIndex);
 
 	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
@@ -148,10 +148,10 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
 			bool notFullyTransparent = texturePixel.a > 0;
-			if (notFullyTransparent && zBuffer.testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing
+			if (notFullyTransparent && context.zBuffer->testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing
 			{
-				Color c = texturePixel.multipliedByLight(lightMult);
-				buf.setPixelUnsafe(x, y, c);
+				Color c = texturePixel.multipliedByLight(context.lightMult);
+				context.frameBuffer->setPixelUnsafe(x, y, c);
 			}
 		}
 	}
@@ -185,10 +185,10 @@ void Triangle::drawInner(PixelBuffer<Color>& buf, const CoordinateTransformer& c
 
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
 			bool notFullyTransparent = texturePixel.a > 0;
-			if (notFullyTransparent && zBuffer.testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing 
+			if (notFullyTransparent && context.zBuffer->testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing 
 			{
-				Color c = texturePixel.multipliedByLight(lightMult);
-				buf.setPixelUnsafe(x, y, c);
+				Color c = texturePixel.multipliedByLight(context.lightMult);
+				context.frameBuffer->setPixelUnsafe(x, y, c);
 			}
 		}
 	}

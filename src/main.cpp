@@ -221,10 +221,20 @@ void main()
 
 		if (currentMap)
 		{
+			TriangleRenderContext ctx;
+			ctx.ctr = &ctr;
+			ctx.frameBuffer = &framebuf;
+			ctx.textureManager = &textureManager;
+			ctx.zBuffer = &zBuffer;
+			ctx.framebufW = framebufW;
+			ctx.framebufH = framebufH;
 			for (int i = 0; i < sectorTriangles.size(); ++i)
 			{
 				for (int j = 0; j < sectorTriangles[i].size(); ++j)
-					sectorTriangles[i][j].drawOn(framebuf, ctr, zBuffer, textureManager, pow(currentMap->sectors[i].lightLevel / 256.0, gamma));
+				{
+					ctx.lightMult = pow(currentMap->sectors[i].lightLevel / 256.0, gamma);
+					sectorTriangles[i][j].drawOn(ctx);
+				}
 			}
 		}
 		std::cout << "Frame " << frames++ << " done\n";

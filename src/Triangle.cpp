@@ -118,14 +118,16 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 
 	double yBeg = std::max(0.0, y1);
 	double yEnd = std::min(context.framebufH, y3);
-	double ySpan = y3 - y1;
+	double ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
 	const Texture& texture = context.textureManager->getTextureByIndex(this->textureIndex);
 
+	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
+	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
 		double yp = (y - y1) / ySpan;
-		TexVertex scanlineTv1 = lerp(tv[0], flatBottom ? tv[1] : tv[2], yp); //flat top and flat bottom triangles require different interpolation points
-		TexVertex scanlineTv2 = lerp(flatBottom ? tv[0] : tv[1], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+		TexVertex scanlineTv1 = lerp(tv[0], lerpDst1, yp); 
+		TexVertex scanlineTv2 = lerp(lerpSrc2, tv[2], yp);
 		const TexVertex* left = &scanlineTv1;
 		const TexVertex* right = &scanlineTv2;
 		if (left->spaceCoords.x > right->spaceCoords.x) std::swap(left, right);

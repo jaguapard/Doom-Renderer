@@ -91,7 +91,7 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 		zDividedUv.z = zInv;
 		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
 	}
-
+	if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 	std::sort(fullyTransformed.begin(), fullyTransformed.end());
 

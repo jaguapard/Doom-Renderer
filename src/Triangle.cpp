@@ -112,11 +112,18 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	flatBottom.textureIndex = this->textureIndex;
 	
 	Triangle flatTop;
-	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
+	//flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
+	
+	//flatTop = { splitVertex, fullyTransformed[1], fullyTransformed[2]};
+	//flatTop = { splitVertex, fullyTransformed[2], fullyTransformed[1] };
+	//flatTop = { fullyTransformed[2], splitVertex, fullyTransformed[1] };
+	//flatTop = { fullyTransformed[2], fullyTransformed[1], splitVertex };
+	bool splitOnLeft = splitVertex.worldCoords.x < fullyTransformed[1].worldCoords.x;
+	flatTop = { splitOnLeft ? splitVertex : fullyTransformed[1], splitOnLeft ? fullyTransformed[1] : splitVertex, fullyTransformed[2] };
 	flatTop.textureIndex = this->textureIndex;
 
 	flatTop.drawScreenSpaceAndUvDividedPrepped(context);
-	flatBottom.drawScreenSpaceAndUvDividedPrepped(context);
+	//flatBottom.drawScreenSpaceAndUvDividedPrepped(context);
 }
 
 void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context) const

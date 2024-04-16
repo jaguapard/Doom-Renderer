@@ -91,7 +91,7 @@ void loadWad(std::string path)
 		int32_t lumpDataOffset = readRaw<int32_t>(&wadBytes[filePtr]);
 		int32_t lumpSizeBytes = readRaw<int32_t>(&wadBytes[filePtr + 4]);
 		std::string name = wadStrToStd(&wadBytes[filePtr + 8]);
-		std::cout << "Found file: " << name << ", data offset: " << lumpDataOffset << ", size: " << lumpSizeBytes << "\n";
+		if (false) std::cout << "Found file: " << name << ", data offset: " << lumpDataOffset << ", size: " << lumpSizeBytes << "\n";
 
 		bool isEpisodicMap = name.length() >= 4 && name[0] == 'E' && name[2] == 'M';
 		bool isNonEpisodicMap = name.length() >= 5 && std::string(name.begin(), name.begin() + 3) == "MAP";

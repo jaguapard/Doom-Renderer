@@ -82,8 +82,6 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	Vec3 camPos = -ctr.doCamOffset(Vec3(0, 0, 0));
 	if (cross.dot(camPos) > 0) return;*/
 
-	double maxX = context.framebufW, maxY = context.framebufH;
-
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
 	{
@@ -107,26 +105,19 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	double splitAlpha = (fullyTransformed[1].worldCoords.y - fullyTransformed[0].worldCoords.y) / (fullyTransformed[2].worldCoords.y - fullyTransformed[0].worldCoords.y);
 	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
 	
-	Triangle flatBottom;// = { {fullyTransformed[0], fullyTransformed[1], splitVertex}, {fullyTransformed[1], splitVertex, fullyTransformed[2]} }, this->textureIndex
+	Triangle flatBottom;
 	flatBottom.tv = { fullyTransformed[0], fullyTransformed[1], splitVertex };
 	flatBottom.textureIndex = this->textureIndex;
 	
 	Triangle flatTop;
-	//flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
-	
-	//flatTop = { splitVertex, fullyTransformed[1], fullyTransformed[2]};
-	//flatTop = { splitVertex, fullyTransformed[2], fullyTransformed[1] };
-	//flatTop = { fullyTransformed[2], splitVertex, fullyTransformed[1] };
-	//flatTop = { fullyTransformed[2], fullyTransformed[1], splitVertex };
-	bool splitOnLeft = splitVertex.worldCoords.x < fullyTransformed[1].worldCoords.x;
-	flatTop = { splitOnLeft ? splitVertex : fullyTransformed[1], splitOnLeft ? fullyTransformed[1] : splitVertex, fullyTransformed[2] };
-	flatTop.textureIndex = this->textureIndex;
+	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
+	flatTop.textureIndex = this->textureIndex;	
 
-	flatTop.drawScreenSpaceAndUvDividedPrepped(context);
-	//flatBottom.drawScreenSpaceAndUvDividedPrepped(context);
+	flatTop.drawScreenSpaceAndUvDividedPrepped(context, false);
+	flatBottom.drawScreenSpaceAndUvDividedPrepped(context, true);
 }
 
-void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context) const
+void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context, bool flatBottom) const
 {
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */
@@ -140,12 +131,8 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
 		double yp = (y - y1) / ySpan;
-		//const TexVertex* tLeft = &scanlineTv1;
-		//const TexVertex* right = &scanlineTv2;
-		TexVertex scanlineTv1 = lerp(tv[0], tv[1], yp);
-		TexVertex scanlineTv2 = lerp(tv[0], tv[2], yp);
-		/*/const TexVertex& left = scanlineTv1.worldCoords.x <= scanlineTv2.worldCoords.x ? scanlineTv1 : scanlineTv2;
-		const TexVertex& right = scanlineTv1.worldCoords.x <= scanlineTv2.worldCoords.x ? scanlineTv2 : scanlineTv1;*/
+		TexVertex scanlineTv1 = lerp(tv[0], flatBottom ? tv[1] : tv[2], yp);
+		TexVertex scanlineTv2 = lerp(flatBottom ? tv[0] : tv[1], tv[2], yp);
 		const TexVertex* left = &scanlineTv1;
 		const TexVertex* right = &scanlineTv2;
 		if (left->worldCoords.x > right->worldCoords.x) std::swap(left, right);

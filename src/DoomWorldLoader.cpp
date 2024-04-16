@@ -98,7 +98,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 		bool debugEnabled = true;
 #endif
 
-		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled || true ? -1 : 1); //too slow in debug mode
+		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled ? -1 : 1); //too slow in debug mode
 		auto& target = sectorTriangles[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
 		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";
@@ -250,41 +250,43 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_initial.png");
 
 	std::vector<Vec3> ret;
-	//carve out right angle triangles
-	for (const auto& it : sectorLinedefs)
+	if (false)
 	{
-		Vertex sv = vertices[it.startVertex];
-		Vertex ev = vertices[it.endVertex];
-		if (sv.x == ev.x || sv.y == ev.y) continue; //it is a horizontal or vertical line, we want only slopes
-
-		//a triangle will have two vertices from the affected linedef, and a third will be calculated from them to reside inside the sector and have right angle. 
-		// There are only 2 such possible arrangments
-		Vec2 candidate(sv.x, ev.y);
-		Vec3 v[3];
-		if (!isPointInsidePolygon(candidate, sectorLinedefs, vertices)) candidate = Vec2(ev.x, sv.y);
-		ret.push_back(v[0] = Vec3(sv.x, 0, sv.y));
-		ret.push_back(v[1] = Vec3(ev.x, 0, ev.y));
-		ret.push_back(v[2] = Vec3(candidate.x, 0, candidate.y));
-
-		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.z < b.z; });
-		real span = v[2].z - v[0].z;
-		assert(span > 0);
-		bool leftStraight = v[0].x == v[2].x;
-		bool rightStraight = v[1].x == v[2].x;
-		for (real y = v[0].z; y < v[2].z; ++y)
+		//carve out right angle triangles
+		for (const auto& it : sectorLinedefs)
 		{
-			real yp = (y - v[0].z) / span;
-			assert(yp >= 0 && yp <= 1);
-			real xLeft = lerp(v[0].x, v[1].x, rightStraight ? 0 : leftStraight ? 1 : yp); //breaks if x0 == x2 and NOT rightStraight (always == 2)
-			real xRight = lerp(v[0].x, v[2].x, rightStraight ? 1 : yp); //and this also always == 0 if previous conditions are met
-			if (xLeft > xRight) std::swap(xLeft, xRight);
-			for (real x = xLeft; x < xRight; ++x)
+			Vertex sv = vertices[it.startVertex];
+			Vertex ev = vertices[it.endVertex];
+			if (sv.x == ev.x || sv.y == ev.y) continue; //it is a horizontal or vertical line, we want only slopes
+
+			//a triangle will have two vertices from the affected linedef, and a third will be calculated from them to reside inside the sector and have right angle. 
+			// There are only 2 such possible arrangments
+			Vec2 candidate(sv.x, ev.y);
+			Vec3 v[3];
+			if (!isPointInsidePolygon(candidate, sectorLinedefs, vertices)) candidate = Vec2(ev.x, sv.y);
+			ret.push_back(v[0] = Vec3(sv.x, 0, sv.y));
+			ret.push_back(v[1] = Vec3(ev.x, 0, ev.y));
+			ret.push_back(v[2] = Vec3(candidate.x, 0, candidate.y));
+
+			std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.z < b.z; });
+			real span = v[2].z - v[0].z;
+			assert(span > 0);
+			bool leftStraight = v[0].x == v[2].x;
+			bool rightStraight = v[1].x == v[2].x;
+			for (real y = v[0].z; y < v[2].z; ++y)
 			{
-				bitmap[int(y - minY) * w + int(x - minX)] = false;
+				real yp = (y - v[0].z) / span;
+				assert(yp >= 0 && yp <= 1);
+				real xLeft = lerp(v[0].x, v[1].x, rightStraight ? 0 : leftStraight ? 1 : yp); //breaks if x0 == x2 and NOT rightStraight (always == 2)
+				real xRight = lerp(v[0].x, v[2].x, rightStraight ? 1 : yp); //and this also always == 0 if previous conditions are met
+				if (xLeft > xRight) std::swap(xLeft, xRight);
+				for (real x = xLeft; x < xRight; ++x)
+				{
+					bitmap[int(y - minY) * w + int(x - minX)] = false;
+				}
 			}
 		}
 	}
-
 	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_post_tri_carve.png");
 
 	std::vector<SDL_Rect> rects;

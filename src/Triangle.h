@@ -25,7 +25,7 @@ struct TexVertex
 
 inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, double amount)
 {
-	return { t1.spaceCoords + (t2.spaceCoords - t1.spaceCoords) * amount, t1.textureCoords + (t2.textureCoords - t1.textureCoords) * amount };
+	return { lerp(t1.spaceCoords, t2.spaceCoords, amount), lerp(t1.textureCoords, t2.textureCoords,amount) };
 }
 
 struct TriangleRenderContext

@@ -134,12 +134,12 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 		
 		double xBeg = std::max(0.0, left->spaceCoords.x);
 		double xEnd = std::min(context.framebufW, right->spaceCoords.x);
-		double tv_xSpan = right->spaceCoords.x - left->spaceCoords.x;
+		double xSpan = right->spaceCoords.x - left->spaceCoords.x;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
 		for (double x = xBeg; x < xEnd; ++x)
 		{
-			double xp = (x - left->spaceCoords.x) / tv_xSpan;
+			double xp = (x - left->spaceCoords.x) / xSpan;
 			Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 

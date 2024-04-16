@@ -104,7 +104,7 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 		fullyTransformed[i].textureCoords = Vec3(dividedUv.x, dividedUv.y, zInv);
 	}
 
-	double splitAlpha = (fullyTransformed[1].worldCoords.y - fullyTransformed[0].worldCoords.y) / (fullyTransformed[2].worldCoords.y - fullyTransformed[2].worldCoords.y);
+	double splitAlpha = (fullyTransformed[1].worldCoords.y - fullyTransformed[0].worldCoords.y) / (fullyTransformed[2].worldCoords.y - fullyTransformed[0].worldCoords.y);
 	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
 	
 	Triangle flatBottom;// = { {fullyTransformed[0], fullyTransformed[1], splitVertex}, {fullyTransformed[1], splitVertex, fullyTransformed[2]} }, this->textureIndex
@@ -112,46 +112,46 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	flatBottom.textureIndex = this->textureIndex;
 	
 	Triangle flatTop;
-	flatTop = { fullyTransformed[1], fullyTransformed[2], splitVertex };
+	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
 	flatTop.textureIndex = this->textureIndex;
 
 	flatTop.drawScreenSpaceAndUvDividedPrepped(context);
-	return flatBottom.drawScreenSpaceAndUvDividedPrepped(context);
+	flatBottom.drawScreenSpaceAndUvDividedPrepped(context);
+}
 
+void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context) const
+{
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */
-	double x1 = fullyTransformed[0].worldCoords.x, x2 = fullyTransformed[1].worldCoords.x, x3 = fullyTransformed[2].worldCoords.x, y1 = fullyTransformed[0].worldCoords.y, y2 = fullyTransformed[1].worldCoords.y, y3 = fullyTransformed[2].worldCoords.y;
-	double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
-	double split_xend = lerp(x1, x3, splitAlpha); //last x of splitting line
-	Vec3 split_dividedUvEnd = lerp(uvDividedByZ[0], uvDividedByZ[2], splitAlpha);
+	double x1 = tv[0].worldCoords.x, x2 = tv[1].worldCoords.x, x3 = tv[2].worldCoords.x, y1 = tv[0].worldCoords.y, y2 = tv[1].worldCoords.y, y3 = tv[2].worldCoords.y;
 
 	double yBeg = std::max(0.0, y1);
-	double yEnd = std::min(maxY, y2);
+	double yEnd = std::min(context.framebufH, y3);
+	double ySpan = y3 - y1;
 	const Texture& texture = context.textureManager->getTextureByIndex(this->textureIndex);
 
 	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
-		double yp = (y - y1) / (y2 - y1); //this is the "progress" along the flat bottom part, not whole triangle!
-		double xLeft = lerp(x1, x2, yp);
-		double xRight = lerp(x1, x3, splitAlpha * yp);
-
-		Vec3 dividedUvLeft = lerp(uvDividedByZ[0], uvDividedByZ[1], yp);
-		Vec3 dividedUvRight = lerp(uvDividedByZ[0], uvDividedByZ[2], splitAlpha * yp);
-
-		if (xLeft > xRight)
-		{
-			std::swap(xLeft, xRight); //enforce non-decreasing x for next loop.
-			std::swap(dividedUvLeft, dividedUvRight); //If we swap x, then uv also has to go.
-		}
-
-		double xBeg = std::max(0.0, xLeft);
-		double xEnd = std::min(maxX, xRight);
+		double yp = (y - y1) / ySpan;
+		//const TexVertex* tLeft = &scanlineTv1;
+		//const TexVertex* right = &scanlineTv2;
+		TexVertex scanlineTv1 = lerp(tv[0], tv[1], yp);
+		TexVertex scanlineTv2 = lerp(tv[0], tv[2], yp);
+		/*/const TexVertex& left = scanlineTv1.worldCoords.x <= scanlineTv2.worldCoords.x ? scanlineTv1 : scanlineTv2;
+		const TexVertex& right = scanlineTv1.worldCoords.x <= scanlineTv2.worldCoords.x ? scanlineTv2 : scanlineTv1;*/
+		const TexVertex* left = &scanlineTv1;
+		const TexVertex* right = &scanlineTv2;
+		if (left->worldCoords.x > right->worldCoords.x) std::swap(left, right);
+		
+		double xBeg = std::max(0.0, left->worldCoords.x);
+		double xEnd = std::min(context.framebufW, right->worldCoords.x);
+		double tv_xSpan = right->worldCoords.x - left->worldCoords.x;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
 		for (double x = xBeg; x < xEnd; ++x)
 		{
-			double xp = (x - xLeft) / (xRight - xLeft);
-			Vec3 interpolatedDividedUv = lerp(dividedUvLeft, dividedUvRight, xp);
+			double xp = (x - left->worldCoords.x) / tv_xSpan;
+			Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
@@ -163,47 +163,6 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 			}
 		}
 	}
-
-	yBeg = std::max(0.0, y2);
-	yEnd = std::min(maxY, y3);
-	for (double y = yBeg; y < yEnd; ++y) //draw flat top part
-	{
-		double yp = (y - y2) / (y3 - y2); //this is the "progress" along the flat top part, not whole triangle!
-		double xLeft = lerp(x2, x3, yp);
-		double xRight = lerp(split_xend, x3, yp);
-
-		Vec3 dividedUvLeft = lerp(uvDividedByZ[1], uvDividedByZ[2], yp);
-		Vec3 dividedUvRight = lerp(split_dividedUvEnd, uvDividedByZ[2], yp);
-
-		if (xLeft > xRight)
-		{
-			std::swap(xLeft, xRight); //enforce non-decreasing x for next loop.
-			std::swap(dividedUvLeft, dividedUvRight); //If we swap x, then uv also has to go.
-		}
-
-		double xBeg = std::max(0.0, xLeft);
-		double xEnd = std::min(maxX, xRight);
-		//xBeg = ceil(xBeg + 0.5);
-		//xEnd = ceil(xEnd + 0.5);
-		for (double x = xBeg; x < xEnd; ++x)
-		{
-			double xp = (x - xLeft) / (xRight - xLeft);
-			Vec3 interpolatedDividedUv = lerp(dividedUvLeft, dividedUvRight, xp);
-			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
-
-			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
-			bool notFullyTransparent = texturePixel.a > 0;
-			if (notFullyTransparent && context.zBuffer->testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing 
-			{
-				Color c = texturePixel.multipliedByLight(context.lightMult);
-				context.frameBuffer->setPixelUnsafe(x, y, c);
-			}
-		}
-	}
-}
-
-void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context) const
-{
 }
 
 TexVertex TexVertex::getClipedToPlane(const TexVertex& dst) const

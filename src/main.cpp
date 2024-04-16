@@ -224,8 +224,8 @@ void main()
 			ctx.frameBuffer = &framebuf;
 			ctx.textureManager = &textureManager;
 			ctx.zBuffer = &zBuffer;
-			ctx.framebufW = framebufW;
-			ctx.framebufH = framebufH;
+			ctx.framebufW = framebufW - 1;
+			ctx.framebufH = framebufH - 1;
 			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
 			{
 				for (const auto& tri : sectorTriangles[nSector])

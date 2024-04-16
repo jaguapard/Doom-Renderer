@@ -269,7 +269,7 @@ void main()
 			{
 				double fx = double(x) / screenW * framebufW;
 				double fy = double(y) / screenH * framebufH;
-				px[y * screenW + x] = framebuf.getPixel(fx, fy).toSDL_Uint32(shifts);
+				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).toSDL_Uint32(shifts);
 				//px[y * screenW + x] = framebuf.getPixel(fx, fy);
 			}
 		}

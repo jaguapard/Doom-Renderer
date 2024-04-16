@@ -87,32 +87,30 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
 	{
-		//double zInv = 1.0 / zDivided[i].worldCoords.z;
-		Vec3 zDivided = tv[i].worldCoords / tv[i].worldCoords.z;
+		double zInv = 1.0 / tv[i].worldCoords.z;
+		Vec3 zDivided = tv[i].worldCoords * zInv;
+		zDivided.z = zInv;
 		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDivided), tv[i].textureCoords };
 	}
 
-	std::array<int, 3> screenIndices = { 0,1,2 };
-	//we need to sort index list by triangle's screen Y (ascending), to later gather the pre-z-divide and fully transformed (to screen space) lists
-	std::sort(std::begin(screenIndices), std::end(screenIndices), [&](int a, int b) {return fullyTransformed[a].worldCoords.y < fullyTransformed[b].worldCoords.y; });
-	std::array<TexVertex, 3> worldSpace, screenSpace;
-	for (int i = 0; i < 3; ++i)
-	{
-		worldSpace[i] = tv[screenIndices[i]];
-		screenSpace[i] = fullyTransformed[screenIndices[i]];
-	}
+	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
+	std::sort(fullyTransformed.begin(), fullyTransformed.end());
 	
 	std::array<Vec3, 3> uvDividedByZ;
 	for (int i = 0; i < 3; ++i)
 	{
-		double zInv = 1.0 / worldSpace[i].worldCoords.z;
-		Vec2 dividedUv = worldSpace[i].textureCoords * zInv;
+		double zInv = fullyTransformed[i].worldCoords.z;
+		Vec2 dividedUv = fullyTransformed[i].textureCoords * zInv;
 		uvDividedByZ[i] = Vec3(dividedUv.x, dividedUv.y, zInv);
 	}
 
+	//double splitAlpha = (screenSpace[1].worldCoords.y - screenSpace[0].worldCoords.y) / (screenSpace[2].worldCoords.y - screenSpace[2].worldCoords.y);
+	//TexVertex splitVertex = 
+	Triangle flatBottom;
+
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */
-	double x1 = screenSpace[0].worldCoords.x, x2 = screenSpace[1].worldCoords.x, x3 = screenSpace[2].worldCoords.x, y1 = screenSpace[0].worldCoords.y, y2 = screenSpace[1].worldCoords.y, y3 = screenSpace[2].worldCoords.y;
+	double x1 = fullyTransformed[0].worldCoords.x, x2 = fullyTransformed[1].worldCoords.x, x3 = fullyTransformed[2].worldCoords.x, y1 = fullyTransformed[0].worldCoords.y, y2 = fullyTransformed[1].worldCoords.y, y3 = fullyTransformed[2].worldCoords.y;
 	double splitAlpha = (y2 - y1) / (y3 - y1); //how far along original triangle's y is the split line? 0 = extreme top, 1 = extreme bottom
 	double split_xend = lerp(x1, x3, splitAlpha); //last x of splitting line
 	Vec3 split_dividedUvEnd = lerp(uvDividedByZ[0], uvDividedByZ[2], splitAlpha);
@@ -192,6 +190,10 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 			}
 		}
 	}
+}
+
+void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context) const
+{
 }
 
 TexVertex TexVertex::getClipedToPlane(const TexVertex& dst) const

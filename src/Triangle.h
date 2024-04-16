@@ -45,6 +45,6 @@ struct Triangle
 
 	void drawOn(const TriangleRenderContext& context) const;
 private:
-	//WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	void drawRotationPrepped(const TriangleRenderContext& context) const;
+	void drawRotationPrepped(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
+	void drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context) const; //This method expects tv to contain screen space coords in tv.worldCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };

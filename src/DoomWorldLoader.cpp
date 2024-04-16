@@ -144,15 +144,12 @@ real scalarCross2d(Vec2 a, Vec2 b)
 	return a.x * b.y - a.y * b.x;
 }
 
-bool rayCrossesLine(const Ved2& p, const Linedef& line, const std::vector<Vertex>& vertices)
+bool rayCrossesLine(const Ved2& p, const std::pair<Ved2, Ved2>& lines)
 {
-	Vertex _sv = vertices[line.startVertex];
-	Vertex _ev = vertices[line.endVertex];
+	const Ved2& sv = lines.first;
+	const Ved2& ev = lines.second;
 
 	//floating point precision is a bitch here, force use doubles everywhere
-	Ved2 sv = { double(_sv.x), double(_sv.y) };
-	Ved2 ev = Ved2(double(_ev.x), double(_ev.y));
-
 	Ved2 v1 = p - sv;
 	Ved2 v2 = ev - sv;
 	Ved2 v3 = { -sqrt(2), sqrt(3) }; //using irrational values to never get pucked by linedefs being perfectly collinear to our ray by chance
@@ -168,7 +165,7 @@ bool rayCrossesLine(const Ved2& p, const Linedef& line, const std::vector<Vertex
 		return true;
 	return false;
 	
-	//this is a safeguard against rampant global find-and-replace
+	//these are safeguards against rampant global find-and-replace mishaps breaking everything
 	static_assert(sizeof(sv) == 16);
 	static_assert(sizeof(ev) == 16);
 	static_assert(sizeof(v1) == 16);
@@ -180,10 +177,11 @@ bool rayCrossesLine(const Ved2& p, const Linedef& line, const std::vector<Vertex
 	static_assert(sizeof(p) == 16);
 }
 
-bool isPointInsidePolygon(const Ved2& p, const std::vector<Linedef>& lines, const std::vector<Vertex>& vertices)
+bool isPointInsidePolygon(const Ved2& p, const std::vector<std::pair<Ved2, Ved2>>& lines)
 {
+	assert(lines.size() >= 3);
 	int intersections = 0;
-	for (const auto& it : lines) intersections += rayCrossesLine(p, it, vertices);
+	for (const auto& it : lines) intersections += rayCrossesLine(p, it);
 	return intersections % 2 == 1;
 }
 
@@ -216,6 +214,13 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	if (tesselSize == -1) return std::vector<Vec3>();
 	assert(sectorLinedefs.size() >= 3);
 
+	std::vector<std::pair<Ved2, Ved2>> polygonLines;
+	for (const auto& ldf : sectorLinedefs)
+	{
+		Vertex sv = vertices[ldf.startVertex];
+		Vertex ev = vertices[ldf.endVertex];
+		polygonLines.push_back(std::make_pair(Ved2(sv.x, sv.y), Ved2(ev.x, ev.y)));
+	}
 	/*
 	The gyst: draw lines on a bitmap, then flood fill and turn all "pixels" into pairs of triangles.
 	*/
@@ -241,7 +246,7 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	{
 		for (int x = 0; x < w; ++x)
 		{
-			bitmap[y * w + x] = isPointInsidePolygon(Vec2(x + minX, y + minY), sectorLinedefs, vertices);
+			bitmap[y * w + x] = isPointInsidePolygon(Vec2(x + minX, y + minY), polygonLines);
 		}
 	}
 

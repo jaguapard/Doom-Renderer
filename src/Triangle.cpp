@@ -86,21 +86,14 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	for (int i = 0; i < 3; ++i)
 	{
 		double zInv = 1.0 / tv[i].worldCoords.z;
-		Vec3 zDivided = tv[i].worldCoords * zInv;
-		zDivided.z = zInv;
-		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDivided), tv[i].textureCoords };
+		Vec3 zDividedWorld = tv[i].worldCoords * zInv;
+		Vec3 zDividedUv = tv[i].textureCoords * zInv;
+		zDividedUv.z = zInv;
+		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
 	}
 
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 	std::sort(fullyTransformed.begin(), fullyTransformed.end());
-
-	std::array<Vec3, 3> uvDividedByZ;
-	for (int i = 0; i < 3; ++i)
-	{
-		double zInv = fullyTransformed[i].worldCoords.z;
-		Vec2 dividedUv = fullyTransformed[i].textureCoords * zInv;
-		fullyTransformed[i].textureCoords = Vec3(dividedUv.x, dividedUv.y, zInv);
-	}
 
 	double splitAlpha = (fullyTransformed[1].worldCoords.y - fullyTransformed[0].worldCoords.y) / (fullyTransformed[2].worldCoords.y - fullyTransformed[0].worldCoords.y);
 	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
@@ -131,8 +124,8 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
 		double yp = (y - y1) / ySpan;
-		TexVertex scanlineTv1 = lerp(tv[0], flatBottom ? tv[1] : tv[2], yp);
-		TexVertex scanlineTv2 = lerp(flatBottom ? tv[0] : tv[1], tv[2], yp);
+		TexVertex scanlineTv1 = lerp(tv[0], flatBottom ? tv[1] : tv[2], yp); //flat top and flat bottom triangles require different interpolation points
+		TexVertex scanlineTv2 = lerp(flatBottom ? tv[0] : tv[1], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 		const TexVertex* left = &scanlineTv1;
 		const TexVertex* right = &scanlineTv2;
 		if (left->worldCoords.x > right->worldCoords.x) std::swap(left, right);

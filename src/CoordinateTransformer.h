@@ -17,5 +17,5 @@ private:
 	Vec3 camPos;
 	Matrix3 rotation;
 	Vec3 _shift;
-	double widthToHeightAspectRatio;
+	real widthToHeightAspectRatio;
 };

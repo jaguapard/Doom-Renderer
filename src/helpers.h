@@ -2,14 +2,15 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include "real.h"
 
 template <typename T>
-inline T lerp(const T& start, const T& end, double amount)
+inline T lerp(const T& start, const T& end, real amount)
 {
 	return start + (end - start) * amount;
 }
 
-inline double inverse_lerp(double from, double to, double value)
+inline real inverse_lerp(real from, real to, real value)
 {
 	return (value - from) / (to - from);
 }

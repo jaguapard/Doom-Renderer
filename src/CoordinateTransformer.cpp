@@ -4,7 +4,7 @@ CoordinateTransformer::CoordinateTransformer(int w, int h)
 {
 	this->w = w;
 	this->h = h;
-	double widthToHeightAspectRatio = double(w) / h;
+	real widthToHeightAspectRatio = real(w) / h;
 	this->_shift = { widthToHeightAspectRatio / 2, 0.5, 0 };
 }
 

@@ -89,5 +89,8 @@
     <ClInclude Include="src\Vec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\real.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

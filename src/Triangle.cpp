@@ -1,7 +1,7 @@
 #include "Triangle.h"
 #include "Statsman.h"
 
-constexpr double planeZ = -1;
+constexpr real planeZ = -1;
 
 void Triangle::drawOn(const TriangleRenderContext& context) const
 {
@@ -85,7 +85,7 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
 	{
-		double zInv = 1.0 / tv[i].spaceCoords.z;
+		real zInv = 1.0 / tv[i].spaceCoords.z;
 		Vec3 zDividedWorld = tv[i].spaceCoords * zInv;
 		Vec3 zDividedUv = tv[i].textureCoords * zInv;
 		zDividedUv.z = zInv;
@@ -95,7 +95,7 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 	std::sort(fullyTransformed.begin(), fullyTransformed.end());
 
-	double splitAlpha = (fullyTransformed[1].spaceCoords.y - fullyTransformed[0].spaceCoords.y) / (fullyTransformed[2].spaceCoords.y - fullyTransformed[0].spaceCoords.y);
+	real splitAlpha = (fullyTransformed[1].spaceCoords.y - fullyTransformed[0].spaceCoords.y) / (fullyTransformed[2].spaceCoords.y - fullyTransformed[0].spaceCoords.y);
 	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
 	
 	Triangle flatBottom;
@@ -114,32 +114,32 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 {
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */
-	double x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
+	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 
-	double yBeg = std::max(0.0, y1);
-	double yEnd = std::min(context.framebufH, y3);
-	double ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
+	real yBeg = std::max(0.0, y1);
+	real yEnd = std::min(context.framebufH, y3);
+	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
 	const Texture& texture = context.textureManager->getTextureByIndex(this->textureIndex);
 
 	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
 	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
-	for (double y = yBeg; y < yEnd; ++y) //draw flat bottom part
+	for (real y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
-		double yp = (y - y1) / ySpan;
+		real yp = (y - y1) / ySpan;
 		TexVertex scanlineTv1 = lerp(tv[0], lerpDst1, yp); 
 		TexVertex scanlineTv2 = lerp(lerpSrc2, tv[2], yp);
 		const TexVertex* left = &scanlineTv1;
 		const TexVertex* right = &scanlineTv2;
 		if (left->spaceCoords.x > right->spaceCoords.x) std::swap(left, right);
 		
-		double xBeg = std::max(0.0, left->spaceCoords.x);
-		double xEnd = std::min(context.framebufW, right->spaceCoords.x);
-		double xSpan = right->spaceCoords.x - left->spaceCoords.x;
+		real xBeg = std::max(0.0, left->spaceCoords.x);
+		real xEnd = std::min(context.framebufW, right->spaceCoords.x);
+		real xSpan = right->spaceCoords.x - left->spaceCoords.x;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
-		for (double x = xBeg; x < xEnd; ++x)
+		for (real x = xBeg; x < xEnd; ++x)
 		{
-			double xp = (x - left->spaceCoords.x) / xSpan;
+			real xp = (x - left->spaceCoords.x) / xSpan;
 			Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 
@@ -156,7 +156,7 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 
 TexVertex TexVertex::getClipedToPlane(const TexVertex& dst) const
 {
-	double alpha = inverse_lerp(spaceCoords.z, dst.spaceCoords.z, planeZ);
+	real alpha = inverse_lerp(spaceCoords.z, dst.spaceCoords.z, planeZ);
 	assert(alpha >= 0 && alpha <= 1);
 	return lerp(*this, dst, alpha);
 }

@@ -23,7 +23,7 @@ struct TexVertex
 	TexVertex getClipedToPlane(const TexVertex& dst) const;
 };
 
-inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, double amount)
+inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
 {
 	return { lerp(t1.spaceCoords, t2.spaceCoords, amount), lerp(t1.textureCoords, t2.textureCoords,amount) };
 }
@@ -34,8 +34,8 @@ struct TriangleRenderContext
 	ZBuffer* zBuffer;
 	const CoordinateTransformer* ctr;	
 	const TextureManager* textureManager;
-	double lightMult;
-	double framebufW, framebufH;
+	real lightMult;
+	real framebufW, framebufH;
 };
 
 struct Triangle

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "real.h"
 
 struct Color : SDL_Color
 {
@@ -8,7 +9,7 @@ struct Color : SDL_Color
 	Color(uint8_t r, uint8_t g, uint8_t b); //alpha value is set to SDL_ALPHA_OPAQUE
 	Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
-	Color multipliedByLight(double lightMult) const; //lighting calculation must preserve alpha value
+	Color multipliedByLight(real lightMult) const; //lighting calculation must preserve alpha value
 
 	operator uint32_t() const;
 	Uint32 toSDL_Uint32(const uint32_t* shifts = _shift) const; //only SDL_PIXELFORMAT_RGBA32 suported!!!

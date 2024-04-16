@@ -124,7 +124,7 @@ void loadMap(std::string mapName)
 
 void main()
 {
-	double gamma = 1.3;
+	real gamma = 1.3;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
 	loadWad("D:/Games/GZDoom/DOOM2.wad");
@@ -158,7 +158,7 @@ void main()
 
 	ZBuffer zBuffer(framebufW, framebufH);
 	uint64_t frames = 0;
-	double flySpeed = 15;
+	real flySpeed = 15;
 	std::string warpTo;
 
 	while (true)
@@ -201,12 +201,12 @@ void main()
 		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
 		gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
 
-		Vec3 camAdd = -Vec3({ double(input.isButtonHeld(SDL_SCANCODE_D)), double(input.isButtonHeld(SDL_SCANCODE_X)), double(input.isButtonHeld(SDL_SCANCODE_W)) });
-		camAdd += { double(input.isButtonHeld(SDL_SCANCODE_A)), double(input.isButtonHeld(SDL_SCANCODE_Z)), double(input.isButtonHeld(SDL_SCANCODE_S))};
+		Vec3 camAdd = -Vec3({ real(input.isButtonHeld(SDL_SCANCODE_D)), real(input.isButtonHeld(SDL_SCANCODE_X)), real(input.isButtonHeld(SDL_SCANCODE_W)) });
+		camAdd += { real(input.isButtonHeld(SDL_SCANCODE_A)), real(input.isButtonHeld(SDL_SCANCODE_Z)), real(input.isButtonHeld(SDL_SCANCODE_S))};
 
 
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
-		if (double l = camAdd.len() > 0)
+		if (real l = camAdd.len() > 0)
 		{
 			camAdd /= camAdd.len();
 			camAdd = getRotationMatrix(-camAng) * camAdd;
@@ -242,12 +242,12 @@ void main()
 			Color fogColor = { 255, 255, 255, 255 };
 			int pxCount = framebufW * framebufH;
 
-			double fogMaxIntensityDist = 600;
+			real fogMaxIntensityDist = 600;
 			for (int i = 0; i < pxCount; ++i)
 			{
-				double depth = -zBuffPixels[i];
+				real depth = -zBuffPixels[i];
 				Color c = framebufPixels[i];
-				double lerpT = depth == 0.0 ? 1 : std::clamp((1.0/depth) / fogMaxIntensityDist, 0.0, 1.0); //z buffer stores 1/z, so need to get the real z
+				real lerpT = depth == 0.0 ? 1 : std::clamp((1.0/depth) / fogMaxIntensityDist, 0.0, 1.0); //z buffer stores 1/z, so need to get the real z
 				c.r = lerp(c.r, fogColor.r, lerpT);
 				c.g = lerp(c.g, fogColor.g, lerpT);
 				c.b = lerp(c.b, fogColor.b, lerpT);
@@ -262,8 +262,8 @@ void main()
 		{
 			for (int x = 0; x < screenW; ++x)
 			{
-				double fx = double(x) / screenW * framebufW;
-				double fy = double(y) / screenH * framebufH;
+				real fx = real(x) / screenW * framebufW;
+				real fy = real(y) / screenH * framebufH;
 				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).toSDL_Uint32(shifts);
 			}
 		}

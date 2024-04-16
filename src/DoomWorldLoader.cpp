@@ -22,13 +22,13 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 		Vertex ev = vertices[linedef.endVertex];
 
 		std::array<Vec3, 6> linedef3dVerts;
-		linedef3dVerts[0] = { double(sv.x), 0, double(sv.y) }; //quads originated by a linedef will always only differ in height
-		linedef3dVerts[1] = { double(ev.x), 0, double(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
-		linedef3dVerts[2] = { double(sv.x), -1, double(sv.y) }; //-1 = lower
+		linedef3dVerts[0] = { real(sv.x), 0, real(sv.y) }; //quads originated by a linedef will always only differ in height
+		linedef3dVerts[1] = { real(ev.x), 0, real(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
+		linedef3dVerts[2] = { real(sv.x), -1, real(sv.y) }; //-1 = lower
 
-		linedef3dVerts[3] = { double(ev.x), 0, double(ev.y) };
-		linedef3dVerts[4] = { double(sv.x), -1, double(sv.y) };
-		linedef3dVerts[5] = { double(ev.x), -1, double(ev.y) };
+		linedef3dVerts[3] = { real(ev.x), 0, real(ev.y) };
+		linedef3dVerts[4] = { real(sv.x), -1, real(sv.y) };
+		linedef3dVerts[5] = { real(ev.x), -1, real(ev.y) };
 
 		std::array<int, 2> sidedefNumbers = { linedef.frontSidedef, linedef.backSidedef };
 
@@ -72,7 +72,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto newTris = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto newTris = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
 				auto& target = sectorTriangles[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.insert(target.end(), newTris.begin(), newTris.end());
 			}
@@ -82,7 +82,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto newTris = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto newTris = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
 				auto& target = sectorTriangles[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.insert(target.end(), newTris.begin(), newTris.end());
 			}
@@ -107,7 +107,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 	return sectorTriangles;
 }
 
-std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(double bottomHeight, double topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
+std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
 {
 	std::vector<Triangle> ret;
 	if (textureName.empty() || textureName == "-" || bottomHeight == topHeight) return ret; //nonsensical arrangement or undefined texture
@@ -139,7 +139,7 @@ std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(double bot
 	return ret;
 }
 
-double scalarCross2d(Vec2 a, Vec2 b)
+real scalarCross2d(Vec2 a, Vec2 b)
 {
 	return a.x * b.y - a.y * b.x;
 }
@@ -149,17 +149,17 @@ bool rayCrossesLine(const Vec2& p, const Linedef& line, const std::vector<Vertex
 	Vertex _sv = vertices[line.startVertex];
 	Vertex _ev = vertices[line.endVertex];
 
-	Vec2 sv = { double(_sv.x),double(_sv.y) };
-	Vec2 ev = Vec2(double(_ev.x), double(_ev.y)) - Vec2(1e-3, 1e-3); //a very tiny disturbance 
+	Vec2 sv = { real(_sv.x),real(_sv.y) };
+	Vec2 ev = Vec2(real(_ev.x), real(_ev.y)) - Vec2(1e-3, 1e-3); //a very tiny disturbance 
 
 	Vec2 v1 = p - sv;
 	Vec2 v2 = ev - sv;
 	Vec2 v3 = { -1e-6, 1.0 }; //a ray into X direction (yes, X) with very tiny Y value to deal with perfectly horizontal linedefs
-	double dot = v2.dot(v3);
+	real dot = v2.dot(v3);
 	if (abs(dot) < 1e-9) return false;
 
-	double t1 = scalarCross2d(v2, v1) / dot;
-	double t2 = v1.dot(v3) / dot;
+	real t1 = scalarCross2d(v2, v1) / dot;
+	real t2 = v1.dot(v3) / dot;
 
 	if (t1 >= 0.0 && (t2 >= 0.0 && t2 <= 1.0))
 		return true;
@@ -253,18 +253,18 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		ret.push_back(v[2] = Vec3(candidate.x, 0, candidate.y));
 
 		std::sort(std::begin(v), std::end(v), [](const Vec3& a, const Vec3& b) {return a.z < b.z; });
-		double span = v[2].z - v[0].z;
+		real span = v[2].z - v[0].z;
 		assert(span > 0);
 		bool leftStraight = v[0].x == v[2].x;
 		bool rightStraight = v[1].x == v[2].x;
-		for (double y = v[0].z; y < v[2].z; ++y)
+		for (real y = v[0].z; y < v[2].z; ++y)
 		{
-			double yp = (y - v[0].z) / span;
+			real yp = (y - v[0].z) / span;
 			assert(yp >= 0 && yp <= 1);
-			double xLeft = lerp(v[0].x, v[1].x, rightStraight ? 0 : leftStraight ? 1 : yp); //breaks if x0 == x2 and NOT rightStraight (always == 2)
-			double xRight = lerp(v[0].x, v[2].x, rightStraight ? 1 : yp); //and this also always == 0 if previous conditions are met
+			real xLeft = lerp(v[0].x, v[1].x, rightStraight ? 0 : leftStraight ? 1 : yp); //breaks if x0 == x2 and NOT rightStraight (always == 2)
+			real xRight = lerp(v[0].x, v[2].x, rightStraight ? 1 : yp); //and this also always == 0 if previous conditions are met
 			if (xLeft > xRight) std::swap(xLeft, xRight);
-			for (double x = xLeft; x < xRight; ++x)
+			for (real x = xLeft; x < xRight; ++x)
 			{
 				bitmap[int(y - minY) * w + int(x - minX)] = false;
 			}
@@ -334,8 +334,8 @@ std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(con
 	auto polygonSplit = orcishTriangulation(sectorLinedefs, vertices, tesselSize);	
 	if (polygonSplit.empty()) return ret;
 
-	double minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
-	double minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
+	real minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
+	real minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
 	Vec3 uvOffset = { minX, minZ, 0 };
 
 	int floorTextureIndex = textureManager.getTextureIndexByName(wadStrToStd(sector.floorTexture));

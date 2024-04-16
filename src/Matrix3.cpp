@@ -11,7 +11,7 @@ Matrix3::Matrix3()
 	}
 }
 
-Matrix3::Matrix3(double e11, double e12, double e13, double e21, double e22, double e23, double e31, double e32, double e33)
+Matrix3::Matrix3(real e11, real e12, real e13, real e21, real e22, real e23, real e31, real e32, real e33)
 {
 	this->elements[0][0] = e11;
 	this->elements[0][1] = e12;
@@ -48,10 +48,10 @@ Vec3 Matrix3::operator*(const Vec3& v3) const
 	};
 }
 
-Matrix3 rotateX(double theta)
+Matrix3 rotateX(real theta)
 {
-	const double sinTheta = sin(theta);
-	const double cosTheta = cos(theta);
+	const real sinTheta = sin(theta);
+	const real cosTheta = cos(theta);
 	return{
 		cosTheta, sinTheta, 0.0,
 		-sinTheta, cosTheta, 0.0,
@@ -59,10 +59,10 @@ Matrix3 rotateX(double theta)
 	};
 }
 
-Matrix3 rotateY(double theta)
+Matrix3 rotateY(real theta)
 {
-	const double sinTheta = sin(theta);
-	const double cosTheta = cos(theta);
+	const real sinTheta = sin(theta);
+	const real cosTheta = cos(theta);
 	return{
 		cosTheta, 0.0,-sinTheta,
 		0.0,   1.0, 0.0,
@@ -70,10 +70,10 @@ Matrix3 rotateY(double theta)
 	};
 }
 
-Matrix3 rotateZ(double theta)
+Matrix3 rotateZ(real theta)
 {
-	const double sinTheta = sin(theta);
-	const double cosTheta = cos(theta);
+	const real sinTheta = sin(theta);
+	const real cosTheta = cos(theta);
 	return{
 		1.0, 0.0,   0.0,
 		0.0, cosTheta, sinTheta,

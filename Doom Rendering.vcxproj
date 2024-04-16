@@ -47,6 +47,7 @@
     <ClInclude Include="src\helpers.h" />
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\PixelBuffer.h" />
+    <ClInclude Include="src\real.h" />
     <ClInclude Include="src\Statsman.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\TextureManager.h" />

@@ -144,29 +144,43 @@ real scalarCross2d(Vec2 a, Vec2 b)
 	return a.x * b.y - a.y * b.x;
 }
 
-bool rayCrossesLine(const Vec2& p, const Linedef& line, const std::vector<Vertex>& vertices)
+bool rayCrossesLine(const Ved2& p, const Linedef& line, const std::vector<Vertex>& vertices)
 {
 	Vertex _sv = vertices[line.startVertex];
 	Vertex _ev = vertices[line.endVertex];
 
-	Vec2 sv = { real(_sv.x),real(_sv.y) };
-	Vec2 ev = Vec2(real(_ev.x), real(_ev.y)) - Vec2(1e-3, 1e-3); //a very tiny disturbance 
+	//floating point precision is a bitch here, force use doubles everywhere
+	Ved2 sv = { double(_sv.x), double(_sv.y) };
+	Ved2 ev = Ved2(double(_ev.x), double(_ev.y));
 
-	Vec2 v1 = p - sv;
-	Vec2 v2 = ev - sv;
-	Vec2 v3 = { -1e-6, 1.0 }; //a ray into X direction (yes, X) with very tiny Y value to deal with perfectly horizontal linedefs
-	real dot = v2.dot(v3);
-	if (abs(dot) < 1e-9) return false;
+	Ved2 v1 = p - sv;
+	Ved2 v2 = ev - sv;
+	Ved2 v3 = { -sqrt(2), sqrt(3) }; //using irrational values to never get pucked by linedefs being perfectly collinear to our ray by chance
+	v3 /= v3.len(); //idk, seems like a good measure
+	double dot = v2.dot(v3);
+	//if (abs(dot) < 1e-9) return false;
 
-	real t1 = scalarCross2d(v2, v1) / dot;
-	real t2 = v1.dot(v3) / dot;
+	double t1 = scalarCross2d(v2, v1) / dot;
+	double t2 = v1.dot(v3) / dot;
 
-	if (t1 >= 0.0 && (t2 >= 0.0 && t2 <= 1.0))
+	//we are fine with false positives (point is considered inside when it's not), but false negatives are absolutely murderous
+	if (t1 >= 1e-9 && (t2 >= 1e-9 && t2 <= 1.0 - 1e-9))
 		return true;
 	return false;
+	
+	//this is a safeguard against rampant global find-and-replace
+	static_assert(sizeof(sv) == 16);
+	static_assert(sizeof(ev) == 16);
+	static_assert(sizeof(v1) == 16);
+	static_assert(sizeof(v2) == 16);
+	static_assert(sizeof(v3) == 16);
+	static_assert(sizeof(dot) == 8);
+	static_assert(sizeof(t1) == 8);
+	static_assert(sizeof(t2) == 8);
+	static_assert(sizeof(p) == 16);
 }
 
-bool isPointInsidePolygon(const Vec2& p, const std::vector<Linedef>& lines, const std::vector<Vertex>& vertices)
+bool isPointInsidePolygon(const Ved2& p, const std::vector<Linedef>& lines, const std::vector<Vertex>& vertices)
 {
 	int intersections = 0;
 	for (const auto& it : lines) intersections += rayCrossesLine(p, it, vertices);
@@ -350,7 +364,7 @@ std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(con
 			Vec3 uv = polygonSplit[i + j%3] - uvOffset;
 			t[j/3].tv[j%3].spaceCoords = polygonSplit[i + j%3];
 			t[j/3].tv[j%3].spaceCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
-			t[j/3].tv[j%3].textureCoords = { uv.x, uv.z };
+			t[j / 3].tv[j % 3].textureCoords = Vec2(uv.x, uv.z);
 			t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
 		}
 

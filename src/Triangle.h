@@ -12,12 +12,12 @@
 
 struct TexVertex
 {
-	Vec3 worldCoords;
-	Vec3 textureCoords;
+	Vec3 spaceCoords; //this can mean different things inside different contexts, world or screen space
+	Vec3 textureCoords; //this too, but it's either normal uv's, or z-divided ones
 
 	bool operator<(const TexVertex& b) const
 	{
-		return worldCoords.y < b.worldCoords.y;
+		return spaceCoords.y < b.spaceCoords.y;
 	}
 
 	TexVertex getClipedToPlane(const TexVertex& dst) const;
@@ -25,7 +25,7 @@ struct TexVertex
 
 inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, double amount)
 {
-	return { t1.worldCoords + (t2.worldCoords - t1.worldCoords) * amount, t1.textureCoords + (t2.textureCoords - t1.textureCoords) * amount };
+	return { t1.spaceCoords + (t2.spaceCoords - t1.spaceCoords) * amount, t1.textureCoords + (t2.textureCoords - t1.textureCoords) * amount };
 }
 
 struct TriangleRenderContext
@@ -46,5 +46,5 @@ struct Triangle
 	void drawOn(const TriangleRenderContext& context) const;
 private:
 	void drawRotationPrepped(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	void drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.worldCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
+	void drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };

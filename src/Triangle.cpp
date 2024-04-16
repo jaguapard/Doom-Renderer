@@ -10,7 +10,7 @@ void Triangle::drawOn(const TriangleRenderContext& context) const
 	int outsideVertexCount = 0;
 	for (int i = 0; i < 3; ++i)
 	{
-		Vec3 off = context.ctr->doCamOffset(tv[i].worldCoords);
+		Vec3 off = context.ctr->doCamOffset(tv[i].spaceCoords);
 		Vec3 rt = context.ctr->rotate(off);
 
 		if (rt.z > planeZ)
@@ -75,9 +75,9 @@ void Triangle::drawOn(const TriangleRenderContext& context) const
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 {
-	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].worldCoords));
-	Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].worldCoords));
-	Vec3 v2 = ctr.rotate(ctr.doCamOffset(tv[2].worldCoords));
+	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].spaceCoords));
+	Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].spaceCoords));
+	Vec3 v2 = ctr.rotate(ctr.doCamOffset(tv[2].spaceCoords));
 	Vec3 cross = (v1 - v0).cross(v2 - v0);
 	Vec3 camPos = -ctr.doCamOffset(Vec3(0, 0, 0));
 	if (cross.dot(camPos) > 0) return;*/
@@ -85,8 +85,8 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
 	{
-		double zInv = 1.0 / tv[i].worldCoords.z;
-		Vec3 zDividedWorld = tv[i].worldCoords * zInv;
+		double zInv = 1.0 / tv[i].spaceCoords.z;
+		Vec3 zDividedWorld = tv[i].spaceCoords * zInv;
 		Vec3 zDividedUv = tv[i].textureCoords * zInv;
 		zDividedUv.z = zInv;
 		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
@@ -95,7 +95,7 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 	std::sort(fullyTransformed.begin(), fullyTransformed.end());
 
-	double splitAlpha = (fullyTransformed[1].worldCoords.y - fullyTransformed[0].worldCoords.y) / (fullyTransformed[2].worldCoords.y - fullyTransformed[0].worldCoords.y);
+	double splitAlpha = (fullyTransformed[1].spaceCoords.y - fullyTransformed[0].spaceCoords.y) / (fullyTransformed[2].spaceCoords.y - fullyTransformed[0].spaceCoords.y);
 	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
 	
 	Triangle flatBottom;
@@ -114,7 +114,7 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 {
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */
-	double x1 = tv[0].worldCoords.x, x2 = tv[1].worldCoords.x, x3 = tv[2].worldCoords.x, y1 = tv[0].worldCoords.y, y2 = tv[1].worldCoords.y, y3 = tv[2].worldCoords.y;
+	double x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 
 	double yBeg = std::max(0.0, y1);
 	double yEnd = std::min(context.framebufH, y3);
@@ -128,16 +128,16 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 		TexVertex scanlineTv2 = lerp(flatBottom ? tv[0] : tv[1], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 		const TexVertex* left = &scanlineTv1;
 		const TexVertex* right = &scanlineTv2;
-		if (left->worldCoords.x > right->worldCoords.x) std::swap(left, right);
+		if (left->spaceCoords.x > right->spaceCoords.x) std::swap(left, right);
 		
-		double xBeg = std::max(0.0, left->worldCoords.x);
-		double xEnd = std::min(context.framebufW, right->worldCoords.x);
-		double tv_xSpan = right->worldCoords.x - left->worldCoords.x;
+		double xBeg = std::max(0.0, left->spaceCoords.x);
+		double xEnd = std::min(context.framebufW, right->spaceCoords.x);
+		double tv_xSpan = right->spaceCoords.x - left->spaceCoords.x;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
 		for (double x = xBeg; x < xEnd; ++x)
 		{
-			double xp = (x - left->worldCoords.x) / tv_xSpan;
+			double xp = (x - left->spaceCoords.x) / tv_xSpan;
 			Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 
@@ -154,7 +154,7 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 
 TexVertex TexVertex::getClipedToPlane(const TexVertex& dst) const
 {
-	double alpha = inverse_lerp(worldCoords.z, dst.worldCoords.z, planeZ);
+	double alpha = inverse_lerp(spaceCoords.z, dst.spaceCoords.z, planeZ);
 	assert(alpha >= 0 && alpha <= 1);
 	return lerp(*this, dst, alpha);
 }

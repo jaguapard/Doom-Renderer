@@ -123,10 +123,10 @@ std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(double bot
 		{
 			Vec3 cookedVert = quadVerts[i * 3 + j];
 			cookedVert.y = cookedVert.y == 0 ? topHeight : bottomHeight;
-			t.tv[j].worldCoords = cookedVert;
+			t.tv[j].spaceCoords = cookedVert;
 			if (i * 3 + j == 0) origin = cookedVert; //if this is the first vertice processed, then save it as an origin for following texture coordinate calculation
 
-			Vec3 worldOffset = t.tv[j].worldCoords - origin;
+			Vec3 worldOffset = t.tv[j].spaceCoords - origin;
 			Vec2 uvPrefab;
 			uvPrefab.x = std::max(abs(worldOffset.x), abs(worldOffset.z)) == abs(worldOffset.x) ? worldOffset.x : worldOffset.z;
 			uvPrefab.y = worldOffset.y;
@@ -348,8 +348,8 @@ std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(con
 		{
 			bool isFloor = j < 3;
 			Vec3 uv = polygonSplit[i + j%3] - uvOffset;
-			t[j/3].tv[j%3].worldCoords = polygonSplit[i + j%3];
-			t[j/3].tv[j%3].worldCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
+			t[j/3].tv[j%3].spaceCoords = polygonSplit[i + j%3];
+			t[j/3].tv[j%3].spaceCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
 			t[j/3].tv[j%3].textureCoords = { uv.x, uv.z };
 			t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
 		}

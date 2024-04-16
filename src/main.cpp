@@ -93,8 +93,8 @@ void loadWad(std::string path)
 		std::string name = wadStrToStd(&wadBytes[filePtr + 8]);
 		if (false) std::cout << "Found file: " << name << ", data offset: " << lumpDataOffset << ", size: " << lumpSizeBytes << "\n";
 
-		bool isEpisodicMap = name.length() >= 4 && name[0] == 'E' && name[2] == 'M';
-		bool isNonEpisodicMap = name.length() >= 5 && std::string(name.begin(), name.begin() + 3) == "MAP";
+		bool isEpisodicMap = name.length() >= 4 && name[0] == 'E' && name[2] == 'M'; //Doom 1 and Heretic
+		bool isNonEpisodicMap = name.length() >= 5 && std::string(name.begin(), name.begin() + 3) == "MAP"; //Doom 2, Hexen, Strife
 		if (isEpisodicMap || isNonEpisodicMap)
 		{
 			if (mapName != name && mapName != "") maps[mapName] = map; //if map was in progress of being read, then save it
@@ -134,16 +134,13 @@ void main()
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");
 
-
 	Vec3 camPosAndAngArchieve[] = {
 		{ 0,0,0 }, {0,0,0},
 		{ 0.1,32.1,370 }, {0,0,0}, //default view
-		{ -45.9, 175.1, 145 }, { 0,0.086, 0.518 }, //buggy mess 1
-		{0.1, 124.1, 188}, {0,0.012, 0.349}, //buggy mess 2
 		{-96, 70, 784}, {0,0,0}, //doom 2 map 01 player start
 	};
 
-	int activeCamPosAndAngle = 4;
+	int activeCamPosAndAngle = 2;
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
@@ -198,8 +195,6 @@ void main()
 			}
 		}
 
-		
-
 		camAng += { 3e-2 * input.isButtonHeld(SDL_SCANCODE_R), 3e-2 * input.isButtonHeld(SDL_SCANCODE_T), 3e-2 * input.isButtonHeld(SDL_SCANCODE_Y)};
 		camAng -= { 3e-2 * input.isButtonHeld(SDL_SCANCODE_F), 3e-2 * input.isButtonHeld(SDL_SCANCODE_G), 3e-2 * input.isButtonHeld(SDL_SCANCODE_H)};
 		if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
@@ -228,12 +223,12 @@ void main()
 			ctx.zBuffer = &zBuffer;
 			ctx.framebufW = framebufW;
 			ctx.framebufH = framebufH;
-			for (int i = 0; i < sectorTriangles.size(); ++i)
+			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
 			{
-				for (int j = 0; j < sectorTriangles[i].size(); ++j)
+				for (const auto& tri : sectorTriangles[nSector])
 				{
-					ctx.lightMult = pow(currentMap->sectors[i].lightLevel / 256.0, gamma);
-					sectorTriangles[i][j].drawOn(ctx);
+					ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
+					tri.drawOn(ctx);
 				}
 			}
 		}
@@ -244,7 +239,7 @@ void main()
 			double* zBuffPixels = zBuffer.getRawPixels();
 			Color* framebufPixels = framebuf.getRawPixels();
 			//Color fogColor = { 150, 42, 36 255 };
-			Color fogColor = { 255,255,255, 255 };
+			Color fogColor = { 255, 255, 255, 255 };
 			int pxCount = framebufW * framebufH;
 
 			double fogMaxIntensityDist = 600;
@@ -270,7 +265,6 @@ void main()
 				double fx = double(x) / screenW * framebufW;
 				double fy = double(y) / screenH * framebufH;
 				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).toSDL_Uint32(shifts);
-				//px[y * screenW + x] = framebuf.getPixel(fx, fy);
 			}
 		}
 		SDL_UpdateWindowSurface(wnd);

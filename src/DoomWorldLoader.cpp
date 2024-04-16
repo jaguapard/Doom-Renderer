@@ -255,7 +255,8 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_initial.png");
 
 	std::vector<Vec3> ret;
-	if (false)
+	constexpr bool CARVER_ENABLED = false;
+	if (CARVER_ENABLED)
 	{
 		//carve out right angle triangles
 		for (const auto& it : sectorLinedefs)
@@ -313,25 +314,12 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		SDL_Rect r = { startingPoint.x, startingPoint.y, initialWidth, 1 };
 		for (int y = startingPoint.y + 1; y < h; ++y)
 		{
-			bool lineGoodForExpansion = true;
-			for (int x = startingPoint.x; x < endX; ++x)
-			{
-				if (!bitmap[y * w + x])
-				{
-					lineGoodForExpansion = false;
-					break;
-				}
-			}
+			auto lineBeg = bitmap.begin() + y * w + startingPoint.x;
+			auto lineEnd = bitmap.begin() + y * w + endX;
+			if (std::find(lineBeg, lineEnd, false) != lineEnd) break; // this line has points outside of the polygon, can't expand
 
-			if (lineGoodForExpansion)
-			{
-				r.h++;
-				std::fill(bitmap.begin() + y * w + startingPoint.x, bitmap.begin() + y * w + endX, false);
-			}
-			else
-			{
-				break;
-			}
+			r.h++;
+			std::fill(lineBeg, lineEnd, false);
 		}
 		r.x += minX;
 		r.y += minY;

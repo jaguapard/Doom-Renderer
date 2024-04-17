@@ -98,7 +98,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 		bool debugEnabled = true;
 #endif
 
-		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled ? -1 : 1); //too slow in debug mode
+		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled && false ? -1 : 1); //too slow in debug mode
 		auto& target = sectorTriangles[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
 		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";
@@ -275,7 +275,7 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 			if (xLeft > xRight) std::swap(xLeft, xRight);
 			for (double x = xLeft; x < xRight; ++x) //or <=?
 			{
-				if (!bitmap[int(expansionY) * w + int(x)]) // point outside polygon, stop expansion attempts. Doubles must be truncated, since y*w may become intermediate integers between floor(y)*w and ceiling(y)*w
+				if (!bitmap[int(expansionY-minY) * w + int(x-minX)]) // point outside polygon, stop expansion attempts. Doubles must be truncated, since y*w may become intermediate integers between floor(y)*w and ceiling(y)*w
 				{
 					goto triangleOutsidePolygon;
 				}
@@ -294,12 +294,12 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 			if (xLeft > xRight) std::swap(xLeft, xRight);
 			for (double x = xLeft; x < xRight; ++x) //or <=?
 			{
-				bitmap[int(ny) * w + int(x)] = false;
+				bitmap[int(ny-minY) * w + int(x-minX)] = false;
 			}
 		}
 
 		double expansionAlpha = (expansionY - line.first.y) / ySpan;
-		double xv = lerp<double>(line.first.x, line.second.y, expansionAlpha);
+		double xv = lerp<double>(line.first.x, line.second.x, expansionAlpha);
 		double xe = line.first.x;
 		Ved2 shearedStart = line.first;
 		Ved2 shearedEnd = { xv, expansionY }; //????
@@ -311,7 +311,7 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		//polygonLines[i] = std::make_pair(shearedStart, shearedEnd);
 		polygonLines[i--] = std::make_pair(shearedEnd, line.second);
 	}
-	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_carved.png");
+	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_zcarved.png");
 
 	std::vector<SDL_Rect> rects;
 	while (true)
@@ -361,9 +361,9 @@ std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(con
 	auto polygonSplit = orcishTriangulation(sectorLinedefs, vertices, tesselSize);	
 	if (polygonSplit.empty()) return ret;
 
-	real minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.x < v2.x; })->x;
-	real minZ = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Vec3& v1, const Vec3& v2) {return v1.z < v2.z; })->z;
-	Vec3 uvOffset = { minX, minZ, 0 };
+	real minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Ved2& v1, const Ved2& v2) {return v1.x < v2.x; })->x;
+	real minY = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Ved2& v1, const Ved2& v2) {return v1.y < v2.y; })->y;
+	Vec2 uvOffset = { minX, minY };
 
 	int floorTextureIndex = textureManager.getTextureIndexByName(wadStrToStd(sector.floorTexture));
 	int ceilingTextureIndex = textureManager.getTextureIndexByName(wadStrToStd(sector.ceilingTexture));
@@ -374,8 +374,10 @@ std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(con
 		for (int j = 0; j < 6; ++j)
 		{
 			bool isFloor = j < 3;
-			Vec3 uv = polygonSplit[i + j%3] - uvOffset;
-			t[j/3].tv[j%3].spaceCoords = polygonSplit[i + j%3];
+			Ved2 _2vert = polygonSplit[i + j % 3];
+			Vec3 vert = Vec3(real(_2vert.x), 0, real(_2vert.y));
+			Vec3 uv = vert - uvOffset;
+			t[j / 3].tv[j % 3].spaceCoords = vert;
 			t[j/3].tv[j%3].spaceCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
 			t[j / 3].tv[j % 3].textureCoords = Vec2(uv.x, uv.z);
 			t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;

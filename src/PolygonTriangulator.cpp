@@ -97,6 +97,7 @@ void PolygonBitmap::saveTo(std::string path)
 	std::unordered_map<uint8_t, Color> palette;
 	palette[INSIDE] = Color(255, 255, 255);
 	palette[OUTSIDE] = Color(0, 0, 0);
+	palette[CARVED] = Color(200, 0, 0);
 
 	std::vector<uint32_t> pixels(w * h);
 	for (int y = 0; y < h; ++y)
@@ -113,7 +114,7 @@ void PolygonBitmap::saveTo(std::string path)
 	SDL_FreeSurface(png);
 }
 
-void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides)
+void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides, PolygonBitmapValue valueOverride)
 {
 	assert(dst.getMinX() <= this->getMinX());
 	assert(dst.getMinY() <= this->getMinY());
@@ -127,7 +128,9 @@ void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides)
 		for (int x = 0; x < w; ++x)
 		{
 			uint8_t val = this->getPixelUnsafe(x, y);
+			assert(val != NONE);
 			if (doNotBlitOutsides && val == OUTSIDE) continue;
+			if (val != OUTSIDE && valueOverride != NONE) val = valueOverride;
 			dst.setPixelUnsafe(x + offsetX, y + offsetY, val);
 		}
 	}

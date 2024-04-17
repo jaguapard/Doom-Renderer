@@ -147,7 +147,6 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 			bool notFullyTransparent = texturePixel.a > 0;
 			if (notFullyTransparent && context.zBuffer->testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing
 			{
-				Color c = texturePixel.multipliedByLight(context.lightMult);
 				context.frameBuffer->setPixelUnsafe(x, y, texturePixel);
 				context.lightBuffer->setPixelUnsafe(x, y, context.lightMult);
 			}

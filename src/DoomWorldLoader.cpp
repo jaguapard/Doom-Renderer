@@ -289,8 +289,8 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	triangleOutsidePolygon:
 		if (expansionY == line.first.y)
 		{
-			if (pass == 1) goto look;
-			else continue; //if the first expansion attempt failed, just go to the next line
+			//if (pass == 1) goto look;
+			continue; //if the first expansion attempt failed, just go to the next line
 		}
 		//else, shear expanded line and mark points as occupied
 		for (double ny = line.first.y; ny < expansionY; ++ny)
@@ -315,7 +315,12 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		ret.push_back(newVert);
 		ret.push_back(shearEnd);
 		//polygonLines[i] = std::make_pair(shearedStart, shearedEnd);
-		if (expansionY < line.second.y) polygonLines[i--] = std::make_pair(shearEnd, line.second); //if line was not fully consumed, shear it
+		if (expansionY < line.second.y)
+		{
+			polygonLines[i--] = std::make_pair(shearEnd, line.second); //if line was not fully consumed, shear it
+			polygonLines.push_back({ line.first, newVert });
+			polygonLines.push_back({ newVert, line.second });
+		}
 		else //else remove it
 		{
 			std::swap(polygonLines[i--], polygonLines.back());

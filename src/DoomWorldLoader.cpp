@@ -265,13 +265,17 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		if (line.first.y > line.second.y) std::swap(line.first, line.second); //enforce increasing Y
 		double ySpan = line.second.y - line.first.y;
 
+		int pass = 0;
+	look:
+		++pass;
+		assert(pass == 1 || pass == 2);
 		double expansionY = line.first.y;
 		for (; expansionY < line.second.y; ++expansionY) //try growing y until we find first y that makes our candidate triangle to spill outside the polygon
 		{
 			double yp = (expansionY - line.first.y) / ySpan;
 			double xv = lerp<double>(line.first.x, line.second.x, yp); //we carve only right angle triangles, so only 1 lerp is needed
 			double xLeft = xv;
-			double xRight = line.first.x;
+			double xRight = pass == 1 ? line.first.x : line.second.x;
 			if (xLeft > xRight) std::swap(xLeft, xRight);
 			for (double x = xLeft; x < xRight; ++x) //or <=?
 			{
@@ -283,7 +287,11 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		}
 
 	triangleOutsidePolygon:
-		if (expansionY == line.first.y) continue; //if the first expansion attempt failed, just go to the next line
+		if (expansionY == line.first.y)
+		{
+			if (pass == 1) goto look;
+			else continue; //if the first expansion attempt failed, just go to the next line
+		}
 		//else, shear expanded line and mark points as occupied
 		for (double ny = line.first.y; ny < expansionY; ++ny)
 		{

@@ -210,9 +210,9 @@ void saveBitmap(const std::vector<bool>& bitmap, int w, int h, std::string fName
 /*returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 DOOM doesn't really give us too many constraints with it's sector shape, so good algorithms like ear clipping may fail (and I'm too lazy to write it anyway) 
 */
-std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sectorLinedefs, const std::vector<Vertex>& vertices, int tesselSize)
+std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sectorLinedefs, const std::vector<Vertex>& vertices, int tesselSize)
 {
-	if (tesselSize == -1) return std::vector<Vec3>();
+	if (tesselSize == -1) return std::vector<Ved2>();
 	assert(sectorLinedefs.size() >= 3);
 
 	std::vector<std::pair<Ved2, Ved2>> polygonLines;
@@ -255,11 +255,11 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	++count;
 	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_initial.png");
 
-	std::vector<Vec3> ret;
+	std::vector<Ved2> ret;
 
 	for (int i = 0; i < polygonLines.size(); ++i)
 	{
-		Line& line = polygonLines[i];
+		Line line = polygonLines[i];
 		if (line.first.x == line.second.x || line.first.y == line.second.y) continue; //skip perfectly vertical or perfectly horizontal lines
 
 		if (line.first.y > line.second.y) std::swap(line.first, line.second); //enforce increasing Y
@@ -269,11 +269,11 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		for (; expansionY < line.second.y; ++expansionY) //try growing y until we find first y that makes our candidate triangle to spill outside the polygon
 		{
 			double yp = (expansionY - line.first.y) / ySpan;
-			double xv = lerp(line.first.x, line.second.x, yp); //we carve only right angle triangles, so only 1 lerp is needed
+			double xv = lerp<double>(line.first.x, line.second.x, yp); //we carve only right angle triangles, so only 1 lerp is needed
 			double xLeft = xv;
 			double xRight = line.first.x;
 			if (xLeft > xRight) std::swap(xLeft, xRight);
-			for (double x = xLeft; x < xRight; ++x)
+			for (double x = xLeft; x < xRight; ++x) //or <=?
 			{
 				if (!bitmap[int(expansionY) * w + int(x)]) // point outside polygon, stop expansion attempts. Doubles must be truncated, since y*w may become intermediate integers between floor(y)*w and ceiling(y)*w
 				{
@@ -285,8 +285,31 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	triangleOutsidePolygon:
 		if (expansionY == line.first.y) continue; //if the first expansion attempt failed, just go to the next line
 		//else, shear expanded line and mark points as occupied
+		for (double ny = line.first.y; ny <= expansionY; ++ny)
+		{
+			double yp = (ny - line.first.y) / ySpan;
+			double xv = lerp<double>(line.first.x, line.second.x, yp);
+			double xLeft = xv;
+			double xRight = line.first.x;
+			if (xLeft > xRight) std::swap(xLeft, xRight);
+			for (double x = xLeft; x < xRight; ++x) //or <=?
+			{
+				bitmap[int(ny) * w + int(x)] = false;
+			}
+		}
 
+		double expansionAlpha = (expansionY - line.first.y) / ySpan;
+		double xv = lerp<double>(line.first.x, line.second.y, expansionAlpha);
+		double xe = line.first.x;
+		Ved2 shearedStart = line.first;
+		Ved2 shearedEnd = { xv, expansionY }; //????
+		Ved2 shearedEnd2 = { xe, expansionY }; //????
 
+		ret.push_back(line.first);
+		ret.push_back(shearedEnd);
+		ret.push_back(shearedEnd2);
+		//polygonLines[i] = std::make_pair(shearedStart, shearedEnd);
+		polygonLines[i--] = std::make_pair(shearedEnd, line.second);
 	}
 	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_carved.png");
 
@@ -321,13 +344,13 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 
 	for (const auto& it : rects)
 	{
-		ret.push_back(Vec3(it.x, 0, it.y));
-		ret.push_back(Vec3(it.x + it.w, 0, it.y));
-		ret.push_back(Vec3(it.x + it.w, 0, it.y + it.h));
+		ret.push_back(Ved2(it.x, it.y));
+		ret.push_back(Ved2(it.x + it.w, it.y));
+		ret.push_back(Ved2(it.x + it.w, it.y + it.h));
 
-		ret.push_back(Vec3(it.x + it.w, 0, it.y + it.h));
-		ret.push_back(Vec3(it.x, 0, it.y + it.h));
-		ret.push_back(Vec3(it.x, 0, it.y));
+		ret.push_back(Ved2(it.x + it.w, it.y + it.h));
+		ret.push_back(Ved2(it.x, it.y + it.h));
+		ret.push_back(Ved2(it.x, it.y));
 	}
 	return ret;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <stdexcept>
+#include <cassert>
 
 template <typename T>
 class PixelBuffer
@@ -53,7 +54,7 @@ inline int PixelBuffer<T>::getH() const
 template<typename T>
 inline T PixelBuffer<T>::getPixel(int x, int y) const
 {
-	return isInBounds(x, y) ? at(x, y) : throw std::runtime_error("Pixel buffer: attempted out of bound access");
+	return isInBounds(x, y) ? at(x, y) : throw std::runtime_error("Pixel buffer: attempted out of bounds access");
 }
 
 template<typename T>
@@ -106,7 +107,8 @@ inline T* PixelBuffer<T>::getRawPixels()
 template<typename T>
 inline T& PixelBuffer<T>::operator[](int i)
 {
-	return store[i];
+	const T& el = *this[el];
+	return const_cast<T&>(el);
 }
 
 template<typename T>
@@ -118,11 +120,16 @@ inline const T& PixelBuffer<T>::operator[](int i) const
 template<typename T>
 inline T& PixelBuffer<T>::at(int x, int y)
 {
-	return store[y * w + x];
+	const T& el = at(x, y);
+	return const_cast<T&>(el);
 }
 
 template<typename T>
 inline const T& PixelBuffer<T>::at(int x, int y) const
 {
+	assert(x >= 0);
+	assert(y >= 0);
+	assert(x < w);
+	assert(y < h);
 	return store[y * w + x];
 }

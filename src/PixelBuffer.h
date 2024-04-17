@@ -13,15 +13,15 @@ public:
 	int getW() const;
 	int getH() const;
 
-	T getPixel(int x, int y) const;
-	T getPixelUnsafe(int x, int y) const; //does not check for out of bounds
+	T getPixel(int x, int y, bool& outOfBounds) const; //Returns a pixel at (x,y) and sets `outOfBounds` to false if the point is in bounds. Else, returns default constructed T and sets `outOfBounds` to true
+	T getPixelUnsafe(int x, int y) const; //does not perform bounds checks
 	bool setPixel(int x, int y, const T& px); //if pixel was set, returns true. Else (pixel is out of bounds) returns false
-	void setPixelUnsafe(int x, int y, const T& px);
+	void setPixelUnsafe(int x, int y, const T& px); //does not perform bounds checks
 
 	bool isOutOfBounds(int x, int y) const;
 	bool isInBounds(int x, int y) const;
 
-	void clear(T value = T(0));
+	void clear(T value = T());
 	T* getRawPixels();
 
 	T& operator[](int i);
@@ -52,9 +52,11 @@ inline int PixelBuffer<T>::getH() const
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixel(int x, int y) const
+inline T PixelBuffer<T>::getPixel(int x, int y, bool& outOfBounds) const
 {
-	return isInBounds(x, y) ? at(x, y) : throw std::runtime_error("Pixel buffer: attempted out of bounds access");
+	if (isInBounds(x, y)) return at(x, y);
+	outOfBounds = true;
+	return T();
 }
 
 template<typename T>
@@ -107,8 +109,7 @@ inline T* PixelBuffer<T>::getRawPixels()
 template<typename T>
 inline T& PixelBuffer<T>::operator[](int i)
 {
-	const T& el = *this[el];
-	return const_cast<T&>(el);
+	return const_cast<T&>(static_cast<const PixelBuffer<T>&>(*this)[i]);
 }
 
 template<typename T>
@@ -120,8 +121,7 @@ inline const T& PixelBuffer<T>::operator[](int i) const
 template<typename T>
 inline T& PixelBuffer<T>::at(int x, int y)
 {
-	const T& el = at(x, y);
-	return const_cast<T&>(el);
+	return const_cast<T&>(static_cast<const PixelBuffer<T>&>(*this).at(x, y));
 }
 
 template<typename T>

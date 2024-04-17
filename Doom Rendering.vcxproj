@@ -33,6 +33,7 @@
     <ClCompile Include="src\DoomWorldLoader.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
+    <ClCompile Include="src\PolygonTriangulator.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\TextureManager.cpp" />
     <ClCompile Include="src\Triangle.cpp" />
@@ -47,6 +48,7 @@
     <ClInclude Include="src\helpers.h" />
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\PixelBuffer.h" />
+    <ClInclude Include="src\PolygonTriangulator.h" />
     <ClInclude Include="src\real.h" />
     <ClInclude Include="src\Statsman.h" />
     <ClInclude Include="src\Texture.h" />

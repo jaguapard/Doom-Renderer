@@ -139,72 +139,12 @@ std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(real botto
 	return ret;
 }
 
-real scalarCross2d(Vec2 a, Vec2 b)
-{
-	return a.x * b.y - a.y * b.x;
-}
-
 typedef std::pair<Ved2, Ved2> Line;
-bool rayCrossesLine(const Ved2& p, const std::pair<Ved2, Ved2>& lines)
-{
-	const Ved2& sv = lines.first;
-	const Ved2& ev = lines.second;
-
-	//floating point precision is a bitch here, force use doubles everywhere
-	Ved2 v1 = p - sv;
-	Ved2 v2 = ev - sv;
-	Ved2 v3 = { -sqrt(2), sqrt(3) }; //using irrational values to never get pucked by linedefs being perfectly collinear to our ray by chance
-	v3 /= v3.len(); //idk, seems like a good measure
-	double dot = v2.dot(v3);
-	//if (abs(dot) < 1e-9) return false;
-
-	double t1 = scalarCross2d(v2, v1) / dot;
-	double t2 = v1.dot(v3) / dot;
-
-	//we are fine with false positives (point is considered inside when it's not), but false negatives are absolutely murderous
-	if (t1 >= 1e-9 && (t2 >= 1e-9 && t2 <= 1.0 - 1e-9))
-		return true;
-	return false;
-	
-	//these are safeguards against rampant global find-and-replace mishaps breaking everything
-	static_assert(sizeof(sv) == 16);
-	static_assert(sizeof(ev) == 16);
-	static_assert(sizeof(v1) == 16);
-	static_assert(sizeof(v2) == 16);
-	static_assert(sizeof(v3) == 16);
-	static_assert(sizeof(dot) == 8);
-	static_assert(sizeof(t1) == 8);
-	static_assert(sizeof(t2) == 8);
-	static_assert(sizeof(p) == 16);
-}
-
-bool isPointInsidePolygon(const Ved2& p, const std::vector<std::pair<Ved2, Ved2>>& lines)
-{
-	assert(lines.size() >= 3);
-	int intersections = 0;
-	for (const auto& it : lines) intersections += rayCrossesLine(p, it);
-	return intersections % 2 == 1;
-}
 
 struct XRange
 {
 	int y, minX, maxX; //[minX, maxX)
 };
-
-void saveBitmap(const std::vector<bool>& bitmap, int w, int h, std::string fName)
-{
-	std::vector<uint32_t> pixels(w * h);
-	for (int y = 0; y < h; ++y)
-	{
-		for (int x = 0; x < w; ++x)
-		{
-			pixels[y * w + x] = bitmap[y * w + x] ? 0xFFFFFFFF : 0x000000FF;
-		}
-	}
-	SDL_Surface* png = SDL_CreateRGBSurfaceWithFormatFrom(&pixels.front(), w, h, 32, w * 4, SDL_PIXELFORMAT_ABGR32);
-	IMG_SavePNG(png, fName.c_str());
-	SDL_FreeSurface(png);
-}
 
 
 /*returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!

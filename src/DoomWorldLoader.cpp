@@ -144,6 +144,7 @@ real scalarCross2d(Vec2 a, Vec2 b)
 	return a.x * b.y - a.y * b.x;
 }
 
+typedef std::pair<Ved2, Ved2> Line;
 bool rayCrossesLine(const Ved2& p, const std::pair<Ved2, Ved2>& lines)
 {
 	const Ved2& sv = lines.first;
@@ -256,8 +257,38 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 
 	std::vector<Vec3> ret;
 
+	for (int i = 0; i < polygonLines.size(); ++i)
+	{
+		Line& line = polygonLines[i];
+		if (line.first.x == line.second.x || line.first.y == line.second.y) continue; //skip perfectly vertical or perfectly horizontal lines
+
+		if (line.first.y > line.second.y) std::swap(line.first, line.second); //enforce increasing Y
+		double ySpan = line.second.y - line.first.y;
+
+		double expansionY = line.first.y;
+		for (; expansionY < line.second.y; ++expansionY) //try growing y until we find first y that makes our candidate triangle to spill outside the polygon
+		{
+			double yp = (expansionY - line.first.y) / ySpan;
+			double xv = lerp(line.first.x, line.second.x, yp); //we carve only right angle triangles, so only 1 lerp is needed
+			double xLeft = xv;
+			double xRight = line.first.x;
+			if (xLeft > xRight) std::swap(xLeft, xRight);
+			for (double x = xLeft; x < xRight; ++x)
+			{
+				if (!bitmap[int(expansionY) * w + int(x)]) // point outside polygon, stop expansion attempts. Doubles must be truncated, since y*w may become intermediate integers between floor(y)*w and ceiling(y)*w
+				{
+					goto triangleOutsidePolygon;
+				}
+			}
+		}
+
+	triangleOutsidePolygon:
+		if (expansionY == line.first.y) continue; //if the first expansion attempt failed, just go to the next line
+		//else, shear expanded line and mark points as occupied
 
 
+	}
+	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_carved.png");
 
 	std::vector<SDL_Rect> rects;
 	while (true)

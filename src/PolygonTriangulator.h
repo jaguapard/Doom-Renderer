@@ -11,8 +11,13 @@ class PolygonBitmap : PixelBuffer<uint8_t>
 public:
 	static PolygonBitmap makeFrom(const std::vector<Line>& polygon);
 	void saveTo(std::string path);
+	void blitOver(PolygonBitmap& dst, bool doNotBlitOutsides); //if doNotBlitOutsides is true, then OUTSIDE values from this bitmap will not be blitted to dst
 
-	int polygonMinX, polygonMinY;
+	int getMaxX() const;
+	int getMaxY() const;
+	int getMinX() const;
+	int getMinY() const;
+
 	enum PolygonBitmapValue : uint8_t
 	{
 		OUTSIDE = 0,
@@ -20,6 +25,7 @@ public:
 	};
 private:
 	PolygonBitmap(int minX, int minY, int maxX, int maxY, int w, int h, const std::vector<Line>& polygon);
+	int polygonMinX, polygonMinY;
 };
 
 class PolygonTriangulator

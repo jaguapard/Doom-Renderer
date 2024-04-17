@@ -112,3 +112,43 @@ void PolygonBitmap::saveTo(std::string path)
 	IMG_SavePNG(png, path.c_str());
 	SDL_FreeSurface(png);
 }
+
+void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides)
+{
+	assert(dst.getMinX() <= this->getMinX());
+	assert(dst.getMinY() <= this->getMinY());
+	assert(dst.getMaxX() >= this->getMaxX());
+	assert(dst.getMaxY() >= this->getMaxY());
+
+	int offsetX = this->getMinX() - dst.getMinX();
+	int offsetY = this->getMinY() - dst.getMinY();
+	for (int y = 0; y < h; ++y)
+	{
+		for (int x = 0; x < w; ++x)
+		{
+			uint8_t val = this->getPixelUnsafe(x, y);
+			if (doNotBlitOutsides && val == OUTSIDE) continue;
+			dst.setPixelUnsafe(x + offsetX, y + offsetY, val);
+		}
+	}
+}
+
+int PolygonBitmap::getMaxX() const
+{
+	return polygonMinX + w;
+}
+
+int PolygonBitmap::getMaxY() const
+{
+	return polygonMinY + h;
+}
+
+int PolygonBitmap::getMinX() const
+{
+	return polygonMinX;
+}
+
+int PolygonBitmap::getMinY() const
+{
+	return polygonMinY;
+}

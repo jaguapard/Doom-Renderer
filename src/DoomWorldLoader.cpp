@@ -275,7 +275,7 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 			if (xLeft > xRight) std::swap(xLeft, xRight);
 			for (double x = xLeft; x < xRight; ++x) //or <=?
 			{
-				if (!bitmap[int(expansionY-minY) * w + int(x-minX)]) // point outside polygon, stop expansion attempts. Doubles must be truncated, since y*w may become intermediate integers between floor(y)*w and ceiling(y)*w
+				if (!bitmap[int(expansionY - minY) * w + int(x - minX)]) // point outside polygon, stop expansion attempts. Doubles must be truncated, since y*w may become intermediate integers between floor(y)*w and ceiling(y)*w
 				{
 					goto triangleOutsidePolygon;
 				}
@@ -285,7 +285,7 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	triangleOutsidePolygon:
 		if (expansionY == line.first.y) continue; //if the first expansion attempt failed, just go to the next line
 		//else, shear expanded line and mark points as occupied
-		for (double ny = line.first.y; ny <= expansionY; ++ny)
+		for (double ny = line.first.y; ny < expansionY; ++ny)
 		{
 			double yp = (ny - line.first.y) / ySpan;
 			double xv = lerp<double>(line.first.x, line.second.x, yp);
@@ -294,22 +294,25 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 			if (xLeft > xRight) std::swap(xLeft, xRight);
 			for (double x = xLeft; x < xRight; ++x) //or <=?
 			{
-				bitmap[int(ny-minY) * w + int(x-minX)] = false;
+				bitmap[int(ny - minY) * w + int(x - minX)] = false;
 			}
 		}
 
 		double expansionAlpha = (expansionY - line.first.y) / ySpan;
 		double xv = lerp<double>(line.first.x, line.second.x, expansionAlpha);
-		double xe = line.first.x;
-		Ved2 shearedStart = line.first;
-		Ved2 shearedEnd = { xv, expansionY }; //????
-		Ved2 shearedEnd2 = { xe, expansionY }; //????
+		Ved2 newVert = { line.first.x, expansionY };
+		Ved2 shearEnd = { xv, expansionY };
 
 		ret.push_back(line.first);
-		ret.push_back(shearedEnd);
-		ret.push_back(shearedEnd2);
+		ret.push_back(newVert);
+		ret.push_back(shearEnd);
 		//polygonLines[i] = std::make_pair(shearedStart, shearedEnd);
-		polygonLines[i--] = std::make_pair(shearedEnd, line.second);
+		if (expansionY < line.second.y) polygonLines[i--] = std::make_pair(shearEnd, line.second); //if line was not fully consumed, shear it
+		else //else remove it
+		{
+			std::swap(polygonLines[i--], polygonLines.back());
+			polygonLines.pop_back();
+		}
 	}
 	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_zcarved.png");
 

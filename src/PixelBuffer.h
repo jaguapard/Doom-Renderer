@@ -22,6 +22,9 @@ public:
 
 	void clear(T value = T(0));
 	T* getRawPixels();
+
+	T& operator[](int i);
+	const T& operator[](int i) const;
 protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
@@ -98,6 +101,18 @@ template<typename T>
 inline T* PixelBuffer<T>::getRawPixels()
 {
 	return &store.front();
+}
+
+template<typename T>
+inline T& PixelBuffer<T>::operator[](int i)
+{
+	return store[i];
+}
+
+template<typename T>
+inline const T& PixelBuffer<T>::operator[](int i) const
+{
+	return store[i];
 }
 
 template<typename T>

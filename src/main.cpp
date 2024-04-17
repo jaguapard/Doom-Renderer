@@ -152,13 +152,17 @@ void main()
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
 	PixelBuffer<Color> framebuf(framebufW, framebufH);
+	PixelBuffer<real> lightBuf(framebufW, framebufH);
+	ZBuffer zBuffer(framebufW, framebufH);
 
 	C_Input input;
 	CoordinateTransformer ctr(framebufW, framebufH);
-
-	ZBuffer zBuffer(framebufW, framebufH);
+	
 	uint64_t frames = 0;
 	real flySpeed = 15;
+	bool fogEnabled = false;
+	real fogMaxIntensityDist = 600;
+
 	std::string warpTo;
 
 	real camAngAdjustmentSpeed_Mouse = 1e-3;
@@ -169,6 +173,7 @@ void main()
 		framebuf.clear();
 		SDL_FillRect(wndSurf, nullptr, 0);
 		zBuffer.clear();
+		lightBuf.clear();
 
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev))
@@ -195,14 +200,17 @@ void main()
 						warpTo.clear();
 					}
 				}
+
+				if (scancode == SDL_SCANCODE_G) fogEnabled = !fogEnabled;
 			}
 		}
 
-		camAng += { camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
-		camAng -= { camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
+		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
+		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
 		if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
 		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
 		gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
+		fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
 
 		Vec3 camAdd = -Vec3({ real(input.isButtonHeld(SDL_SCANCODE_D)), real(input.isButtonHeld(SDL_SCANCODE_X)), real(input.isButtonHeld(SDL_SCANCODE_W)) });
 		camAdd += { real(input.isButtonHeld(SDL_SCANCODE_A)), real(input.isButtonHeld(SDL_SCANCODE_Z)), real(input.isButtonHeld(SDL_SCANCODE_S))};
@@ -222,6 +230,7 @@ void main()
 			TriangleRenderContext ctx;
 			ctx.ctr = &ctr;
 			ctx.frameBuffer = &framebuf;
+			ctx.lightBuffer = &lightBuf;
 			ctx.textureManager = &textureManager;
 			ctx.zBuffer = &zBuffer;
 			ctx.framebufW = framebufW - 1;
@@ -237,15 +246,14 @@ void main()
 		}
 		std::cout << "Frame " << frames++ << " done\n";
 
-		if (false)
+		if (fogEnabled)
 		{
 			double* zBuffPixels = zBuffer.getRawPixels();
 			Color* framebufPixels = framebuf.getRawPixels();
 			//Color fogColor = { 150, 42, 36 255 };
 			Color fogColor = { 255, 255, 255, 255 };
 			int pxCount = framebufW * framebufH;
-
-			real fogMaxIntensityDist = 600;
+			
 			for (int i = 0; i < pxCount; ++i)
 			{
 				real depth = -zBuffPixels[i];
@@ -265,9 +273,10 @@ void main()
 		{
 			for (int x = 0; x < screenW; ++x)
 			{
-				real fx = real(x) / screenW * framebufW;
-				real fy = real(y) / screenH * framebufH;
-				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).toSDL_Uint32(shifts);
+				int fx = real(x) / screenW * framebufW;
+				int fy = real(y) / screenH * framebufH;
+				real lightMult = lightBuf.getPixelUnsafe(fx, fy);
+				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).multipliedByLight(lightMult).toSDL_Uint32(shifts);
 			}
 		}
 		SDL_UpdateWindowSurface(wnd);

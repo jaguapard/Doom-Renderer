@@ -31,6 +31,7 @@ inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
 struct TriangleRenderContext
 {
 	PixelBuffer<Color>* frameBuffer;
+	PixelBuffer<real>* lightBuffer;
 	ZBuffer* zBuffer;
 	const CoordinateTransformer* ctr;	
 	const TextureManager* textureManager;

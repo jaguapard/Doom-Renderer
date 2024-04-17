@@ -77,14 +77,14 @@ PolygonBitmap PolygonBitmap::makeFrom(const std::vector<Line>& polygon)
 	for (const auto& line : polygon)
 	{
 		minX = std::min<int>(minX, line.first.x);
-		minY = std::min<int>(minX, line.first.y);
+		minY = std::min<int>(minY, line.first.y);
 		maxX = std::max<int>(maxX, line.first.x);
-		maxY = std::max<int>(maxX, line.first.y);
+		maxY = std::max<int>(maxY, line.first.y);
 
 		minX = std::min<int>(minX, line.second.x);
-		minY = std::min<int>(minX, line.second.y);
+		minY = std::min<int>(minY, line.second.y);
 		maxX = std::max<int>(maxX, line.second.x);
-		maxY = std::max<int>(maxX, line.second.y);
+		maxY = std::max<int>(maxY, line.second.y);
 	}
 
 	int w = maxX - minX;

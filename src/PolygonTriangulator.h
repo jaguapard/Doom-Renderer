@@ -10,7 +10,6 @@ class PolygonBitmap : PixelBuffer<uint8_t>
 {
 public:
 	static PolygonBitmap makeFrom(const std::vector<Line>& polygon);
-	//PolygonBitmap(const std::vector<Line>& polygon);
 	void saveTo(std::string path);
 
 	int polygonMinX, polygonMinY;

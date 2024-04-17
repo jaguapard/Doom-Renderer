@@ -286,8 +286,10 @@ std::vector<Vec3> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 				}
 			}
 		}
+		saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_post_tri_carve.png");
 	}
-	saveBitmap(bitmap, w, h, "sectors_debug/" + std::to_string(count) + "_post_tri_carve.png");
+	
+
 
 	std::vector<SDL_Rect> rects;
 	while (true)

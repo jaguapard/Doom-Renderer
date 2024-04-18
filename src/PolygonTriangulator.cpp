@@ -95,6 +95,9 @@ PolygonBitmap PolygonBitmap::makeFrom(const std::vector<Line>& polygon)
 
 void PolygonBitmap::saveTo(std::string path)
 {
+	constexpr bool POLYGON_BITMAPS_DEBUG_PNGS = true;
+	if (!POLYGON_BITMAPS_DEBUG_PNGS) return;
+
 	std::unordered_map<uint8_t, Color> palette;
 	palette[INSIDE] = Color(255, 255, 255);
 	palette[OUTSIDE] = Color(0, 0, 0);

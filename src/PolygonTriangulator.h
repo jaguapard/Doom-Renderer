@@ -3,6 +3,7 @@
 #include <array>
 #include "PixelBuffer.h"
 #include "Vec.h"
+#include <string>
 
 typedef std::pair<Ved2, Ved2> Line;
 
@@ -22,6 +23,16 @@ public:
 	void saveTo(std::string path);
 	void blitOver(PolygonBitmap& dst, bool doNotBlitOutsides, PolygonBitmapValue valueOverride); //if doNotBlitOutsides is true, then OUTSIDE values from this bitmap will not be blitted to dst
 
+	bool areAllPointsInside(const PolygonBitmap& other) const;
+
+	uint8_t getValueAt(int x, int y) const; //"world" XY, not pixel xy inside the buffer
+	void setValueAt(int x, int y, uint8_t val);
+
+	uint8_t& atXY(int x, int y);
+	const uint8_t& atXY(int x, int y) const;
+
+	bool isInBoundsOf(const PolygonBitmap& other) const;
+
 	int getMaxX() const;
 	int getMaxY() const;
 	int getMinX() const;
@@ -36,5 +47,5 @@ class PolygonTriangulator
 public:
 	static std::vector<Ved2> triangulate(std::vector<Line> polygonLines);
 private:	
-	static std::vector<Ved2> tryCarve(const std::array<Line, 3>& triangle, PolygonBitmap& bitmap);
+	static std::vector<Ved2> tryCarve(const std::array<Ved2, 3>& trianglePoints, PolygonBitmap& bitmap);
 };

@@ -116,10 +116,7 @@ void PolygonBitmap::saveTo(std::string path)
 
 void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides, PolygonBitmapValue valueOverride)
 {
-	assert(dst.getMinX() <= this->getMinX());
-	assert(dst.getMinY() <= this->getMinY());
-	assert(dst.getMaxX() >= this->getMaxX());
-	assert(dst.getMaxY() >= this->getMaxY());
+	assert(this->isInBoundsOf(dst));
 
 	int offsetX = this->getMinX() - dst.getMinX();
 	int offsetY = this->getMinY() - dst.getMinY();
@@ -134,6 +131,49 @@ void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides, Polygon
 			dst.setPixelUnsafe(x + offsetX, y + offsetY, val);
 		}
 	}
+}
+
+bool PolygonBitmap::areAllPointsInside(const PolygonBitmap& other) const
+{
+	assert(this->isInBoundsOf(other));
+	for (int y = this->getMinY(); y < this->getMaxY(); ++y)
+	{
+		for (int x = this->getMinX(); x < this->getMaxX(); ++x)
+		{
+			if (this->getValueAt(x, y) != OUTSIDE && other.getValueAt(x, y) == OUTSIDE) return false;
+			//TODO: maybe other conditions? What if this is outside, but other == inside?
+		}
+	}
+	return true;
+}
+
+uint8_t PolygonBitmap::getValueAt(int x, int y) const
+{
+	return atXY(x, y);
+}
+
+void PolygonBitmap::setValueAt(int x, int y, uint8_t val)
+{
+	atXY(x, y) = val;
+}
+
+uint8_t& PolygonBitmap::atXY(int x, int y)
+{
+	return const_cast<uint8_t&>(static_cast<const PolygonBitmap&>(*this).atXY(x, y));
+}
+
+const uint8_t& PolygonBitmap::atXY(int x, int y) const
+{
+	return at(x - polygonMinX, y - polygonMinY);
+}
+
+bool PolygonBitmap::isInBoundsOf(const PolygonBitmap& other) const
+{
+	return 
+		other.getMinX() <= this->getMinX() &&
+		other.getMinY() <= this->getMinY() &&
+		other.getMaxX() >= this->getMaxX() &&
+		other.getMaxY() >= this->getMaxY();
 }
 
 int PolygonBitmap::getMaxX() const
@@ -159,6 +199,10 @@ int PolygonBitmap::getMinY() const
 std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLines)
 {
 	auto bitmap = PolygonBitmap::makeFrom(polygonLines);
+	static int nSector = 0;
+	bitmap.saveTo("sectors_debug/" + std::to_string(nSector) + "_initial.png");
+
+	std::vector<Ved2> ret;
 	while (true)
 	{
 		int slopedLineCount = 0;
@@ -168,7 +212,41 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 		}
 		if (slopedLineCount == 0) break;
 
+		for (int i = 0; i < polygonLines.size(); ++i)
+		{
+			Line line = polygonLines[i];
+			if (line.first.x == line.second.x || line.first.y == line.second.y) continue; //skip non-sloped lines
 
+			Ved2 newVert = { line.first.x, line.second.y };
+			std::array<Ved2, 3> trianglePoints = { line.first, newVert, line.second };
+			auto carveResult = tryCarve(trianglePoints, bitmap);
+			ret.insert(ret.end(), carveResult.begin(), carveResult.end());
+
+			trianglePoints[1] = { line.second.x, line.first.y };
+			carveResult = tryCarve(trianglePoints, bitmap);
+			ret.insert(ret.end(), carveResult.begin(), carveResult.end());
+		}
+		break;
+	}
+
+	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + "_zcarved.png");
+	return ret;
+}
+
+std::vector<Ved2> PolygonTriangulator::tryCarve(const std::array<Ved2, 3>& trianglePoints, PolygonBitmap& bitmap)
+{
+	std::vector<Line> triangleLines(3);
+	/*/Line p1 = std::make_pair(line.first, newVert);
+			Line p2 = std::make_pair(newVert, line.second);
+			Line p3 = std::make_pair(line.second, line.first);
+			std::array<Line, 3> candidateTriangle = { p1, p2, p3};*/
+
+	for (int i = 0; i < 3; ++i) triangleLines[i] = std::make_pair(trianglePoints[i], trianglePoints[i < 2 ? i + 1 : 0]);
+	auto triangleBitmap = PolygonBitmap::makeFrom(triangleLines);
+	if (triangleBitmap.areAllPointsInside(bitmap)) //very trivial for now, just check if entire triangle can fit
+	{
+		triangleBitmap.blitOver(bitmap, true, CARVED);
+		return std::vector<Ved2>(trianglePoints.begin(), trianglePoints.end());
 	}
 
 	return std::vector<Ved2>();

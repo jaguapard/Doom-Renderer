@@ -145,7 +145,7 @@ struct XRange
 {
 	int y, minX, maxX; //[minX, maxX)
 };
-
+#include "PolygonTriangulator.h"
 
 /*returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 DOOM doesn't really give us too many constraints with it's sector shape, so good algorithms like ear clipping may fail (and I'm too lazy to write it anyway) 
@@ -162,10 +162,13 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		Vertex ev = vertices[ldf.endVertex];
 		polygonLines.push_back(std::make_pair(Ved2(sv.x, sv.y), Ved2(ev.x, ev.y)));
 	}
+
+	auto ret = PolygonTriangulator::triangulate(polygonLines);
+	return ret;
 	/*
 	The gyst: draw lines on a bitmap, then flood fill and turn all "pixels" into pairs of triangles.
 	*/
-	std::vector<Vertex> vs;
+	/*std::vector<Vertex> vs;
 	int minX = INT32_MAX;
 	int maxX = INT32_MIN;
 	int minY = INT32_MAX;
@@ -308,7 +311,7 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		ret.push_back(Ved2(it.x, it.y + it.h));
 		ret.push_back(Ved2(it.x, it.y));
 	}
-	return ret;
+	return ret;*/
 }
 
 std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const Sector& sector, const std::vector<Linedef>& sectorLinedefs, const std::vector<Vertex>& vertices, TextureManager& textureManager, int tesselSize)

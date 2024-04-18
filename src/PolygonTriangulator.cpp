@@ -155,3 +155,21 @@ int PolygonBitmap::getMinY() const
 {
 	return polygonMinY;
 }
+
+std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLines)
+{
+	auto bitmap = PolygonBitmap::makeFrom(polygonLines);
+	while (true)
+	{
+		int slopedLineCount = 0;
+		for (auto& it : polygonLines)
+		{
+			slopedLineCount += it.first.x != it.second.x && it.first.y != it.second.y;
+		}
+		if (slopedLineCount == 0) break;
+
+
+	}
+
+	return std::vector<Ved2>();
+}

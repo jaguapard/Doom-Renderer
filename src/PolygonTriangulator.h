@@ -33,6 +33,8 @@ private:
 
 class PolygonTriangulator
 {
+public:
+	static std::vector<Ved2> triangulate(std::vector<Line> polygonLines);
 private:	
-	std::vector<Ved2> tryCarve(const std::array<Line, 3>& triangle, PolygonBitmap& bitmap);
+	static std::vector<Ved2> tryCarve(const std::array<Line, 3>& triangle, PolygonBitmap& bitmap);
 };

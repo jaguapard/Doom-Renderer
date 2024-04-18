@@ -172,16 +172,6 @@ const uint8_t& PolygonBitmap::atXY(int x, int y) const
 	return at(x - polygonMinX, y - polygonMinY);
 }
 
-uint8_t* PolygonBitmap::begin()
-{
-	return &store.front();
-}
-
-uint8_t* PolygonBitmap::end()
-{
-	return &store.back();
-}
-
 bool PolygonBitmap::isInBoundsOf(const PolygonBitmap& other) const
 {
 	return 

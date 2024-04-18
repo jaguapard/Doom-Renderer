@@ -24,6 +24,9 @@ public:
 	void clear(T value = T());
 	T* getRawPixels();
 
+	T* begin();
+	T* end();
+
 	T& operator[](int i);
 	const T& operator[](int i) const;
 protected:
@@ -104,6 +107,18 @@ template<typename T>
 inline T* PixelBuffer<T>::getRawPixels()
 {
 	return &store.front();
+}
+
+template<typename T>
+inline T* PixelBuffer<T>::begin()
+{
+	return &store.front();
+}
+
+template<typename T>
+inline T* PixelBuffer<T>::end()
+{
+	return &store.back() + 1;
 }
 
 template<typename T>

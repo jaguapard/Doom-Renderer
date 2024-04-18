@@ -32,9 +32,6 @@ public:
 	uint8_t& atXY(int x, int y);
 	const uint8_t& atXY(int x, int y) const;
 
-	uint8_t* begin();
-	uint8_t* end();
-
 	bool isInBoundsOf(const PolygonBitmap& other) const;
 
 	int getMaxX() const;

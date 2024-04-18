@@ -12,6 +12,7 @@ enum PolygonBitmapValue : uint8_t
 	OUTSIDE = 0,
 	INSIDE = 1,
 	CARVED = 2,
+	RECTANGLEFIED = 3,
 
 	NONE, //value used to signalize the abscence of value
 };

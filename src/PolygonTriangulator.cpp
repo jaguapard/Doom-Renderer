@@ -4,6 +4,7 @@
 
 #include "PolygonTriangulator.h"
 #include "Color.h"
+#include <functional>
 
 double scalarCross2d(Ved2 a, Ved2 b)
 {
@@ -98,6 +99,7 @@ void PolygonBitmap::saveTo(std::string path)
 	palette[INSIDE] = Color(255, 255, 255);
 	palette[OUTSIDE] = Color(0, 0, 0);
 	palette[CARVED] = Color(200, 0, 0);
+	palette[RECTANGLEFIED] = Color(0, 0, 150);
 
 	std::vector<uint32_t> pixels(w * h);
 	for (int y = 0; y < h; ++y)
@@ -210,7 +212,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 {
 	auto bitmap = PolygonBitmap::makeFrom(polygonLines);
 	static int nSector = 0;
-	bitmap.saveTo("sectors_debug/" + std::to_string(nSector) + "_initial.png");
+	bitmap.saveTo("sectors_debug/" + std::to_string(nSector) + "_a_initial.png");
 
 	std::vector<Ved2> ret;
 	while (true)
@@ -239,7 +241,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 		break;
 	}
 
-	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + "_zcarved.png");
+	bitmap.saveTo("sectors_debug/" + std::to_string(nSector) + "_b_carved.png");
 
 
 	int minX = bitmap.getMinX();
@@ -251,6 +253,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 
 	std::vector<SDL_Rect> rects;
 
+	std::function pointOutsidePolygon = [&](const uint8_t v) {return v == OUTSIDE; };
 	while (true)
 	{
 		auto firstFreeIt = std::find(bitmap.begin(), bitmap.end(), INSIDE);
@@ -259,25 +262,28 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 		int firstFreePos = firstFreeIt - bitmap.begin();
 
 		SDL_Point startingPoint = { firstFreePos % w, firstFreePos / w };
-		int initialWidth = std::find(firstFreeIt, bitmap.begin() + (startingPoint.y + 1) * w, false) - firstFreeIt;
+		int initialWidth = std::find_if(firstFreeIt, bitmap.begin() + (startingPoint.y + 1) * w, pointOutsidePolygon) - firstFreeIt;
+
 		assert(initialWidth > 0);
 		int endX = startingPoint.x + initialWidth;
-		std::fill(firstFreeIt, firstFreeIt + initialWidth, false);
+		std::fill(firstFreeIt, firstFreeIt + initialWidth, RECTANGLEFIED);
 
 		SDL_Rect r = { startingPoint.x, startingPoint.y, initialWidth, 1 };
 		for (int y = startingPoint.y + 1; y < h; ++y)
 		{
 			auto lineBeg = bitmap.begin() + y * w + startingPoint.x;
 			auto lineEnd = bitmap.begin() + y * w + endX;
-			if (std::find(lineBeg, lineEnd, false) != lineEnd) break; // this line has points outside of the polygon, can't expand
+			if (std::find_if(lineBeg, lineEnd, pointOutsidePolygon) != lineEnd) break; // this line has points outside of the polygon, can't expand
 
 			r.h++;
-			std::fill(lineBeg, lineEnd, false);
+			//this is a little bit buggy - it overrides previous values, potentially overwriting the CARVED value. It does not cause OUTSIDE to be overwritten though, so it's almost purely cosmetical/visible on sectors_debug pngs
+			std::fill(lineBeg, lineEnd, RECTANGLEFIED);
 		}
 		r.x += minX;
 		r.y += minY;
 		rects.push_back(r);
 	}
+	bitmap.saveTo("sectors_debug/" + std::to_string(nSector) + "_c_rectified.png");
 
 	for (const auto& it : rects)
 	{
@@ -290,6 +296,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 		ret.push_back(Ved2(it.x, it.y));
 	}
 
+	++nSector;
 	return ret;
 }
 

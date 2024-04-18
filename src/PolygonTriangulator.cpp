@@ -230,6 +230,53 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 	}
 
 	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + "_zcarved.png");
+
+
+	int minX = bitmap.getMinX();
+	int maxX = bitmap.getMaxX();
+	int minY = bitmap.getMinY();
+	int maxY = bitmap.getMaxY();
+
+	std::vector<SDL_Rect> rects;
+	while (true)
+	{
+		auto firstFreeIt = std::find(bitmap.begin(), bitmap.end(), true);
+		if (firstFreeIt == bitmap.end()) break;
+
+		int firstFreePos = firstFreeIt - bitmap.begin();
+
+		SDL_Point startingPoint = { firstFreePos % w, firstFreePos / w };
+		int initialWidth = std::find(firstFreeIt, bitmap.begin() + (startingPoint.y + 1) * w, false) - firstFreeIt;
+		assert(initialWidth > 0);
+		int endX = startingPoint.x + initialWidth;
+		std::fill(firstFreeIt, firstFreeIt + initialWidth, false);
+
+		SDL_Rect r = { startingPoint.x, startingPoint.y, initialWidth, 1 };
+		for (int y = startingPoint.y + 1; y < h; ++y)
+		{
+			auto lineBeg = bitmap.begin() + y * w + startingPoint.x;
+			auto lineEnd = bitmap.begin() + y * w + endX;
+			if (std::find(lineBeg, lineEnd, false) != lineEnd) break; // this line has points outside of the polygon, can't expand
+
+			r.h++;
+			std::fill(lineBeg, lineEnd, false);
+		}
+		r.x += minX;
+		r.y += minY;
+		rects.push_back(r);
+	}
+
+	for (const auto& it : rects)
+	{
+		ret.push_back(Ved2(it.x, it.y));
+		ret.push_back(Ved2(it.x + it.w, it.y));
+		ret.push_back(Ved2(it.x + it.w, it.y + it.h));
+
+		ret.push_back(Ved2(it.x + it.w, it.y + it.h));
+		ret.push_back(Ved2(it.x, it.y + it.h));
+		ret.push_back(Ved2(it.x, it.y));
+	}
+
 	return ret;
 }
 

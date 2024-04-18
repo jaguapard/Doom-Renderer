@@ -16,7 +16,7 @@ enum PolygonBitmapValue : uint8_t
 	NONE, //value used to signalize the abscence of value
 };
 
-class PolygonBitmap : PixelBuffer<uint8_t>
+class PolygonBitmap : public PixelBuffer<uint8_t>
 {
 public:
 	static PolygonBitmap makeFrom(const std::vector<Line>& polygon);

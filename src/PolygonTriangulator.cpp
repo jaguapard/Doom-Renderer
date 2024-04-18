@@ -236,11 +236,14 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 	int maxX = bitmap.getMaxX();
 	int minY = bitmap.getMinY();
 	int maxY = bitmap.getMaxY();
+	int w = bitmap.getW();
+	int h = bitmap.getH();
 
 	std::vector<SDL_Rect> rects;
+
 	while (true)
 	{
-		auto firstFreeIt = std::find(bitmap.begin(), bitmap.end(), true);
+		auto firstFreeIt = std::find(bitmap.begin(), bitmap.end(), INSIDE);
 		if (firstFreeIt == bitmap.end()) break;
 
 		int firstFreePos = firstFreeIt - bitmap.begin();

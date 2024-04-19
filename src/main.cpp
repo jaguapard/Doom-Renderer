@@ -129,8 +129,6 @@ void loadMap(std::string mapName)
 
 void program()
 {
-	real gamma = 1.3;
-
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
 	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());
@@ -168,6 +166,7 @@ void program()
 	
 	uint64_t frames = 0;
 	real flySpeed = 15;
+	real gamma = 1.3;
 	bool fogEnabled = false;
 	real fogMaxIntensityDist = 600;
 
@@ -176,11 +175,11 @@ void program()
 	real camAngAdjustmentSpeed_Mouse = 1e-3;
 	real camAngAdjustmentSpeed_Keyboard = 3e-2;
 
-	PerformanceMonitor fpsCounter;
+	PerformanceMonitor performanceMonitor;
 
 	while (true)
 	{
-		fpsCounter.registerFrameBegin();
+		performanceMonitor.registerFrameBegin();
 		framebuf.clear();
 		SDL_FillRect(wndSurf, nullptr, 0);
 		zBuffer.clear();
@@ -231,7 +230,6 @@ void program()
 		Vec3 camAdd = -Vec3({ real(input.isButtonHeld(SDL_SCANCODE_D)), real(input.isButtonHeld(SDL_SCANCODE_X)), real(input.isButtonHeld(SDL_SCANCODE_W)) });
 		camAdd += { real(input.isButtonHeld(SDL_SCANCODE_A)), real(input.isButtonHeld(SDL_SCANCODE_Z)), real(input.isButtonHeld(SDL_SCANCODE_S))};
 
-
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
 		if (real l = camAdd.len() > 0)
 		{
@@ -281,9 +279,22 @@ void program()
 			}
 		}
 
-		Uint32* px = (Uint32*)(wndSurf->pixels);
+		//this is a stupid fix for everything becoming way too blue in debug mode specifially.
+		//try to find a missing bit shift to put the alpha value into the unused byte
+		Uint32* px = reinterpret_cast<Uint32*>(wndSurf->pixels);
 		auto* wf = wndSurf->format;
-		uint32_t shifts[4] = { wf->Rshift, wf->Gshift, wf->Bshift, 32 }; //window does not support transparency, so kill alpha by shifting it out of range of uint32
+		uint32_t shifts[] = {wf->Rshift, wf->Gshift, wf->Bshift, 0};
+		uint32_t missingShift = 24;
+		for (int i = 0; i < 3; ++i)
+		{
+			if (std::find(std::begin(shifts), std::end(shifts), i * 8) == std::end(shifts))
+			{
+				missingShift = i * 8;
+				break;
+			}
+		}
+		shifts[3] = missingShift;
+
 		for (int y = 0; y < screenH; ++y)
 		{
 			for (int x = 0; x < screenW; ++x)
@@ -295,8 +306,8 @@ void program()
 			}
 		}
 
-		fpsCounter.registerFrameDone();
-		fpsCounter.drawOn(wndSurf, { 0,0 });
+		performanceMonitor.registerFrameDone();
+		performanceMonitor.drawOn(wndSurf, { 0,0 });
 
 		SDL_UpdateWindowSurface(wnd);
 		//std::cout << "Frame " << frames++ << " done\n";

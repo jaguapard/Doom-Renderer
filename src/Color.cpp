@@ -45,7 +45,7 @@ Color::operator uint32_t() const
 	return *reinterpret_cast<const uint32_t*>(this);
 }
 
-Uint32 Color::toSDL_Uint32(const uint32_t* shifts) const
+Uint32 Color::toSDL_Uint32(const std::array<uint32_t, 4>& shifts) const
 {
 	uint32_t ret = 0;
 	uint32_t vals[4] = { r, g, b, a };

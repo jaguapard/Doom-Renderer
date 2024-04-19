@@ -286,7 +286,7 @@ void program()
 		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
 		Uint32* px = reinterpret_cast<Uint32*>(wndSurf->pixels);
 		auto* wf = wndSurf->format;
-		uint32_t shifts[] = {wf->Rshift, wf->Gshift, wf->Bshift, 0};
+		std::array<uint32_t, 4> shifts = {wf->Rshift, wf->Gshift, wf->Bshift};
 		uint32_t missingShift = 24;
 		for (int i = 0; i < 3; ++i)
 		{

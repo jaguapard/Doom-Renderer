@@ -32,7 +32,7 @@ void PerformanceMonitor::registerFrameDone(bool remember)
 	}
 }
 
-void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner)
+void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const OptionalInfo* optionalInfo)
 {
 	std::string text = PercentileInfo(frameNumber, frameTimesMs).toString();
 	std::stringstream ss;
@@ -45,7 +45,13 @@ void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftC
 		ss << (statsman-oldStats).toString() << "\n";
 	}
 
-	auto s = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(font.get(), ss.str().c_str(), {255,255,255,SDL_ALPHA_OPAQUE}, 400));
+	if (optionalInfo)
+	{
+		ss << "Pos: " << optionalInfo->camPos.x << " " << optionalInfo->camPos.y << " " << optionalInfo->camPos.z << "\n";
+		ss << "Ang: " << optionalInfo->camAng.x << " " << optionalInfo->camAng.y << " " << optionalInfo->camAng.z << "\n";
+	}
+
+	auto s = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(font.get(), ss.str().c_str(), {255,255,255,SDL_ALPHA_OPAQUE}, 600));
 	if (!s) throw std::runtime_error(std::string("Failed to draw FPS info: ") + SDL_GetError());
 	SDL_Rect rect = { pixelsFromUpperLeftCorner.x, pixelsFromUpperLeftCorner.y, s->w, s->h };
 	SDL_BlitSurface(s.get(), nullptr, dst, &rect);

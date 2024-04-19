@@ -1,5 +1,7 @@
 #include <SDL\SDL.h>
 #include <SDL\SDL_image.h>
+#include <SDL\SDL_ttf.h>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -189,23 +191,25 @@ void main()
 			{
 				flySpeed *= pow(1.05, ev.wheel.y);
 			}
+		}
 
-			if (ev.type == SDL_KEYDOWN)
+
+		for (char c = '0'; c <= '9'; ++c)
+		{
+			if (input.wasCharPressedOnThisFrame(c))
 			{
-				auto scancode = ev.key.keysym.scancode;
-				if (isInRange(scancode, SDL_SCANCODE_1, SDL_SCANCODE_0)) //TODO: very dirty, assumes than scancodes are sequential
-				{
-					warpTo += (scancode == SDL_SCANCODE_0) ? '0' : (scancode - SDL_SCANCODE_1 + '1');
-					if (warpTo.length() == 2)
-					{
-						loadMap("MAP" + warpTo);
-						warpTo.clear();
-					}
-				}
-
-				if (scancode == SDL_SCANCODE_G) fogEnabled = !fogEnabled;
+				warpTo += c;
+				break;
 			}
 		}
+
+		if (warpTo.length() == 2)
+		{
+			loadMap("MAP" + warpTo);
+			warpTo.clear();
+		}
+
+		if (input.wasCharPressedOnThisFrame('G')) fogEnabled = !fogEnabled;
 
 		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};

@@ -13,7 +13,7 @@ PerformanceMonitor::PerformanceMonitor()
 void PerformanceMonitor::reset()
 {
 	frameTimesMs.clear();
-	timer.restart();
+	timer = bob::Timer();
 }
 
 void PerformanceMonitor::registerFrameBegin()

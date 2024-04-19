@@ -125,8 +125,6 @@ void loadMap(std::string mapName)
 	currentMap = &m;
 }
 
-
-
 void program()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
@@ -182,7 +180,7 @@ void program()
 	{
 		performanceMonitor.registerFrameBegin();
 		framebuf.clear();
-		SDL_FillRect(wndSurf, nullptr, 0);
+		SDL_FillRect(wndSurf, nullptr, Color(0,0,0));
 		zBuffer.clear();
 		lightBuf.clear();
 
@@ -217,6 +215,7 @@ void program()
 			std::cout << "Loading map " << mapToLoad << "...\n";
 			loadMap(mapToLoad);
 			warpTo.clear();
+			performanceMonitor.reset();
 		}
 
 		//^= 1 == toggle true->false or false->true

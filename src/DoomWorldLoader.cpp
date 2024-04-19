@@ -98,7 +98,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 		bool debugEnabled = true;
 #endif
 
-		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled && false ? -1 : 1); //too slow in debug mode
+		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled ? -1 : 1); //too slow in debug mode
 		auto& target = sectorTriangles[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
 		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";

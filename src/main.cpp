@@ -170,13 +170,14 @@ void program()
 	bool fogEnabled = false;
 	real fogMaxIntensityDist = 600;
 
+	PerformanceMonitor performanceMonitor;
+	bool performanceMonitorDisplayEnabled = true;
+
 	std::string warpTo;
 
 	real camAngAdjustmentSpeed_Mouse = 1e-3;
 	real camAngAdjustmentSpeed_Keyboard = 3e-2;
-
-	PerformanceMonitor performanceMonitor;
-
+	
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
@@ -218,7 +219,9 @@ void program()
 			warpTo.clear();
 		}
 
-		if (input.wasCharPressedOnThisFrame('G')) fogEnabled = !fogEnabled;
+		//^= 1 == toggle true->false or false->true
+		if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
+		if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
 
 		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
@@ -279,8 +282,8 @@ void program()
 			}
 		}
 
-		//this is a stupid fix for everything becoming way too blue in debug mode specifially.
-		//try to find a missing bit shift to put the alpha value into the unused byte
+		//this is a stupid fix for everything becoming way too blue in debug mode specifically.
+		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
 		Uint32* px = reinterpret_cast<Uint32*>(wndSurf->pixels);
 		auto* wf = wndSurf->format;
 		uint32_t shifts[] = {wf->Rshift, wf->Gshift, wf->Bshift, 0};
@@ -307,7 +310,7 @@ void program()
 		}
 
 		performanceMonitor.registerFrameDone();
-		performanceMonitor.drawOn(wndSurf, { 0,0 });
+		if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 });
 
 		SDL_UpdateWindowSurface(wnd);
 		//std::cout << "Frame " << frames++ << " done\n";

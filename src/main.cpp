@@ -213,7 +213,9 @@ void program()
 
 		if (warpTo.length() == 2)
 		{
-			loadMap("MAP" + warpTo);
+			std::string mapToLoad = "MAP" + warpTo;
+			std::cout << "Loading map " << mapToLoad << "...\n";
+			loadMap(mapToLoad);
 			warpTo.clear();
 		}
 

@@ -116,8 +116,8 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 	"mixing" (linearly interpolating) between two values. */
 	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 
-	real yBeg = std::max<real>(0.0, y1);
-	real yEnd = std::min<real>(context.framebufH, y3);
+	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
+	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
 	const Texture& texture = context.textureManager->getTextureByIndex(this->textureIndex);
 
@@ -132,8 +132,8 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 		const TexVertex* right = &scanlineTv2;
 		if (left->spaceCoords.x > right->spaceCoords.x) std::swap(left, right);
 		
-		real xBeg = std::max<real>(0.0, left->spaceCoords.x);
-		real xEnd = std::min<real>(context.framebufW, right->spaceCoords.x);
+		real xBeg = std::clamp<real>(left->spaceCoords.x, 0, context.framebufW);
+		real xEnd = std::clamp<real>(right->spaceCoords.x, 0, context.framebufW);
 		real xSpan = right->spaceCoords.x - left->spaceCoords.x;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);

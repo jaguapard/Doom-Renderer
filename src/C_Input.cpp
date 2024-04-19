@@ -31,7 +31,6 @@ void C_Input::handleEvent(const SDL_Event& ev)
 		SDL_Scancode scancode = ev.key.keysym.scancode;
 		buttonHoldStatus[scancode] = true;
 		if (lockedKeys.find(scancode) == lockedKeys.end()) buttonPressStatus[scancode] = true;
-		std::cout << "Scancode " << scancode << " is down\n";
 		break;
 	}		
 	case SDL_KEYUP:

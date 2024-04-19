@@ -27,6 +27,7 @@
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
+#pragma comment(lib,"SDL2_ttf.lib")
 #undef main
 
 template <typename T>
@@ -175,6 +176,7 @@ void main()
 		zBuffer.clear();
 		lightBuf.clear();
 
+		input.beginNewFrame();
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev))
 		{

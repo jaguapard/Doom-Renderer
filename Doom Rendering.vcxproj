@@ -30,6 +30,7 @@
     <ClCompile Include="src\Color.cpp" />
     <ClCompile Include="src\CoordinateTransformer.cpp" />
     <ClCompile Include="src\C_Input.cpp" />
+    <ClCompile Include="src\DoomMap.cpp" />
     <ClCompile Include="src\DoomWorldLoader.cpp" />
     <ClCompile Include="src\PerformanceMonitor.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -39,12 +40,14 @@
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\TextureManager.cpp" />
     <ClCompile Include="src\Triangle.cpp" />
+    <ClCompile Include="src\WadLoader.cpp" />
     <ClCompile Include="src\ZBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Color.h" />
     <ClInclude Include="src\CoordinateTransformer.h" />
     <ClInclude Include="src\C_Input.h" />
+    <ClInclude Include="src\DoomMap.h" />
     <ClInclude Include="src\DoomStructs.h" />
     <ClInclude Include="src\DoomWorldLoader.h" />
     <ClInclude Include="src\PerformanceMonitor.h" />
@@ -59,6 +62,7 @@
     <ClInclude Include="src\TextureManager.h" />
     <ClInclude Include="src\Triangle.h" />
     <ClInclude Include="src\Vec.h" />
+    <ClInclude Include="src\WadLoader.h" />
     <ClInclude Include="src\ZBuffer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

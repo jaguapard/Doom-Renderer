@@ -27,105 +27,14 @@
 
 #include "DoomStructs.h"
 #include "DoomWorldLoader.h"
-
+#include "WadLoader.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
 #pragma comment(lib,"SDL2_ttf.lib")
 #undef main
 
-template <typename T>
-void readRaw(T& ret, const void* bytes)
-{
-	ret = *reinterpret_cast<const T*>(bytes);
-}
-
-template <typename T>
-T readRaw(const void* bytes)
-{
-	return *reinterpret_cast<const T*>(bytes);
-}
-
-template <typename T> 
-std::vector<T> getVectorFromWad(int32_t lumpDataOffset, int32_t lumpSizeBytes, const std::vector<char>& wadBytes)
-{
-	std::vector<T> ret;
-	for (int i = 0; i < lumpSizeBytes; i += sizeof(T))
-	{
-		T v = readRaw<T>(&wadBytes[lumpDataOffset + i]);
-		ret.push_back(v);
-	}
-	return ret;
-}
-
-class Map
-{
-public:
-	Map() = default;
-	std::vector<Vertex> vertices;
-	std::vector<Linedef> linedefs;
-	std::vector<Sidedef> sidedefs;
-	std::vector<Sector> sectors;
-};
-
-std::map<std::string, Map> maps;
-
-void loadWad(std::string path)
-{
-	std::ifstream f(path, std::ios::binary);
-	if (!f.is_open()) throw std::runtime_error(std::string("Failed to open file ") + path + ": " + strerror(errno));
-
-	f.seekg(0, f.end);
-	int wadSize = f.tellg();
-	f.seekg(0, f.beg);
-	
-	std::vector<char> wadBytes(wadSize);
-	f.read(&wadBytes.front(), wadSize);
-	if (f.gcount() != wadSize) throw std::runtime_error(std::string("Failed to load file ") + path + ": " + strerror(errno));
-
-	std::string header = wadStrToStd(&wadBytes.front(), 4);
-	if (header != "IWAD" && header != "PWAD")
-		throw std::runtime_error(std::string("Invalid WAD file: ") + path + ": header mismatch. Got " + header);
-
-	int32_t numFiles = readRaw<int32_t>(&wadBytes[4]);
-	int32_t FAToffset = readRaw<int32_t>(&wadBytes[8]);
-
-	int32_t filePtr = FAToffset;
-	std::string mapName = "";
-	Map map;
-	for (int i = 0; i < numFiles; ++i)
-	{
-		int32_t lumpDataOffset = readRaw<int32_t>(&wadBytes[filePtr]);
-		int32_t lumpSizeBytes = readRaw<int32_t>(&wadBytes[filePtr + 4]);
-		std::string name = wadStrToStd(&wadBytes[filePtr + 8]);
-		if (false) std::cout << "Found file: " << name << ", data offset: " << lumpDataOffset << ", size: " << lumpSizeBytes << "\n";
-
-		bool isEpisodicMap = name.length() >= 4 && name[0] == 'E' && name[2] == 'M'; //Doom 1 and Heretic
-		bool isNonEpisodicMap = name.length() >= 5 && std::string(name.begin(), name.begin() + 3) == "MAP"; //Doom 2, Hexen, Strife
-		if (isEpisodicMap || isNonEpisodicMap)
-		{
-			if (mapName != name && mapName != "") maps[mapName] = map; //if map was in progress of being read, then save it
-			mapName = name;
-		}
-
-		if (name == "VERTEXES") map.vertices = getVectorFromWad<Vertex>(lumpDataOffset, lumpSizeBytes, wadBytes);
-		if (name == "LINEDEFS") map.linedefs = getVectorFromWad<Linedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
-		if (name == "SIDEDEFS") map.sidedefs = getVectorFromWad<Sidedef>(lumpDataOffset, lumpSizeBytes, wadBytes);
-		if (name == "SECTORS") map.sectors = getVectorFromWad<Sector>(lumpDataOffset, lumpSizeBytes, wadBytes);
-		filePtr += 16;
-	}
-}
-
 Statsman statsman;
-std::vector<std::vector<Triangle>> sectorTriangles;
-TextureManager textureManager;
-Map* currentMap = nullptr;
-void loadMap(std::string mapName)
-{
-	Map& m = maps[mapName];
-	sectorTriangles = DoomWorldLoader::loadTriangles(m.linedefs, m.vertices, m.sidedefs, m.sectors, textureManager);
-	currentMap = &m;
-}
 
 void program()
 {
@@ -133,7 +42,7 @@ void program()
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
 	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());
 
-	loadWad("D:/Games/GZDoom/DOOM2.wad"); //can't redistribute commercial wads!
+	auto maps = WadLoader::loadWad("D:/Games/GZDoom/DOOM2.wad"); //can't redistribute commercial wads!
 	//loadWad("data/test_maps/STUPID.wad");
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");
@@ -175,6 +84,10 @@ void program()
 
 	real camAngAdjustmentSpeed_Mouse = 1e-3;
 	real camAngAdjustmentSpeed_Keyboard = 3e-2;
+
+	std::vector<std::vector<Triangle>> sectorTriangles;
+	TextureManager textureManager;
+	DoomMap* currentMap = nullptr;
 	
 	while (true)
 	{
@@ -199,7 +112,6 @@ void program()
 			}
 		}
 
-
 		for (char c = '0'; c <= '9'; ++c)
 		{
 			if (input.wasCharPressedOnThisFrame(c))
@@ -213,12 +125,15 @@ void program()
 		{
 			std::string mapToLoad = "MAP" + warpTo;
 			std::cout << "Loading map " << mapToLoad << "...\n";
-			loadMap(mapToLoad);
+
+			currentMap = &maps[mapToLoad];
+			sectorTriangles = currentMap->getTriangles(textureManager);
+
 			warpTo.clear();
 			performanceMonitor.reset();
 		}
 
-		//^= 1 == toggle true->false or false->true
+		//xoring with 1 == toggle true->false or false->true
 		if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
 		if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
 

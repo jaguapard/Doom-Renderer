@@ -27,6 +27,7 @@ inline void setPixel(SDL_Surface* s, int x, int y, uint32_t color)
 	}
 }
 
+//WAD file names are not 0 terminated if they are 8 symbols long.
 inline std::string wadStrToStd(const char* wadStr, int maxLen = 8)
 {
 	std::vector<char> buf(maxLen + 1, 0);
@@ -50,7 +51,7 @@ inline std::string toThousandsSeparatedString(int64_t value, std::string sep = "
 		int mod = positive % 1000;
 		std::string modStr = std::to_string(mod);
 
-		if (positive > 1000)
+		if (positive > 1000) //prepend the resulting string part with zeros if it's not the leftmost part
 		{
 			if (mod < 10) modStr = "00" + modStr;
 			else if (mod < 100) modStr = "0" + modStr;
@@ -61,7 +62,7 @@ inline std::string toThousandsSeparatedString(int64_t value, std::string sep = "
 		positive /= 1000;
 	}
 
-	ret.pop_back(); //due to how algorithm works, there's always a trailing separator. Just remove it
+	ret.pop_back(); //due to how algorithm works, there's always a unnecessary trailing separator after last digit. Just remove it
 	if (value < 0) ret = "-" + ret;
 	return ret;
 }

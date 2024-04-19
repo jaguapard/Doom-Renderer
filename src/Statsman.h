@@ -1,5 +1,12 @@
 #pragma once
+
 #include <cstdint>
+#include <string>
+#include "helpers.h"
+
+#define VAR_PRINT(x) (std::string(#x) + ": " + toThousandsSeparatedString(x))
+
+#pragma pack(push, 1)
 class Statsman
 {
 public:
@@ -14,6 +21,8 @@ public:
 			occlusionDiscards = 0,
 			writes = 0,
 			writeDisabledTests = 0;
+
+		std::string toString();
 	};
 	struct Triangles
 	{
@@ -22,6 +31,8 @@ public:
 			doubleVertexOutOfScreenSplits = 0,
 			singleVertexOutOfScreenSplits = 0,
 			zeroVerticesOutsideDraws = 0;
+
+		std::string toString();
 	};
 	struct Textures
 	{
@@ -29,20 +40,29 @@ public:
 			pixelFetches = 0,
 			optimizedXreads = 0,
 			optimizedYreads = 0;
+
+		std::string toString();
 	};
 
 	struct Pixels
 	{
 		uint64_t
 			nonOpaqueDraws = 0;
+
+		std::string toString();
 	};
 
 	ZBuffer zBuffer;
 	Triangles triangles;
 	Textures textures;
 	Pixels pixels;
+
+	Statsman operator-(const Statsman& other) const;
+
+	std::string toString();
 private:
 };
+#pragma pack(pop)
 
 extern Statsman statsman;
 

@@ -35,6 +35,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\PolygonTriangulator.cpp" />
+    <ClCompile Include="src\Statsman.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\TextureManager.cpp" />
     <ClCompile Include="src\Triangle.cpp" />

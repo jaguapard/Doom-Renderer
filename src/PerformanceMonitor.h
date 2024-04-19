@@ -5,17 +5,22 @@
 #include <deque>
 
 #include "smart.h"
+#include "Statsman.h"
+
 class PerformanceMonitor
 {
 public:
 	PerformanceMonitor();
 	void reset();
+	void registerFrameBegin(); //must be called before any drawing and processing is attempted
 	void registerFrameDone(bool remember = true);
 	void drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner);
 private:
-	bob::Timer timer;
-	uint64_t frameNumber = 0;
 	Smart_Font font;
+	bob::Timer timer;
+
+	Statsman oldStats;
+	uint64_t frameNumber = 0;
 	std::deque<double> frameTimesMs;
 
 	struct PercentileInfo

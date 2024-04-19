@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <numeric>
 
+#include "Statsman.h"
 PerformanceMonitor::PerformanceMonitor()
 {
 	std::string path = "C:/Windows/Fonts/Arial.ttf";
@@ -13,6 +14,11 @@ void PerformanceMonitor::reset()
 {
 	frameTimesMs.clear();
 	timer.restart();
+}
+
+void PerformanceMonitor::registerFrameBegin()
+{
+	oldStats = statsman;
 }
 
 void PerformanceMonitor::registerFrameDone(bool remember)
@@ -29,8 +35,17 @@ void PerformanceMonitor::registerFrameDone(bool remember)
 void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner)
 {
 	std::string text = PercentileInfo(frameNumber, frameTimesMs).toString();
+	std::stringstream ss;
 
-	auto s = Smart_Surface(TTF_RenderUTF8_Blended(font.get(), text.c_str(), {255,255,255,SDL_ALPHA_OPAQUE}));
+	ss << timer.getTime() << " sec\n";
+	ss << text;
+
+	if (true && Statsman::enabled) //statsman stuff
+	{
+		ss << (statsman-oldStats).toString() << "\n";
+	}
+
+	auto s = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(font.get(), ss.str().c_str(), {255,255,255,SDL_ALPHA_OPAQUE}, 400));
 	if (!s) throw std::runtime_error(std::string("Failed to draw FPS info: ") + SDL_GetError());
 	SDL_Rect rect = { pixelsFromUpperLeftCorner.x, pixelsFromUpperLeftCorner.y, s->w, s->h };
 	SDL_BlitSurface(s.get(), nullptr, dst, &rect);

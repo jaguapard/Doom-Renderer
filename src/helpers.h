@@ -2,6 +2,9 @@
 #include <cassert>
 #include <string>
 #include <vector>
+
+#include <SDL/SDL.h>
+
 #include "real.h"
 
 template <typename T>
@@ -35,4 +38,30 @@ template <typename T>
 bool isInRange(T val, T min, T max)
 {
 	return val >= min && val <= max;
+}
+
+inline std::string toThousandsSeparatedString(int64_t value, std::string sep = ",")
+{
+	if (value == 0) return "0";
+	int64_t positive = abs(value);
+	std::string ret;
+	while (positive > 0)
+	{		
+		int mod = positive % 1000;
+		std::string modStr = std::to_string(mod);
+
+		if (positive > 1000)
+		{
+			if (mod < 10) modStr = "00" + modStr;
+			else if (mod < 100) modStr = "0" + modStr;
+		}
+
+		ret = modStr + sep + ret;
+
+		positive /= 1000;
+	}
+
+	ret.pop_back(); //due to how algorithm works, there's always a trailing separator. Just remove it
+	if (value < 0) ret = "-" + ret;
+	return ret;
 }

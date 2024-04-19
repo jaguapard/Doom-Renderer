@@ -180,6 +180,7 @@ void program()
 
 	while (true)
 	{
+		fpsCounter.registerFrameBegin();
 		framebuf.clear();
 		SDL_FillRect(wndSurf, nullptr, 0);
 		zBuffer.clear();

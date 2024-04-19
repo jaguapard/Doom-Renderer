@@ -89,12 +89,14 @@ void program()
 	std::vector<std::vector<Triangle>> sectorTriangles;
 	TextureManager textureManager;
 	DoomMap* currentMap = nullptr;
-	
+	std::vector<Triangle> skyTriangles;
+
 	{
 		const Texture& sky = textureManager.getTextureByName("RSKY1");
+		int skyTextureIndex = textureManager.getTextureIndexByName("RSKY1");
 		double scaleX = 256 / double(framebufW); //TODO: remove hardcoded const
 		double scaleY = 128 / double(framebufH);
-		for (int y = 0; y < framebufH; ++y)
+		for (int y = 0; y < framebufH; ++y) //boring sky
 		{
 			for (int x = 0; x < framebufW; ++x)
 			{
@@ -103,12 +105,52 @@ void program()
 				skyBuff.setPixel(x,y, sky.getPixel(fx, fy));
 			}
 		}
+
+		double skyCubeSide = 131072;
+		std::vector<Vec3> cubeVerts =  //connect: 0->1->2 and 2->3->0
+		{
+			{-1, -1, -1},  { 1, -1, -1},  { 1,  1, -1},  {-1,  1, -1}, //neg z
+			{-1, -1,  1},  { 1, -1,  1},  { 1,  1,  1},  {-1,  1,  1}, //pos z
+			{-1, -1, -1},  { 1, -1, -1},  { 1, -1,  1},  {-1, -1,  1}, //neg y
+			{-1,  1, -1},  { 1,  1, -1},  { 1,  1,  1},  {-1,  1,  1}, //pos y
+			{-1,  1, -1},  {-1, -1, -1},  {-1, -1,  1},  {-1,  1,  1}, //neg x
+			{1,   1, -1},  { 1, -1, -1},  { 1, -1,  1},  {1,   1,  1}, //pos x
+		};
+		std::vector<Vec3> uv;
+
+		for (const auto& vert : cubeVerts)
+		{
+			uv.push_back(vert * 128);
+		}
+
+		std::vector<TexVertex> tv(cubeVerts.size());
+		for (int i = 0; i < cubeVerts.size(); ++i)
+		{
+			tv[i].spaceCoords = cubeVerts[i] * skyCubeSide;
+			tv[i].textureCoords = uv[i];
+		}
+
+		for (int i = 3; i < tv.size(); i += 4)
+		{
+			Triangle t;
+			t.textureIndex = skyTextureIndex;
+
+			t.tv[0] = tv[i - 3];
+			t.tv[1] = tv[i - 2];
+			t.tv[2] = tv[i - 1];
+			skyTriangles.push_back(t);
+
+			t.tv[0] = tv[i - 1];
+			t.tv[1] = tv[i];
+			t.tv[2] = tv[i - 3];
+			skyTriangles.push_back(t);
+		}
 	}
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
-		//framebuf.clear();
-		framebuf = skyBuff;
+		framebuf.clear();
+		//framebuf = skyBuff;
 		SDL_FillRect(wndSurf, nullptr, Color(0,0,0));
 		zBuffer.clear();
 		lightBuf.clear(1);
@@ -182,6 +224,7 @@ void program()
 			ctx.zBuffer = &zBuffer;
 			ctx.framebufW = framebufW - 1;
 			ctx.framebufH = framebufH - 1;
+			for (const auto& it : skyTriangles) it.drawOn(ctx);
 			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
 			{
 				for (const auto& tri : sectorTriangles[nSector])
@@ -240,7 +283,10 @@ void program()
 		}
 
 		performanceMonitor.registerFrameDone();
-		if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 });
+		PerformanceMonitor::OptionalInfo info;
+		info.camPos = camPos;
+		info.camAng = camAng;
+		if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, &info);
 
 		SDL_UpdateWindowSurface(wnd);
 		//std::cout << "Frame " << frames++ << " done\n";

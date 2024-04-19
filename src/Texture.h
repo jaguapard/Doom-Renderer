@@ -23,6 +23,7 @@ class Texture
 public:
 	Texture(std::string name);
 	Color getPixel(int x, int y) const;
+	Color getPixelAtUV(real u, real v) const;
 
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
 private:

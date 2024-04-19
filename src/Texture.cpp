@@ -66,6 +66,11 @@ Color Texture::getPixel(int x, int y) const
 	return pixels.getPixelUnsafe(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
 }
 
+Color Texture::getPixelAtUV(real u, real v) const
+{
+	return this->getPixel(u * pixels.getW(), v * pixels.getH());
+}
+
 void Texture::constructDebugTexture()
 {
 	int tw = 1024, th = 1024;

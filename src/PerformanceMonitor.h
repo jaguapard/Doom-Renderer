@@ -17,4 +17,13 @@ private:
 	uint64_t frameNumber = 0;
 	Smart_Font font;
 	std::deque<double> frameTimesMs;
+
+	struct PercentileInfo
+	{
+		PercentileInfo(uint64_t frameNumber, std::deque<double> frameTimesMs); //copy is intentional, since constructor will garble the data
+		std::string toString();
+
+		double fps_inst = 0, fps_avg = 0, fps_1pct_low = 0, fps_point1pct_low = 0;
+		uint64_t frameNumber;
+	};
 };

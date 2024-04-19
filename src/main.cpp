@@ -73,17 +73,19 @@ std::map<std::string, Map> maps;
 void loadWad(std::string path)
 {
 	std::ifstream f(path, std::ios::binary);
-	std::vector<char> wadBytes;
-	while (f)
-	{
-		char b;
-		f.read(&b, 1);
-		wadBytes.push_back(b);
-	}
+	if (!f.is_open()) throw std::runtime_error(std::string("Failed to open file ") + path + ": " + strerror(errno));
+
+	f.seekg(0, f.end);
+	int wadSize = f.tellg();
+	f.seekg(0, f.beg);
+	
+	std::vector<char> wadBytes(wadSize);
+	f.read(&wadBytes.front(), wadSize);
+	if (f.gcount() != wadSize) throw std::runtime_error(std::string("Failed to load file ") + path + ": " + strerror(errno));
 
 	std::string header = wadStrToStd(&wadBytes.front(), 4);
 	if (header != "IWAD" && header != "PWAD")
-		throw std::exception("Invalid WAD file: header mismatch");
+		throw std::runtime_error(std::string("Invalid WAD file: ") + path + ": header mismatch. Got " + header);
 
 	int32_t numFiles = readRaw<int32_t>(&wadBytes[4]);
 	int32_t FAToffset = readRaw<int32_t>(&wadBytes[8]);
@@ -131,10 +133,8 @@ void program()
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
 	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());
 
-	loadWad("D:/Games/GZDoom/DOOM2.wad");
+	loadWad("D:/Games/GZDoom/DOOM2.wad"); //can't redistribute commercial wads!
 	//loadWad("data/test_maps/STUPID.wad");
-	//loadWad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
-	//loadWad("D:/Games/GZDoom/MappingTests/D2_MAP15.wad");
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");
 

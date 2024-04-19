@@ -26,6 +26,11 @@ const Texture& TextureManager::getTextureByIndex(int index) const
 	return textures[index];
 }
 
+const Texture& TextureManager::getTextureByName(const std::string& name)
+{
+	return this->getTextureByIndex(this->getTextureIndexByName(name));
+}
+
 std::unordered_map<std::string, std::string> TextureManager::loadTextureTranslation()
 {
 	std::unordered_map<std::string, std::string> ret;

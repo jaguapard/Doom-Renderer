@@ -65,6 +65,7 @@ void program()
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
 	PixelBuffer<Color> framebuf(framebufW, framebufH);
+	auto skyBuff = framebuf;
 	PixelBuffer<real> lightBuf(framebufW, framebufH);
 	ZBuffer zBuffer(framebufW, framebufH);
 
@@ -89,13 +90,28 @@ void program()
 	TextureManager textureManager;
 	DoomMap* currentMap = nullptr;
 	
+	{
+		const Texture& sky = textureManager.getTextureByName("RSKY1");
+		double scaleX = 256 / double(framebufW); //TODO: remove hardcoded const
+		double scaleY = 128 / double(framebufH);
+		for (int y = 0; y < framebufH; ++y)
+		{
+			for (int x = 0; x < framebufW; ++x)
+			{
+				double fx = scaleX * x;
+				double fy = scaleY * y;
+				skyBuff.setPixel(x,y, sky.getPixel(fx, fy));
+			}
+		}
+	}
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
-		framebuf.clear();
+		//framebuf.clear();
+		framebuf = skyBuff;
 		SDL_FillRect(wndSurf, nullptr, Color(0,0,0));
 		zBuffer.clear();
-		lightBuf.clear();
+		lightBuf.clear(1);
 
 		input.beginNewFrame();
 		SDL_Event ev;

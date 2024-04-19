@@ -23,9 +23,11 @@
 #include "ZBuffer.h"
 #include "Triangle.h"
 #include "Statsman.h"
+#include "PerformanceMonitor.h"
 
 #include "DoomStructs.h"
 #include "DoomWorldLoader.h"
+
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -125,11 +127,14 @@ void loadMap(std::string mapName)
 
 
 
-void main()
+void program()
 {
 	real gamma = 1.3;
 
-	SDL_Init(SDL_INIT_EVERYTHING);
+	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
+	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
+	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());
+
 	loadWad("D:/Games/GZDoom/DOOM2.wad");
 	//loadWad("data/test_maps/STUPID.wad");
 	//loadWad("D:/Games/GZDoom/MappingTests/D2_MAP01.wad");
@@ -170,6 +175,8 @@ void main()
 
 	real camAngAdjustmentSpeed_Mouse = 1e-3;
 	real camAngAdjustmentSpeed_Keyboard = 3e-2;
+
+	PerformanceMonitor fpsCounter;
 
 	while (true)
 	{
@@ -250,7 +257,6 @@ void main()
 				}
 			}
 		}
-		std::cout << "Frame " << frames++ << " done\n";
 
 		if (fogEnabled)
 		{
@@ -285,8 +291,27 @@ void main()
 				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).multipliedByLight(lightMult).toSDL_Uint32(shifts);
 			}
 		}
+
+		fpsCounter.registerFrameDone();
+		fpsCounter.drawOn(wndSurf, { 0,0 });
+
 		SDL_UpdateWindowSurface(wnd);
+		//std::cout << "Frame " << frames++ << " done\n";
 	}
 
 	system("pause");
+}
+
+int main()
+{
+	try
+	{
+		program();
+	}
+	catch (const std::exception& e)
+	{
+		std::string msg = e.what();
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error has occured", msg.c_str(), nullptr);
+	}
+	return 0;
 }

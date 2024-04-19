@@ -31,6 +31,7 @@
     <ClCompile Include="src\CoordinateTransformer.cpp" />
     <ClCompile Include="src\C_Input.cpp" />
     <ClCompile Include="src\DoomWorldLoader.cpp" />
+    <ClCompile Include="src\PerformanceMonitor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\PolygonTriangulator.cpp" />
@@ -45,11 +46,13 @@
     <ClInclude Include="src\C_Input.h" />
     <ClInclude Include="src\DoomStructs.h" />
     <ClInclude Include="src\DoomWorldLoader.h" />
+    <ClInclude Include="src\PerformanceMonitor.h" />
     <ClInclude Include="src\helpers.h" />
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\PixelBuffer.h" />
     <ClInclude Include="src\PolygonTriangulator.h" />
     <ClInclude Include="src\real.h" />
+    <ClInclude Include="src\smart.h" />
     <ClInclude Include="src\Statsman.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\TextureManager.h" />

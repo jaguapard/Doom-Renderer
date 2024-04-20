@@ -108,7 +108,7 @@ void program()
 		}
 
 		double skyCubeSide = 131072;
-		std::vector<Vec3> cubeVerts =  //connect: 0->1->2 and 2->3->0
+		/*std::vector<Vec3> cubeVerts =  //connect: 0->1->2 and 2->3->0
 		{
 			{-1, -1, -1},  { 1, -1, -1},  { 1,  1, -1},  {-1,  1, -1}, //neg z
 			{-1, -1,  1},  { 1, -1,  1},  { 1,  1,  1},  {-1,  1,  1}, //pos z
@@ -118,6 +118,17 @@ void program()
 
 			{-1,  1, -1},  {-1, -1, -1},  {-1, -1,  1},  {-1,  1,  1}, //neg x
 			{1,   1, -1},  { 1, -1, -1},  { 1, -1,  1},  {1,   1,  1}, //pos x
+		};*/
+		std::vector<TexVertex> cubeVerts =  //connect: 0->1->2 and 2->3->0
+		{
+			{ {-1, -1, -1}, {0,0}}, { { 1, -1, -1 }, {1,0}},  {{ 1,  1, -1 }, {1,1}}, {{ -1,  1, -1 }, {0, 1}}, //neg z
+			{ {-1, -1,  1}, {0,0}}, { { 1, -1,  1 }, {1,0}}, { {1,  1,  1 }, {1,1}}, { { -1,  1,  1 }, {0,1}}, //pos z
+
+			{ {-1, -1, -1}, {0,0}}, { { 1, -1, -1 }, {1,0}}, {{ 1, -1,  1 }, {1,1}},  {{-1, -1,  1}, {0,1}},  //neg y
+			{{-1,  1, -1}, {0,0}}, {{ 1,  1, -1 }, {1,0}}, {{ 1,  1,  1 }, {1,1}}, {{ -1,  1,  1 },{0,1}}, //pos y
+
+			{ { -1,  1, -1 }, {0,0} }, {{ -1, -1, -1 }, {1,0}}, {{ -1, -1,  1 }, {1,1}}, {{ -1,  1,  1 }, {0,1}}, //neg x
+			{{1,   1, -1}, {0,0}}, {{ 1, -1, -1 }, {1,0}}, {{ 1, -1,  1 }, {1,1}}, {{ 1,   1,  1 }, {0,1}}, //pos x
 		};
 
 		Vec3 cubeSizeMult = { 1, 0.5, 1 };
@@ -126,8 +137,8 @@ void program()
 		for (int i = 0; i < cubeVerts.size(); ++i)
 		{
 			
-			cubeVerts[i] *= cubeSizeMult * 128; //TODO: remove hardcoded const
-			tv[i].spaceCoords = cubeVerts[i];
+			//TODO: remove hardcoded const
+			tv[i] = { cubeVerts[i].spaceCoords * 128, cubeVerts[i].textureCoords * 128 };
 		}
 
 		for (int i = 0; i < tv.size(); i += 4)
@@ -139,13 +150,13 @@ void program()
 			t.tv[0] = tv[i + 0];
 			t.tv[1] = tv[i + 1];
 			t.tv[2] = tv[i + 2];
-			t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
+			//t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
 			skyTriangles.push_back(t);
 
 			t.tv[0] = tv[i + 2];
 			t.tv[1] = tv[i + 3];
 			t.tv[2] = tv[i + 0];
-			t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
+			//t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
 			skyTriangles.push_back(t);
 		}
 

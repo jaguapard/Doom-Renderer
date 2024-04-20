@@ -124,9 +124,8 @@ void program()
 		for (int i = 0; i < cubeVerts.size(); ++i)
 		{
 			
-			cubeVerts[i] *= 128;
-			TexVertex prefab = TextureMapper::mapRelativeToReferencePoint(cubeVerts[i], cubeVerts[(i / 4) * 4]);
-			tv[i] = prefab;
+			cubeVerts[i] *= 128; //TODO: remove hardcoded const
+			tv[i].spaceCoords = cubeVerts[i];
 		}
 
 		for (int i = 0; i < tv.size(); i += 4)

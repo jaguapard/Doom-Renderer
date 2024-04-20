@@ -263,8 +263,10 @@ void program()
 			for (auto& tv : tri.tv)
 				tv.spaceCoords *= skyCubeSide / 128;
 
-		skySphere = generateSphereMesh(60, 30, 65536, {1,1,1}, {0, -0.4, 0});
-		Vec3 uvMult = Vec3(sky.getW(), sky.getH(), 1);
+		double aspectRatio = sky.getW() / sky.getH();
+		Vec3 uvMult = Vec3(sky.getH(), sky.getH(), 1);
+		Vec3 aspectRatioDistortion = Vec3(aspectRatio * 2, 1, 1); //stretching the sphere helps with textures being too stretched. 2, since X wraps around 2 times
+		skySphere = generateSphereMesh(60, 30, 65536, aspectRatioDistortion, {0, -0.4, 0});		
 		for (auto& it : skySphere)
 		{
 			it.textureIndex = skyTextureIndex;
@@ -273,7 +275,7 @@ void program()
 				Vec3 preremapUv = tv.textureCoords; //to stop texture abruptly jumping back to the beginning at sphere's end, we must wrap it properly
 				if (preremapUv.x <= 0.5) preremapUv.x = 2 * preremapUv.x;
 				else if (preremapUv.x > 0.5) preremapUv.x = (1 - preremapUv.x)*2; //this remaps range (0,1) to (0,1),(1,0) flipping direction when x == 0.5
-				tv.textureCoords = preremapUv * uvMult; //TODO: consider aspect ratio considerations, textures can get very stretched
+				tv.textureCoords = preremapUv * uvMult;
 			}
 		}
 	}

@@ -119,12 +119,14 @@ void program()
 			{-1,  1, -1},  {-1, -1, -1},  {-1, -1,  1},  {-1,  1,  1}, //neg x
 			{1,   1, -1},  { 1, -1, -1},  { 1, -1,  1},  {1,   1,  1}, //pos x
 		};
+
+		Vec3 cubeSizeMult = { 1, 0.5, 1 };
 		std::vector<TexVertex> tv(cubeVerts.size());
 
 		for (int i = 0; i < cubeVerts.size(); ++i)
 		{
 			
-			cubeVerts[i] *= 128; //TODO: remove hardcoded const
+			cubeVerts[i] *= cubeSizeMult * 128; //TODO: remove hardcoded const
 			tv[i].spaceCoords = cubeVerts[i];
 		}
 

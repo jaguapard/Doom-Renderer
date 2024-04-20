@@ -25,6 +25,9 @@ public:
 	Color getPixel(int x, int y) const;
 	Color getPixelAtUV(real u, real v) const;
 
+	int getW() const;
+	int getH() const;
+
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
 private:
 	PixelBuffer<Color> pixels;

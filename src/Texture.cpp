@@ -71,6 +71,16 @@ Color Texture::getPixelAtUV(real u, real v) const
 	return this->getPixel(u * pixels.getW(), v * pixels.getH());
 }
 
+int Texture::getW() const
+{
+	return pixels.getW();
+}
+
+int Texture::getH() const
+{
+	return pixels.getH();
+}
+
 void Texture::constructDebugTexture()
 {
 	int tw = 1024, th = 1024;

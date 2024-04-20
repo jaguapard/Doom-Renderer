@@ -123,9 +123,12 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 
 	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
 	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+
+	real ypStep = 1.0 / ySpan;
+	real yp = (yBeg - y1 - 1) / ySpan;
 	for (real y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
-		real yp = (y - y1) / ySpan;
+		yp += ypStep;
 		TexVertex scanlineTv1 = lerp(tv[0], lerpDst1, yp); 
 		TexVertex scanlineTv2 = lerp(lerpSrc2, tv[2], yp);
 		const TexVertex* left = &scanlineTv1;
@@ -135,11 +138,14 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 		real xBeg = std::clamp<real>(left->spaceCoords.x, 0, context.framebufW);
 		real xEnd = std::clamp<real>(right->spaceCoords.x, 0, context.framebufW);
 		real xSpan = right->spaceCoords.x - left->spaceCoords.x;
+
+		real xpStep = 1.0 / xSpan;
+		real xp = (xBeg - left->spaceCoords.x - 1) / xSpan;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
 		for (real x = xBeg; x < xEnd; ++x)
 		{
-			real xp = (x - left->spaceCoords.x) / xSpan;
+			xp += xpStep;
 			Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 

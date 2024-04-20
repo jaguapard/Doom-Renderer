@@ -37,5 +37,8 @@ std::string Statsman::toString()
     ss << VAR_PRINT(textures.pixelFetches) << "\n";
 
     ss << VAR_PRINT(pixels.nonOpaqueDraws) << "\n";
+
+    ss << VAR_PRINT(memory.allocsByNew) << "\n";
+    ss << VAR_PRINT(memory.freesByDelete) << "\n";
     return ss.str();
 }

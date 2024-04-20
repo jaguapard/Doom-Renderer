@@ -37,6 +37,18 @@
 
 Statsman statsman;
 
+void* operator new(size_t n)
+{
+	StatCount(statsman.memory.allocsByNew++);
+	return _aligned_malloc(n, 64);
+}
+
+void operator delete(void* block)
+{
+	StatCount(statsman.memory.freesByDelete++);
+	return _aligned_free(block);
+}
+
 std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDivisions, real radius)
 {
 	assert(horizontalDivisions * (verticalDivisions-1) % 3 == 0);

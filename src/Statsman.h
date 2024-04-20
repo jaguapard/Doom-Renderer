@@ -21,8 +21,6 @@ public:
 			occlusionDiscards = 0,
 			writes = 0,
 			writeDisabledTests = 0;
-
-		std::string toString();
 	};
 	struct Triangles
 	{
@@ -31,31 +29,31 @@ public:
 			doubleVertexOutOfScreenSplits = 0,
 			singleVertexOutOfScreenSplits = 0,
 			zeroVerticesOutsideDraws = 0;
-
-		std::string toString();
 	};
 	struct Textures
 	{
 		uint64_t
-			pixelFetches = 0,
-			optimizedXreads = 0,
-			optimizedYreads = 0;
-
-		std::string toString();
+			pixelFetches = 0;
 	};
 
 	struct Pixels
 	{
 		uint64_t
 			nonOpaqueDraws = 0;
+	};
 
-		std::string toString();
+	struct Memory
+	{
+		uint64_t
+			allocsByNew = 0,
+			freesByDelete = 0;
 	};
 
 	ZBuffer zBuffer;
 	Triangles triangles;
 	Textures textures;
 	Pixels pixels;
+	Memory memory;
 
 	Statsman operator-(const Statsman& other) const;
 

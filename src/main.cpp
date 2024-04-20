@@ -263,7 +263,7 @@ void program()
 			for (auto& tv : tri.tv)
 				tv.spaceCoords *= skyCubeSide / 128;
 
-		skySphere = generateSphereMesh(60, 30, 65536);
+		skySphere = generateSphereMesh(60, 30, 65536, {1,1,1}, {0, -0.4, 0});
 		for (auto& it : skySphere) it.textureIndex = skyTextureIndex;
 	}
 

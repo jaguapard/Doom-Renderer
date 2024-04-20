@@ -39,6 +39,7 @@
     <ClCompile Include="src\Statsman.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\TextureManager.cpp" />
+    <ClCompile Include="src\TextureMapper.cpp" />
     <ClCompile Include="src\Triangle.cpp" />
     <ClCompile Include="src\WadLoader.cpp" />
     <ClCompile Include="src\ZBuffer.cpp" />
@@ -60,6 +61,7 @@
     <ClInclude Include="src\Statsman.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\TextureManager.h" />
+    <ClInclude Include="src\TextureMapper.h" />
     <ClInclude Include="src\Triangle.h" />
     <ClInclude Include="src\Vec.h" />
     <ClInclude Include="src\WadLoader.h" />

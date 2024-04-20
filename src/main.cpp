@@ -173,6 +173,8 @@ void program()
 		zBuffer.clear();
 		lightBuf.clear(1);
 
+
+
 		input.beginNewFrame();
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev))
@@ -223,6 +225,27 @@ void program()
 		Vec3 camAdd = -Vec3({ real(input.isButtonHeld(SDL_SCANCODE_D)), real(input.isButtonHeld(SDL_SCANCODE_X)), real(input.isButtonHeld(SDL_SCANCODE_W)) });
 		camAdd += { real(input.isButtonHeld(SDL_SCANCODE_A)), real(input.isButtonHeld(SDL_SCANCODE_Z)), real(input.isButtonHeld(SDL_SCANCODE_S))};
 
+		camAng.x = fmod(camAng.x, 2*M_PI);
+		camAng.y = fmod(camAng.y, 2*M_PI);
+		camAng.z = fmod(camAng.z, 2*M_PI);
+
+		int skyTextureWidth = 256;
+		int skyTextureHeight = 128;
+		real totalSkySize = framebufW; //asuming fov is 90 degrees
+		real skyTextureScale = real(skyTextureWidth) / totalSkySize;
+		real skyTextureOffset = (2*M_PI - camAng.y) / (2 * M_PI) * skyTextureWidth;
+		const Texture& skyTexture = textureManager.getTextureByName("RSKY1");
+		for (int y = 0; y < framebufH; ++y) //rotating sky
+		{
+			for (int x = 0; x < framebufW; ++x)
+			{
+				real skyX = skyTextureOffset + x * skyTextureScale;
+				real skyY = 0 + y * skyTextureScale;
+				Color skyColor = skyTexture.getPixel(skyX, skyY);
+				framebuf.setPixelUnsafe(x, y, skyColor);
+			}
+		}
+
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
 		if (real l = camAdd.len() > 0)
 		{
@@ -242,7 +265,7 @@ void program()
 			ctx.zBuffer = &zBuffer;
 			ctx.framebufW = framebufW - 1;
 			ctx.framebufH = framebufH - 1;
-			for (const auto& it : skyTriangles) it.drawOn(ctx);
+			//for (const auto& it : skyTriangles) it.drawOn(ctx);
 			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
 			{
 				for (const auto& tri : sectorTriangles[nSector])

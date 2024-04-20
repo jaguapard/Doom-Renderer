@@ -41,7 +41,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 {
 	assert(horizontalDivisions * (verticalDivisions-1) % 3 == 0);
 	std::vector<Triangle> ret;
-	std::vector<Vec3> world;
+	std::vector<Vec3> world, texture;
 	for (int m = 0; m < horizontalDivisions; m++)
 	{
 		for (int n = 0; n < verticalDivisions - 1; n++)
@@ -75,7 +75,8 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			x = sin(M_PI * (m) / horizontalDivisions) * cos(2 * M_PI * (n) / verticalDivisions);
 			y = sin(M_PI * (m) / horizontalDivisions) * sin(2 * M_PI * (n) / verticalDivisions);
 			z = cos(M_PI * (m) / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));		
+			world.push_back(Vec3(x, y, z));
+			texture.push_back(Vec2(m, n));
 		}
 	}
 
@@ -85,7 +86,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 		Triangle t;
 		for (int j = 0; j < 3; ++j)
 		{
-			Vec3 textureCoords = (world[i + j] - Vec3(0, 0, 1))*256;
+			Vec3 textureCoords = texture[i + j]*256;
 			t.tv[j] = { world[i + j]*radius, textureCoords };
 		}
 

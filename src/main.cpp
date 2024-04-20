@@ -124,12 +124,9 @@ void program()
 		for (int i = 0; i < cubeVerts.size(); ++i)
 		{
 			
-			//Vec3 wanted = (cubeVerts[i] - cubeVerts[(i / 4) * 4]) * 128;
-			
 			cubeVerts[i] *= 128;
 			TexVertex prefab = TextureMapper::mapRelativeToReferencePoint(cubeVerts[i], cubeVerts[(i / 4) * 4]);
 			tv[i] = prefab;
-			//tv[i].spaceCoords *= skyCubeSide;
 		}
 
 		for (int i = 0; i < tv.size(); i += 4)
@@ -141,7 +138,7 @@ void program()
 			t.tv[0] = tv[i + 0];
 			t.tv[1] = tv[i + 1];
 			t.tv[2] = tv[i + 2];
-			t = isInRange(i, 8, 15) ? TextureMapper::mapTriangleRelativeToMinPoint(t) : TextureMapper::mapTriangleRelativeToFirstVertex(t);
+			t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
 			skyTriangles.push_back(t);
 
 			t.tv[0] = tv[i + 2];

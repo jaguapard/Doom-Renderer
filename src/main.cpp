@@ -47,36 +47,54 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 		for (int n = 0; n < verticalDivisions - 1; n++)
 		{
 			real x, y, z;
-			x = sin(M_PI * m / horizontalDivisions) * cos(2 * M_PI * n / verticalDivisions);
-			y = sin(M_PI * m / horizontalDivisions) * sin(2 * M_PI * n / verticalDivisions);
-			z = cos(M_PI * m / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));	
-
-			x = sin(M_PI * (m+1) / horizontalDivisions) * cos(2 * M_PI * n / verticalDivisions);
-			y = sin(M_PI * (m+1) / horizontalDivisions) * sin(2 * M_PI * n / verticalDivisions);
-			z = cos(M_PI * (m+1) / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));	
-
-			x = sin(M_PI * (m+1) / horizontalDivisions) * cos(2 * M_PI * (n+1) / verticalDivisions);
-			y = sin(M_PI * (m+1) / horizontalDivisions) * sin(2 * M_PI * (n+1) / verticalDivisions);
-			z = cos(M_PI * (m+1) / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));	
-			
-			x = sin(M_PI * (m + 1) / horizontalDivisions) * cos(2 * M_PI * (n + 1) / verticalDivisions);
-			y = sin(M_PI * (m+1) / horizontalDivisions) * sin(2 * M_PI * (n+1) / verticalDivisions);
-			z = cos(M_PI * (m+1) / horizontalDivisions);
+			real mp, np;
+			mp = real(m) / horizontalDivisions;
+			np = real(n) / verticalDivisions;
+			x = sin(M_PI * mp) * cos(2 * M_PI * np);
+			y = sin(M_PI * mp) * sin(2 * M_PI * np);
+			z = cos(M_PI * mp);
 			world.push_back(Vec3(x, y, z));
-			
-			x = sin(M_PI * (m) / horizontalDivisions) * cos(2 * M_PI * (n+1) / verticalDivisions);
-			y = sin(M_PI * (m) / horizontalDivisions) * sin(2 * M_PI * (n+1) / verticalDivisions);
-			z = cos(M_PI * (m) / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));
+			texture.push_back(Vec2(mp, np));
 
-			x = sin(M_PI * (m) / horizontalDivisions) * cos(2 * M_PI * (n) / verticalDivisions);
-			y = sin(M_PI * (m) / horizontalDivisions) * sin(2 * M_PI * (n) / verticalDivisions);
-			z = cos(M_PI * (m) / horizontalDivisions);
+			mp = real(m + 1) / horizontalDivisions;
+			np = real(n) / verticalDivisions;
+			x = sin(M_PI * mp) * cos(2 * M_PI * np);
+			y = sin(M_PI * mp) * sin(2 * M_PI * np);
+			z = cos(M_PI * mp);
 			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(m, n));
+			texture.push_back(Vec2(mp, np));
+
+			mp = real(m + 1) / horizontalDivisions;
+			np = real(n + 1) / verticalDivisions;
+			x = sin(M_PI * mp) * cos(2 * M_PI * np);
+			y = sin(M_PI * mp) * sin(2 * M_PI * np);
+			z = cos(M_PI * mp);
+			world.push_back(Vec3(x, y, z));
+			texture.push_back(Vec2(mp, np));
+
+			mp = real(m + 1) / horizontalDivisions;
+			np = real(n + 1) / verticalDivisions;
+			x = sin(M_PI * mp) * cos(2 * M_PI * np);
+			y = sin(M_PI * mp) * sin(2 * M_PI * np);
+			z = cos(M_PI * mp);
+			world.push_back(Vec3(x, y, z));
+			texture.push_back(Vec2(mp, np));
+
+			mp = real(m) / horizontalDivisions;
+			np = real(n + 1) / verticalDivisions;
+			x = sin(M_PI * mp) * cos(2 * M_PI * np);
+			y = sin(M_PI * mp) * sin(2 * M_PI * np);
+			z = cos(M_PI * mp);
+			world.push_back(Vec3(x, y, z));
+			texture.push_back(Vec2(mp, np));
+
+			mp = real(m) / horizontalDivisions;
+			np = real(n) / verticalDivisions;
+			x = sin(M_PI * mp) * cos(2 * M_PI * np);
+			y = sin(M_PI * mp) * sin(2 * M_PI * np);
+			z = cos(M_PI * mp);
+			world.push_back(Vec3(x, y, z));
+			texture.push_back(Vec2(mp, np));
 		}
 	}
 
@@ -87,6 +105,8 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 		for (int j = 0; j < 3; ++j)
 		{
 			Vec3 textureCoords = texture[i + j]*256;
+			std::swap(textureCoords.x, textureCoords.y);
+			std::swap(world[i + j].z, world[i + j].y);
 			t.tv[j] = { world[i + j]*radius, textureCoords };
 		}
 

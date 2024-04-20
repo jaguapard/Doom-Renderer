@@ -37,6 +37,29 @@
 
 Statsman statsman;
 
+std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDivisions, real radius)
+{
+	assert(horizontalDivisions * verticalDivisions % 3 == 0);
+	std::vector<Triangle> ret;
+	std::vector<Vec3> world;
+	for (int m = 0; m < horizontalDivisions; m++)
+	{
+		for (int n = 0; n < verticalDivisions - 1; n++)
+		{
+			real x = sin(M_PI * m / verticalDivisions) * cos(2 * M_PI * n / verticalDivisions);
+			real y = sin(M_PI * m / verticalDivisions) * sin(2 * M_PI * n / verticalDivisions);
+			real z = cos(M_PI * m / verticalDivisions);
+			world.push_back(Vec3(x, y, z));
+		}
+	}
+
+	for (int i = 0; i < ret.size(); i += 3)
+	{
+		Vec3 texture = world[i] - Vec3(0, 0, 1);
+		ret.emplace_back(world[i]*radius, texture, -1);
+	}
+	return ret;
+}
 void program()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
@@ -234,12 +257,13 @@ void program()
 
 		if (rotatingSky)
 		{
-			int skyTextureWidth = 256;
-			int skyTextureHeight = 128;
+			const Texture& skyTexture = textureManager.getTextureByName("RSKY1");
+			int skyTextureWidth = skyTexture.getW();
+			int skyTextureHeight = skyTexture.getH();
 			real totalSkySize = framebufW; //asuming fov is 90 degrees
 			real skyTextureScale = real(skyTextureWidth) / totalSkySize;
 			real skyTextureOffset = (2 * M_PI - camAng.y) / (2 * M_PI) * skyTextureWidth;
-			const Texture& skyTexture = textureManager.getTextureByName("RSKY1");
+			
 			for (int y = 0; y < framebufH; ++y) //rotating sky
 			{
 				for (int x = 0; x < framebufW; ++x)

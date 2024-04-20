@@ -177,6 +177,7 @@ void program()
 	real gamma = 1.3;
 	bool fogEnabled = false;
 	real fogMaxIntensityDist = 600;
+	bool mouseCaptured = false;
 
 	PerformanceMonitor performanceMonitor;
 	bool performanceMonitorDisplayEnabled = true;
@@ -297,9 +298,10 @@ void program()
 		while (SDL_PollEvent(&ev))
 		{
 			input.handleEvent(ev);
-			if (input.isMouseButtonHeld(SDL_BUTTON_LEFT) && ev.type == SDL_MOUSEMOTION)
+			if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
 			{
-				camAng += { 0, ev.motion.xrel * camAngAdjustmentSpeed_Mouse, ev.motion.yrel * -camAngAdjustmentSpeed_Mouse};
+				camAng += { 0, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, ev.motion.yrel * camAngAdjustmentSpeed_Mouse};
+				camAng.z = std::clamp<real>(camAng.z, -M_PI / 2, M_PI / 2);
 			}
 			if (ev.type == SDL_MOUSEWHEEL)
 			{
@@ -332,6 +334,11 @@ void program()
 		if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
 		if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
 		if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
+		if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
+		{
+			mouseCaptured ^= 1;
+			SDL_SetRelativeMouseMode(mouseCaptured ? SDL_TRUE : SDL_FALSE);
+		}
 
 		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};

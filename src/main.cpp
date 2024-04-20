@@ -39,7 +39,7 @@ Statsman statsman;
 
 std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDivisions, real radius)
 {
-	assert(horizontalDivisions * verticalDivisions % 3 == 0);
+	assert(horizontalDivisions * (verticalDivisions-1) % 3 == 0);
 	std::vector<Triangle> ret;
 	std::vector<Vec3> world;
 	for (int m = 0; m < horizontalDivisions; m++)
@@ -53,13 +53,29 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 		}
 	}
 
-	for (int i = 0; i < ret.size(); i += 3)
-	{
-		Vec3 texture = world[i] - Vec3(0, 0, 1);
-		ret.emplace_back(world[i]*radius, texture, -1);
+	assert(world.size() % 3 == 0);
+	for (int i = 0; i < world.size(); i += 3)
+	{		
+		Triangle t;
+		for (int j = 0; j < 3; ++j)
+		{
+			Vec3 textureCoords = world[i + j] - Vec3(0, 0, 1);
+			t.tv[j] = { world[i + j]*radius, textureCoords };
+		}
+
+		ret.push_back(t);
 	}
 	return ret;
 }
+
+enum SkyRenderingMode
+{
+	NONE,
+	ROTATING,
+	CUBE,
+	SPHERE,
+	COUNT
+};
 void program()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
@@ -113,7 +129,7 @@ void program()
 	std::vector<std::vector<Triangle>> sectorTriangles;
 	TextureManager textureManager;
 	DoomMap* currentMap = nullptr;
-	std::vector<Triangle> skyTriangles;
+	std::vector<Triangle> skyCube, skySphere;
 
 	{
 		const Texture& sky = textureManager.getTextureByName("RSKY1");
@@ -174,21 +190,24 @@ void program()
 			t.tv[1] = tv[i + 1];
 			t.tv[2] = tv[i + 2];
 			//t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
-			skyTriangles.push_back(t);
+			skyCube.push_back(t);
 
 			t.tv[0] = tv[i + 2];
 			t.tv[1] = tv[i + 3];
 			t.tv[2] = tv[i + 0];
 			//t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
-			skyTriangles.push_back(t);
+			skyCube.push_back(t);
 		}
 
-		for (auto& tri : skyTriangles)
+		for (auto& tri : skyCube)
 			for (auto& tv : tri.tv)
 				tv.spaceCoords *= skyCubeSide / 128;
+
+		skySphere = generateSphereMesh(60, 30, 65536);
+		for (auto& it : skySphere) it.textureIndex = skyTextureIndex;
 	}
 
-	bool rotatingSky = true;
+	SkyRenderingMode skyRenderingMode = ROTATING;
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
@@ -239,7 +258,7 @@ void program()
 		//xoring with 1 == toggle true->false or false->true
 		if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
 		if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
-		if (input.wasCharPressedOnThisFrame('J')) rotatingSky ^= 1;
+		if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT + 1));
 
 		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
@@ -255,7 +274,7 @@ void program()
 		camAng.y = fmod(camAng.y, 2*M_PI);
 		camAng.z = fmod(camAng.z, 2*M_PI);
 
-		if (rotatingSky)
+		if (skyRenderingMode == ROTATING)
 		{
 			const Texture& skyTexture = textureManager.getTextureByName("RSKY1");
 			int skyTextureWidth = skyTexture.getW();
@@ -295,7 +314,8 @@ void program()
 			ctx.zBuffer = &zBuffer;
 			ctx.framebufW = framebufW - 1;
 			ctx.framebufH = framebufH - 1;
-			if (!rotatingSky) for (const auto& it : skyTriangles) it.drawOn(ctx);
+			if (skyRenderingMode == CUBE) for (const auto& it : skyCube) it.drawOn(ctx);
+			if (skyRenderingMode == SPHERE) for (const auto& it : skySphere) it.drawOn(ctx);
 			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
 			{
 				for (const auto& tri : sectorTriangles[nSector])

@@ -49,7 +49,7 @@ void operator delete(void* block)
 	return _aligned_free(block);
 }
 
-std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDivisions, real radius)
+std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDivisions, real radius, Vec3 sizeMult = {1,1,1}, Vec3 shift = {0,0,0})
 {
 	assert(horizontalDivisions * (verticalDivisions-1) % 3 == 0);
 	std::vector<Triangle> ret;
@@ -119,7 +119,8 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			Vec3 textureCoords = texture[i + j]*256;
 			std::swap(textureCoords.x, textureCoords.y);
 			std::swap(world[i + j].z, world[i + j].y);
-			t.tv[j] = { world[i + j]*radius, textureCoords };
+			Vec3 adjWorld = (world[i + j] * sizeMult + shift) * radius;
+			t.tv[j] = { adjWorld, textureCoords };
 		}
 
 		ret.push_back(t);

@@ -116,7 +116,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 		Triangle t;
 		for (int j = 0; j < 3; ++j)
 		{
-			Vec3 textureCoords = texture[i + j]*256;
+			Vec3 textureCoords = texture[i + j];
 			std::swap(textureCoords.x, textureCoords.y);
 			std::swap(world[i + j].z, world[i + j].y);
 			Vec3 adjWorld = (world[i + j] * sizeMult + shift) * radius;
@@ -264,7 +264,12 @@ void program()
 				tv.spaceCoords *= skyCubeSide / 128;
 
 		skySphere = generateSphereMesh(60, 30, 65536, {1,1,1}, {0, -0.4, 0});
-		for (auto& it : skySphere) it.textureIndex = skyTextureIndex;
+		Vec3 uvMult = Vec3(sky.getW(), sky.getH(), 1);
+		for (auto& it : skySphere)
+		{
+			it.textureIndex = skyTextureIndex;
+			for (auto& tv : it.tv) tv.textureCoords *= uvMult;
+		}
 	}
 
 	SkyRenderingMode skyRenderingMode = SPHERE;

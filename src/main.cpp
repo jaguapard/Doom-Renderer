@@ -44,7 +44,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 	std::vector<Vec3> world, texture;
 	for (int m = 0; m < horizontalDivisions; m++)
 	{
-		for (int n = 0; n < verticalDivisions - 1; n++)
+		for (int n = 0; n < verticalDivisions; n++)
 		{
 			real x, y, z;
 			real mp, np;

@@ -32,7 +32,7 @@ public:
 protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
-	alignas(32) std::vector<T> store; //forced alignment for SIMD-friendliness
+	std::vector<T> store;
 	int w, h;
 };
 

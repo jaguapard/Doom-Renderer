@@ -125,10 +125,11 @@ void program()
 		{
 			
 			//Vec3 wanted = (cubeVerts[i] - cubeVerts[(i / 4) * 4]) * 128;
+			
+			cubeVerts[i] *= 128;
 			TexVertex prefab = TextureMapper::mapRelativeToReferencePoint(cubeVerts[i], cubeVerts[(i / 4) * 4]);
-			prefab.textureCoords *= 128;
 			tv[i] = prefab;
-			tv[i].spaceCoords *= skyCubeSide;
+			//tv[i].spaceCoords *= skyCubeSide;
 		}
 
 		for (int i = 0; i < tv.size(); i += 4)
@@ -140,13 +141,19 @@ void program()
 			t.tv[0] = tv[i + 0];
 			t.tv[1] = tv[i + 1];
 			t.tv[2] = tv[i + 2];
+			t = isInRange(i, 8, 15) ? TextureMapper::mapTriangleRelativeToMinPoint(t) : TextureMapper::mapTriangleRelativeToFirstVertex(t);
 			skyTriangles.push_back(t);
 
 			t.tv[0] = tv[i + 2];
 			t.tv[1] = tv[i + 3];
 			t.tv[2] = tv[i + 0];
+			t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
 			skyTriangles.push_back(t);
 		}
+
+		for (auto& tri : skyTriangles)
+			for (auto& tv : tri.tv)
+				tv.spaceCoords *= skyCubeSide / 128;
 	}
 	while (true)
 	{

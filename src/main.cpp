@@ -268,7 +268,13 @@ void program()
 		for (auto& it : skySphere)
 		{
 			it.textureIndex = skyTextureIndex;
-			for (auto& tv : it.tv) tv.textureCoords *= uvMult;
+			for (auto& tv : it.tv)
+			{
+				Vec3 preremapUv = tv.textureCoords; //to stop texture abruptly jumping back to the beginning at sphere's end, we must wrap it properly
+				if (preremapUv.x <= 0.5) preremapUv.x = 2 * preremapUv.x;
+				else if (preremapUv.x > 0.5) preremapUv.x = (1 - preremapUv.x)*2; //this remaps range (0,1) to (0,1),(1,0) flipping direction when x == 0.5
+				tv.textureCoords = preremapUv * uvMult; //TODO: consider aspect ratio considerations, textures can get very stretched
+			}
 		}
 	}
 

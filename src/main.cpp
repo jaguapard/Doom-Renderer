@@ -267,7 +267,7 @@ void program()
 		for (auto& it : skySphere) it.textureIndex = skyTextureIndex;
 	}
 
-	SkyRenderingMode skyRenderingMode = ROTATING;
+	SkyRenderingMode skyRenderingMode = SPHERE;
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();

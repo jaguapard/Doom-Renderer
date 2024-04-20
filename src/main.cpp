@@ -301,7 +301,8 @@ void program()
 			if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
 			{
 				camAng += { 0, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, ev.motion.yrel * camAngAdjustmentSpeed_Mouse};
-				camAng.z = std::clamp<real>(camAng.z, -M_PI / 2, M_PI / 2);
+
+				camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 + 0.01); //no real need for + 0.01, but who knows
 			}
 			if (ev.type == SDL_MOUSEWHEEL)
 			{
@@ -350,9 +351,9 @@ void program()
 		Vec3 camAdd = -Vec3({ real(input.isButtonHeld(SDL_SCANCODE_D)), real(input.isButtonHeld(SDL_SCANCODE_X)), real(input.isButtonHeld(SDL_SCANCODE_W)) });
 		camAdd += { real(input.isButtonHeld(SDL_SCANCODE_A)), real(input.isButtonHeld(SDL_SCANCODE_Z)), real(input.isButtonHeld(SDL_SCANCODE_S))};
 
-		camAng.x = fmod(camAng.x, 2*M_PI);
+		camAng.x = fmod(camAng.x, M_PI);
 		camAng.y = fmod(camAng.y, 2*M_PI);
-		camAng.z = fmod(camAng.z, 2*M_PI);
+		//camAng.z = fmod(camAng.z, 2*M_PI);
 
 		if (skyRenderingMode == ROTATING)
 		{

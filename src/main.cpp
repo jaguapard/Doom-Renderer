@@ -46,43 +46,36 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 	{
 		for (int n = 0; n < verticalDivisions - 1; n++)
 		{
-			real x = sin(M_PI * m / horizontalDivisions) * cos(2 * M_PI * n / verticalDivisions);
-			real y = sin(M_PI * m / horizontalDivisions) * sin(2 * M_PI * n / verticalDivisions);
-			real z = cos(M_PI * m / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));			
-
-			x = sin(M_PI * m / horizontalDivisions) * cos(2 * M_PI * (n + 1) / verticalDivisions);
-			y = sin(M_PI * m / horizontalDivisions) * sin(2 * M_PI * (n + 1) / verticalDivisions);
+			real x, y, z;
+			x = sin(M_PI * m / horizontalDivisions) * cos(2 * M_PI * n / verticalDivisions);
+			y = sin(M_PI * m / horizontalDivisions) * sin(2 * M_PI * n / verticalDivisions);
 			z = cos(M_PI * m / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));
-			
+			world.push_back(Vec3(x, y, z));	
+
 			x = sin(M_PI * (m+1) / horizontalDivisions) * cos(2 * M_PI * n / verticalDivisions);
 			y = sin(M_PI * (m+1) / horizontalDivisions) * sin(2 * M_PI * n / verticalDivisions);
 			z = cos(M_PI * (m+1) / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));			
-			
+			world.push_back(Vec3(x, y, z));	
+
 			x = sin(M_PI * (m+1) / horizontalDivisions) * cos(2 * M_PI * (n+1) / verticalDivisions);
 			y = sin(M_PI * (m+1) / horizontalDivisions) * sin(2 * M_PI * (n+1) / verticalDivisions);
 			z = cos(M_PI * (m+1) / horizontalDivisions);
+			world.push_back(Vec3(x, y, z));	
+			
+			x = sin(M_PI * (m + 1) / horizontalDivisions) * cos(2 * M_PI * (n + 1) / verticalDivisions);
+			y = sin(M_PI * (m+1) / horizontalDivisions) * sin(2 * M_PI * (n+1) / verticalDivisions);
+			z = cos(M_PI * (m+1) / horizontalDivisions);
+			world.push_back(Vec3(x, y, z));
+			
+			x = sin(M_PI * (m) / horizontalDivisions) * cos(2 * M_PI * (n+1) / verticalDivisions);
+			y = sin(M_PI * (m) / horizontalDivisions) * sin(2 * M_PI * (n+1) / verticalDivisions);
+			z = cos(M_PI * (m) / horizontalDivisions);
 			world.push_back(Vec3(x, y, z));
 
-			
-			x = sin(M_PI * m / horizontalDivisions) * cos(2 * M_PI * (n + 2) / verticalDivisions);
-			y = sin(M_PI * m / horizontalDivisions) * sin(2 * M_PI * (n + 2) / verticalDivisions);
-			z = cos(M_PI * m / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));
-			
-			x = sin(M_PI * (m+2) / horizontalDivisions) * cos(2 * M_PI * n / verticalDivisions);
-			y = sin(M_PI * (m+2) / horizontalDivisions) * sin(2 * M_PI * n / verticalDivisions);
-			z = cos(M_PI * (m+2) / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));			
-			
-			x = sin(M_PI * (m+2) / horizontalDivisions) * cos(2 * M_PI * (n+2) / verticalDivisions);
-			y = sin(M_PI * (m+2) / horizontalDivisions) * sin(2 * M_PI * (n+2) / verticalDivisions);
-			z = cos(M_PI * (m+2) / horizontalDivisions);
-			world.push_back(Vec3(x, y, z));
-
-			
+			x = sin(M_PI * (m) / horizontalDivisions) * cos(2 * M_PI * (n) / verticalDivisions);
+			y = sin(M_PI * (m) / horizontalDivisions) * sin(2 * M_PI * (n) / verticalDivisions);
+			z = cos(M_PI * (m) / horizontalDivisions);
+			world.push_back(Vec3(x, y, z));		
 		}
 	}
 
@@ -92,7 +85,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 		Triangle t;
 		for (int j = 0; j < 3; ++j)
 		{
-			Vec3 textureCoords = (world[i + j] - Vec3(0, 0, 1))*128;
+			Vec3 textureCoords = (world[i + j] - Vec3(0, 0, 1))*256;
 			t.tv[j] = { world[i + j]*radius, textureCoords };
 		}
 
@@ -130,10 +123,10 @@ void program()
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
-	int framebufW = 1280;
-	int framebufH = 720;
-	int screenW = 1280;
-	int screenH = 720;
+	int framebufW = 1920;
+	int framebufH = 1080;
+	int screenW = 1920;
+	int screenH = 1080;
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenW, screenH, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
@@ -291,7 +284,7 @@ void program()
 		//xoring with 1 == toggle true->false or false->true
 		if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
 		if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
-		if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT + 1));
+		if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
 
 		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};

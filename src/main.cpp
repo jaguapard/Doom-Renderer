@@ -54,6 +54,11 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			x = sin(M_PI * (m+1) / horizontalDivisions) * cos(2 * M_PI * n / verticalDivisions);
 			y = sin(M_PI * (m+1) / horizontalDivisions) * sin(2 * M_PI * n / verticalDivisions);
 			z = cos(M_PI * (m+1) / horizontalDivisions);
+			world.push_back(Vec3(x, y, z));			
+			
+			x = sin(M_PI * (m+1) / horizontalDivisions) * cos(2 * M_PI * (n+1) / verticalDivisions);
+			y = sin(M_PI * (m+1) / horizontalDivisions) * sin(2 * M_PI * (n+1) / verticalDivisions);
+			z = cos(M_PI * (m+1) / horizontalDivisions);
 			world.push_back(Vec3(x, y, z));
 		}
 	}

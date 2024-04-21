@@ -54,7 +54,6 @@ enum SkyRenderingMode
 {
 	NONE,
 	ROTATING,
-	CUBE,
 	SPHERE,
 	COUNT
 };
@@ -112,82 +111,6 @@ void program()
 	std::vector<std::vector<Triangle>> sectorTriangles;
 	TextureManager textureManager;
 	DoomMap* currentMap = nullptr;
-	std::vector<Triangle> skyCube, skySphere;
-
-	{
-		const Texture& sky = textureManager.getTextureByName("RSKY1");
-		int skyTextureIndex = textureManager.getTextureIndexByName("RSKY1");
-		double scaleX = 256 / double(framebufW); //TODO: remove hardcoded const
-		double scaleY = 128 / double(framebufH);
-		for (int y = 0; y < framebufH; ++y) //boring sky
-		{
-			for (int x = 0; x < framebufW; ++x)
-			{
-				double fx = scaleX * x;
-				double fy = scaleY * y;
-				skyBuff.setPixel(x,y, sky.getPixel(fx, fy));
-			}
-		}
-
-		double skyCubeSide = 131072;
-		/*std::vector<Vec3> cubeVerts =  //connect: 0->1->2 and 2->3->0
-		{
-			{-1, -1, -1},  { 1, -1, -1},  { 1,  1, -1},  {-1,  1, -1}, //neg z
-			{-1, -1,  1},  { 1, -1,  1},  { 1,  1,  1},  {-1,  1,  1}, //pos z
-
-			{-1, -1, -1},  { 1, -1, -1},  { 1, -1,  1},  {-1, -1,  1}, //neg y
-			{-1,  1, -1},  { 1,  1, -1},  { 1,  1,  1},  {-1,  1,  1}, //pos y
-
-			{-1,  1, -1},  {-1, -1, -1},  {-1, -1,  1},  {-1,  1,  1}, //neg x
-			{1,   1, -1},  { 1, -1, -1},  { 1, -1,  1},  {1,   1,  1}, //pos x
-		};*/
-		std::vector<TexVertex> cubeVerts =  //connect: 0->1->2 and 2->3->0
-		{
-			{ {-1, -1, -1}, {0,0}}, { { 1, -1, -1 }, {1,0}},  {{ 1,  1, -1 }, {1,1}}, {{ -1,  1, -1 }, {0, 1}}, //neg z
-			{ {-1, -1,  1}, {0,0}}, { { 1, -1,  1 }, {1,0}}, { {1,  1,  1 }, {1,1}}, { { -1,  1,  1 }, {0,1}}, //pos z
-
-			{ {-1, -1, -1}, {0,0}}, { { 1, -1, -1 }, {1,0}}, {{ 1, -1,  1 }, {1,1}},  {{-1, -1,  1}, {0,1}},  //neg y
-			{{-1,  1, -1}, {0,0}}, {{ 1,  1, -1 }, {1,0}}, {{ 1,  1,  1 }, {1,1}}, {{ -1,  1,  1 },{0,1}}, //pos y
-
-			{ { -1,  1, -1 }, {1,1} }, {{ -1, -1, -1 }, {1,0}}, {{ -1, -1,  1 }, {0,0}}, {{ -1,  1,  1 }, {0,1}}, //neg x
-			{{1,   1, -1}, {1,1}}, {{ 1, -1, -1 }, {1,0}}, {{ 1, -1,  1 }, {0,0}}, {{ 1,   1,  1 }, {0,1}}, //pos x
-		};
-
-		Vec3 cubeSizeMult = { 1, 0.5, 1 };
-		std::vector<TexVertex> tv(cubeVerts.size());
-
-		for (int i = 0; i < cubeVerts.size(); ++i)
-		{
-			
-			//TODO: remove hardcoded const
-			tv[i] = { cubeVerts[i].spaceCoords * 128, cubeVerts[i].textureCoords * 128 };
-		}
-
-		for (int i = 0; i < tv.size(); i += 4)
-		{
-			Triangle t;
-			t.textureIndex = skyTextureIndex;
-
-			//connect: 0->1->2 and 2->3->0
-			t.tv[0] = tv[i + 0];
-			t.tv[1] = tv[i + 1];
-			t.tv[2] = tv[i + 2];
-			//t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
-			skyCube.push_back(t);
-
-			t.tv[0] = tv[i + 2];
-			t.tv[1] = tv[i + 3];
-			t.tv[2] = tv[i + 0];
-			//t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
-			skyCube.push_back(t);
-		}
-
-		for (auto& tri : skyCube)
-			for (auto& tv : tri.tv)
-				tv.spaceCoords *= skyCubeSide / 128;
-	
-		
-	}
 
 	SkyRenderingMode skyRenderingMode = SPHERE;
 	Sky sky("RSKY1", textureManager);
@@ -306,8 +229,6 @@ void program()
 
 		if (currentMap)
 		{			
-			if (skyRenderingMode == CUBE) for (const auto& it : skyCube) it.drawOn(ctx);
-			if (skyRenderingMode == SPHERE) for (const auto& it : skySphere) it.drawOn(ctx);
 			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
 			{
 				for (const auto& tri : sectorTriangles[nSector])

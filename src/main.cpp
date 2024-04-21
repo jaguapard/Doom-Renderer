@@ -309,14 +309,17 @@ void program()
 		}
 		shifts[3] = missingShift;
 
+		for (int i = 0; i < framebufW * framebufH; ++i)
+		{
+			framebuf[i] = framebuf[i].multipliedByLight(lightBuf[i]);
+		}
 		for (int y = 0; y < screenH; ++y)
 		{
 			for (int x = 0; x < screenW; ++x)
 			{
 				int fx = real(x) / screenW * framebufW;
 				int fy = real(y) / screenH * framebufH;
-				real lightMult = lightBuf.getPixelUnsafe(fx, fy);
-				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).multipliedByLight(lightMult).toSDL_Uint32(shifts);
+				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).toSDL_Uint32(shifts);
 			}
 		}
 

@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
+std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 	const std::vector<Linedef>& linedefs,
 	const std::vector<Vertex>& vertices,
 	const std::vector<Sidedef>& sidedefs,
@@ -13,7 +13,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 	TextureManager& textureManager
 )
 {
-	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
+	std::vector<std::vector<Model>> sectorModels(sectors.size());
 	std::vector<std::vector<Linedef>> sectorLinedefs(sectors.size());
 
 	for (const auto& linedef : linedefs)
@@ -62,7 +62,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 		for (const auto& si : linedefSectors) //first add middle sections of walls 
 		{
 			auto newTris = getTrianglesForSectorWallQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
-			auto& target = sectorTriangles[si.sectorNumber];
+			auto& target = sectorModels[si.sectorNumber];
 			target.insert(target.end(), newTris.begin(), newTris.end());
 		}
 
@@ -73,7 +73,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 				SectorInfo high = linedefSectors[1];
 
 				auto newTris = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
-				auto& target = sectorTriangles[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
+				auto& target = sectorModels[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.insert(target.end(), newTris.begin(), newTris.end());
 			}
 
@@ -83,7 +83,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 				SectorInfo high = linedefSectors[1];
 
 				auto newTris = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
-				auto& target = sectorTriangles[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
+				auto& target = sectorModels[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.insert(target.end(), newTris.begin(), newTris.end());
 			}
 		}
@@ -99,12 +99,12 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 #endif
 
 		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled ? -1 : 1); //too slow in debug mode
-		auto& target = sectorTriangles[nSector];
+		auto& target = sectorModels[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
 		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";
 	}
 
-	return sectorTriangles;
+	return sectorModels;
 }
 
 std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)

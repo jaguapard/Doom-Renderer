@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include "Triangle.h"
+#include "Model.h"
+
 class Sky
 {
 public:
@@ -8,6 +10,5 @@ public:
 	Sky(std::string textureName, TextureManager& textureManager);
 	void draw(TriangleRenderContext ctx);
 private:
-	std::vector<Triangle> skyTriangles;
-	
+	Model skyModel;	
 };

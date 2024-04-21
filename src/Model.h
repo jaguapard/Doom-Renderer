@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <array>
 #include "Triangle.h"
 class Model
 {
@@ -10,4 +11,5 @@ public:
 private:
 	std::vector<Triangle> triangles;
 	int textureIndex;
+	std::array<Vec3, 8> boundingBox; //8 points to check clipping and collision against
 };

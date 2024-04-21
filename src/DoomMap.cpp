@@ -1,9 +1,9 @@
 #include "DoomMap.h"
 #include "DoomWorldLoader.h"
 
-std::vector<std::vector<Triangle>> DoomMap::getTriangles(TextureManager& tm)
+std::vector<std::vector<Model>> DoomMap::getMapGeometryModels(TextureManager& tm)
 {
-    auto tris = DoomWorldLoader::loadTriangles(linedefs, vertices, sidedefs, sectors, tm);
+    auto tris = DoomWorldLoader::loadMapSectorsAsModels(linedefs, vertices, sidedefs, sectors, tm);
 
     return tris;
 }

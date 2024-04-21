@@ -109,7 +109,7 @@ void program()
 	real camAngAdjustmentSpeed_Mouse = 1e-3;
 	real camAngAdjustmentSpeed_Keyboard = 3e-2;
 
-	std::vector<std::vector<Triangle>> sectorTriangles;
+	std::vector<std::vector<Model>> sectorWorldModels;
 	TextureManager textureManager;
 	DoomMap* currentMap = nullptr;
 
@@ -172,7 +172,7 @@ void program()
 			std::cout << "Loading map " << mapToLoad << "...\n";
 
 			currentMap = &maps[mapToLoad];
-			sectorTriangles = currentMap->getTriangles(textureManager);
+			sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
 
 			warpTo.clear();
 			performanceMonitor.reset();
@@ -263,12 +263,12 @@ void program()
 
 		if (currentMap)
 		{			
-			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
+			for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
 			{
-				for (const auto& tri : sectorTriangles[nSector])
+				for (const auto& model : sectorWorldModels[nSector])
 				{
 					ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
-					tri.drawOn(ctx);
+					model.draw(ctx);
 				}
 			}
 		}

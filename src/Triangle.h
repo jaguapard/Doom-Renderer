@@ -38,6 +38,8 @@ struct TriangleRenderContext
 	const Texture* texture;
 	real lightMult;
 	real framebufW, framebufH;
+
+	real nearPlaneClippingZ = -1;
 };
 
 struct Triangle

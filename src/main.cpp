@@ -30,6 +30,7 @@
 #include "DoomStructs.h"
 #include "DoomWorldLoader.h"
 #include "WadLoader.h"
+#include "Model.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")

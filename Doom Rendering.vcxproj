@@ -40,6 +40,7 @@
     <ClCompile Include="src\C_Input.cpp" />
     <ClCompile Include="src\DoomMap.cpp" />
     <ClCompile Include="src\DoomWorldLoader.cpp" />
+    <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\PerformanceMonitor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
@@ -60,6 +61,7 @@
     <ClInclude Include="src\DoomMap.h" />
     <ClInclude Include="src\DoomStructs.h" />
     <ClInclude Include="src\DoomWorldLoader.h" />
+    <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\PerformanceMonitor.h" />
     <ClInclude Include="src\helpers.h" />
     <ClInclude Include="src\Matrix3.h" />

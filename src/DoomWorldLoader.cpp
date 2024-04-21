@@ -137,7 +137,7 @@ Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real to
 		}
 		triangles.push_back(t);
 	}
-	return Model(triangles, textureIndex);
+	return Model(triangles, textureIndex, textureManager);
 }
 
 typedef std::pair<Ved2, Ved2> Line;
@@ -199,5 +199,5 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 		trisFloor.push_back(t[0]);
 		trisCeiling.push_back(t[1]);
 	}
-	return { Model(trisFloor, floorTextureIndex), Model(trisCeiling, ceilingTextureIndex) };
+	return { Model(trisFloor, floorTextureIndex, textureManager), Model(trisCeiling, ceilingTextureIndex, textureManager) };
 }

@@ -98,7 +98,7 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 			tv.textureCoords = preremapUv * uvMult;
 		}
 	}
-	this->skyModel = Model(skyTriangles, textureIndex);
+	this->skyModel = Model(skyTriangles, textureIndex, textureManager);
 }
 
 void Sky::draw(TriangleRenderContext ctx)

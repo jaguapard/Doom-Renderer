@@ -3,9 +3,9 @@
 #include <numeric>
 #include "Statsman.h"
 
-Model::Model(const std::vector<Triangle>& triangles, int textureIndex)
+Model::Model(const std::vector<Triangle>& triangles, int textureIndex, TextureManager& textureManager)
 {
-	this->triangles = triangles;
+	//assert(triangles.size() > 0);
 	this->textureIndex = textureIndex;
 
 	std::function inf = std::numeric_limits<real>::infinity;

@@ -9,6 +9,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		RelClang|x64 = RelClang|x64
+		RelClang|x86 = RelClang|x86
 		RelDbgInfo|x64 = RelDbgInfo|x64
 		RelDbgInfo|x86 = RelDbgInfo|x86
 		Release|x64 = Release|x64
@@ -21,6 +23,10 @@ Global
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.Debug|x64.Build.0 = Debug|x64
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.Debug|x86.ActiveCfg = Debug|Win32
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.Debug|x86.Build.0 = Debug|Win32
+		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelClang|x64.ActiveCfg = RelClang|x64
+		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelClang|x64.Build.0 = RelClang|x64
+		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelClang|x86.ActiveCfg = RelClang|Win32
+		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelClang|x86.Build.0 = RelClang|Win32
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelDbgInfo|x64.ActiveCfg = RelDbgInfo|x64
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelDbgInfo|x64.Build.0 = RelDbgInfo|x64
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelDbgInfo|x86.ActiveCfg = RelDbgInfo|Win32

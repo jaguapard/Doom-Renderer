@@ -1,3 +1,4 @@
+#include <cassert>
 #include "Texture.h"
 #include <iostream>
 #include "Vec.h"
@@ -117,7 +118,7 @@ void Texture::constructDebugTexture()
 			switch (TEXTURE_DEBUG_MODE)
 			{
 			case TextureDebugMode::NONE:
-				assert(false, "Debug texture build attempted without debug texture mode set");
+				assert((false, "Debug texture build attempted without debug texture mode set"));
 				return;
 			case TextureDebugMode::X_GRADIENT:
 				pixels.setPixelUnsafe(x, y, Color(x, x, x, SDL_ALPHA_OPAQUE));
@@ -138,8 +139,8 @@ void Texture::constructDebugTexture()
 				Color c = (x % 16 < 8) ^ (y % 16 < 8) ? Color(0, 0, 0) : Color(255, 255, 255);
 				pixels.setPixelUnsafe(x, y, c);
 				break;
-			default:
-				break;
+			//default:
+			//	break;
 			}
 		}
 	}

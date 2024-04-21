@@ -1,7 +1,9 @@
+#include <cassert>
 #include "Texture.h"
 #include <iostream>
 #include "Vec.h"
 #include "Statsman.h"
+#include "smart.h"
 
 Texture::Texture(std::string name)
 {
@@ -9,48 +11,50 @@ Texture::Texture(std::string name)
 	if (TEXTURE_DEBUG_MODE != TextureDebugMode::NONE)
 	{
 		this->constructDebugTexture();
-		return;
-	}
-
-	std::string path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
-	SDL_Surface* surf = IMG_Load(path.c_str());
-
-	if (surf)
-	{
-		SDL_Surface* nSurf = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_RGBA32, 0); //force convert into this format, since that's the only one we support
-		Uint32* surfPixels = reinterpret_cast<Uint32*>(nSurf->pixels);
-		int w = nSurf->w;
-		int h = nSurf->h;
-		this->pixels = PixelBuffer<Color>(w, h);
-
-		for (int y = 0; y < h; ++y)
-		{
-			for (int x = 0; x < w; ++x)
-			{
-				this->pixels.setPixelUnsafe(x, y, surfPixels[y * w + x]);
-			}
-		}
-		
-		SDL_FreeSurface(nSurf);
 	}
 	else
 	{
-		std::cout << "Failed to load texture " << name << " from " << path << ": " << IMG_GetError() << "\n" <<
-			"Falling back to purple-black checkerboard.\n\n";
-		int w = 64, h = 64;
+		std::string path;
+		if (name.size() > 1 && name[1] == ':') path = name; //TODO: a dirty hack to tell absolute paths from relative 
+		else path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
 
-		this->pixels = PixelBuffer<Color>(w, h);
-		for (int y = 0; y < h; ++y)
+		Smart_Surface surf = Smart_Surface(IMG_Load(path.c_str()));
+
+		if (surf)
 		{
-			for (int x = 0; x < w; ++x)
+			Smart_Surface nSurf = Smart_Surface(SDL_ConvertSurfaceFormat(surf.get(), SDL_PIXELFORMAT_RGBA32, 0)); //force convert into this format, since that's the only one we support
+			Uint32* surfPixels = reinterpret_cast<Uint32*>(nSurf->pixels);
+			int w = nSurf->w;
+			int h = nSurf->h;
+			this->pixels = PixelBuffer<Color>(w, h);
+
+			for (int y = 0; y < h; ++y)
 			{
-				Color c = (x % 16 < 8) ^ (y % 16 < 8) ? Color(0, 0, 0) : Color(255, 0, 255);
-				this->pixels.setPixel(x, y, c); 
+				for (int x = 0; x < w; ++x)
+				{
+					this->pixels.setPixelUnsafe(x, y, surfPixels[y * w + x]);
+				}
+			}
+		}
+		else
+		{
+			std::cout << "Failed to load texture " << name << " from " << path << ": " << IMG_GetError() << "\n" <<
+				"Falling back to purple-black checkerboard.\n\n";
+			int w = 64, h = 64;
+
+			this->pixels = PixelBuffer<Color>(w, h);
+			for (int y = 0; y < h; ++y)
+			{
+				for (int x = 0; x < w; ++x)
+				{
+					Color c = (x % 16 < 8) ^ (y % 16 < 8) ? Color(0, 0, 0) : Color(255, 0, 255);
+					this->pixels.setPixel(x, y, c);
+				}
 			}
 		}
 	}
 
-	SDL_FreeSurface(surf);
+	this->checkForTransparentPixels();
 }
 
 Color Texture::getPixel(int x, int y) const
@@ -81,6 +85,24 @@ int Texture::getH() const
 	return pixels.getH();
 }
 
+bool Texture::hasOnlyOpaquePixels() const
+{
+	return _hasOnlyOpaquePixels;
+}
+
+void Texture::checkForTransparentPixels()
+{
+	for (const auto it : pixels)
+	{
+		if (it.a < SDL_ALPHA_OPAQUE)
+		{
+			_hasOnlyOpaquePixels = false;
+			break;
+		}
+	}
+	_hasOnlyOpaquePixels = true;
+}
+
 void Texture::constructDebugTexture()
 {
 	int tw = 1024, th = 1024;
@@ -96,7 +118,7 @@ void Texture::constructDebugTexture()
 			switch (TEXTURE_DEBUG_MODE)
 			{
 			case TextureDebugMode::NONE:
-				assert(false, "Debug texture build attempted without debug texture mode set");
+				assert((false, "Debug texture build attempted without debug texture mode set"));
 				return;
 			case TextureDebugMode::X_GRADIENT:
 				pixels.setPixelUnsafe(x, y, Color(x, x, x, SDL_ALPHA_OPAQUE));
@@ -117,8 +139,8 @@ void Texture::constructDebugTexture()
 				Color c = (x % 16 < 8) ^ (y % 16 < 8) ? Color(0, 0, 0) : Color(255, 255, 255);
 				pixels.setPixelUnsafe(x, y, c);
 				break;
-			default:
-				break;
+			//default:
+			//	break;
 			}
 		}
 	}

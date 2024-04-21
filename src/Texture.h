@@ -27,12 +27,14 @@ public:
 
 	int getW() const;
 	int getH() const;
+	bool hasOnlyOpaquePixels() const;
 
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
 private:
 	PixelBuffer<Color> pixels;
 	std::string name;
-	int wMask = -1, hMask = -1;
+	bool _hasOnlyOpaquePixels = true;
 
+	void checkForTransparentPixels();
 	void constructDebugTexture();
 };

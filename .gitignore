@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 *.png
 *.zip
+/data/sky_textures.txt

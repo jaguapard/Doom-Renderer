@@ -24,11 +24,13 @@
 #include "Triangle.h"
 #include "Statsman.h"
 #include "PerformanceMonitor.h"
+#include "TextureMapper.h"
+#include "Sky.h"
 
 #include "DoomStructs.h"
 #include "DoomWorldLoader.h"
 #include "WadLoader.h"
-#include "TextureMapper.h"
+#include "Model.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -49,90 +51,10 @@ void operator delete(void* block)
 	return _aligned_free(block);
 }
 
-std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDivisions, real radius, Vec3 sizeMult = {1,1,1}, Vec3 shift = {0,0,0})
-{
-	assert(horizontalDivisions * (verticalDivisions-1) % 3 == 0);
-	std::vector<Triangle> ret;
-	std::vector<Vec3> world, texture;
-	for (int m = 0; m < horizontalDivisions; m++)
-	{
-		for (int n = 0; n < verticalDivisions; n++)
-		{
-			real x, y, z;
-			real mp, np;
-			mp = real(m) / horizontalDivisions;
-			np = real(n) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m + 1) / horizontalDivisions;
-			np = real(n) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m + 1) / horizontalDivisions;
-			np = real(n + 1) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m + 1) / horizontalDivisions;
-			np = real(n + 1) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m) / horizontalDivisions;
-			np = real(n + 1) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m) / horizontalDivisions;
-			np = real(n) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-		}
-	}
-
-	assert(world.size() % 3 == 0);
-	for (int i = 0; i < world.size(); i += 3)
-	{		
-		Triangle t;
-		for (int j = 0; j < 3; ++j)
-		{
-			Vec3 textureCoords = texture[i + j];
-			std::swap(textureCoords.x, textureCoords.y);
-			std::swap(world[i + j].z, world[i + j].y);
-			Vec3 adjWorld = (world[i + j] * sizeMult + shift) * radius;
-			t.tv[j] = { adjWorld, textureCoords };
-		}
-
-		ret.push_back(t);
-	}
-	return ret;
-}
-
 enum SkyRenderingMode
 {
 	NONE,
 	ROTATING,
-	CUBE,
 	SPHERE,
 	COUNT
 };
@@ -187,101 +109,26 @@ void program()
 	real camAngAdjustmentSpeed_Mouse = 1e-3;
 	real camAngAdjustmentSpeed_Keyboard = 3e-2;
 
-	std::vector<std::vector<Triangle>> sectorTriangles;
+	std::vector<std::vector<Model>> sectorWorldModels;
 	TextureManager textureManager;
 	DoomMap* currentMap = nullptr;
-	std::vector<Triangle> skyCube, skySphere;
 
+	SkyRenderingMode skyRenderingMode = SPHERE;
+	Sky sky("RSKY1", textureManager);
+	int currSkyTextureIndex = 3;
+	std::vector<std::string> skyTextures;
+	skyTextures.push_back("RSKY1");
+	skyTextures.push_back("RSKY2");
+	skyTextures.push_back("RSKY3");
 	{
-		const Texture& sky = textureManager.getTextureByName("RSKY1");
-		int skyTextureIndex = textureManager.getTextureIndexByName("RSKY1");
-		double scaleX = 256 / double(framebufW); //TODO: remove hardcoded const
-		double scaleY = 128 / double(framebufH);
-		for (int y = 0; y < framebufH; ++y) //boring sky
+		std::ifstream f("data/sky_textures.txt");
+		std::string line;
+		while (std::getline(f, line))
 		{
-			for (int x = 0; x < framebufW; ++x)
-			{
-				double fx = scaleX * x;
-				double fy = scaleY * y;
-				skyBuff.setPixel(x,y, sky.getPixel(fx, fy));
-			}
-		}
-
-		double skyCubeSide = 131072;
-		/*std::vector<Vec3> cubeVerts =  //connect: 0->1->2 and 2->3->0
-		{
-			{-1, -1, -1},  { 1, -1, -1},  { 1,  1, -1},  {-1,  1, -1}, //neg z
-			{-1, -1,  1},  { 1, -1,  1},  { 1,  1,  1},  {-1,  1,  1}, //pos z
-
-			{-1, -1, -1},  { 1, -1, -1},  { 1, -1,  1},  {-1, -1,  1}, //neg y
-			{-1,  1, -1},  { 1,  1, -1},  { 1,  1,  1},  {-1,  1,  1}, //pos y
-
-			{-1,  1, -1},  {-1, -1, -1},  {-1, -1,  1},  {-1,  1,  1}, //neg x
-			{1,   1, -1},  { 1, -1, -1},  { 1, -1,  1},  {1,   1,  1}, //pos x
-		};*/
-		std::vector<TexVertex> cubeVerts =  //connect: 0->1->2 and 2->3->0
-		{
-			{ {-1, -1, -1}, {0,0}}, { { 1, -1, -1 }, {1,0}},  {{ 1,  1, -1 }, {1,1}}, {{ -1,  1, -1 }, {0, 1}}, //neg z
-			{ {-1, -1,  1}, {0,0}}, { { 1, -1,  1 }, {1,0}}, { {1,  1,  1 }, {1,1}}, { { -1,  1,  1 }, {0,1}}, //pos z
-
-			{ {-1, -1, -1}, {0,0}}, { { 1, -1, -1 }, {1,0}}, {{ 1, -1,  1 }, {1,1}},  {{-1, -1,  1}, {0,1}},  //neg y
-			{{-1,  1, -1}, {0,0}}, {{ 1,  1, -1 }, {1,0}}, {{ 1,  1,  1 }, {1,1}}, {{ -1,  1,  1 },{0,1}}, //pos y
-
-			{ { -1,  1, -1 }, {1,1} }, {{ -1, -1, -1 }, {1,0}}, {{ -1, -1,  1 }, {0,0}}, {{ -1,  1,  1 }, {0,1}}, //neg x
-			{{1,   1, -1}, {1,1}}, {{ 1, -1, -1 }, {1,0}}, {{ 1, -1,  1 }, {0,0}}, {{ 1,   1,  1 }, {0,1}}, //pos x
-		};
-
-		Vec3 cubeSizeMult = { 1, 0.5, 1 };
-		std::vector<TexVertex> tv(cubeVerts.size());
-
-		for (int i = 0; i < cubeVerts.size(); ++i)
-		{
-			
-			//TODO: remove hardcoded const
-			tv[i] = { cubeVerts[i].spaceCoords * 128, cubeVerts[i].textureCoords * 128 };
-		}
-
-		for (int i = 0; i < tv.size(); i += 4)
-		{
-			Triangle t;
-			t.textureIndex = skyTextureIndex;
-
-			//connect: 0->1->2 and 2->3->0
-			t.tv[0] = tv[i + 0];
-			t.tv[1] = tv[i + 1];
-			t.tv[2] = tv[i + 2];
-			//t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
-			skyCube.push_back(t);
-
-			t.tv[0] = tv[i + 2];
-			t.tv[1] = tv[i + 3];
-			t.tv[2] = tv[i + 0];
-			//t = TextureMapper::mapTriangleRelativeToFirstVertex(t);
-			skyCube.push_back(t);
-		}
-
-		for (auto& tri : skyCube)
-			for (auto& tv : tri.tv)
-				tv.spaceCoords *= skyCubeSide / 128;
-
-		double aspectRatio = sky.getW() / sky.getH();
-		Vec3 uvMult = Vec3(sky.getH(), sky.getH(), 1);
-		Vec3 aspectRatioDistortion = Vec3(aspectRatio * 2, 1, 1); //stretching the sphere helps with textures being too stretched. 2, since X wraps around 2 times
-		skySphere = generateSphereMesh(60, 30, 65536, aspectRatioDistortion, {0, -0.4, 0});		
-		for (auto& it : skySphere)
-		{
-			it.textureIndex = skyTextureIndex;
-			for (auto& tv : it.tv)
-			{
-				Vec3 preremapUv = tv.textureCoords; //to stop texture abruptly jumping back to the beginning at sphere's end, we must wrap it properly
-				if (preremapUv.x <= 0.5) preremapUv.x = 2 * preremapUv.x;
-				else if (preremapUv.x > 0.5) preremapUv.x = (1 - preremapUv.x)*2; //this remaps range (0,1) to (0,1),(1,0) flipping direction when x == 0.5
-				tv.textureCoords = preremapUv * uvMult;
-			}
+			skyTextures.push_back(line);
 		}
 	}
 
-	SkyRenderingMode skyRenderingMode = SPHERE;
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
@@ -325,7 +172,7 @@ void program()
 			std::cout << "Loading map " << mapToLoad << "...\n";
 
 			currentMap = &maps[mapToLoad];
-			sectorTriangles = currentMap->getTriangles(textureManager);
+			sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
 
 			warpTo.clear();
 			performanceMonitor.reset();
@@ -340,6 +187,24 @@ void program()
 			mouseCaptured ^= 1;
 			SDL_SetRelativeMouseMode(mouseCaptured ? SDL_TRUE : SDL_FALSE);
 		}
+
+		bool skyChanged = false;
+		if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LEFT))
+		{
+			currSkyTextureIndex--;
+			skyChanged = true;
+		}
+		else if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_RIGHT))
+		{
+			currSkyTextureIndex++;
+			skyChanged = true;
+		}
+
+		if (currSkyTextureIndex < 0) currSkyTextureIndex = 0;
+		else currSkyTextureIndex %= skyTextures.size();
+
+		if (skyChanged) sky = Sky(skyTextures[currSkyTextureIndex], textureManager);
+
 
 		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
@@ -385,24 +250,25 @@ void program()
 		}
 		ctr.prepare(camPos, transformMatrix);
 
+		TriangleRenderContext ctx;
+		ctx.ctr = &ctr;
+		ctx.frameBuffer = &framebuf;
+		ctx.lightBuffer = &lightBuf;
+		ctx.textureManager = &textureManager;
+		ctx.zBuffer = &zBuffer;
+		ctx.framebufW = framebufW - 1;
+		ctx.framebufH = framebufH - 1;
+		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
+		if (skyRenderingMode == SPHERE) sky.draw(ctx);
+
 		if (currentMap)
-		{
-			TriangleRenderContext ctx;
-			ctx.ctr = &ctr;
-			ctx.frameBuffer = &framebuf;
-			ctx.lightBuffer = &lightBuf;
-			ctx.textureManager = &textureManager;
-			ctx.zBuffer = &zBuffer;
-			ctx.framebufW = framebufW - 1;
-			ctx.framebufH = framebufH - 1;
-			if (skyRenderingMode == CUBE) for (const auto& it : skyCube) it.drawOn(ctx);
-			if (skyRenderingMode == SPHERE) for (const auto& it : skySphere) it.drawOn(ctx);
-			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
+		{			
+			for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
 			{
-				for (const auto& tri : sectorTriangles[nSector])
+				for (const auto& model : sectorWorldModels[nSector])
 				{
 					ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
-					tri.drawOn(ctx);
+					model.draw(ctx);
 				}
 			}
 		}
@@ -443,14 +309,17 @@ void program()
 		}
 		shifts[3] = missingShift;
 
+		for (int i = 0; i < framebufW * framebufH; ++i)
+		{
+			framebuf[i] = framebuf[i].multipliedByLight(lightBuf[i]);
+		}
 		for (int y = 0; y < screenH; ++y)
 		{
 			for (int x = 0; x < screenW; ++x)
 			{
 				int fx = real(x) / screenW * framebufW;
 				int fy = real(y) / screenH * framebufH;
-				real lightMult = lightBuf.getPixelUnsafe(fx, fy);
-				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).multipliedByLight(lightMult).toSDL_Uint32(shifts);
+				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).toSDL_Uint32(shifts);
 			}
 		}
 

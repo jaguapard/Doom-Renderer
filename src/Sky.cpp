@@ -84,7 +84,7 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 	const Texture& texture = textureManager.getTextureByName(textureName);
 	double aspectRatio = texture.getW() / texture.getH();
 	Vec3 uvMult = Vec3(texture.getH(), texture.getH(), 1);
-	Vec3 aspectRatioDistortion = Vec3(aspectRatio * 2, 1, 1); //stretching the sphere helps with textures being too stretched. 2, since X wraps around 2 times
+	Vec3 aspectRatioDistortion = Vec3(2 / aspectRatio, 1, 1); //stretching the sphere helps with textures being too stretched. 2, since X wraps around 2 times
 	this->skyTriangles = generateSphereMesh(60, 30, 65536, aspectRatioDistortion, {0, -0.4, 0});
 
 	int textureIndex = textureManager.getTextureIndexByName(textureName);

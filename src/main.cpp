@@ -114,6 +114,20 @@ void program()
 
 	SkyRenderingMode skyRenderingMode = SPHERE;
 	Sky sky("RSKY1", textureManager);
+	int currSkyTextureIndex = 3;
+	std::vector<std::string> skyTextures;
+	skyTextures.push_back("RSKY1");
+	skyTextures.push_back("RSKY2");
+	skyTextures.push_back("RSKY3");
+	{
+		std::ifstream f("data/sky_textures.txt");
+		std::string line;
+		while (std::getline(f, line))
+		{
+			skyTextures.push_back(line);
+		}
+	}
+
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
@@ -172,6 +186,24 @@ void program()
 			mouseCaptured ^= 1;
 			SDL_SetRelativeMouseMode(mouseCaptured ? SDL_TRUE : SDL_FALSE);
 		}
+
+		bool skyChanged = false;
+		if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LEFT))
+		{
+			currSkyTextureIndex--;
+			skyChanged = true;
+		}
+		else if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_RIGHT))
+		{
+			currSkyTextureIndex++;
+			skyChanged = true;
+		}
+
+		if (currSkyTextureIndex < 0) currSkyTextureIndex = 0;
+		else currSkyTextureIndex %= skyTextures.size();
+
+		if (skyChanged) sky = Sky(skyTextures[currSkyTextureIndex], textureManager);
+
 
 		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};

@@ -30,6 +30,7 @@
 #include "DoomStructs.h"
 #include "DoomWorldLoader.h"
 #include "WadLoader.h"
+#include "Model.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -108,7 +109,7 @@ void program()
 	real camAngAdjustmentSpeed_Mouse = 1e-3;
 	real camAngAdjustmentSpeed_Keyboard = 3e-2;
 
-	std::vector<std::vector<Triangle>> sectorTriangles;
+	std::vector<std::vector<Model>> sectorWorldModels;
 	TextureManager textureManager;
 	DoomMap* currentMap = nullptr;
 
@@ -171,7 +172,7 @@ void program()
 			std::cout << "Loading map " << mapToLoad << "...\n";
 
 			currentMap = &maps[mapToLoad];
-			sectorTriangles = currentMap->getTriangles(textureManager);
+			sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
 
 			warpTo.clear();
 			performanceMonitor.reset();
@@ -257,16 +258,17 @@ void program()
 		ctx.zBuffer = &zBuffer;
 		ctx.framebufW = framebufW - 1;
 		ctx.framebufH = framebufH - 1;
+		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
 		if (skyRenderingMode == SPHERE) sky.draw(ctx);
 
 		if (currentMap)
 		{			
-			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)
+			for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
 			{
-				for (const auto& tri : sectorTriangles[nSector])
+				for (const auto& model : sectorWorldModels[nSector])
 				{
 					ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
-					tri.drawOn(ctx);
+					model.draw(ctx);
 				}
 			}
 		}

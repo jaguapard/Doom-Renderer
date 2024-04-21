@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
+std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 	const std::vector<Linedef>& linedefs,
 	const std::vector<Vertex>& vertices,
 	const std::vector<Sidedef>& sidedefs,
@@ -13,7 +13,7 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 	TextureManager& textureManager
 )
 {
-	std::vector<std::vector<Triangle>> sectorTriangles(sectors.size());
+	std::vector<std::vector<Model>> sectorModels(sectors.size());
 	std::vector<std::vector<Linedef>> sectorLinedefs(sectors.size());
 
 	for (const auto& linedef : linedefs)
@@ -61,9 +61,9 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 		std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.floorHeight < si2.floorHeight; });
 		for (const auto& si : linedefSectors) //first add middle sections of walls 
 		{
-			auto newTris = getTrianglesForSectorWallQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
-			auto& target = sectorTriangles[si.sectorNumber];
-			target.insert(target.end(), newTris.begin(), newTris.end());
+			auto model = getTrianglesForSectorWallQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
+			auto& target = sectorModels[si.sectorNumber];
+			target.push_back(model);
 		}
 
 		if (linedefSectors.size() > 1)
@@ -72,9 +72,9 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto newTris = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
-				auto& target = sectorTriangles[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
-				target.insert(target.end(), newTris.begin(), newTris.end());
+				auto model = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
+				auto& target = sectorModels[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
+				target.push_back(model);
 			}
 
 			std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.ceilingHeight < si2.ceilingHeight; });
@@ -82,9 +82,9 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto newTris = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
-				auto& target = sectorTriangles[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
-				target.insert(target.end(), newTris.begin(), newTris.end());
+				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
+				auto& target = sectorModels[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
+				target.push_back(model);
 			}
 		}
 	}
@@ -99,23 +99,25 @@ std::vector<std::vector<Triangle>> DoomWorldLoader::loadTriangles(
 #endif
 
 		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled ? -1 : 1); //too slow in debug mode
-		auto& target = sectorTriangles[nSector];
+		auto& target = sectorModels[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
 		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";
 	}
 
-	return sectorTriangles;
+	return sectorModels;
 }
 
-std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
+Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
 {
-	std::vector<Triangle> ret;
+	Model ret;
 	if (textureName.empty() || textureName == "-" || bottomHeight == topHeight) return ret; //nonsensical arrangement or undefined texture
 
 	Vec3 origin;
 	if (bottomHeight > topHeight) std::swap(bottomHeight, topHeight);
 
+	std::vector<Triangle> triangles;
 	//TODO: add some kind of Z figting prevention for double-sided linedefs
+	int textureIndex = textureManager.getTextureIndexByName(textureName);
 	for (int i = 0; i < 2; ++i)
 	{
 		Triangle t;
@@ -133,10 +135,9 @@ std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(real botto
 			Vec2 uv = Vec2(sectorInfo.xTextureOffset, sectorInfo.yTextureOffset) - uvPrefab;
 			t.tv[j].textureCoords = uv;			
 		}
-		t.textureIndex = textureManager.getTextureIndexByName(textureName);
-		ret.push_back(t);
+		triangles.push_back(t);
 	}
-	return ret;
+	return Model(triangles, textureIndex);
 }
 
 typedef std::pair<Ved2, Ved2> Line;
@@ -168,11 +169,11 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	return ret;
 }
 
-std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const Sector& sector, const std::vector<Linedef>& sectorLinedefs, const std::vector<Vertex>& vertices, TextureManager& textureManager, int tesselSize)
+std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const Sector& sector, const std::vector<Linedef>& sectorLinedefs, const std::vector<Vertex>& vertices, TextureManager& textureManager, int tesselSize)
 {
-	std::vector<Triangle> ret;
+	std::vector<Triangle> trisFloor, trisCeiling;
 	auto polygonSplit = orcishTriangulation(sectorLinedefs, vertices, tesselSize);	
-	if (polygonSplit.empty()) return ret;
+	if (polygonSplit.empty()) return {};
 
 	real minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Ved2& v1, const Ved2& v2) {return v1.x < v2.x; })->x;
 	real minY = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Ved2& v1, const Ved2& v2) {return v1.y < v2.y; })->y;
@@ -193,11 +194,10 @@ std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(con
 			t[j / 3].tv[j % 3].spaceCoords = vert;
 			t[j/3].tv[j%3].spaceCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
 			t[j / 3].tv[j % 3].textureCoords = Vec2(uv.x, uv.z);
-			t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
 		}
 
-		ret.push_back(t[0]);
-		ret.push_back(t[1]);
+		trisFloor.push_back(t[0]);
+		trisCeiling.push_back(t[1]);
 	}
-	return ret;
+	return { Model(trisFloor, floorTextureIndex), Model(trisCeiling, ceilingTextureIndex) };
 }

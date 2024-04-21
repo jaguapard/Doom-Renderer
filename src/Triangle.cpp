@@ -100,11 +100,9 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	
 	Triangle flatBottom;
 	flatBottom.tv = { fullyTransformed[0], fullyTransformed[1], splitVertex };
-	flatBottom.textureIndex = this->textureIndex;
 	
 	Triangle flatTop;
-	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
-	flatTop.textureIndex = this->textureIndex;	
+	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };	
 
 	flatTop.drawScreenSpaceAndUvDividedPrepped(context, false);
 	flatBottom.drawScreenSpaceAndUvDividedPrepped(context, true);
@@ -119,7 +117,7 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
 	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
-	const Texture& texture = context.textureManager->getTextureByIndex(this->textureIndex);
+	const Texture& texture = *context.texture;
 
 	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
 	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance

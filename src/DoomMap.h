@@ -3,6 +3,7 @@
 
 #include "DoomStructs.h"
 #include "Triangle.h"
+#include "Model.h"
 
 class DoomMap
 {
@@ -13,5 +14,5 @@ public:
 	std::vector<Sidedef> sidedefs;
 	std::vector<Sector> sectors;
 
-	std::vector<std::vector<Triangle>> getTriangles(TextureManager& tm);
+	std::vector<std::vector<Model>> getMapGeometryModels(TextureManager& tm);
 };

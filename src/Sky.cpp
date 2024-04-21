@@ -85,12 +85,11 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 	double aspectRatio = texture.getW() / texture.getH();
 	Vec3 uvMult = Vec3(texture.getH(), texture.getH(), 1);
 	Vec3 aspectRatioDistortion = Vec3(2 / aspectRatio, 1, 1); //stretching the sphere helps with textures being too stretched. 2, since X wraps around 2 times
-	this->skyTriangles = generateSphereMesh(60, 30, 65536, aspectRatioDistortion, {0, -0.4, 0});
+	auto skyTriangles = generateSphereMesh(60, 30, 65536, aspectRatioDistortion, {0, -0.4, 0});
 
 	int textureIndex = textureManager.getTextureIndexByName(textureName);
 	for (auto& it : skyTriangles)
 	{
-		it.textureIndex = textureIndex;
 		for (auto& tv : it.tv)
 		{
 			Vec3 preremapUv = tv.textureCoords; //to stop texture abruptly jumping back to the beginning at sphere's end, we must wrap it properly
@@ -99,10 +98,11 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 			tv.textureCoords = preremapUv * uvMult;
 		}
 	}
+	this->skyModel = Model(skyTriangles, textureIndex);
 }
 
 void Sky::draw(TriangleRenderContext ctx)
 {
 	ctx.lightMult = 1;
-	for (const auto& it : skyTriangles) it.drawOn(ctx);
+	this->skyModel.draw(ctx);
 }

@@ -35,14 +35,18 @@ struct TriangleRenderContext
 	ZBuffer* zBuffer;
 	const CoordinateTransformer* ctr;	
 	const TextureManager* textureManager;
+	const Texture* texture;
 	real lightMult;
 	real framebufW, framebufH;
+
+	int doomSkyTextureMarkerIndex;
+
+	real nearPlaneClippingZ = -1;
 };
 
 struct Triangle
 {
 	std::array<TexVertex, 3> tv;
-	int textureIndex;
 
 	void drawOn(const TriangleRenderContext& context) const;
 private:

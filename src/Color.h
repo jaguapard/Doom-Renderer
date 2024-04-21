@@ -12,6 +12,7 @@ struct Color : SDL_Color
 	Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 	Color multipliedByLight(real lightMult) const; //lighting calculation must preserve alpha value
+	static void multipliyByLightInPlace(const real* lightMults, Color* colors, int pixelCount);
 
 	operator uint32_t() const;
 	Uint32 toSDL_Uint32(const std::array<uint32_t, 4>& shifts = _shift) const; //only SDL_PIXELFORMAT_RGBA32 suported!!!

@@ -309,45 +309,8 @@ void program()
 		}
 		shifts[3] = missingShift;
 
-		int pixelsRemaining = framebufW * framebufH;
-		real* lightPtr = &lightBuf[0];
-		Color* colorPtr = &framebuf[0];
-		assert(pixelsRemaining % 8 == 0);
-		while (pixelsRemaining >= 8)
-		{
-			__m256 light = _mm256_load_ps(lightPtr); //load light intensities for pixels from light buffer
-			__m256 expandedLight = _mm256_mul_ps(light, _mm256_set1_ps(256)); //and turn them into integers to perform fixed-point arithmetic with them
-			__m256i intLight = _mm256_cvttps_epi32(expandedLight); //0.0f ... 1.0f -> 0 ... 255 (uint8)
-
-			__m256i colors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colorPtr));
-			__m256i lastByteMask = _mm256_set1_epi32(0xFF);
-
-			//shift bytes for color values into correct places and cut away everything else. After this the lower bytes of each epi32 hold original color byte
-			__m256i r = _mm256_and_epi32(colors, lastByteMask);
-			__m256i g = _mm256_and_epi32(_mm256_srli_epi32(colors, 8), lastByteMask);
-			__m256i b = _mm256_and_epi32(_mm256_srli_epi32(colors, 16), lastByteMask);
-			//alpha can stay broken lol
-
-			//calculate new values for colors: new = ((old*intLight) >> 8) & 0xFF and place into correct places for further store. 
-			// This is very close to truly multiplying with a float, but avoids lots of unnecessary int->float and back conversions
-			__m256i mulR = _mm256_mullo_epi32(r, intLight);
-			__m256i mulG = _mm256_mullo_epi32(g, intLight);
-			__m256i mulB = _mm256_mullo_epi32(b, intLight);
-			__m256i bBytes = _mm256_and_si256(_mm256_slli_epi32(mulB, 8), _mm256_set1_epi32(0xFF0000));
-			__m256i gBytes = _mm256_and_si256(mulG, _mm256_set1_epi32(0xFF00));
-			__m256i rBytes = _mm256_srli_epi32(mulR, 8);
-			
-			__m256i res = _mm256_or_si256(rBytes,_mm256_or_si256(gBytes, bBytes));
-			_mm256_store_si256(reinterpret_cast<__m256i*>(colorPtr), res);
-
-			lightPtr += 8;
-			colorPtr += 8;
-			pixelsRemaining -= 8;
-		}
-		/*/for (int i = 0; i < framebufW * framebufH; ++i)
-		{
-			framebuf[i] = framebuf[i].multipliedByLight(lightBuf[i]);
-		}*/
+		Color::multipliyByLightInPlace(&lightBuf[0], &framebuf[0], framebufW * framebufH);
+	
 		for (int y = 0; y < screenH; ++y)
 		{
 			for (int x = 0; x < screenW; ++x)

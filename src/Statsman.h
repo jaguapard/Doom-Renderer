@@ -49,11 +49,17 @@ public:
 			freesByDelete = 0;
 	};
 
+	struct Models
+	{
+		uint64_t boundingBoxDiscards = 0;
+	};
+
 	ZBuffer zBuffer;
 	Triangles triangles;
 	Textures textures;
 	Pixels pixels;
 	Memory memory;
+	Models models;
 
 	Statsman operator-(const Statsman& other) const;
 

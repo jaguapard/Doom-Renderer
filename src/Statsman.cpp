@@ -40,5 +40,7 @@ std::string Statsman::toString()
 
     ss << VAR_PRINT(memory.allocsByNew) << "\n";
     ss << VAR_PRINT(memory.freesByDelete) << "\n";
+
+    ss << VAR_PRINT(models.boundingBoxDiscards) << "\n";
     return ss.str();
 }

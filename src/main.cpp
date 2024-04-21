@@ -308,18 +308,9 @@ void program()
 			}
 		}
 		shifts[3] = missingShift;
-
+		assert(screenW * screenH == framebufW * framebufH);
 		Color::multipliyByLightInPlace(&lightBuf[0], &framebuf[0], framebufW * framebufH);
-	
-		for (int y = 0; y < screenH; ++y)
-		{
-			for (int x = 0; x < screenW; ++x)
-			{
-				int fx = real(x) / screenW * framebufW;
-				int fy = real(y) / screenH * framebufH;
-				px[y * screenW + x] = framebuf.getPixelUnsafe(fx, fy).toSDL_Uint32(shifts);
-			}
-		}
+		Color::toSDL_Uint32(&framebuf[0], reinterpret_cast<Uint32*>(wndSurf->pixels), framebufW * framebufH, shifts);
 
 		performanceMonitor.registerFrameDone();
 		PerformanceMonitor::OptionalInfo info;
@@ -343,7 +334,7 @@ int main()
 	catch (const std::exception& e)
 	{
 		std::string msg = e.what();
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error has occured", msg.c_str(), nullptr);
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "An error has occured", msg.c_str(), nullptr);
 	}
 	return 0;
 }

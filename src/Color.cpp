@@ -82,6 +82,38 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 	}
 }
 
+void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const std::array<uint32_t, 4>& shifts)
+{
+	assert(pixelCount % 8 == 0);
+	__m256i rShift = _mm256_set1_epi32(shifts[0]);
+	__m256i gShift = _mm256_set1_epi32(shifts[1]);
+	__m256i bShift = _mm256_set1_epi32(shifts[2]);
+	__m256i aShift = _mm256_set1_epi32(shifts[3]);
+
+	while (pixelCount >= 8)
+	{
+		__m256i origColors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colors));
+		__m256i lastByteMask = _mm256_set1_epi32(0xFF);
+
+		__m256i r = _mm256_and_epi32(origColors, lastByteMask);
+		__m256i g = _mm256_and_epi32(_mm256_srli_epi32(origColors, 8), lastByteMask);
+		__m256i b = _mm256_and_epi32(_mm256_srli_epi32(origColors, 16), lastByteMask);
+		__m256i a = _mm256_and_epi32(_mm256_srli_epi32(origColors, 24), lastByteMask);
+
+		__m256i nr = _mm256_sllv_epi32(r, rShift);
+		__m256i ng = _mm256_sllv_epi32(g, gShift);
+		__m256i nb = _mm256_sllv_epi32(b, bShift);
+		__m256i na = _mm256_sllv_epi32(a, aShift);
+
+		__m256i res = _mm256_or_epi32(_mm256_or_epi32(_mm256_or_epi32(na, nb), ng), nr);
+		_mm256_store_si256(reinterpret_cast<__m256i*>(u), res);
+
+		u += 8;
+		colors += 8;
+		pixelCount -= 8;
+	}
+}
+
 Color::operator uint32_t() const
 {
 	return *reinterpret_cast<const uint32_t*>(this);

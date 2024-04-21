@@ -169,11 +169,11 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	return ret;
 }
 
-std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const Sector& sector, const std::vector<Linedef>& sectorLinedefs, const std::vector<Vertex>& vertices, TextureManager& textureManager, int tesselSize)
+std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const Sector& sector, const std::vector<Linedef>& sectorLinedefs, const std::vector<Vertex>& vertices, TextureManager& textureManager, int tesselSize)
 {
-	std::vector<Triangle> ret;
+	std::vector<Triangle> trisFloor, trisCeiling;
 	auto polygonSplit = orcishTriangulation(sectorLinedefs, vertices, tesselSize);	
-	if (polygonSplit.empty()) return ret;
+	if (polygonSplit.empty()) return {};
 
 	real minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Ved2& v1, const Ved2& v2) {return v1.x < v2.x; })->x;
 	real minY = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Ved2& v1, const Ved2& v2) {return v1.y < v2.y; })->y;
@@ -194,11 +194,10 @@ std::vector<Triangle> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(con
 			t[j / 3].tv[j % 3].spaceCoords = vert;
 			t[j/3].tv[j%3].spaceCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
 			t[j / 3].tv[j % 3].textureCoords = Vec2(uv.x, uv.z);
-			t[j/3].textureIndex = isFloor ? floorTextureIndex : ceilingTextureIndex;
 		}
 
-		ret.push_back(t[0]);
-		ret.push_back(t[1]);
+		trisFloor.push_back(t[0]);
+		trisCeiling.push_back(t[1]);
 	}
-	return ret;
+	return { Model(trisFloor, floorTextureIndex), Model(trisCeiling, ceilingTextureIndex) };
 }

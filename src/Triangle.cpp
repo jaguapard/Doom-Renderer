@@ -143,10 +143,13 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 		real xp = (xBeg - left->spaceCoords.x - 1) / xSpan;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
+		
+		Vec3 interpolatedDividedUvStep = (right->textureCoords - left->textureCoords) * xpStep;
+		Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
 		for (real x = xBeg; x < xEnd; ++x)
 		{
 			xp += xpStep;
-			Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
+			interpolatedDividedUv += interpolatedDividedUvStep;
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);

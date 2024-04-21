@@ -1,6 +1,6 @@
 #include "Model.h"
 
-void Model::fromTriangles(const std::vector<Triangle>& triangles, int textureIndex)
+Model::Model(const std::vector<Triangle>& triangles, int textureIndex)
 {
 	this->triangles = triangles;
 	this->textureIndex = textureIndex;

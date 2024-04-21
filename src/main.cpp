@@ -24,11 +24,12 @@
 #include "Triangle.h"
 #include "Statsman.h"
 #include "PerformanceMonitor.h"
+#include "TextureMapper.h"
+#include "Sky.h"
 
 #include "DoomStructs.h"
 #include "DoomWorldLoader.h"
 #include "WadLoader.h"
-#include "TextureMapper.h"
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -47,85 +48,6 @@ void operator delete(void* block)
 {
 	StatCount(statsman.memory.freesByDelete++);
 	return _aligned_free(block);
-}
-
-std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDivisions, real radius, Vec3 sizeMult = {1,1,1}, Vec3 shift = {0,0,0})
-{
-	assert(horizontalDivisions * (verticalDivisions-1) % 3 == 0);
-	std::vector<Triangle> ret;
-	std::vector<Vec3> world, texture;
-	for (int m = 0; m < horizontalDivisions; m++)
-	{
-		for (int n = 0; n < verticalDivisions; n++)
-		{
-			real x, y, z;
-			real mp, np;
-			mp = real(m) / horizontalDivisions;
-			np = real(n) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m + 1) / horizontalDivisions;
-			np = real(n) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m + 1) / horizontalDivisions;
-			np = real(n + 1) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m + 1) / horizontalDivisions;
-			np = real(n + 1) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m) / horizontalDivisions;
-			np = real(n + 1) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-
-			mp = real(m) / horizontalDivisions;
-			np = real(n) / verticalDivisions;
-			x = sin(M_PI * mp) * cos(2 * M_PI * np);
-			y = sin(M_PI * mp) * sin(2 * M_PI * np);
-			z = cos(M_PI * mp);
-			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
-		}
-	}
-
-	assert(world.size() % 3 == 0);
-	for (int i = 0; i < world.size(); i += 3)
-	{		
-		Triangle t;
-		for (int j = 0; j < 3; ++j)
-		{
-			Vec3 textureCoords = texture[i + j];
-			std::swap(textureCoords.x, textureCoords.y);
-			std::swap(world[i + j].z, world[i + j].y);
-			Vec3 adjWorld = (world[i + j] * sizeMult + shift) * radius;
-			t.tv[j] = { adjWorld, textureCoords };
-		}
-
-		ret.push_back(t);
-	}
-	return ret;
 }
 
 enum SkyRenderingMode
@@ -263,25 +185,12 @@ void program()
 		for (auto& tri : skyCube)
 			for (auto& tv : tri.tv)
 				tv.spaceCoords *= skyCubeSide / 128;
-
-		double aspectRatio = sky.getW() / sky.getH();
-		Vec3 uvMult = Vec3(sky.getH(), sky.getH(), 1);
-		Vec3 aspectRatioDistortion = Vec3(aspectRatio * 2, 1, 1); //stretching the sphere helps with textures being too stretched. 2, since X wraps around 2 times
-		skySphere = generateSphereMesh(60, 30, 65536, aspectRatioDistortion, {0, -0.4, 0});		
-		for (auto& it : skySphere)
-		{
-			it.textureIndex = skyTextureIndex;
-			for (auto& tv : it.tv)
-			{
-				Vec3 preremapUv = tv.textureCoords; //to stop texture abruptly jumping back to the beginning at sphere's end, we must wrap it properly
-				if (preremapUv.x <= 0.5) preremapUv.x = 2 * preremapUv.x;
-				else if (preremapUv.x > 0.5) preremapUv.x = (1 - preremapUv.x)*2; //this remaps range (0,1) to (0,1),(1,0) flipping direction when x == 0.5
-				tv.textureCoords = preremapUv * uvMult;
-			}
-		}
+	
+		
 	}
 
 	SkyRenderingMode skyRenderingMode = SPHERE;
+	Sky sky("RSKY1", textureManager);
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
@@ -385,16 +294,18 @@ void program()
 		}
 		ctr.prepare(camPos, transformMatrix);
 
+		TriangleRenderContext ctx;
+		ctx.ctr = &ctr;
+		ctx.frameBuffer = &framebuf;
+		ctx.lightBuffer = &lightBuf;
+		ctx.textureManager = &textureManager;
+		ctx.zBuffer = &zBuffer;
+		ctx.framebufW = framebufW - 1;
+		ctx.framebufH = framebufH - 1;
+		if (skyRenderingMode == SPHERE) sky.draw(ctx);
+
 		if (currentMap)
-		{
-			TriangleRenderContext ctx;
-			ctx.ctr = &ctr;
-			ctx.frameBuffer = &framebuf;
-			ctx.lightBuffer = &lightBuf;
-			ctx.textureManager = &textureManager;
-			ctx.zBuffer = &zBuffer;
-			ctx.framebufW = framebufW - 1;
-			ctx.framebufH = framebufH - 1;
+		{			
 			if (skyRenderingMode == CUBE) for (const auto& it : skyCube) it.drawOn(ctx);
 			if (skyRenderingMode == SPHERE) for (const auto& it : skySphere) it.drawOn(ctx);
 			for (int nSector = 0; nSector < sectorTriangles.size(); ++nSector)

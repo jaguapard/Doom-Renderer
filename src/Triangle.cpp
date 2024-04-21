@@ -143,12 +143,16 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 			Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 
+			bool occluded = !context.zBuffer->testAndSet(x, y, interpolatedDividedUv.z, false);
+			if (occluded) continue;
+
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
 			bool notFullyTransparent = texturePixel.a > 0;
-			if (notFullyTransparent && context.zBuffer->testAndSet(x, y, interpolatedDividedUv.z, notFullyTransparent)) //fully transparent pixels do not need to be considered for drawing
+			if (notFullyTransparent) //fully transparent pixels do not need to be considered for drawing
 			{
 				context.frameBuffer->setPixelUnsafe(x, y, texturePixel);
 				context.lightBuffer->setPixelUnsafe(x, y, context.lightMult);
+				context.zBuffer->setPixelUnsafe(x, y, interpolatedDividedUv.z);
 			}
 		}
 	}

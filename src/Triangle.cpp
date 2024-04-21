@@ -3,6 +3,31 @@
 
 constexpr real planeZ = -1;
 
+void Triangle::sortByAscendingSpaceX()
+{
+	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.x < tv2.spaceCoords.x; });
+}
+
+void Triangle::sortByAscendingSpaceY()
+{
+	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.y < tv2.spaceCoords.y; });
+}
+
+void Triangle::sortByAscendingSpaceZ()
+{
+	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.z < tv2.spaceCoords.z; });
+}
+
+void Triangle::sortByAscendingTextureX()
+{
+	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.x < tv2.textureCoords.x; });
+}
+
+void Triangle::sortByAscendingTextureY()
+{
+	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
+}
+
 void Triangle::drawOn(const TriangleRenderContext& context) const
 {
 	std::array<TexVertex,3> rot;

@@ -59,6 +59,12 @@ struct Triangle
 {
 	std::array<TexVertex, 3> tv;
 
+	void sortByAscendingSpaceX();
+	void sortByAscendingSpaceY();
+	void sortByAscendingSpaceZ();
+	void sortByAscendingTextureX();
+	void sortByAscendingTextureY();
+
 	void drawOn(const TriangleRenderContext& context) const;
 private:
 	void drawRotationPrepped(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!

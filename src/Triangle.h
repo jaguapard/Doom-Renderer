@@ -39,6 +39,8 @@ struct TriangleRenderContext
 	real lightMult;
 	real framebufW, framebufH;
 
+	int doomSkyTextureMarkerIndex;
+
 	real nearPlaneClippingZ = -1;
 };
 

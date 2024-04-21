@@ -61,9 +61,9 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 		std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.floorHeight < si2.floorHeight; });
 		for (const auto& si : linedefSectors) //first add middle sections of walls 
 		{
-			auto newTris = getTrianglesForSectorWallQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
+			auto model = getTrianglesForSectorWallQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
 			auto& target = sectorModels[si.sectorNumber];
-			target.insert(target.end(), newTris.begin(), newTris.end());
+			target.push_back(model);
 		}
 
 		if (linedefSectors.size() > 1)
@@ -72,9 +72,9 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto newTris = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
+				auto model = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
 				auto& target = sectorModels[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
-				target.insert(target.end(), newTris.begin(), newTris.end());
+				target.push_back(model);
 			}
 
 			std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.ceilingHeight < si2.ceilingHeight; });
@@ -82,9 +82,9 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto newTris = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
+				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
 				auto& target = sectorModels[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
-				target.insert(target.end(), newTris.begin(), newTris.end());
+				target.push_back(model);
 			}
 		}
 	}
@@ -107,15 +107,17 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 	return sectorModels;
 }
 
-std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
+Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
 {
-	std::vector<Triangle> ret;
+	Model ret;
 	if (textureName.empty() || textureName == "-" || bottomHeight == topHeight) return ret; //nonsensical arrangement or undefined texture
 
 	Vec3 origin;
 	if (bottomHeight > topHeight) std::swap(bottomHeight, topHeight);
 
+	std::vector<Triangle> triangles;
 	//TODO: add some kind of Z figting prevention for double-sided linedefs
+	int textureIndex = textureManager.getTextureIndexByName(textureName);
 	for (int i = 0; i < 2; ++i)
 	{
 		Triangle t;
@@ -133,10 +135,9 @@ std::vector<Triangle> DoomWorldLoader::getTrianglesForSectorWallQuads(real botto
 			Vec2 uv = Vec2(sectorInfo.xTextureOffset, sectorInfo.yTextureOffset) - uvPrefab;
 			t.tv[j].textureCoords = uv;			
 		}
-		t.textureIndex = textureManager.getTextureIndexByName(textureName);
-		ret.push_back(t);
+		triangles.push_back(t);
 	}
-	return ret;
+	return Model(triangles, textureIndex);
 }
 
 typedef std::pair<Ved2, Ved2> Line;

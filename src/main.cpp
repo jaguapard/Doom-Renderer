@@ -258,6 +258,7 @@ void program()
 		ctx.zBuffer = &zBuffer;
 		ctx.framebufW = framebufW - 1;
 		ctx.framebufH = framebufH - 1;
+		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
 		if (skyRenderingMode == SPHERE) sky.draw(ctx);
 
 		if (currentMap)

@@ -309,10 +309,38 @@ void program()
 		}
 		shifts[3] = missingShift;
 
-		for (int i = 0; i < framebufW * framebufH; ++i)
+		int pixelsRemaining = framebufW * framebufH;
+		real* lightPtr = &lightBuf[0];
+		Color* colorPtr = &framebuf[0];
+		while (pixelsRemaining >= 8)
+		{
+			__m256 light = _mm256_load_ps(lightPtr);
+			__m256 expandedLight = _mm256_mul_ps(light, _mm256_set1_ps(255));
+			__m256i intLight = _mm256_cvttps_epi32(expandedLight);
+
+			__m256i colors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colorPtr));
+			__m256i lastByteMask = _mm256_set1_epi32(0xFF);
+
+			__m256i r = _mm256_and_epi32(colors, lastByteMask);
+			__m256i g = _mm256_and_epi32(_mm256_srli_epi32(colors, 8), lastByteMask);
+			__m256i b = _mm256_and_epi32(_mm256_srli_epi32(colors, 16), lastByteMask);
+			//alpha can stay broken lol
+
+			__m256i nr = _mm256_slli_epi32(_mm256_mullo_epi32(r, intLight), 8);
+			__m256i ng = _mm256_and_si256(_mm256_srli_epi32(_mm256_mullo_epi32(g, intLight), 8), _mm256_set1_epi32(0xFF00));
+			__m256i nb = _mm256_and_si256(_mm256_srli_epi32(_mm256_mullo_epi32(b, intLight), 16), _mm256_set1_epi32(0xFF0000));
+			
+			__m256i res =_mm256_or_si256(nr,_mm256_or_si256(ng, nb));
+			_mm256_store_si256(reinterpret_cast<__m256i*>(colorPtr), res);
+
+			lightPtr += 8;
+			colorPtr += 8;
+			pixelsRemaining -= 8;
+		}
+		/*/for (int i = 0; i < framebufW * framebufH; ++i)
 		{
 			framebuf[i] = framebuf[i].multipliedByLight(lightBuf[i]);
-		}
+		}*/
 		for (int y = 0; y < screenH; ++y)
 		{
 			for (int x = 0; x < screenW; ++x)

@@ -54,13 +54,27 @@ Texture::Texture(std::string name)
 		}
 	}
 
+	populateInverses(pixels.getW(), pixels.getH());
 	this->checkForTransparentPixels();
 }
 
 Color Texture::getPixel(int x, int y) const
 {
+	assert(abs(x) < 32768);
+	assert(abs(y) < 32768);
 	StatCount(statsman.textures.pixelFetches++);
-	
+
+#ifndef OLD_TEXTURE_FETCH
+	int px = x < 0 ? -x : x;
+	int py = y < 0 ? -y : y;
+	int64_t xPreShift = px * wInverse;
+	int64_t yPreShift = py * hInverse;
+	int64_t divW = xPreShift >> 32;
+	int64_t divH = yPreShift >> 32;
+	int64_t tx = px - divW * pixels.getW();
+	int64_t ty = py - divH * pixels.getH();
+	return pixels.getPixelUnsafe(tx, ty); //due to previous manipulations with input x and y, it should never go out of bounds
+#else
 	int w = pixels.getW();
 	int h = pixels.getH();
 	x %= pixels.getW(); //TODO: this is very slow. Our textures do not change size at runtime, so it can be optimized by fast integer modulo techiques
@@ -68,6 +82,7 @@ Color Texture::getPixel(int x, int y) const
 	x += (x < 0) ? w : 0; //can't just flip the sign of modulo - that will make textures reflect around 0, i.e. x=-1 will map to 1 instead of (w-1)
 	y += (y < 0) ? h : 0;
 	return pixels.getPixelUnsafe(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
+#endif
 }
 
 Color Texture::getPixelAtUV(real u, real v) const
@@ -145,4 +160,11 @@ void Texture::constructDebugTexture()
 		}
 	}
 	++textureNumber;
+	populateInverses(tw, th);
+}
+
+void Texture::populateInverses(int w, int h)
+{
+	wInverse = UINT32_MAX / w + 1;
+	hInverse = UINT32_MAX / h + 1;
 }

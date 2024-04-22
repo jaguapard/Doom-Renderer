@@ -34,7 +34,10 @@ private:
 	PixelBuffer<Color> pixels;
 	std::string name;
 	bool _hasOnlyOpaquePixels = true;
+	int64_t wInverse, hInverse; //inverse values for removing idiv
 
 	void checkForTransparentPixels();
+	//static constexpr int FRACBITS = 16;
 	void constructDebugTexture();
+	void populateInverses(int w, int h);
 };

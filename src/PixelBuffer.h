@@ -2,6 +2,8 @@
 #include <vector>
 #include <stdexcept>
 #include <cassert>
+#include <bit>
+#include <immintrin.h>
 
 template <typename T>
 class PixelBuffer
@@ -100,7 +102,42 @@ inline bool PixelBuffer<T>::isInBounds(int x, int y) const
 template<typename T>
 inline void PixelBuffer<T>::clear(T value)
 {
+#ifdef 0//__AVX2__
+	int bytesRemaining = this->getW() * this->getH() * sizeof(T);
+	assert(bytesRemaining % 32 == 0);
+	char* curr = reinterpret_cast<char*>(&(*this)[0]);
+
+	__m256i fill;
+	switch (sizeof(T))
+	{
+	case 1:
+		fill = _mm256_set1_epi8(*reinterpret_cast<char*>(&value));
+		break;
+	case 2:
+		fill = _mm256_set1_epi16(*reinterpret_cast<uint16_t*>(&value));
+		break;
+	case 4:
+		fill = _mm256_set1_epi32(*reinterpret_cast<uint32_t*>(&value));
+		break;
+	case 8:
+		fill = _mm256_set1_epi32(*reinterpret_cast<uint64_t*>(&value));
+		break;
+	default:
+		assert(false);
+		break;
+	}
+	
+	while (bytesRemaining >= 32)
+	{
+		_mm256_store_si256(reinterpret_cast<__m256i*>(curr), fill);
+		
+		bytesRemaining -= 32;
+		curr += 32;
+	}
+
+#else
 	for (auto& it : store) it = value;
+#endif
 }
 
 template<typename T>

@@ -48,6 +48,7 @@ struct TriangleRenderContext
 	real framebufW, framebufH;
 
 	int doomSkyTextureMarkerIndex;
+	bool wireframeEnabled = false;
 
 	real nearPlaneClippingZ = -1;
 };

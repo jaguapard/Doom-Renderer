@@ -157,10 +157,16 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
 			bool notFullyTransparent = texturePixel.a > 0;
 			
+			auto lightMult = context.lightMult;
+			if (context.wireframeEnabled && (x - xBeg <= 0.5 || xEnd - x <= 0.5 || (flatBottom && y - yBeg <= 0.5) || (!flatBottom && yEnd - y <= 0.5)))
+			{
+				texturePixel = Color(255, 255, 255);
+				lightMult = 1;
+			}
 			if (notFullyTransparent) //fully transparent pixels do not need to be considered for drawing
 			{
 				(*context.frameBuffer)[pixelIndex] = texturePixel;
-				(*context.lightBuffer)[pixelIndex] = context.lightMult;
+				(*context.lightBuffer)[pixelIndex] = lightMult;
 				(*context.zBuffer)[pixelIndex] = interpolatedDividedUv.z;
 			}
 		}

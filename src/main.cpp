@@ -100,6 +100,7 @@ void program()
 	bool fogEnabled = false;
 	real fogMaxIntensityDist = 600;
 	bool mouseCaptured = false;
+	bool wireframeEnabled = false;
 
 	PerformanceMonitor performanceMonitor;
 	bool performanceMonitorDisplayEnabled = true;
@@ -182,6 +183,8 @@ void program()
 		if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
 		if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
 		if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
+		if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
+
 		if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 		{
 			mouseCaptured ^= 1;
@@ -259,6 +262,7 @@ void program()
 		ctx.framebufW = framebufW - 1;
 		ctx.framebufH = framebufH - 1;
 		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
+		ctx.wireframeEnabled = wireframeEnabled;
 		if (skyRenderingMode == SPHERE) sky.draw(ctx);
 
 		if (currentMap)

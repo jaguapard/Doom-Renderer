@@ -58,7 +58,7 @@ enum SkyRenderingMode
 	SPHERE,
 	COUNT
 };
-void program()
+void program(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
@@ -130,6 +130,37 @@ void program()
 		}
 	}
 
+	bool benchmarkMode = argc > 1 && (!strcmpi(argv[1], "benchmark"));
+	int benchmarkModeFrames = argc > 2 ? atoi(argv[2]) : -1;
+	int benchmarkModeFramesRemaining;
+	std::string benchmarkPassName;
+	if (argc > 3) benchmarkPassName = argv[3];
+
+	if (benchmarkMode)
+	{
+		if (benchmarkModeFrames < 1)
+		{
+			std::cout << "Benchmark mode frame count not set. Defaulting to 1000.\n";
+			benchmarkModeFrames = 1000;
+		}
+		std::cout << "Benchmark mode selected. Running...\n";
+
+		benchmarkModeFramesRemaining = benchmarkModeFrames;
+		camPos = { 441, 877, -488 };
+		camAng = { 0,0,0.43 };
+		
+		currentMap = &maps.at("MAP15");
+		sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+
+		performanceMonitorDisplayEnabled = false;
+		wireframeEnabled = false;
+		mouseCaptured = false;
+		fogEnabled = false;
+		skyRenderingMode = SPHERE;
+	}
+
+	bob::Timer benchmarkTimer;
+	performanceMonitor.reset();
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
@@ -139,91 +170,112 @@ void program()
     	zBuffer.clear();
 		lightBuf.clear(1);
 
-
-
-		input.beginNewFrame();
-		SDL_Event ev;
-		while (SDL_PollEvent(&ev))
+		Vec3 camAdd = { 0,0,0 };
+		if (!benchmarkMode) //benchmark mode will supress any user input
 		{
-			input.handleEvent(ev);
-			if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
+			input.beginNewFrame();
+			SDL_Event ev;
+			while (SDL_PollEvent(&ev))
 			{
-				camAng += { 0, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, ev.motion.yrel * camAngAdjustmentSpeed_Mouse};
+				input.handleEvent(ev);
+				if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
+				{
+					camAng += { 0, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, ev.motion.yrel* camAngAdjustmentSpeed_Mouse};
 
-				camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 + 0.01); //no real need for + 0.01, but who knows
+					camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 + 0.01); //no real need for + 0.01, but who knows
+				}
+				if (ev.type == SDL_MOUSEWHEEL)
+				{
+					flySpeed *= pow(1.05, ev.wheel.y);
+				}
+
+				if (ev.type == SDL_QUIT) return;
 			}
-			if (ev.type == SDL_MOUSEWHEEL)
+
+			for (char c = '0'; c <= '9'; ++c)
 			{
-				flySpeed *= pow(1.05, ev.wheel.y);
+				if (input.wasCharPressedOnThisFrame(c))
+				{
+					warpTo += c;
+					break;
+				}
 			}
 
-			if (ev.type == SDL_QUIT) return;
+			if (warpTo.length() == 2)
+			{
+				std::string mapToLoad = "MAP" + warpTo;
+				std::cout << "Loading map " << mapToLoad << "...\n";
+
+				currentMap = &maps[mapToLoad];
+				sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+
+				warpTo.clear();
+				performanceMonitor.reset();
+			}
+
+			//xoring with 1 == toggle true->false or false->true
+			if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
+			if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
+			if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
+			if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
+
+			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
+			{
+				mouseCaptured ^= 1;
+				SDL_SetRelativeMouseMode(mouseCaptured ? SDL_TRUE : SDL_FALSE);
+			}
+
+			bool skyChanged = false;
+			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LEFT))
+			{
+				currSkyTextureIndex--;
+				skyChanged = true;
+			}
+			else if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_RIGHT))
+			{
+				currSkyTextureIndex++;
+				skyChanged = true;
+			}
+
+			if (currSkyTextureIndex < 0) currSkyTextureIndex = 0;
+			else currSkyTextureIndex %= skyTextures.size();
+
+			if (skyChanged) sky = Sky(skyTextures[currSkyTextureIndex], textureManager);
+
+
+			//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
+			//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
+			if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
+			if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
+			gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
+			fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
+
+			camAdd = -Vec3({ real(input.isButtonHeld(SDL_SCANCODE_D)), real(input.isButtonHeld(SDL_SCANCODE_X)), real(input.isButtonHeld(SDL_SCANCODE_W)) });
+			camAdd += { real(input.isButtonHeld(SDL_SCANCODE_A)), real(input.isButtonHeld(SDL_SCANCODE_Z)), real(input.isButtonHeld(SDL_SCANCODE_S))};
+
+			camAng.x = fmod(camAng.x, M_PI);
+			camAng.y = fmod(camAng.y, 2 * M_PI);
+			//camAng.z = fmod(camAng.z, 2*M_PI);
 		}
-
-		for (char c = '0'; c <= '9'; ++c)
+		else
 		{
-			if (input.wasCharPressedOnThisFrame(c))
+			SDL_Event ev;
+			while (SDL_PollEvent(&ev)) {}; //prevent window from freezing
+			camAng.y = double(benchmarkModeFrames-benchmarkModeFramesRemaining) / benchmarkModeFrames * 2 * M_PI;
+			if (!benchmarkModeFramesRemaining--)
 			{
-				warpTo += c;
+				auto info = performanceMonitor.getPercentileInfo();
+				std::stringstream ss;
+				ss << benchmarkModeFrames << " frames rendered in " << benchmarkTimer.getTime() << " s\n";
+				ss << info.fps_avg << " avg, " << "1% low: " << info.fps_1pct_low << ", " << "0.1% low: " << info.fps_point1pct_low << "\n";
+				if (!benchmarkPassName.empty()) ss << "Comment: " << benchmarkPassName << "\n";
+
+				std::cout << ss.str();
+				std::ofstream f("benchmarks.txt", std::ios::app);
+				f << ss.str() << "\n";
 				break;
 			}
 		}
-
-		if (warpTo.length() == 2)
-		{
-			std::string mapToLoad = "MAP" + warpTo;
-			std::cout << "Loading map " << mapToLoad << "...\n";
-
-			currentMap = &maps[mapToLoad];
-			sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
-
-			warpTo.clear();
-			performanceMonitor.reset();
-		}
-
-		//xoring with 1 == toggle true->false or false->true
-		if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
-		if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
-		if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
-		if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
-
-		if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
-		{
-			mouseCaptured ^= 1;
-			SDL_SetRelativeMouseMode(mouseCaptured ? SDL_TRUE : SDL_FALSE);
-		}
-
-		bool skyChanged = false;
-		if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LEFT))
-		{
-			currSkyTextureIndex--;
-			skyChanged = true;
-		}
-		else if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_RIGHT))
-		{
-			currSkyTextureIndex++;
-			skyChanged = true;
-		}
-
-		if (currSkyTextureIndex < 0) currSkyTextureIndex = 0;
-		else currSkyTextureIndex %= skyTextures.size();
-
-		if (skyChanged) sky = Sky(skyTextures[currSkyTextureIndex], textureManager);
-
-
-		//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
-		//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
-		if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
-		if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
-		gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
-		fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
-
-		Vec3 camAdd = -Vec3({ real(input.isButtonHeld(SDL_SCANCODE_D)), real(input.isButtonHeld(SDL_SCANCODE_X)), real(input.isButtonHeld(SDL_SCANCODE_W)) });
-		camAdd += { real(input.isButtonHeld(SDL_SCANCODE_A)), real(input.isButtonHeld(SDL_SCANCODE_Z)), real(input.isButtonHeld(SDL_SCANCODE_S))};
-
-		camAng.x = fmod(camAng.x, M_PI);
-		camAng.y = fmod(camAng.y, 2*M_PI);
-		//camAng.z = fmod(camAng.z, 2*M_PI);
 
 		if (skyRenderingMode == ROTATING)
 		{
@@ -327,15 +379,13 @@ void program()
 		SDL_UpdateWindowSurface(wnd);
 		//std::cout << "Frame " << frames++ << " done\n";
 	}
-
-	system("pause");
 }
 
-int main()
+int main(int argc, char** argv)
 {
 	try
 	{
-		program();
+		program(argc, argv);
 	}
 	catch (const std::exception& e)
 	{

@@ -19,6 +19,17 @@ public:
 	void registerFrameDone(bool remember = true);
 	void drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const OptionalInfo* optionalInfo = nullptr);
 
+	struct PercentileInfo
+	{
+		PercentileInfo(uint64_t frameNumber, std::deque<double> frameTimesMs); //copy is intentional, since constructor will garble the data
+		std::string toString();
+
+		double fps_inst = 0, fps_avg = 0, fps_1pct_low = 0, fps_point1pct_low = 0;
+		uint64_t frameNumber;
+	};
+
+	PercentileInfo getPercentileInfo() const;
+
 	struct OptionalInfo
 	{
 		Vec3 camPos, camAng;
@@ -30,13 +41,4 @@ private:
 	Statsman oldStats;
 	uint64_t frameNumber = 0;
 	std::deque<double> frameTimesMs;
-
-	struct PercentileInfo
-	{
-		PercentileInfo(uint64_t frameNumber, std::deque<double> frameTimesMs); //copy is intentional, since constructor will garble the data
-		std::string toString();
-
-		double fps_inst = 0, fps_avg = 0, fps_1pct_low = 0, fps_point1pct_low = 0;
-		uint64_t frameNumber;
-	};
 };

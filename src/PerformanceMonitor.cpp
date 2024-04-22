@@ -57,6 +57,12 @@ void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftC
 	SDL_BlitSurface(s.get(), nullptr, dst, &rect);
 }
 
+PerformanceMonitor::PercentileInfo PerformanceMonitor::getPercentileInfo() const
+{
+	return PercentileInfo(this->frameNumber, frameTimesMs);
+}
+
+
 PerformanceMonitor::PercentileInfo::PercentileInfo(uint64_t frameNumber, std::deque<double> frameTimesMs)
 {
 	this->frameNumber = frameNumber;

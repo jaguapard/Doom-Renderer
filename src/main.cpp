@@ -87,7 +87,6 @@ void program(int argc, char** argv)
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
 	PixelBuffer<Color> framebuf(framebufW, framebufH);
-	auto skyBuff = framebuf;
 	PixelBuffer<real> lightBuf(framebufW, framebufH);
 	ZBuffer zBuffer(framebufW, framebufH);
 
@@ -165,7 +164,6 @@ void program(int argc, char** argv)
 	{
 		performanceMonitor.registerFrameBegin();
 		framebuf.clear();
-		//framebuf = skyBuff;
 		SDL_FillRect(wndSurf, nullptr, Color(0,0,0));
     	zBuffer.clear();
 		lightBuf.clear(1);

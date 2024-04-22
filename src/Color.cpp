@@ -42,7 +42,7 @@ Color Color::multipliedByLight(real lightMult) const
 
 void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int pixelCount)
 {
-	assert(pixelCount % 8 == 0);
+#ifdef __AVX2__
 	while (pixelCount >= 8)
 	{
 		__m256 light = _mm256_load_ps(lightMults); //load light intensities for pixels from light buffer
@@ -74,7 +74,7 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 		colors += 8;
 		pixelCount -= 8;
 	}
-
+#endif
 	while (pixelCount--)
 	{
 		*colors = colors->multipliedByLight(*lightMults++);
@@ -84,7 +84,7 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 
 void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const std::array<uint32_t, 4>& shifts)
 {
-	assert(pixelCount % 8 == 0);
+#ifdef __AVX2__
 	__m256i rShift = _mm256_set1_epi32(shifts[0]);
 	__m256i gShift = _mm256_set1_epi32(shifts[1]);
 	__m256i bShift = _mm256_set1_epi32(shifts[2]);
@@ -111,6 +111,14 @@ void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const s
 		u += 8;
 		colors += 8;
 		pixelCount -= 8;
+	}
+#endif
+	while (pixelCount)
+	{
+		*u = colors->toSDL_Uint32(shifts);
+		++u;
+		++colors;
+		--pixelCount;
 	}
 }
 

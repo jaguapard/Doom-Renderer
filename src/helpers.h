@@ -16,6 +16,7 @@ inline T lerp(const T& start, const T& end, real amount)
 	return start + (end - start) * amount;
 }
 
+#ifdef __AVX__
 inline Vec3 lerp(const Vec3& start, const Vec3& end, real amount)
 {
 	__m256i mask = _mm256_set_epi32(-1, -1, -1, 0, 0, 0, 0, 0);
@@ -27,6 +28,7 @@ inline Vec3 lerp(const Vec3& start, const Vec3& end, real amount)
 	__m256 res = _mm256_fmadd_ps(diff, am, src);
 	return *reinterpret_cast<Vec3*>(&res);
 }
+#endif
 
 inline real inverse_lerp(real from, real to, real value)
 {

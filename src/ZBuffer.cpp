@@ -1,7 +1,8 @@
 #include "ZBuffer.h"
 #include "Statsman.h"
+#include <iostream>
 
-ZBuffer::ZBuffer(int w, int h) : PixelBuffer<double>(w, h)
+ZBuffer::ZBuffer(int w, int h) : PixelBuffer<real>(w, h)
 {
 }
 
@@ -26,4 +27,12 @@ bool ZBuffer::testAndSet(int x, int y, real depth, bool doWrite)
 		StatCount(statsman.zBuffer.occlusionDiscards++);
 	}
 	return cmp;
+}
+
+Color ZBuffer::toColor(real value) const
+{
+	real dist = -1.0/value;
+	real intensity = std::clamp<real>(dist, 0, 1800) / 1800;
+	uint8_t fv = intensity * 255;
+	return Color(fv,fv,fv);
 }

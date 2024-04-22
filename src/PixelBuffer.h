@@ -5,6 +5,9 @@
 #include <bit>
 #include <immintrin.h>
 
+#include <SDL/SDL.h>
+
+#include "Color.h"
 template <typename T>
 class PixelBuffer
 {
@@ -31,6 +34,9 @@ public:
 
 	T& operator[](int i);
 	const T& operator[](int i) const;
+
+	void saveToFile(const std::string& path) const;
+	virtual Color toColor(T value) const;
 protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
@@ -169,6 +175,44 @@ template<typename T>
 inline const T& PixelBuffer<T>::operator[](int i) const
 {
 	return store[i];
+}
+
+template<typename T>
+inline void PixelBuffer<T>::saveToFile(const std::string& path) const
+{
+	std::vector<Uint32> pix(w*h);
+	for (int y = 0; y < h; ++y)
+	{
+		for (int x = 0; x < w; ++x)
+		{
+			pix[y * w + x] = this->toColor(this->getPixelUnsafe(x, y));
+		}
+	}
+
+	Uint32* px = &pix.front();
+	SDL_Surface* s = SDL_CreateRGBSurfaceWithFormatFrom(px, w, h, 32, w * 4, SDL_PIXELFORMAT_RGBA32);
+	IMG_SavePNG(s, path.c_str());
+	SDL_FreeSurface(s);
+}
+
+
+template<>
+inline Color PixelBuffer<Color>::toColor(Color value) const
+{
+	return value;
+}
+
+template<>
+inline Color PixelBuffer<real>::toColor(real value) const
+{
+	uint8_t fv = value * 255;
+	return Color(fv, fv, fv);
+}
+
+template<>
+inline Color PixelBuffer<uint8_t>::toColor(uint8_t value) const
+{
+	return Color(value, value, value);
 }
 
 template<typename T>

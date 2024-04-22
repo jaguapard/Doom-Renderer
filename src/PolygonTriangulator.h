@@ -37,7 +37,7 @@ public:
 	int getMaxX() const;
 	int getMaxY() const;
 	int getMinX() const;
-	int getMinY() const;	
+	int getMinY() const;
 private:
 	PolygonBitmap(int minX, int minY, int maxX, int maxY, int w, int h, const std::vector<Line>& polygon);
 	int polygonMinX, polygonMinY;

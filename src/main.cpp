@@ -217,7 +217,7 @@ void program(int argc, char** argv)
 			if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
 			if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
 			if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
-			if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
+			if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;			
 
 			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 			{
@@ -266,7 +266,7 @@ void program(int argc, char** argv)
 			{
 				auto info = performanceMonitor.getPercentileInfo();
 				std::stringstream ss;
-				ss << benchmarkModeFrames << " frames rendered in " << benchmarkTimer.getTime() << " s\n";
+				ss << "\n" << benchmarkModeFrames << " frames rendered in " << benchmarkTimer.getTime() << " s\n";
 				ss << info.fps_avg << " avg, " << "1% low: " << info.fps_1pct_low << ", " << "0.1% low: " << info.fps_point1pct_low << "\n";
 				if (!benchmarkPassName.empty()) ss << "Comment: " << benchmarkPassName << "\n";
 
@@ -333,7 +333,7 @@ void program(int argc, char** argv)
 
 		if (fogEnabled)
 		{
-			double* zBuffPixels = zBuffer.getRawPixels();
+			real* zBuffPixels = zBuffer.getRawPixels();
 			Color* framebufPixels = framebuf.getRawPixels();
 			//Color fogColor = { 150, 42, 36 255 };
 			Color fogColor = { 255, 255, 255, 255 };
@@ -351,6 +351,13 @@ void program(int argc, char** argv)
 			}
 		}
 
+		if (!benchmarkMode && input.wasCharPressedOnThisFrame('U'))
+		{
+			std::string s = std::to_string(__rdtsc());
+			framebuf.saveToFile("screenshots/" + s + "_framebuf.png");
+			zBuffer.saveToFile("screenshots/" + s+ "_zbuf.png");
+			lightBuf.saveToFile("screenshots/" + s + "_lightbuf.png");
+		}
 		//this is a stupid fix for everything becoming way too blue in debug mode specifically.
 		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
 		Uint32* px = reinterpret_cast<Uint32*>(wndSurf->pixels);
@@ -375,6 +382,11 @@ void program(int argc, char** argv)
 		info.camPos = camPos;
 		info.camAng = camAng;
 		if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, &info);
+
+		if (!benchmarkMode && input.wasCharPressedOnThisFrame('U'))
+		{
+			//framebuf.saveToFile("screenshots/fullframe.png");
+		}
 
 		SDL_UpdateWindowSurface(wnd);
 		//std::cout << "Frame " << frames++ << " done\n";

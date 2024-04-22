@@ -1,5 +1,6 @@
 #include "Model.h"
 #include <functional>
+#include <numeric>
 #include "Statsman.h"
 
 Model::Model(const std::vector<Triangle>& triangles, int textureIndex)
@@ -53,4 +54,9 @@ void Model::draw(TriangleRenderContext ctx) const
 	render:
 	ctx.texture = &ctx.textureManager->getTextureByIndex(textureIndex);
 	for (const auto& it : triangles) it.drawOn(ctx);
+}
+
+Vec3 Model::getBoundingBoxMidPoint() const
+{
+	return std::accumulate(boundingBox.begin(), boundingBox.end(), Vec3(0, 0, 0)) / boundingBox.size();
 }

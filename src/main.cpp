@@ -136,7 +136,7 @@ void program()
 		framebuf.clear();
 		//framebuf = skyBuff;
 		SDL_FillRect(wndSurf, nullptr, Color(0,0,0));
-		zBuffer.clear();
+    	zBuffer.clear();
 		lightBuf.clear(1);
 
 

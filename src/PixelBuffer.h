@@ -102,7 +102,8 @@ inline bool PixelBuffer<T>::isInBounds(int x, int y) const
 template<typename T>
 inline void PixelBuffer<T>::clear(T value)
 {
-#ifdef 0//__AVX2__
+#if 0
+//#ifdef  //__AVX2__
 	int bytesRemaining = this->getW() * this->getH() * sizeof(T);
 	assert(bytesRemaining % 32 == 0);
 	char* curr = reinterpret_cast<char*>(&(*this)[0]);

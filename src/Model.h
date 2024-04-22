@@ -8,6 +8,7 @@ public:
 	Model() = default;
 	Model(const std::vector<Triangle>& triangles, int textureIndex);
 	void draw(TriangleRenderContext ctx) const;
+	Vec3 getBoundingBoxMidPoint() const;
 private:
 	std::vector<Triangle> triangles;
 	int textureIndex;

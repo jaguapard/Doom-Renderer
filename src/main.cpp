@@ -115,11 +115,11 @@ void program(int argc, char** argv)
 
 	SkyRenderingMode skyRenderingMode = SPHERE;
 	Sky sky("RSKY1", textureManager);
-	int currSkyTextureIndex = 3;
+	int currSkyTextureIndex = 2;
 	std::vector<std::string> skyTextures;
-	skyTextures.push_back("RSKY1");
 	skyTextures.push_back("RSKY2");
 	skyTextures.push_back("RSKY3");
+	skyTextures.push_back("RSKY1");
 	{
 		std::ifstream f("data/sky_textures.txt");
 		std::string line;
@@ -235,7 +235,7 @@ void program(int argc, char** argv)
 				skyChanged = true;
 			}
 
-			if (currSkyTextureIndex < 0) currSkyTextureIndex = 0;
+			if (currSkyTextureIndex < 0) currSkyTextureIndex = skyTextures.size() - 1;
 			else currSkyTextureIndex %= skyTextures.size();
 
 			if (skyChanged) sky = Sky(skyTextures[currSkyTextureIndex], textureManager);

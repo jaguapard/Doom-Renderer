@@ -156,6 +156,8 @@ void program()
 			{
 				flySpeed *= pow(1.05, ev.wheel.y);
 			}
+
+			if (ev.type == SDL_QUIT) return;
 		}
 
 		for (char c = '0'; c <= '9'; ++c)

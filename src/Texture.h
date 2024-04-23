@@ -35,6 +35,7 @@ private:
 	std::string name;
 	bool _hasOnlyOpaquePixels = true;
 	int64_t wInverse, hInverse; //inverse values for removing idiv
+	int bigW, bigH;
 
 	void checkForTransparentPixels();
 	//static constexpr int FRACBITS = 16;

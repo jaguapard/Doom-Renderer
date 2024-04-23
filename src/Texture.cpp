@@ -65,8 +65,9 @@ Color Texture::getPixel(int x, int y) const
 	StatCount(statsman.textures.pixelFetches++);
 
 #ifndef OLD_TEXTURE_FETCH
-	int px = x < 0 ? -x : x;
-	int py = y < 0 ? -y : y;
+	//We can't just take abs, since -w-1 must map to w-1, not 1
+	int64_t px = x + bigW; //assuming texture never wraps around more than 16384 times on a single map,
+	int64_t py = y + bigH; //this is equivivalent to properly shift everything into the positives.
 	int64_t xPreShift = px * wInverse;
 	int64_t yPreShift = py * hInverse;
 	int64_t divW = xPreShift >> 32;
@@ -167,4 +168,6 @@ void Texture::populateInverses(int w, int h)
 {
 	wInverse = UINT32_MAX / w + 1;
 	hInverse = UINT32_MAX / h + 1;
+	bigW = pixels.getW() * 16384;
+	bigH = pixels.getH() * 16384;
 }

@@ -56,6 +56,11 @@ void Model::draw(TriangleRenderContext ctx) const
 	for (const auto& it : triangles) it.drawOn(ctx);
 }
 
+int Model::getTriangleCount() const
+{
+	return triangles.size();
+}
+
 Vec3 Model::getBoundingBoxMidPoint() const
 {
 	return std::accumulate(boundingBox.begin(), boundingBox.end(), Vec3(0, 0, 0)) / boundingBox.size();

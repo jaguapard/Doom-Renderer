@@ -133,7 +133,7 @@ Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real to
 			uvPrefab.x = std::max(abs(worldOffset.x), abs(worldOffset.z)) == abs(worldOffset.x) ? worldOffset.x : worldOffset.z;
 			uvPrefab.y = worldOffset.y;
 			Vec2 uv = Vec2(sectorInfo.xTextureOffset, sectorInfo.yTextureOffset) - uvPrefab;
-			t.tv[j].textureCoords = uv;			
+			t.tv[j].textureCoords = { uv.x, uv.y };
 		}
 		triangles.push_back(t);
 	}
@@ -190,10 +190,10 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 			bool isFloor = j < 3;
 			Ved2 _2vert = polygonSplit[i + j % 3];
 			Vec3 vert = Vec3(real(_2vert.x), 0, real(_2vert.y));
-			Vec3 uv = vert - uvOffset;
+			Vec3 uv = vert - Vec3(uvOffset.x, uvOffset.y);
 			t[j / 3].tv[j % 3].spaceCoords = vert;
 			t[j/3].tv[j%3].spaceCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
-			t[j / 3].tv[j % 3].textureCoords = Vec2(uv.x, uv.z);
+			t[j / 3].tv[j % 3].textureCoords = Vec3(uv.x, uv.z);
 		}
 
 		trisFloor.push_back(t[0]);

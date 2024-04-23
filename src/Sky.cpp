@@ -17,7 +17,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			y = sin(M_PI * mp) * sin(2 * M_PI * np);
 			z = cos(M_PI * mp);
 			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
+			texture.push_back(Vec3(mp, np));
 
 			mp = real(m + 1) / horizontalDivisions;
 			np = real(n) / verticalDivisions;
@@ -25,7 +25,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			y = sin(M_PI * mp) * sin(2 * M_PI * np);
 			z = cos(M_PI * mp);
 			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
+			texture.push_back(Vec3(mp, np));
 
 			mp = real(m + 1) / horizontalDivisions;
 			np = real(n + 1) / verticalDivisions;
@@ -33,7 +33,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			y = sin(M_PI * mp) * sin(2 * M_PI * np);
 			z = cos(M_PI * mp);
 			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
+			texture.push_back(Vec3(mp, np));
 
 			mp = real(m + 1) / horizontalDivisions;
 			np = real(n + 1) / verticalDivisions;
@@ -41,7 +41,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			y = sin(M_PI * mp) * sin(2 * M_PI * np);
 			z = cos(M_PI * mp);
 			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
+			texture.push_back(Vec3(mp, np));
 
 			mp = real(m) / horizontalDivisions;
 			np = real(n + 1) / verticalDivisions;
@@ -49,7 +49,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			y = sin(M_PI * mp) * sin(2 * M_PI * np);
 			z = cos(M_PI * mp);
 			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
+			texture.push_back(Vec3(mp, np));
 
 			mp = real(m) / horizontalDivisions;
 			np = real(n) / verticalDivisions;
@@ -57,7 +57,7 @@ std::vector<Triangle> generateSphereMesh(int horizontalDivisions, int verticalDi
 			y = sin(M_PI * mp) * sin(2 * M_PI * np);
 			z = cos(M_PI * mp);
 			world.push_back(Vec3(x, y, z));
-			texture.push_back(Vec2(mp, np));
+			texture.push_back(Vec3(mp, np));
 		}
 	}
 

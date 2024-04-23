@@ -34,6 +34,11 @@ Model::Model(const std::vector<Triangle>& triangles, int textureIndex, TextureMa
 		Vec3(min.x, max.y, max.z),
 		Vec3(max.x, max.y, max.z),
 	};
+
+	for (const auto& it : triangles)
+	{
+		this->triangles.push_back(it);
+	}
 	assert(this->triangles.size() > 0);
 }
 

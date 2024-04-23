@@ -100,12 +100,6 @@ void Triangle::drawOn(const TriangleRenderContext& context) const
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 {
-	/*/Vec3 v0 = ctr.rotate(ctr.doCamOffset(tv[0].spaceCoords));
-	Vec3 v1 = ctr.rotate(ctr.doCamOffset(tv[1].spaceCoords));
-	Vec3 v2 = ctr.rotate(ctr.doCamOffset(tv[2].spaceCoords));
-	Vec3 cross = (v1 - v0).cross(v2 - v0);
-	Vec3 camPos = -ctr.doCamOffset(Vec3(0, 0, 0));
-	if (cross.dot(camPos) > 0) return;*/
 
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)

@@ -1,6 +1,7 @@
 #include "Triangle.h"
 #include "Statsman.h"
 
+#include <functional>
 constexpr real planeZ = -1;
 
 void Triangle::sortByAscendingSpaceX()
@@ -97,10 +98,27 @@ void Triangle::drawOn(const TriangleRenderContext& context) const
 	}
 }
 
+std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> rectPoints)
+{
+	Triangle t[2];
+	constexpr int vertInds[2][3] = {{0,1,2}, {0,3,2}};
+
+	std::function sortFunc = [&](const TexVertex& tv1, const TexVertex& tv2) {return tv1.spaceCoords.x < tv2.spaceCoords.x; }; 
+	//TODO: make sure this guarantees no overlaps
+	std::sort(rectPoints.begin(), rectPoints.end(), sortFunc);
+	for (int i = 0; i < 2; ++i)
+	{
+		for (int j = 0; j < 3; ++j)
+		{
+			t[i].tv[j] = rectPoints[vertInds[i][j]];
+		}
+	}
+	return std::make_pair(t[0], t[1]);
+}
+
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 {
-
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
 	{

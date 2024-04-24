@@ -355,6 +355,18 @@ void program(int argc, char** argv)
 			framebuf.saveToFile("screenshots/" + s + "_framebuf.png");
 			zBuffer.saveToFile("screenshots/" + s+ "_zbuf.png");
 			lightBuf.saveToFile("screenshots/" + s + "_lightbuf.png");
+
+			std::ofstream f("screenshots/" + s + "_zbuffer.txt");
+			f.precision(10);
+			for (int y = 0; y < framebufH; ++y)
+			{
+				for (int x = 0; x < framebufW; x++)
+				{
+					real pixel = zBuffer.getPixelUnsafe(x, y);
+					real depth = -1.0 / pixel;
+					f << x << " " << y << " " << depth << "\n";
+				}
+			}
 		}
 		//this is a stupid fix for everything becoming way too blue in debug mode specifically.
 		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts

@@ -365,3 +365,4 @@ FodyWeavers.xsd
 *.zip
 /data/sky_textures.txt
 /benchmarks.txt
+/screenshots

@@ -57,7 +57,7 @@ void Threadpool::workerRoutine(size_t workerNumber)
 			if (tasks.empty()) continue;
 
 			myTask = *tasks.begin();
-			tasks.erase(tasks.begin());
+			tasks.erase(myTask.first);
 		}
 
 		myTask.second();

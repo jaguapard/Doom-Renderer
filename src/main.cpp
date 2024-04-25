@@ -180,7 +180,7 @@ void program(int argc, char** argv)
 	std::vector<RenderJob> renderJobs;
 	TriangleRenderContext ctx;
 
-	int threadCount = 28;
+	int threadCount = 8;
 	std::vector<uint8_t> activityFlags(threadCount, 0);
 	std::vector<std::thread> workers;
 	/*
@@ -365,13 +365,14 @@ void program(int argc, char** argv)
 		std::vector<size_t> taskIds;
 		for (int tNum = 0; tNum < threadCount; ++tNum)
 		{
-			std::function f = [&]() {
+			const std::vector<RenderJob>* rj = &renderJobs;
+			std::function f = [=]() { //is is crucial to capture by value [=], else myThreadNum gets a wrong value when task starts. That's also the reason for passing vector by good ol' pointer
 				int myThreadNum = tNum;
 				int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
 				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
-				for (int i = 0; i < renderJobs.size(); ++i)
+				for (int i = 0; i < rj->size(); ++i)
 				{
-					const RenderJob& myJob = renderJobs[i];
+					const RenderJob& myJob = (*rj)[i];
 					myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
 				}
 			};

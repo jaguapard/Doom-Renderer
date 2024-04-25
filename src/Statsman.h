@@ -10,7 +10,7 @@
 class Statsman
 {
 public:
-	static constexpr bool enabled = true;
+	static constexpr bool enabled = false;
 
 	struct ZBuffer
 	{

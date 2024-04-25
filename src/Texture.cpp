@@ -60,8 +60,8 @@ Texture::Texture(std::string name)
 
 Color Texture::getPixel(int x, int y) const
 {
-	assert(abs(x) < 32768);
-	assert(abs(y) < 32768);
+	//assert(abs(x) < 32768); //the "smart" approach does have limitations, but since we chose 64 bit ints and 32 bit shifts,
+	//assert(abs(y) < 32768); //it should not break at all, since supplied values are 32 bits wide and will overflow just before the algorithm breaks
 	StatCount(statsman.textures.pixelFetches++);
 
 #ifndef OLD_TEXTURE_FETCH

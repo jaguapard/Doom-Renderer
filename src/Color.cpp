@@ -53,9 +53,9 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 		__m256i lastByteMask = _mm256_set1_epi32(0xFF);
 
 		//shift bytes for color values into correct places and cut away everything else. After this the lower bytes of each epi32 hold original color byte
-		__m256i r = _mm256_and_epi32(origColors, lastByteMask);
-		__m256i g = _mm256_and_epi32(_mm256_srli_epi32(origColors, 8), lastByteMask);
-		__m256i b = _mm256_and_epi32(_mm256_srli_epi32(origColors, 16), lastByteMask);
+		__m256i r = _mm256_and_si256(origColors, lastByteMask);
+		__m256i g = _mm256_and_si256(_mm256_srli_epi32(origColors, 8), lastByteMask);
+		__m256i b = _mm256_and_si256(_mm256_srli_epi32(origColors, 16), lastByteMask);
 		//alpha can stay broken lol
 
 		//calculate new values for colors: new = ((old*intLight) >> 8) & 0xFF and place into correct places for further store. 
@@ -95,17 +95,17 @@ void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const s
 		__m256i origColors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colors));
 		__m256i lastByteMask = _mm256_set1_epi32(0xFF);
 
-		__m256i r = _mm256_and_epi32(origColors, lastByteMask);
-		__m256i g = _mm256_and_epi32(_mm256_srli_epi32(origColors, 8), lastByteMask);
-		__m256i b = _mm256_and_epi32(_mm256_srli_epi32(origColors, 16), lastByteMask);
-		__m256i a = _mm256_and_epi32(_mm256_srli_epi32(origColors, 24), lastByteMask);
+		__m256i r = _mm256_and_si256(origColors, lastByteMask);
+		__m256i g = _mm256_and_si256(_mm256_srli_epi32(origColors, 8), lastByteMask);
+		__m256i b = _mm256_and_si256(_mm256_srli_epi32(origColors, 16), lastByteMask);
+		__m256i a = _mm256_and_si256(_mm256_srli_epi32(origColors, 24), lastByteMask);
 
 		__m256i nr = _mm256_sllv_epi32(r, rShift);
 		__m256i ng = _mm256_sllv_epi32(g, gShift);
 		__m256i nb = _mm256_sllv_epi32(b, bShift);
 		__m256i na = _mm256_sllv_epi32(a, aShift);
 
-		__m256i res = _mm256_or_epi32(_mm256_or_epi32(_mm256_or_epi32(na, nb), ng), nr);
+		__m256i res = _mm256_or_si256(_mm256_or_si256(_mm256_or_si256(na, nb), ng), nr);
 		_mm256_store_si256(reinterpret_cast<__m256i*>(u), res);
 
 		u += 8;

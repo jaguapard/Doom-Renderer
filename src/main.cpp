@@ -337,7 +337,7 @@ void program(int argc, char** argv)
 
 		
 		std::vector<std::stringstream> ss(32);
-		renderJobs.resize(2);
+		//renderJobs.resize(2);
 		#pragma omp parallel
 		{
 			int threadCount = omp_get_num_threads();
@@ -348,6 +348,7 @@ void program(int argc, char** argv)
 			//#pragma omp for
 			for (int i = 0; i < renderJobs.size(); ++i)
 			{
+				//std::cout << renderJobs.size() 
 				//ss[myThreadNum] << "Thread " << ": doing job " << i << "\n";
 				const RenderJob& myJob = renderJobs[i];
 				

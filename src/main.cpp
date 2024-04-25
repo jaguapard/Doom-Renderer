@@ -192,7 +192,7 @@ void program(int argc, char** argv)
 				{
 					camAng += { 0, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, ev.motion.yrel* camAngAdjustmentSpeed_Mouse};
 
-					camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 + 0.01); //no real need for + 0.01, but who knows
+					camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
 				}
 				if (ev.type == SDL_MOUSEWHEEL)
 				{

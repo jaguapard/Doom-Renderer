@@ -31,8 +31,10 @@
 #include "DoomWorldLoader.h"
 #include "WadLoader.h"
 #include "Model.h"
+#include "Threadpool.h"
 
 #include <thread>
+#include <functional>
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -67,13 +69,7 @@ void renderWorkerRoutine(const TriangleRenderContext* ctx, const std::vector<Ren
 	{
 		while (!*active) { SDL_Delay(1); };
 
-		int myMinY = real(ctx->framebufH) / threadCount * myThreadNum;
-		int myMaxY = real(ctx->framebufH) / threadCount * (myThreadNum + 1);
-		for (int i = 0; i < jobs->size(); ++i)
-		{
-			const RenderJob& myJob = (*jobs)[i];
-			myJob.t.drawSlice(*ctx, myJob, myMinY, myMaxY);
-		}
+		
 
 		*active = false;
 	}
@@ -187,11 +183,14 @@ void program(int argc, char** argv)
 	int threadCount = 28;
 	std::vector<uint8_t> activityFlags(threadCount, 0);
 	std::vector<std::thread> workers;
+	/*
 	for (int i = 0; i < threadCount; ++i)
 	{
 		workers.emplace_back(renderWorkerRoutine, &ctx, &renderJobs, &activityFlags[i], i, threadCount);
 		workers[i].detach();
-	}
+	}*/
+
+	Threadpool threadpool(threadCount);
 
 	while (true)
 	{
@@ -363,14 +362,24 @@ void program(int argc, char** argv)
 		}
 		if (skyRenderingMode == SPHERE) sky.draw(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 		
-		for (int i = 0; i < threadCount; ++i) activityFlags[i] = true;
-		while (true)
+		std::vector<size_t> taskIds;
+		for (int tNum = 0; tNum < threadCount; ++tNum)
 		{
-			int activeThreadCount = 0;
-			for (int i = 0; i < threadCount; ++i) activeThreadCount += activityFlags[i] > 0;
-			if (activeThreadCount == 0) break;
-			SDL_Delay(1); //spin me baby
+			std::function f = [&]() {
+				int myThreadNum = tNum;
+				int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
+				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
+				for (int i = 0; i < renderJobs.size(); ++i)
+				{
+					const RenderJob& myJob = renderJobs[i];
+					myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
+				}
+			};
+			taskIds.push_back(threadpool.addTask(f));
+
 		}
+		
+		for (auto& it : taskIds) threadpool.waitUntilTaskCompletes(it);
 		renderJobs.clear();
 
 		if (fogEnabled)

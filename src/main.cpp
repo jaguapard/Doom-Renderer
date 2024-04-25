@@ -63,17 +63,6 @@ enum SkyRenderingMode
 	COUNT
 };
 
-void renderWorkerRoutine(const TriangleRenderContext* ctx, const std::vector<RenderJob>* jobs, volatile uint8_t* active, int myThreadNum, int threadCount)
-{
-	while (true)
-	{
-		while (!*active) { SDL_Delay(1); };
-
-		
-
-		*active = false;
-	}
-}
 void program(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
@@ -180,16 +169,7 @@ void program(int argc, char** argv)
 	std::vector<RenderJob> renderJobs;
 	TriangleRenderContext ctx;
 
-	int threadCount = 8;
-	std::vector<uint8_t> activityFlags(threadCount, 0);
-	std::vector<std::thread> workers;
-	/*
-	for (int i = 0; i < threadCount; ++i)
-	{
-		workers.emplace_back(renderWorkerRoutine, &ctx, &renderJobs, &activityFlags[i], i, threadCount);
-		workers[i].detach();
-	}*/
-
+	int threadCount = 28;
 	Threadpool threadpool(threadCount);
 
 	while (true)
@@ -377,7 +357,6 @@ void program(int argc, char** argv)
 				}
 			};
 			taskIds.push_back(threadpool.addTask(f));
-
 		}
 		
 		for (auto& it : taskIds) threadpool.waitUntilTaskCompletes(it);

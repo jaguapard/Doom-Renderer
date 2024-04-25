@@ -58,6 +58,7 @@ void Model::draw(TriangleRenderContext ctx) const
 	*/
 	render:
 	ctx.texture = &ctx.textureManager->getTextureByIndex(textureIndex);
+	ctx.textureIndex = textureIndex;
 	for (const auto& it : triangles) it.drawOn(ctx);
 }
 

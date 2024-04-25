@@ -153,6 +153,15 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 
 	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
 	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
+	if (yBeg < yEnd)
+	{
+		RenderJob rj;
+		rj.flatBottom = flatBottom;
+		rj.t = *this;
+		rj.lightMult = context.lightMult;
+		rj.textureIndex = context.textureIndex;
+		context.renderJobs->push_back(rj);
+	}
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
 	const Texture& texture = *context.texture;
 

@@ -9,6 +9,7 @@
 #include "ZBuffer.h"
 #include "Texture.h"
 #include "TextureManager.h"
+#include "Triangle.h"
 
 #include <immintrin.h>
 
@@ -38,22 +39,7 @@ inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
 	return { lerp(t1.spaceCoords, t2.spaceCoords, amount), lerp(t1.textureCoords, t2.textureCoords,amount) };
 }
 
-struct TriangleRenderContext
-{
-	PixelBuffer<Color>* frameBuffer;
-	PixelBuffer<real>* lightBuffer;
-	ZBuffer* zBuffer;
-	const CoordinateTransformer* ctr;	
-	const TextureManager* textureManager;
-	const Texture* texture;
-	real lightMult;
-	real framebufW, framebufH;
-
-	int doomSkyTextureMarkerIndex;
-	bool wireframeEnabled = false;
-
-	real nearPlaneClippingZ = -1;
-};
+struct TriangleRenderContext;
 
 struct Triangle
 {
@@ -67,7 +53,36 @@ struct Triangle
 
 	void drawOn(const TriangleRenderContext& context) const;
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
+	void drawSlice(const TriangleRenderContext& context, bool flatBottom, real lightMult, real yBeg, real yEnd) const;
 private:
 	void drawRotationPrepped(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 	void drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
+};
+
+struct RenderJob
+{
+	Triangle t;
+	bool flatBottom;
+	int textureIndex;
+	real lightMult;
+};
+
+struct TriangleRenderContext
+{
+	PixelBuffer<Color>* frameBuffer;
+	PixelBuffer<real>* lightBuffer;
+	ZBuffer* zBuffer;
+	const CoordinateTransformer* ctr;	
+	const TextureManager* textureManager;
+	const Texture* texture;
+	int textureIndex;
+	real lightMult;
+	real framebufW, framebufH;
+
+	int doomSkyTextureMarkerIndex;
+	bool wireframeEnabled = false;
+
+	std::vector<RenderJob>* renderJobs;
+
+	real nearPlaneClippingZ = -1;
 };

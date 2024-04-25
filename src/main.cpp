@@ -58,6 +58,7 @@ enum SkyRenderingMode
 	SPHERE,
 	COUNT
 };
+
 void program(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
@@ -303,7 +304,9 @@ void program(int argc, char** argv)
 			camAdd = getRotationMatrix(-camAng) * camAdd;
 			camPos += camAdd * flySpeed;
 		}
+
 		ctr.prepare(camPos, transformMatrix);
+		std::vector<RenderJob> renderJobs;
 
 		TriangleRenderContext ctx;
 		ctx.ctr = &ctr;
@@ -315,6 +318,7 @@ void program(int argc, char** argv)
 		ctx.framebufH = framebufH - 1;
 		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
 		ctx.wireframeEnabled = wireframeEnabled;
+		ctx.renderJobs = &renderJobs;		
 
 		if (currentMap)
 		{			
@@ -329,6 +333,15 @@ void program(int argc, char** argv)
 		}
 		if (skyRenderingMode == SPHERE) sky.draw(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 
+		
+		/*
+#pragma omp parallel for
+		int threadCount = omp_get_num_threads();
+		for (int i = 0; i < renderJobs.size(); ++i)
+		{
+			const RenderJob& myJob = renderJobs[i];
+			myJob.t.drawSlice(ctx, myJob.lightMult, zones[tNum], zones[tNum + 1]);
+		}*/
 		if (fogEnabled)
 		{
 			real* zBuffPixels = zBuffer.getRawPixels();

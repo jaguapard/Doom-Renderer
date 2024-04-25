@@ -149,11 +149,7 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 {
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */
-	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
-
-	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
-	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
-	if (yBeg < yEnd)
+	//if (yBeg < yEnd)
 	{
 		RenderJob rj;
 		rj.flatBottom = flatBottom;
@@ -162,8 +158,22 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 		rj.textureIndex = context.textureIndex;
 		context.renderJobs->push_back(rj);
 	}
+}
+
+void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
+{
+	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
+
+	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
+	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
+	if (yBeg >= zoneMaxY || yEnd < zoneMinY) return;
+	yBeg = std::max<real>(yBeg, zoneMinY);
+	yEnd = std::min<real>(yEnd, zoneMaxY - 1);
+
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
-	const Texture& texture = *context.texture;
+	//const Texture& texture = *context.texture;
+	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
+	bool flatBottom = renderJob.flatBottom;
 
 	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
 	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
@@ -201,7 +211,7 @@ void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& c
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
 			bool notFullyTransparent = texturePixel.a > 0;
 			
-			auto lightMult = context.lightMult;
+			auto lightMult = renderJob.lightMult;
 			if (context.wireframeEnabled && (x - xBeg <= 0.5 || xEnd - x <= 0.5 || (flatBottom && y - yBeg <= 0.5) || (!flatBottom && yEnd - y <= 0.5)))
 			{
 				texturePixel = Color(255, 255, 255);

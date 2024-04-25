@@ -40,6 +40,7 @@ inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
 }
 
 struct TriangleRenderContext;
+struct RenderJob;
 
 struct Triangle
 {
@@ -53,7 +54,7 @@ struct Triangle
 
 	void drawOn(const TriangleRenderContext& context) const;
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
-	void drawSlice(const TriangleRenderContext& context, bool flatBottom, real lightMult, real yBeg, real yEnd) const;
+	void drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const;
 private:
 	void drawRotationPrepped(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 	void drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords

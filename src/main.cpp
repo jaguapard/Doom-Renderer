@@ -32,6 +32,8 @@
 #include "WadLoader.h"
 #include "Model.h"
 
+#include <omp.h>
+
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
 #pragma comment(lib,"SDL2_ttf.lib")
@@ -334,14 +336,26 @@ void program(int argc, char** argv)
 		if (skyRenderingMode == SPHERE) sky.draw(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 
 		
-		/*
-#pragma omp parallel for
-		int threadCount = omp_get_num_threads();
-		for (int i = 0; i < renderJobs.size(); ++i)
+		std::vector<std::stringstream> ss(32);
+		renderJobs.resize(2);
+		#pragma omp parallel
 		{
-			const RenderJob& myJob = renderJobs[i];
-			myJob.t.drawSlice(ctx, myJob.lightMult, zones[tNum], zones[tNum + 1]);
-		}*/
+			int threadCount = omp_get_num_threads();
+			int myThreadNum = omp_get_thread_num();
+			int myMinY = framebufH / threadCount * myThreadNum;
+			int myMaxY = framebufH / threadCount * (myThreadNum+1);
+			//ss[myThreadNum] << "Thread " << myThreadNum << ": " << VAR_PRINT(myMinY) << ", " << VAR_PRINT(myMaxY) << ", " << VAR_PRINT(threadCount);
+			//#pragma omp for
+			for (int i = 0; i < renderJobs.size(); ++i)
+			{
+				//ss[myThreadNum] << "Thread " << ": doing job " << i << "\n";
+				const RenderJob& myJob = renderJobs[i];
+				
+				myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
+			}
+		}
+
+		for (auto& it : ss) std::cout << it.str() << "\n";
 		if (fogEnabled)
 		{
 			real* zBuffPixels = zBuffer.getRawPixels();

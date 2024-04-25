@@ -71,10 +71,7 @@ void renderWorkerRoutine(const TriangleRenderContext* ctx, const std::vector<Ren
 		int myMaxY = real(ctx->framebufH) / threadCount * (myThreadNum + 1);
 		for (int i = 0; i < jobs->size(); ++i)
 		{
-			//std::cout << renderJobs.size() 
-			//ss[myThreadNum] << "Thread " << ": doing job " << i << "\n";
 			const RenderJob& myJob = (*jobs)[i];
-
 			myJob.t.drawSlice(*ctx, myJob, myMinY, myMaxY);
 		}
 

@@ -342,8 +342,8 @@ void program(int argc, char** argv)
 		{
 			int threadCount = omp_get_num_threads();
 			int myThreadNum = omp_get_thread_num();
-			int myMinY = framebufH / threadCount * myThreadNum;
-			int myMaxY = framebufH / threadCount * (myThreadNum+1);
+			int myMinY = real(framebufH) / threadCount * myThreadNum;
+			int myMaxY = real(framebufH) / threadCount * (myThreadNum+1);
 			//ss[myThreadNum] << "Thread " << myThreadNum << ": " << VAR_PRINT(myMinY) << ", " << VAR_PRINT(myMaxY) << ", " << VAR_PRINT(threadCount);
 			//#pragma omp for
 			for (int i = 0; i < renderJobs.size(); ++i)

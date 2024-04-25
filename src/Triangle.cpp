@@ -168,7 +168,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
 	if (yBeg >= zoneMaxY || yEnd < zoneMinY) return;
 	yBeg = std::max<real>(yBeg, zoneMinY);
-	yEnd = std::min<real>(yEnd, zoneMaxY - 1);
+	yEnd = std::min<real>(yEnd, zoneMaxY - 1e-6);
 
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
 	//const Texture& texture = *context.texture;

@@ -60,7 +60,7 @@ private:
 	void drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };
 
-struct RenderJob
+struct alignas(32) RenderJob
 {
 	Triangle t;
 	bool flatBottom;

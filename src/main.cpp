@@ -32,7 +32,7 @@
 #include "WadLoader.h"
 #include "Model.h"
 
-#include <omp.h>
+#include <thread>
 
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2_image.lib")
@@ -61,6 +61,26 @@ enum SkyRenderingMode
 	COUNT
 };
 
+void renderWorkerRoutine(const TriangleRenderContext* ctx, const std::vector<RenderJob>* jobs, uint8_t* active, int myThreadNum, int threadCount)
+{
+	while (true)
+	{
+		while (!*active) { SDL_Delay(1); };
+
+		int myMinY = real(ctx->framebufH) / threadCount * myThreadNum;
+		int myMaxY = real(ctx->framebufH) / threadCount * (myThreadNum + 1);
+		for (int i = 0; i < jobs->size(); ++i)
+		{
+			//std::cout << renderJobs.size() 
+			//ss[myThreadNum] << "Thread " << ": doing job " << i << "\n";
+			const RenderJob& myJob = (*jobs)[i];
+
+			myJob.t.drawSlice(*ctx, myJob, myMinY, myMaxY);
+		}
+
+		*active = false;
+	}
+}
 void program(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
@@ -163,6 +183,19 @@ void program(int argc, char** argv)
 
 	bob::Timer benchmarkTimer;
 	performanceMonitor.reset();
+
+	std::vector<RenderJob> renderJobs;
+	TriangleRenderContext ctx;
+
+	int threadCount = 28;
+	std::vector<uint8_t> activityFlags(threadCount, 0);
+	std::vector<std::thread> workers;
+	for (int i = 0; i < threadCount; ++i)
+	{
+		workers.emplace_back(renderWorkerRoutine, &ctx, &renderJobs, &activityFlags[i], i, threadCount);
+		workers[i].detach();
+	}
+
 	while (true)
 	{
 		performanceMonitor.registerFrameBegin();
@@ -308,9 +341,7 @@ void program(int argc, char** argv)
 		}
 
 		ctr.prepare(camPos, transformMatrix);
-		std::vector<RenderJob> renderJobs;
-
-		TriangleRenderContext ctx;
+		
 		ctx.ctr = &ctr;
 		ctx.frameBuffer = &framebuf;
 		ctx.lightBuffer = &lightBuf;
@@ -334,29 +365,17 @@ void program(int argc, char** argv)
 			}
 		}
 		if (skyRenderingMode == SPHERE) sky.draw(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
-
 		
-		std::vector<std::stringstream> ss(32);
-		//renderJobs.resize(2);
-		#pragma omp parallel
+		for (int i = 0; i < threadCount; ++i) activityFlags[i] = true;
+		while (true)
 		{
-			int threadCount = omp_get_num_threads();
-			int myThreadNum = omp_get_thread_num();
-			int myMinY = real(framebufH) / threadCount * myThreadNum;
-			int myMaxY = real(framebufH) / threadCount * (myThreadNum+1);
-			//ss[myThreadNum] << "Thread " << myThreadNum << ": " << VAR_PRINT(myMinY) << ", " << VAR_PRINT(myMaxY) << ", " << VAR_PRINT(threadCount);
-			//#pragma omp for
-			for (int i = 0; i < renderJobs.size(); ++i)
-			{
-				//std::cout << renderJobs.size() 
-				//ss[myThreadNum] << "Thread " << ": doing job " << i << "\n";
-				const RenderJob& myJob = renderJobs[i];
-				
-				myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
-			}
+			int activeThreadCount = 0;
+			for (int i = 0; i < threadCount; ++i) activeThreadCount += activityFlags[i] > 0;
+			if (activeThreadCount == 0) break;
+			SDL_Delay(1); //spin me baby
 		}
+		renderJobs.clear();
 
-		for (auto& it : ss) std::cout << it.str() << "\n";
 		if (fogEnabled)
 		{
 			real* zBuffPixels = zBuffer.getRawPixels();

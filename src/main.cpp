@@ -61,7 +61,7 @@ enum SkyRenderingMode
 	COUNT
 };
 
-void renderWorkerRoutine(const TriangleRenderContext* ctx, const std::vector<RenderJob>* jobs, uint8_t* active, int myThreadNum, int threadCount)
+void renderWorkerRoutine(const TriangleRenderContext* ctx, const std::vector<RenderJob>* jobs, volatile uint8_t* active, int myThreadNum, int threadCount)
 {
 	while (true)
 	{

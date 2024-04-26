@@ -1,5 +1,9 @@
 #include "Threadpool.h"
-#include <SDL/SDL.h>
+#include <cassert>
+
+using task_id = Threadpool::task_id;
+using tast_t = Threadpool::task_t;
+
 Threadpool::Threadpool()
 {
 	this->spawnThreads(std::thread::hardware_concurrency());
@@ -11,63 +15,70 @@ Threadpool::Threadpool(size_t numThreads)
 Threadpool::task_id Threadpool::addTask(task_t taskFunc)
 {
 	std::lock_guard lck(taskListMutex);
-	this->tasks[lastTaskId++] = taskFunc;
+	this->unassignedTasks[lastFreeTaskId++] = taskFunc;
 
 	//std::unique_lock cv_lck(cv_mtx);
 	cv.notify_one();
 
-	return lastTaskId - 1;
+	return lastFreeTaskId - 1;
+}
+task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies)
+{
+	std::lock_guard lck(taskListMutex);
+	this->unassignedTasks[lastFreeTaskId++] = taskFunc;
+	task_id id = lastFreeTaskId - 1;
+
+	for (auto it : dependencies) this->dependenciesMap[id].insert(it);
+	cv.notify_one();
+
+	return id;
 }
 void Threadpool::waitUntilTaskCompletes(task_id taskIndex)
 {
+	/*
 	{
 		std::lock_guard tasksLck(taskListMutex);
-		if (taskIndex >= lastTaskId) throw std::runtime_error("Attempting to wait for non-existant task.");
+		if (taskIndex >= lastFreeTaskId) throw std::runtime_error("Attempting to wait for non-existant task.");
 		auto it = finishedTasks.find(taskIndex);
 		if (it != finishedTasks.end())
 		{
 			finishedTasks.erase(it);
 			return; //if task was completed, just return
 		}
-	}
+	}*/
 
 	std::unique_lock cv_lck(cv_mtx);
 	cv.wait(cv_lck, [&]() {
 		std::lock_guard task_lck(taskListMutex);
-		return finishedTasks.find(taskIndex) != finishedTasks.end();
-		});
-
-	{
-		std::lock_guard tasksLck(taskListMutex);
-		finishedTasks.erase(finishedTasks.find(taskIndex));
-	}
+		return isTaskFinished(taskIndex);
+	});
 }
+
+void Threadpool::waitForMultipleTasks(const std::vector<task_id>& taskIds)
+{
+	for (const auto it : taskIds) waitUntilTaskCompletes(it);
+}
+
 void Threadpool::workerRoutine(size_t workerNumber)
 {
 	while (true)
 	{
-		{
+		std::pair<task_id, task_t> myTask;
+		{ //wait until there are runnable tasks
 			std::unique_lock cv_lck(cv_mtx);
 			cv.wait(cv_lck, [&]() {
-				std::lock_guard<std::mutex> taskLck(taskListMutex);
-				return !tasks.empty();
-				});
-		}
+				std::lock_guard taskLck(taskListMutex); //do everything under the aegis of mutex to avoid other threads stealing our job between conditional awake and us marking the task as in-progress
+				auto ret = tryGetTask();
+				if (!ret.has_value()) return false;
 
-		std::pair<task_id, task_t> myTask;
-		{
-			std::lock_guard task_lck(taskListMutex);
-			if (tasks.empty()) continue;
-
-			myTask = *tasks.begin();
-			tasks.erase(myTask.first);
+				myTask = ret.value();
+				markTaskAsInProgress(myTask.first);
+				return true;
+			});
 		}
 
 		myTask.second();
-		{
-			std::lock_guard task_lck(taskListMutex);
-			finishedTasks.insert(myTask.first);
-		}
+		markTaskFinished(myTask.first);
 
 		std::unique_lock cv_lck(cv_mtx);
 		cv.notify_all();
@@ -78,4 +89,58 @@ void Threadpool::spawnThreads(size_t numThreads)
 {
 	for (size_t i = 0; i < numThreads; ++i)
 		threads.emplace_back(&Threadpool::workerRoutine, this, i);
+}
+
+std::optional<std::pair<task_id, Threadpool::task_t>> Threadpool::tryGetTask()
+{
+	std::lock_guard lck(taskListMutex);
+	for (const auto& candidateTask : unassignedTasks)
+	{
+		task_id candidateTaskId = candidateTask.first;
+		auto depIt = dependenciesMap.find(candidateTaskId);
+		if (depIt == dependenciesMap.end() || depIt->second.empty())  //second condition should never occur really
+			return { candidateTask }; //if task has no dependendencies, we can just give it to the worker
+
+		size_t depCount = depIt->second.size();
+		size_t finishedDepCount = 0;
+		for (auto& depTaskId : depIt->second)
+		{
+			finishedDepCount += isTaskFinished(depTaskId);
+		}
+
+		if (depCount == finishedDepCount) return { candidateTask }; //if the task had dependencies, but they have finished, return
+		//else keep looking
+	}
+
+	return {}; //no runnable tasks found, return empty optional
+}
+
+void Threadpool::markTaskFinished(task_id taskId)
+{
+	std::lock_guard lck(taskListMutex);
+	//auto [taskId, taskFunc] = task;
+	finishedTasks.insert(taskId);
+	unassignedTasks.erase(taskId);
+	inProgressTasks.erase(taskId);
+	dependenciesMap.erase(taskId);
+}
+
+void Threadpool::markTaskAsInProgress(task_id taskId)
+{
+	std::lock_guard lck(taskListMutex);
+	assert(unassignedTasks.find(taskId) != unassignedTasks.end()); //a task must never be attempted to marked as in progress more than once
+	assert(inProgressTasks.find(taskId) == inProgressTasks.end()); 
+
+	unassignedTasks.erase(taskId);
+	inProgressTasks.insert(taskId);
+}
+
+bool Threadpool::isTaskFinished(task_id taskId)
+{
+	std::lock_guard lck(taskListMutex);
+	assert(taskId < lastFreeTaskId); //there's nothing really wrong about asking for finish status of not yet added task, but that's probably a mistake on caller's end
+	if (taskId >= lastFreeTaskId) return false; //TODO: maybe throw here?
+	return 
+		inProgressTasks.find(taskId) == inProgressTasks.end() &&
+		unassignedTasks.find(taskId) == unassignedTasks.end();
 }

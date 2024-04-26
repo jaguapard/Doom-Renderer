@@ -63,6 +63,24 @@ enum SkyRenderingMode
 	COUNT
 };
 
+struct CmdArg
+{
+	std::string originalValue;
+	int64_t asInt;
+	double asDouble;
+
+	enum class Type {
+		INTEGER,
+		DOUBLE,
+		STRING,
+		NONE, //single arg (no value), a switch
+	};
+};
+
+std::map<std::string, CmdArg> parseCmdArgs(int argc, char** argv)
+{
+	std::string validKeys = { "benchmark" };
+}
 void program(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());

@@ -6,7 +6,9 @@ using tast_t = Threadpool::task_t;
 
 Threadpool::Threadpool()
 {
-	this->spawnThreads(std::thread::hardware_concurrency());
+	size_t threadCount = std::max(1u, std::thread::hardware_concurrency() - 1); //don't crowd out the main thread, unless it is impossible 
+	if (std::thread::hardware_concurrency() == 0) threadCount = 1; //hardware_concurrency can return 0
+	this->spawnThreads(threadCount);
 }
 Threadpool::Threadpool(size_t numThreads)
 {
@@ -57,6 +59,11 @@ void Threadpool::waitUntilTaskCompletes(task_id taskIndex)
 void Threadpool::waitForMultipleTasks(const std::vector<task_id>& taskIds)
 {
 	for (const auto it : taskIds) waitUntilTaskCompletes(it);
+}
+
+size_t Threadpool::getThreadCount() const
+{
+	return this->threads.size();
 }
 
 void Threadpool::workerRoutine(size_t workerNumber)

@@ -187,13 +187,13 @@ void program(int argc, char** argv)
 	std::vector<RenderJob> renderJobs;
 	TriangleRenderContext ctx;
 
-	int threadCount = 28;
-	Threadpool threadpool(threadCount);
+	Threadpool threadpool; //auto number of threads
 	std::vector<Threadpool::task_id> taskIds;
 	Threadpool::task_id windowUpdateTaskId = 0;
 
 	while (true)
 	{
+		int threadCount = threadpool.getThreadCount();
 		taskIds = {
 			threadpool.addTask([&]() {framebuf.clear(); }),
 			threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress

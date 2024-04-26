@@ -18,10 +18,14 @@ public:
 
 	Threadpool();
 	Threadpool(size_t numThreads);
+
 	task_id addTask(task_t taskFunc); //add an independent task to the pool
 	task_id addTask(task_t taskFunc, std::vector<task_id> dependencies); //add task that must start only if all the `dependencies` finished
+
 	void waitUntilTaskCompletes(task_id taskIndex);
 	void waitForMultipleTasks(const std::vector<task_id>& taskIds);
+
+	size_t getThreadCount() const;
 private:
 	std::unordered_map<task_id, task_t> unassignedTasks;
 	std::unordered_map<task_id, std::unordered_set<task_id>> dependenciesMap; //map task ids to a set of task ids that must complete before this one starts

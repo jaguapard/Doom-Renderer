@@ -426,6 +426,7 @@ void program(int argc, char** argv)
 		real* lightStart = lightBuf.begin();
 		Color* framebufStart = framebuf.begin();
 		Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
+		int wndSurfPitch = wndSurf->pitch;
 		for (int i = 0; i < threadCount; ++i)
 		{
 			std::function blitFunc = [=]() {
@@ -434,7 +435,7 @@ void program(int argc, char** argv)
 				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
 				if (myThreadNum == threadCount - 1) myMaxY = ctx.framebufH-1; //avoid going out of bounds
 
-				int myPixelCount = (myMaxY - myMinY + 1) * ctx.framebufW;
+				int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
 				int myStartIndex = myMinY * ctx.framebufW;
 
 				real* lightPtr = lightStart + myStartIndex;

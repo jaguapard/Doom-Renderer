@@ -29,7 +29,7 @@ void Triangle::sortByAscendingTextureY()
 	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
 }
 
-void Triangle::drawOn(const TriangleRenderContext& context) const
+void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 {
 	std::array<TexVertex,3> rot;
 	bool vertexOutside[3] = { false };
@@ -57,7 +57,7 @@ void Triangle::drawOn(const TriangleRenderContext& context) const
 		StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
 		Triangle prepped = *this;
 		prepped.tv = rot;
-		return prepped.drawRotationPrepped(context);
+		return prepped.prepareScreenSpace(context);
 	}
 	
 	auto itBeg = std::begin(vertexOutside);
@@ -78,8 +78,8 @@ void Triangle::drawOn(const TriangleRenderContext& context) const
 		t1.tv = { v1,clipped1, v2 };
 		t2.tv = { clipped1, clipped2, v2};
 
-		t1.drawRotationPrepped(context);
-		t2.drawRotationPrepped(context);
+		t1.prepareScreenSpace(context);
+		t2.prepareScreenSpace(context);
 		return;
 	}
 
@@ -94,7 +94,7 @@ void Triangle::drawOn(const TriangleRenderContext& context) const
 		clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 		clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 		clipped.tv[i] = rot[i];
-		return clipped.drawRotationPrepped(context);
+		return clipped.prepareScreenSpace(context);
 	}
 }
 
@@ -117,7 +117,7 @@ std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> re
 }
 
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
+void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 {
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
@@ -141,11 +141,11 @@ void Triangle::drawRotationPrepped(const TriangleRenderContext& context) const
 	Triangle flatTop;
 	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };	
 
-	flatTop.drawScreenSpaceAndUvDividedPrepped(context, false);
-	flatBottom.drawScreenSpaceAndUvDividedPrepped(context, true);
+	flatTop.addToRenderQueueFinal(context, false);
+	flatBottom.addToRenderQueueFinal(context, true);
 }
 
-void Triangle::drawScreenSpaceAndUvDividedPrepped(const TriangleRenderContext& context, bool flatBottom) const
+void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const
 {
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */

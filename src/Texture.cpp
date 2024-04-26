@@ -4,7 +4,7 @@
 #include "Vec.h"
 #include "Statsman.h"
 #include "smart.h"
-
+#define OLD_TEXTURE_FETCH
 Texture::Texture(std::string name)
 {
 	this->name = name;
@@ -66,7 +66,8 @@ Color Texture::getPixel(int x, int y) const
 
 #ifndef OLD_TEXTURE_FETCH
 	//We can't just take abs, since -w-1 must map to w-1, not 1
-	int64_t px = x + bigW; //assuming texture never wraps around more than 16384 times on a single map,
+	//TODO: still crashes with some values, falling back for now
+	int64_t px = x + bigW; //assuming texture never wraps around more than 65536 times on a single map,
 	int64_t py = y + bigH; //this is equivivalent to properly shift everything into the positives.
 	int64_t xPreShift = px * wInverse;
 	int64_t yPreShift = py * hInverse;
@@ -168,6 +169,6 @@ void Texture::populateInverses(int w, int h)
 {
 	wInverse = UINT32_MAX / w + 1;
 	hInverse = UINT32_MAX / h + 1;
-	bigW = pixels.getW() * 16384;
-	bigH = pixels.getH() * 16384;
+	bigW = pixels.getW() * 65536;
+	bigH = pixels.getH() * 65536;
 }

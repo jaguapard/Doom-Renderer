@@ -80,6 +80,7 @@ struct CmdArg
 std::map<std::string, CmdArg> parseCmdArgs(int argc, char** argv)
 {
 	std::string validKeys = { "benchmark" };
+	return {};
 }
 void program(int argc, char** argv)
 {

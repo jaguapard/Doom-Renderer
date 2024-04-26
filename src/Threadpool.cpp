@@ -30,7 +30,7 @@ task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies)
 	this->unassignedTasks[lastFreeTaskId++] = taskFunc;
 	task_id id = lastFreeTaskId - 1;
 
-	for (auto it : dependencies) this->dependenciesMap[id].insert(it);
+	this->dependenciesMap[id].insert(dependencies.begin(), dependencies.end());
 	cv.notify_one();
 
 	return id;

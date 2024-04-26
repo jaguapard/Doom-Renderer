@@ -42,7 +42,7 @@ Model::Model(const std::vector<Triangle>& triangles, int textureIndex, TextureMa
 	assert(this->triangles.size() > 0);
 }
 
-void Model::draw(TriangleRenderContext ctx) const
+void Model::addToRenderQueue(TriangleRenderContext ctx) const
 {
 	if (this->textureIndex == ctx.doomSkyTextureMarkerIndex) return; //skip sky textured level geometry
 

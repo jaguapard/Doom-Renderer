@@ -8,7 +8,7 @@ class Sky
 public:
 	Sky() = default;
 	Sky(std::string textureName, TextureManager& textureManager);
-	void draw(TriangleRenderContext ctx);
+	void addToRenderQueue(TriangleRenderContext ctx);
 private:
 	Model skyModel;	
 };

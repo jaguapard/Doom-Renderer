@@ -359,11 +359,11 @@ void program(int argc, char** argv)
 				for (const auto& model : sectorWorldModels[nSector])
 				{
 					ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
-					model.draw(ctx);
+					model.addToRenderQueue(ctx);
 				}
 			}
 		}
-		if (skyRenderingMode == SPHERE) sky.draw(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
+		if (skyRenderingMode == SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 		
 		assert(screenW * screenH == framebufW * framebufH);
 		int pixelCount = framebufW * framebufH;

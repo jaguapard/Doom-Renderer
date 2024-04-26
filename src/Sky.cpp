@@ -101,8 +101,8 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 	this->skyModel = Model(skyTriangles, textureIndex, textureManager);
 }
 
-void Sky::draw(TriangleRenderContext ctx)
+void Sky::addToRenderQueue(TriangleRenderContext ctx)
 {
 	ctx.lightMult = 1;
-	this->skyModel.draw(ctx);
+	this->skyModel.addToRenderQueue(ctx);
 }

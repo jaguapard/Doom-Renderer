@@ -345,14 +345,14 @@ void program(int argc, char** argv)
 		std::vector<size_t> taskIds;
 		for (int tNum = 0; tNum < threadCount; ++tNum)
 		{
-			const std::vector<RenderJob>* rj = &renderJobs;
-			std::function f = [=]() { //is is crucial to capture by value [=], else myThreadNum gets a wrong value when task starts. That's also the reason for passing vector by good ol' pointer
+			//const std::vector<RenderJob>* rj = &renderJobs;
+			std::function f = [&, tNum]() { //is is crucial to capture tNum by value [=], else myThreadNum gets a wrong value when task starts.
 				int myThreadNum = tNum;
 				int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
 				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
-				for (int i = 0; i < rj->size(); ++i)
+				for (int i = 0; i < renderJobs.size(); ++i)
 				{
-					const RenderJob& myJob = (*rj)[i];
+					const RenderJob& myJob = renderJobs[i];
 					myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
 				}
 			};

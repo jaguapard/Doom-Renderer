@@ -199,12 +199,15 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		
 		Vec3 interpolatedDividedUvStep = (right->textureCoords - left->textureCoords) * xpStep;
 		Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
-		for (real x = xBeg; x < xEnd; ++x, xp += xpStep)
+		int bufW = context.frameBuffer->getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
+		int yInt = int(y);
+		int xInt = int(xBeg);
+		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++xInt)
 		{			
 			interpolatedDividedUv += interpolatedDividedUvStep;
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
 
-			int pixelIndex = int(y) * context.frameBuffer->getW() + int(x); //all buffers have the same size, so we can use a single index
+			int pixelIndex = yInt * bufW + xInt; //all buffers have the same size, so we can use a single index
 			bool occluded = (*(context.zBuffer))[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
 

@@ -25,7 +25,7 @@ public:
 private:
 	std::unordered_map<task_id, task_t> unassignedTasks;
 	std::unordered_map<task_id, std::unordered_set<task_id>> dependenciesMap; //map task ids to a set of task ids that must complete before this one starts
-	std::set<task_id> finishedTasks, inProgressTasks; //need id ordering for proper cleanup
+	std::unordered_set<task_id> inProgressTasks;
 
 	std::recursive_mutex taskListMutex;
 	std::vector<std::thread> threads;

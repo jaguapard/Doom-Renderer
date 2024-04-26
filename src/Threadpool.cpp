@@ -118,8 +118,6 @@ std::optional<std::pair<task_id, Threadpool::task_t>> Threadpool::tryGetTask()
 void Threadpool::markTaskFinished(task_id taskId)
 {
 	std::lock_guard lck(taskListMutex);
-	//auto [taskId, taskFunc] = task;
-	finishedTasks.insert(taskId);
 	unassignedTasks.erase(taskId);
 	inProgressTasks.erase(taskId);
 	dependenciesMap.erase(taskId);

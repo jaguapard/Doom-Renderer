@@ -193,6 +193,7 @@ void program(int argc, char** argv)
 
 	while (true)
 	{
+		taskIds.clear();
 		taskIds.push_back(threadpool.addTask([&]() {framebuf.clear();}));
 		taskIds.push_back(threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }));
 		taskIds.push_back(threadpool.addTask([&]() {zBuffer.clear(); }));
@@ -416,7 +417,6 @@ void program(int argc, char** argv)
 		
 		for (auto& it : taskIds) threadpool.waitUntilTaskCompletes(it);
 		renderJobs.clear();
-		taskIds.clear();
 
 		if (fogEnabled)
 		{

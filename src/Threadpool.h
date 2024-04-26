@@ -14,6 +14,7 @@ public:
 	typedef std::function<void()> task_t;
 	typedef size_t task_id;
 
+	Threadpool();
 	Threadpool(size_t numThreads);
 	task_id addTask(task_t taskFunc); //add an independent task to the pool
 	task_id addTask(task_t taskFunc, std::vector<task_id> dependendies); //add task that must start only if all the `dependencies` finished
@@ -31,4 +32,5 @@ private:
 	std::mutex cv_mtx;
 
 	void workerRoutine(size_t workerNumber);
+	void spawnThreads(size_t numThreads);
 };

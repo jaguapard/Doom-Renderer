@@ -1,9 +1,12 @@
 #include "Threadpool.h"
 #include <SDL/SDL.h>
+Threadpool::Threadpool()
+{
+	this->spawnThreads(std::thread::hardware_concurrency());
+}
 Threadpool::Threadpool(size_t numThreads)
 {
-	for (size_t i = 0; i < numThreads; ++i)
-		threads.emplace_back(&Threadpool::workerRoutine, this, i);
+	spawnThreads(numThreads);
 }
 Threadpool::task_id Threadpool::addTask(task_t taskFunc)
 {
@@ -69,4 +72,10 @@ void Threadpool::workerRoutine(size_t workerNumber)
 		std::unique_lock cv_lck(cv_mtx);
 		cv.notify_all();
 	}
+}
+
+void Threadpool::spawnThreads(size_t numThreads)
+{
+	for (size_t i = 0; i < numThreads; ++i)
+		threads.emplace_back(&Threadpool::workerRoutine, this, i);
 }

@@ -169,7 +169,7 @@ void program(int argc, char** argv)
 	std::vector<RenderJob> renderJobs;
 	TriangleRenderContext ctx;
 
-	int threadCount = 28;
+	int threadCount = 32;
 	Threadpool threadpool(threadCount);
 
 	while (true)

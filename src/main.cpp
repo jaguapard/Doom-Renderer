@@ -343,7 +343,7 @@ void program(int argc, char** argv)
 		if (skyRenderingMode == SPHERE) sky.draw(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 		
 		assert(screenW * screenH == framebufW * framebufH);
-		std::vector<size_t> taskIds;
+		std::vector<Threadpool::task_id> taskIds;
 		int pixelCount = framebufW * framebufH;
 		int startPixels = 0;
 		int threadStep = pixelCount / threadCount;
@@ -370,7 +370,7 @@ void program(int argc, char** argv)
 		{
 			//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
 			//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
-			std::function f = [=, &renderJobs]() {
+			Threadpool::task_t f = [=, &renderJobs]() {
 				int myThreadNum = tNum;
 				int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
 				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);

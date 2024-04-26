@@ -5,7 +5,7 @@ Threadpool::Threadpool(size_t numThreads)
 	for (size_t i = 0; i < numThreads; ++i)
 		threads.emplace_back(&Threadpool::workerRoutine, this, i);
 }
-size_t Threadpool::addTask(std::function<void()> taskFunc)
+Threadpool::task_id Threadpool::addTask(task_t taskFunc)
 {
 	std::lock_guard lck(taskListMutex);
 	this->tasks[lastTaskId++] = taskFunc;
@@ -15,7 +15,7 @@ size_t Threadpool::addTask(std::function<void()> taskFunc)
 
 	return lastTaskId - 1;
 }
-void Threadpool::waitUntilTaskCompletes(size_t taskIndex)
+void Threadpool::waitUntilTaskCompletes(task_id taskIndex)
 {
 	{
 		std::lock_guard tasksLck(taskListMutex);
@@ -51,7 +51,7 @@ void Threadpool::workerRoutine(size_t workerNumber)
 				});
 		}
 
-		std::pair<size_t, std::function<void()>> myTask;
+		std::pair<task_id, task_t> myTask;
 		{
 			std::lock_guard task_lck(taskListMutex);
 			if (tasks.empty()) continue;

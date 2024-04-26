@@ -16,6 +16,7 @@ public:
 	void waitUntilTaskCompletes(size_t taskIndex);
 private:
 	std::unordered_map<size_t, std::function<void()>> tasks;
+	std::unordered_map<size_t, std::unordered_set<size_t>> dependencies; //map task ids to a set of task ids that must complete before this one starts
 	std::unordered_set<size_t> finishedTasks;
 
 	std::mutex taskListMutex;

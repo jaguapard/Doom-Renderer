@@ -323,8 +323,8 @@ void program(int argc, char** argv)
 		ctx.lightBuffer = &lightBuf;
 		ctx.textureManager = &textureManager;
 		ctx.zBuffer = &zBuffer;
-		ctx.framebufW = framebufW - 1;
-		ctx.framebufH = framebufH - 1;
+		ctx.framebufW = framebufW;
+		ctx.framebufH = framebufH;
 		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
 		ctx.wireframeEnabled = wireframeEnabled;
 		ctx.renderJobs = &renderJobs;		
@@ -416,9 +416,39 @@ void program(int argc, char** argv)
 			}
 		}
 		shifts[3] = missingShift;
+		
 		assert(screenW * screenH == framebufW * framebufH);
-		Color::multipliyByLightInPlace(&lightBuf[0], &framebuf[0], framebufW * framebufH);
-		Color::toSDL_Uint32(&framebuf[0], reinterpret_cast<Uint32*>(wndSurf->pixels), framebufW * framebufH, shifts);
+		int pixelCount = framebufW * framebufH;
+		int startPixels = 0;
+		int threadStep = pixelCount / threadCount;
+		std::vector<size_t> tasks;
+
+		real* lightStart = lightBuf.begin();
+		Color* framebufStart = framebuf.begin();
+		Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
+		for (int i = 0; i < threadCount; ++i)
+		{
+			std::function blitFunc = [=]() {
+				int myThreadNum = i;
+				int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
+				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
+				if (myThreadNum == threadCount - 1) myMaxY = ctx.framebufH-1; //avoid going out of bounds
+
+				int myPixelCount = (myMaxY - myMinY + 1) * ctx.framebufW;
+				int myStartIndex = myMinY * ctx.framebufW;
+
+				real* lightPtr = lightStart + myStartIndex;
+				Color* framebufPtr = framebufStart + myStartIndex;
+				Uint32* wndSurfPtr = wndSurfStart + myStartIndex;
+
+				Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
+				Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
+			};
+
+			tasks.push_back(threadpool.addTask(blitFunc));
+		}
+		for (auto& it : tasks) threadpool.waitUntilTaskCompletes(it);
+		
 
 		performanceMonitor.registerFrameDone();
 		PerformanceMonitor::OptionalInfo info;

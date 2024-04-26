@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <cassert>
 #include <bit>
+#include <execution>
 #include <immintrin.h>
 
 #include <SDL/SDL.h>
@@ -143,7 +144,8 @@ inline void PixelBuffer<T>::clear(T value)
 	}
 
 #else
-	for (auto& it : store) it = value;
+	//for (auto& it : store) it = value;
+	std::fill(std::execution::par_unseq, this->begin(), this->end(), value);
 #endif
 }
 

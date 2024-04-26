@@ -194,11 +194,12 @@ void program(int argc, char** argv)
 
 	while (true)
 	{
-		taskIds.clear();
-		taskIds.push_back(threadpool.addTask([&]() {framebuf.clear();}));
-		taskIds.push_back(threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId})); //shouldn't overwrite the surface while window update is in progress
-		taskIds.push_back(threadpool.addTask([&]() {zBuffer.clear(); }));
-		taskIds.push_back(threadpool.addTask([&]() {lightBuf.clear(1); }));
+		taskIds = {
+			threadpool.addTask([&]() {framebuf.clear(); }),
+			threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
+			threadpool.addTask([&]() {zBuffer.clear(); }),
+			threadpool.addTask([&]() {lightBuf.clear(1); }),
+		};		
 		performanceMonitor.registerFrameBegin();
 
 		Vec3 camAdd = { 0,0,0 };

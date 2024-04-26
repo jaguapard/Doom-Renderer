@@ -460,19 +460,19 @@ void program(int argc, char** argv)
 			}
 		}
 
-		performanceMonitor.registerFrameDone();
-		PerformanceMonitor::OptionalInfo info;
-		info.camPos = camPos;
-		info.camAng = camAng;
-		if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, &info);
-
 		if (!benchmarkMode && input.wasCharPressedOnThisFrame('U'))
 		{
 			//framebuf.saveToFile("screenshots/fullframe.png");
 		}
 
-		windowUpdateTaskId = threadpool.addTask([&]() {SDL_UpdateWindowSurface(wnd); });
-		//std::cout << "Frame " << frames++ << " done\n";
+		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
+			performanceMonitor.registerFrameDone();
+			PerformanceMonitor::OptionalInfo info;
+			info.camPos = camPos;
+			info.camAng = camAng;
+			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, &info); 
+			SDL_UpdateWindowSurface(wnd); 
+		});
 	}
 }
 

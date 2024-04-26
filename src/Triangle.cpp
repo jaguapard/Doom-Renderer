@@ -163,6 +163,8 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool 
 void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
 	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
+	real original_yBeg = y1;
+	real original_yEnd = y3;
 
 	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
 	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
@@ -188,6 +190,8 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		const TexVertex* right = &scanlineTv2;
 		if (left->spaceCoords.x > right->spaceCoords.x) std::swap(left, right);
 		
+		real original_xBeg = left->spaceCoords.x;
+		real original_xEnd = right->spaceCoords.x;
 		real xBeg = std::clamp<real>(left->spaceCoords.x, 0, context.framebufW);
 		real xEnd = std::clamp<real>(right->spaceCoords.x, 0, context.framebufW);
 		real xSpan = right->spaceCoords.x - left->spaceCoords.x;
@@ -215,10 +219,18 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			bool notFullyTransparent = texturePixel.a > 0;
 			
 			auto lightMult = renderJob.lightMult;
-			if (context.wireframeEnabled && (x - xBeg <= 0.5 || xEnd - x <= 0.5 || (flatBottom && y - yBeg <= 0.5) || (!flatBottom && yEnd - y <= 0.5)))
+			if (context.wireframeEnabled)
 			{
-				texturePixel = Color(255, 255, 255);
-				lightMult = 1;
+				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = original_yBeg, oye = original_yEnd;
+				bool leftEdge = rx == oxb;
+				bool rightEdge = rx == oxe;
+				bool topEdge = flatBottom && ry == oyb;
+				bool bottomEdge = !flatBottom && ry == oye;
+				if (leftEdge || rightEdge || topEdge || bottomEdge)
+				{
+					texturePixel = Color(255, 255, 255);
+					lightMult = 1;
+				}
 			}
 			if (notFullyTransparent) //fully transparent pixels do not need to be considered for drawing
 			{

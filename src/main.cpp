@@ -190,12 +190,13 @@ void program(int argc, char** argv)
 	int threadCount = 28;
 	Threadpool threadpool(threadCount);
 	std::vector<Threadpool::task_id> taskIds;
+	Threadpool::task_id windowUpdateTaskId = 0;
 
 	while (true)
 	{
 		taskIds.clear();
 		taskIds.push_back(threadpool.addTask([&]() {framebuf.clear();}));
-		taskIds.push_back(threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }));
+		taskIds.push_back(threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId})); //shouldn't overwrite the surface while window update is in progress
 		taskIds.push_back(threadpool.addTask([&]() {zBuffer.clear(); }));
 		taskIds.push_back(threadpool.addTask([&]() {lightBuf.clear(1); }));
 		performanceMonitor.registerFrameBegin();
@@ -469,7 +470,7 @@ void program(int argc, char** argv)
 			//framebuf.saveToFile("screenshots/fullframe.png");
 		}
 
-		SDL_UpdateWindowSurface(wnd);
+		windowUpdateTaskId = threadpool.addTask([&]() {SDL_UpdateWindowSurface(wnd); });
 		//std::cout << "Frame " << frames++ << " done\n";
 	}
 }

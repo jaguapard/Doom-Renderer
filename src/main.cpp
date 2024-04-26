@@ -342,19 +342,55 @@ void program(int argc, char** argv)
 		}
 		if (skyRenderingMode == SPHERE) sky.draw(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 		
+		assert(screenW * screenH == framebufW * framebufH);
 		std::vector<size_t> taskIds;
+		int pixelCount = framebufW * framebufH;
+		int startPixels = 0;
+		int threadStep = pixelCount / threadCount;
+		real* lightStart = lightBuf.begin();
+		Color* framebufStart = framebuf.begin();
+		Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
+
+		//this is a stupid fix for everything becoming way too blue in debug mode specifically.
+		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
+		auto* wf = wndSurf->format;
+		std::array<uint32_t, 4> shifts = { wf->Rshift, wf->Gshift, wf->Bshift };
+		uint32_t missingShift = 24;
+		for (int i = 0; i < 3; ++i)
+		{
+			if (std::find(std::begin(shifts), std::end(shifts), i * 8) == std::end(shifts))
+			{
+				missingShift = i * 8;
+				break;
+			}
+		}
+		shifts[3] = missingShift;
+
 		for (int tNum = 0; tNum < threadCount; ++tNum)
 		{
-			//const std::vector<RenderJob>* rj = &renderJobs;
-			std::function f = [&, tNum]() { //is is crucial to capture tNum by value [=], else myThreadNum gets a wrong value when task starts.
+			//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
+			//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
+			std::function f = [=, &renderJobs]() {
 				int myThreadNum = tNum;
 				int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
 				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
+				if (myThreadNum == threadCount - 1) myMaxY = ctx.framebufH - 1; //avoid going out of bounds
+
 				for (int i = 0; i < renderJobs.size(); ++i)
 				{
 					const RenderJob& myJob = renderJobs[i];
 					myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
-				}
+				}			
+
+				int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
+				int myStartIndex = myMinY * ctx.framebufW;
+
+				real* lightPtr = lightStart + myStartIndex;
+				Color* framebufPtr = framebufStart + myStartIndex;
+				Uint32* wndSurfPtr = wndSurfStart + myStartIndex;
+
+				Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
+				Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
 			};
 			taskIds.push_back(threadpool.addTask(f));
 		}
@@ -401,55 +437,6 @@ void program(int argc, char** argv)
 				}
 			}
 		}
-		//this is a stupid fix for everything becoming way too blue in debug mode specifically.
-		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
-		Uint32* px = reinterpret_cast<Uint32*>(wndSurf->pixels);
-		auto* wf = wndSurf->format;
-		std::array<uint32_t, 4> shifts = {wf->Rshift, wf->Gshift, wf->Bshift};
-		uint32_t missingShift = 24;
-		for (int i = 0; i < 3; ++i)
-		{
-			if (std::find(std::begin(shifts), std::end(shifts), i * 8) == std::end(shifts))
-			{
-				missingShift = i * 8;
-				break;
-			}
-		}
-		shifts[3] = missingShift;
-		
-		assert(screenW * screenH == framebufW * framebufH);
-		int pixelCount = framebufW * framebufH;
-		int startPixels = 0;
-		int threadStep = pixelCount / threadCount;
-		std::vector<size_t> tasks;
-
-		real* lightStart = lightBuf.begin();
-		Color* framebufStart = framebuf.begin();
-		Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
-		int wndSurfPitch = wndSurf->pitch;
-		for (int i = 0; i < threadCount; ++i)
-		{
-			std::function blitFunc = [=]() {
-				int myThreadNum = i;
-				int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
-				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
-				if (myThreadNum == threadCount - 1) myMaxY = ctx.framebufH-1; //avoid going out of bounds
-
-				int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
-				int myStartIndex = myMinY * ctx.framebufW;
-
-				real* lightPtr = lightStart + myStartIndex;
-				Color* framebufPtr = framebufStart + myStartIndex;
-				Uint32* wndSurfPtr = wndSurfStart + myStartIndex;
-
-				Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
-				Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
-			};
-
-			tasks.push_back(threadpool.addTask(blitFunc));
-		}
-		for (auto& it : tasks) threadpool.waitUntilTaskCompletes(it);
-		
 
 		performanceMonitor.registerFrameDone();
 		PerformanceMonitor::OptionalInfo info;

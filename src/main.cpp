@@ -187,16 +187,17 @@ void program(int argc, char** argv)
 	std::vector<RenderJob> renderJobs;
 	TriangleRenderContext ctx;
 
-	int threadCount = 32;
+	int threadCount = 28;
 	Threadpool threadpool(threadCount);
+	std::vector<Threadpool::task_id> taskIds;
 
 	while (true)
 	{
+		taskIds.push_back(threadpool.addTask([&]() {framebuf.clear();}));
+		taskIds.push_back(threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }));
+		taskIds.push_back(threadpool.addTask([&]() {zBuffer.clear(); }));
+		taskIds.push_back(threadpool.addTask([&]() {lightBuf.clear(1); }));
 		performanceMonitor.registerFrameBegin();
-		framebuf.clear();
-		SDL_FillRect(wndSurf, nullptr, Color(0,0,0));
-    	zBuffer.clear();
-		lightBuf.clear(1);
 
 		Vec3 camAdd = { 0,0,0 };
 		if (!benchmarkMode) //benchmark mode will supress any user input
@@ -361,7 +362,6 @@ void program(int argc, char** argv)
 		if (skyRenderingMode == SPHERE) sky.draw(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 		
 		assert(screenW * screenH == framebufW * framebufH);
-		std::vector<Threadpool::task_id> taskIds;
 		int pixelCount = framebufW * framebufH;
 		int startPixels = 0;
 		int threadStep = pixelCount / threadCount;
@@ -384,6 +384,7 @@ void program(int argc, char** argv)
 		}
 		shifts[3] = missingShift;
 
+		auto renderDependencies = taskIds;
 		for (int tNum = 0; tNum < threadCount; ++tNum)
 		{
 			//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
@@ -410,11 +411,12 @@ void program(int argc, char** argv)
 				Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
 				Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
 			};
-			taskIds.push_back(threadpool.addTask(f));
+			taskIds.push_back(threadpool.addTask(f, renderDependencies));
 		}
 		
 		for (auto& it : taskIds) threadpool.waitUntilTaskCompletes(it);
 		renderJobs.clear();
+		taskIds.clear();
 
 		if (fogEnabled)
 		{

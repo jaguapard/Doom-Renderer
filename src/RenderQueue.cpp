@@ -107,9 +107,8 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 		if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
 		{
 			StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
-			Triangle prepped = *this;
-			prepped.tv = rot;
-			return prepped.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
+			currTri.tv = rot;
+			continue;
 		}
 
 		auto itBeg = std::begin(vertexOutside);

@@ -4,12 +4,14 @@
 RenderQueue::RenderQueue(Threadpool& pool)
 	:threadpool(pool)
 {
-	//drawJobs.resize(threadpool.getThreadCount());
+	threadJobs.resize(threadpool.getThreadCount());
 }
 
 void RenderQueue::clear()
 {
-	initialJobs.clear();
+	assert(threadJobs.size() > 0);
+	for (auto& it : threadJobs) it.clear();
+	jobsInQueue = 0;
 }
 
 void RenderQueue::addInitialJob(const Triangle& t, int textureIndex, real lightMult)
@@ -18,7 +20,7 @@ void RenderQueue::addInitialJob(const Triangle& t, int textureIndex, real lightM
 	rj.t = t;
 	rj.info.textureIndex = textureIndex;
 	rj.info.lightMult = lightMult;
-	initialJobs.emplace_back(rj);
+	threadJobs[(jobsInQueue++) % threadJobs.size()].emplace_back(rj); //somewhat even split of triangles
 
 	t.assertNoNans();
 }
@@ -73,8 +75,9 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 	}*/
 }
 
-void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
+void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx, size_t threadIndex)
 {
+	std::vector<RenderJob>& initialJobs = threadJobs[threadIndex];
 	int64_t indexChange = 0;
 	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size()-indexChange; ++nRenderJob)
 	{
@@ -165,10 +168,12 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 	}
 }
 
-void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx)
+void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx, size_t threadIndex)
 {
-	int zoneMinY = 0; //TODO: testing values, remove!
-	int zoneMaxY = 1079;
+	std::vector<RenderJob>& initialJobs = threadJobs[threadIndex];
+	auto zone = threadpool.getLimitsForThread(threadIndex, 0, ctx.framebufH);
+	int zoneMinY = zone.first;
+	int zoneMaxY = zone.second;
 
 	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
 	{

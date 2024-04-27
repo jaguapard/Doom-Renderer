@@ -29,10 +29,11 @@ public:
 	void drawOn(TriangleRenderContext ctx);
 private:
 	Threadpool& threadpool;
-	std::vector<RenderJob> initialJobs, processedJobs;
+	std::vector<std::vector<RenderJob>> threadJobs;
+	size_t jobsInQueue = 0;
 	//std::vector<std::vector<DrawJob>> drawJobs; //each thread gets it's own storage for drawJobs it produces
 
 	void doTransformations(TriangleRenderContext& ctx);
-	void doRotationAndClipping(TriangleRenderContext& ctx);
-	void doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx);
+	void doRotationAndClipping(TriangleRenderContext& ctx, size_t threadIndex);
+	void doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx, size_t threadIndex);
 };

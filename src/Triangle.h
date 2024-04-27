@@ -41,6 +41,7 @@ inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
 
 struct TriangleRenderContext;
 struct RenderJob;
+struct RenderQueue;
 
 struct Triangle
 {
@@ -73,9 +74,14 @@ struct TriangleRenderContext //triangle render context holds info shared by all 
 	PixelBuffer<Color>* frameBuffer;
 	PixelBuffer<real>* lightBuffer;
 	ZBuffer* zBuffer;
+	RenderQueue* renderQueue;
+
 	const CoordinateTransformer* ctr;	
 	const TextureManager* textureManager;
 	real framebufW, framebufH;
+
+	const std::array<uint32_t, 4>* windowBitShifts;
+	SDL_Surface* wndSurf;
 
 	int doomSkyTextureMarkerIndex;
 	bool wireframeEnabled = false;

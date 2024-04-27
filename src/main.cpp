@@ -32,6 +32,8 @@
 #include "WadLoader.h"
 #include "Model.h"
 #include "Threadpool.h"
+#include "RenderQueue.h"
+
 
 #include <thread>
 #include <functional>
@@ -187,8 +189,8 @@ void program(int argc, char** argv)
 
 	TriangleRenderContext ctx;
 	Threadpool threadpool; //auto number of threads
-	std::vector<RenderJob> renderJobs;
 	std::vector<Threadpool::task_id> taskIds;
+	RenderQueue renderQueue(threadpool);
 	Threadpool::task_id windowUpdateTaskId = 0;
 
 	while (true)
@@ -349,7 +351,7 @@ void program(int argc, char** argv)
 		ctx.framebufH = framebufH;
 		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
 		ctx.wireframeEnabled = wireframeEnabled;
-		ctx.renderJobs = &renderJobs;		
+		ctx.renderQueue = &renderQueue;
 
 		if (currentMap)
 		{			
@@ -386,6 +388,8 @@ void program(int argc, char** argv)
 			}
 		}
 		shifts[3] = missingShift;
+		ctx.wndSurf = wndSurf;
+		ctx.windowBitShifts = &shifts;
 
 		auto renderDependencies = taskIds;
 		for (int tNum = 0; tNum < threadCount; ++tNum)

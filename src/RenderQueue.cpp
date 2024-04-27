@@ -41,12 +41,12 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 			int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
 			int myStartIndex = myMinY * ctx.framebufW;
 
-			real* lightPtr = lightStart + myStartIndex;
-			Color* framebufPtr = framebufStart + myStartIndex;
-			Uint32* wndSurfPtr = wndSurfStart + myStartIndex;
+			real* lightPtr = ctx.lightBuffer->begin() + myStartIndex;
+			Color* framebufPtr = ctx.frameBuffer->begin() + myStartIndex;
+			Uint32* wndSurfPtr = reinterpret_cast<Uint32*>(ctx.wndSurf->pixels) + myStartIndex;
 
 			Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
-			Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
+			Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, *ctx.windowBitShifts);
 		};
 	}
 }

@@ -104,6 +104,9 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 				if (outsideVertexCount == 3)
 				{
 					StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
+					currJob = std::move(initialJobs.back());
+					initialJobs.pop_back();
+					nRenderJob--;
 					//std::swap(currJob, initialJobs.back());
 					//nRenderJob--;
 					//initialJobs.pop_back();

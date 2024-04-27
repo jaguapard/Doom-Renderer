@@ -80,38 +80,31 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 		std::array<TexVertex, 3> rot;
 		bool vertexOutside[3] = { false };
 		int outsideVertexCount = 0;
-		RenderJob& currJob = initialJobs[nRenderJob];
-		Triangle& currTriangle = currJob.t;
-
 		for (int i = 0; i < 3; ++i)
 		{
-			Vec3 off = ctx.ctr->doCamOffset(currTriangle.tv[i].spaceCoords);
-			Vec3 rt = ctx.ctr->rotate(off);
+			Vec3 off = context.ctr->doCamOffset(tv[i].spaceCoords);
+			Vec3 rt = context.ctr->rotate(off);
 
-			if (rt.z > ctx.nearPlaneClippingZ)
+			if (rt.z > planeZ)
 			{
 				outsideVertexCount++;
-				if (outsideVertexCount == 3) //triangle is completely behind the clipping plane, discard
+				if (outsideVertexCount == 3)
 				{
 					StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
-					std::swap(initialJobs[nRenderJob--], initialJobs.back());
-					initialJobs.pop_back();
-					
-
-					break;; //can't use continue here, it will not skip upper loop iteration
+					std::swap(rjtl.jobs[rjtl.currJobIndex--], rjtl.jobs.back());
+					return; //triangle is completely behind the clipping plane, discard
 				}
 				vertexOutside[i] = true;
 			}
-			currTriangle.tv[i].spaceCoords = rt;
-			rot[i] = { rt, currTriangle.tv[i].textureCoords };
+			rot[i] = { rt, tv[i].textureCoords };
 		}
 
-		if (outsideVertexCount == 3) continue;
-
-		if (outsideVertexCount == 0) //if all vertices are in front of camera, this triangle doesn't need clipping
+		if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
 		{
 			StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
-			continue;
+			Triangle prepped = *this;
+			prepped.tv = rot;
+			return prepped.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
 		}
 
 		auto itBeg = std::begin(vertexOutside);
@@ -125,15 +118,16 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 
 			const TexVertex& v1 = rot[v1_ind];
 			const TexVertex& v2 = rot[v2_ind];
-			Triangle newTriangle;
+			Triangle t1 = *this, t2 = *this;
 			TexVertex clipped1 = rot[i].getClipedToPlane(v1);
 			TexVertex clipped2 = rot[i].getClipedToPlane(v2);
 
-			currTriangle.tv = { v1,clipped1, v2 };
-			newTriangle.tv = { clipped1, clipped2, v2 };
-			initialJobs.push_back({ newTriangle, currJob.info });
-			indexChange++; //avoid trying to clip already clipped
-			continue;
+			t1.tv = { v1,clipped1, v2 };
+			t2.tv = { clipped1, clipped2, v2 };
+
+			t1.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
+			t2.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
+			return;
 		}
 
 		if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
@@ -143,10 +137,11 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds
 			int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
 
-			currTriangle.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
-			currTriangle.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
-			currTriangle.tv[i] = rot[i];
-			continue;
+			Triangle clipped = *this;
+			clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
+			clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
+			clipped.tv[i] = rot[i];
+			return clipped.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
 		}
 	}
 }

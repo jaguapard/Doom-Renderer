@@ -37,17 +37,11 @@ task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies)
 }
 void Threadpool::waitUntilTaskCompletes(task_id taskIndex)
 {
-	/*
+	
 	{
-		std::lock_guard tasksLck(taskListMutex);
 		if (taskIndex >= lastFreeTaskId) throw std::runtime_error("Attempting to wait for non-existant task.");
-		auto it = finishedTasks.find(taskIndex);
-		if (it != finishedTasks.end())
-		{
-			finishedTasks.erase(it);
-			return; //if task was completed, just return
-		}
-	}*/
+		if (isTaskFinished(taskIndex)) return;
+	}
 
 	std::unique_lock cv_lck(cv_mtx);
 	cv.wait(cv_lck, [&]() {

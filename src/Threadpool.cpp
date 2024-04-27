@@ -1,6 +1,7 @@
 #include "Threadpool.h"
 #include <cassert>
 #include "helpers.h"
+#include <iostream>
 
 using task_id = Threadpool::task_id;
 using tast_t = Threadpool::task_t;
@@ -32,6 +33,7 @@ task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies)
 	task_id id = lastFreeTaskId - 1;
 
 	this->dependenciesMap[id].insert(dependencies.begin(), dependencies.end());
+	//for (auto& it : dependencies) this->dependenciesMap[id].insert(it);
 	cv.notify_one();
 
 	return id;
@@ -93,7 +95,14 @@ void Threadpool::workerRoutine(size_t workerNumber)
 			});
 		}
 
-		myTask.second();
+		try
+		{
+			myTask.second();
+		}
+		catch (const std::exception& e)
+		{
+			std::cout << "Exception in a worker: " << e.what() << std::endl;
+		}
 		markTaskFinished(myTask.first);
 
 		std::unique_lock cv_lck(cv_mtx);

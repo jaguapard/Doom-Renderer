@@ -124,8 +124,8 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			const TexVertex& v1 = rot[v1_ind];
 			const TexVertex& v2 = rot[v2_ind];
 			Triangle newTriangle;
-			TexVertex clipped1 = currTriangle.tv[i].getClipedToPlane(v1);
-			TexVertex clipped2 = currTriangle.tv[i].getClipedToPlane(v2);
+			TexVertex clipped1 = rot[i].getClipedToPlane(v1);
+			TexVertex clipped2 = rot[i].getClipedToPlane(v2);
 
 			currTriangle.tv = { v1,clipped1, v2 };
 			newTriangle.tv = { clipped1, clipped2, v2 };
@@ -142,7 +142,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 
 			currTriangle.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 			currTriangle.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
-			//currTriangle.tv[i] = rot[i];
+			currTriangle.tv[i] = rot[i];
 			continue;
 		}
 	}
@@ -179,7 +179,7 @@ void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx)
 		Triangle flatTop;
 		flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
 
-		flatBottom.drawSlice(ctx, currJob.info, true, zoneMinY, zoneMaxY);
+		flatBottom.drawSlice(ctx, currJob.info, true, zoneMinY, zoneMaxY); //TODO: no, this will not work when we implement MT
 		flatTop.drawSlice(ctx, currJob.info, false, zoneMinY, zoneMaxY);
 		//flatTop.addToRenderQueueFinal(context, false);
 		//flatBottom.addToRenderQueueFinal(context, true);

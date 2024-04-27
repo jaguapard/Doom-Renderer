@@ -10,6 +10,7 @@ RenderQueue::RenderQueue(Threadpool& pool)
 void RenderQueue::clear()
 {
 	initialJobs.clear();
+	processedJobs.clear();
 	//drawJobs.clear();
 }
 
@@ -77,7 +78,7 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 {
 	int64_t indexChange = 0;
-	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size() - indexChange; ++nRenderJob)
+	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
 	{
 	loopBegin:
 		std::array<TexVertex, 3> rot;
@@ -103,10 +104,10 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 				if (outsideVertexCount == 3)
 				{
 					StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
-					std::swap(currJob, initialJobs.back());
-					nRenderJob--;
-					initialJobs.pop_back();
-					goto loopBegin; //triangle is completely behind the clipping plane, discard
+					//std::swap(currJob, initialJobs.back());
+					//nRenderJob--;
+					//initialJobs.pop_back();
+					break; //triangle is completely behind the clipping plane, discard
 				}
 				vertexOutside[i] = true;
 			}
@@ -114,10 +115,12 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			rot[i].assertNoNans();
 		}
 
+		if (outsideVertexCount == 3) continue;
 		if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
 		{
 			StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
-			currTri.tv = rot;
+			Triangle t = { rot };
+			processedJobs.push_back({ t,currJob.info });
 			continue;
 		}
 
@@ -139,10 +142,11 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			t1.tv = { v1,clipped1, v2 };
 			t2.tv = { clipped1, clipped2, v2 };
 
-			currTri = t1;
-			initialJobs.push_back({ t2, currJob.info });
+			//currTri = t1;
+			processedJobs.push_back({ t1, currJob.info });
+			processedJobs.push_back({ t2, currJob.info });
 
-			currTri.assertNoNans();
+			t1.assertNoNans();
 			t2.assertNoNans();
 
 			indexChange++; //avoid attempting to clip the same triangle twice
@@ -160,8 +164,9 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 			clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 			clipped.tv[i] = rot[i];
-			currTri = clipped;
-			currTri.assertNoNans();
+			//currTri = clipped;
+			clipped.assertNoNans();
+			processedJobs.push_back({ clipped, currJob.info });
 			continue;
 		}
 	}
@@ -172,9 +177,9 @@ void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx)
 	int zoneMinY = 0; //TODO: testing values, remove!
 	int zoneMaxY = 1079;
 
-	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
+	for (size_t nRenderJob = 0; nRenderJob < processedJobs.size(); ++nRenderJob)
 	{
-		RenderJob& currJob = initialJobs[nRenderJob];
+		RenderJob& currJob = processedJobs[nRenderJob];
 		Triangle& currentTriangle = currJob.t;
 		std::array<TexVertex, 3> fullyTransformed;
 		for (int i = 0; i < 3; ++i)

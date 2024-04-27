@@ -78,7 +78,7 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 {
 	int64_t indexChange = 0;
-	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
+	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size()-indexChange; ++nRenderJob)
 	{
 	loopBegin:
 		std::array<TexVertex, 3> rot;
@@ -104,13 +104,9 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 				if (outsideVertexCount == 3)
 				{
 					StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
-					currJob = std::move(initialJobs.back());
-					initialJobs.pop_back();
-					nRenderJob--;
-					//std::swap(currJob, initialJobs.back());
-					//nRenderJob--;
-					//initialJobs.pop_back();
-					break; //triangle is completely behind the clipping plane, discard
+					//triangle is completely behind the clipping plane, discard. We can't use any swapping techiniques, since end elements may be populated with correct triangles (results from clipping). That's why we just make this job as bad
+					currJob.shouldDraw = false;
+					break;
 				}
 				vertexOutside[i] = true;
 			}
@@ -145,8 +141,12 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			t2.tv = { clipped1, clipped2, v2 };
 
 			//currTri = t1;
-			processedJobs.push_back({ t1, currJob.info });
-			processedJobs.push_back({ t2, currJob.info });
+			//currTri = t1;
+			//initialJobs[nRenderJob].t = t1;
+			initialJobs[nRenderJob].t = t1;
+			initialJobs.push_back({ t2, currJob.info });
+			//processedJobs.push_back({ t1, currJob.info });
+			//processedJobs.push_back({ t2, currJob.info });
 
 			t1.assertNoNans();
 			t2.assertNoNans();
@@ -167,8 +167,9 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 			clipped.tv[i] = rot[i];
 			//currTri = clipped;
+			initialJobs[nRenderJob].t = clipped;
 			clipped.assertNoNans();
-			processedJobs.push_back({ clipped, currJob.info });
+			//processedJobs.push_back({ clipped, currJob.info });
 			continue;
 		}
 	}
@@ -179,9 +180,11 @@ void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx)
 	int zoneMinY = 0; //TODO: testing values, remove!
 	int zoneMaxY = 1079;
 
-	for (size_t nRenderJob = 0; nRenderJob < processedJobs.size(); ++nRenderJob)
+	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
 	{
-		RenderJob& currJob = processedJobs[nRenderJob];
+		RenderJob& currJob = initialJobs[nRenderJob];
+		if (!currJob.shouldDraw) continue;
+
 		Triangle& currentTriangle = currJob.t;
 		std::array<TexVertex, 3> fullyTransformed;
 		for (int i = 0; i < 3; ++i)

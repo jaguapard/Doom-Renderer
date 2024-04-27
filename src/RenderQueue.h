@@ -14,6 +14,7 @@ struct RenderJob //RenderJob is a struct that holds stuff needed for a specific 
 {
 	Triangle t;
 	DrawInfo info;
+	bool shouldDraw = true;
 };
 
 

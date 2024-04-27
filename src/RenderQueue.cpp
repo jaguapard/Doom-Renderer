@@ -122,8 +122,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 		if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
 		{
 			StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
-			Triangle t = { rot };
-			processedJobs.push_back({ t,currJob.info });
+			currTri.tv = rot;
 			continue;
 		}
 

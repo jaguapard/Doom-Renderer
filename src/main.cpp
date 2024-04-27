@@ -385,6 +385,7 @@ void program(int argc, char** argv)
 		
 		assert(screenW * screenH == framebufW * framebufH);
 		renderQueue.drawOn(ctx);
+		renderQueue.clear();
 		
 
 		

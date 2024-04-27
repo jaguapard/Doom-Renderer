@@ -27,6 +27,19 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 	this->doRotationAndClipping(ctx);
 	this->doScreenSpaceTransformAndDraw(ctx);
 
+	int myMaxY = 1079;
+	int myMinY = 0;
+
+	int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
+	int myStartIndex = myMinY * ctx.framebufW;
+
+	real* lightPtr = ctx.lightBuffer->begin() + myStartIndex;
+	Color* framebufPtr = ctx.frameBuffer->begin() + myStartIndex;
+	Uint32* wndSurfPtr = reinterpret_cast<Uint32*>(ctx.wndSurf->pixels) + myStartIndex;
+
+	Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
+	Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, *ctx.windowBitShifts);
+
 	/*size_t nThreads = threadpool.getThreadCount();
 	for (size_t i = 0; i < nThreads; ++i)
 	{
@@ -63,7 +76,6 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 {
 	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
 	{
-	loopBegin:
 		std::array<TexVertex, 3> rot;
 		bool vertexOutside[3] = { false };
 		int outsideVertexCount = 0;
@@ -83,12 +95,16 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 					StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
 					std::swap(initialJobs[nRenderJob--], initialJobs.back());
 					initialJobs.pop_back();
-					goto loopBegin; //can't use continue here, it will not skip upper loop iteration
+					
+					break;; //can't use continue here, it will not skip upper loop iteration
 				}
 				vertexOutside[i] = true;
 			}
 			currTriangle.tv[i].spaceCoords = rt;
+			rot[i] = { rt, currTriangle.tv[i].textureCoords };
 		}
+
+		if (outsideVertexCount == 3) continue;
 
 		if (outsideVertexCount == 0) //if all vertices are in front of camera, this triangle doesn't need clipping
 		{
@@ -108,8 +124,8 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			const TexVertex& v1 = rot[v1_ind];
 			const TexVertex& v2 = rot[v2_ind];
 			Triangle newTriangle;
-			TexVertex clipped1 = rot[i].getClipedToPlane(v1);
-			TexVertex clipped2 = rot[i].getClipedToPlane(v2);
+			TexVertex clipped1 = currTriangle.tv[i].getClipedToPlane(v1);
+			TexVertex clipped2 = currTriangle.tv[i].getClipedToPlane(v2);
 
 			currTriangle.tv = { v1,clipped1, v2 };
 			newTriangle.tv = { clipped1, clipped2, v2 };
@@ -126,7 +142,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 
 			currTriangle.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 			currTriangle.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
-			currTriangle.tv[i] = rot[i];
+			//currTriangle.tv[i] = rot[i];
 			continue;
 		}
 	}

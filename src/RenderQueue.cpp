@@ -77,26 +77,31 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 	int64_t indexChange = 0;
 	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size() - indexChange; ++nRenderJob)
 	{
+	loopBegin:
 		std::array<TexVertex, 3> rot;
 		bool vertexOutside[3] = { false };
 		int outsideVertexCount = 0;
+		RenderJob& currJob = initialJobs[nRenderJob];
+		Triangle& currTri = currJob.t;
+
 		for (int i = 0; i < 3; ++i)
 		{
-			Vec3 off = context.ctr->doCamOffset(tv[i].spaceCoords);
-			Vec3 rt = context.ctr->rotate(off);
+			Vec3 off = ctx.ctr->doCamOffset(currTri.tv[i].spaceCoords);
+			Vec3 rt = ctx.ctr->rotate(off);
 
-			if (rt.z > planeZ)
+			if (rt.z > -1)
 			{
 				outsideVertexCount++;
 				if (outsideVertexCount == 3)
 				{
 					StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
-					std::swap(rjtl.jobs[rjtl.currJobIndex--], rjtl.jobs.back());
-					return; //triangle is completely behind the clipping plane, discard
+					std::swap(currJob, initialJobs.back());
+					initialJobs.pop_back();
+					goto loopBegin; //triangle is completely behind the clipping plane, discard
 				}
 				vertexOutside[i] = true;
 			}
-			rot[i] = { rt, tv[i].textureCoords };
+			rot[i] = { rt, currTri.tv[i].textureCoords };
 		}
 
 		if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed

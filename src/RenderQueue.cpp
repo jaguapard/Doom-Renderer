@@ -74,7 +74,8 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 
 void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 {
-	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
+	int64_t indexChange = 0;
+	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size() - indexChange; ++nRenderJob)
 	{
 		std::array<TexVertex, 3> rot;
 		bool vertexOutside[3] = { false };
@@ -96,6 +97,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 					std::swap(initialJobs[nRenderJob--], initialJobs.back());
 					initialJobs.pop_back();
 					
+
 					break;; //can't use continue here, it will not skip upper loop iteration
 				}
 				vertexOutside[i] = true;
@@ -130,6 +132,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			currTriangle.tv = { v1,clipped1, v2 };
 			newTriangle.tv = { clipped1, clipped2, v2 };
 			initialJobs.push_back({ newTriangle, currJob.info });
+			indexChange++; //avoid trying to clip already clipped
 			continue;
 		}
 

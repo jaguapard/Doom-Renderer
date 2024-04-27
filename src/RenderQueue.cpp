@@ -27,21 +27,22 @@ void RenderQueue::addInitialJob(const Triangle& t, int textureIndex, real lightM
 
 void RenderQueue::drawOn(TriangleRenderContext ctx)
 {
-	this->doRotationAndClipping(ctx);
-	this->doScreenSpaceTransformAndDraw(ctx);
+	std::vector<Threadpool::task_id> taskIds;
 
-	int myMaxY = 1079;
-	int myMinY = 0;
+	for (size_t tInd = 0; tInd < threadpool.getThreadCount(); ++tInd)
+	{
+		Threadpool::task_t task = [&, tInd]()
+		{
+			this->doRotationAndClipping(ctx, tInd);
+			this->doScreenSpaceTransformAndDraw(ctx, tInd);
+			this->doScreenBlitting(ctx, tInd);
+		};
+		
+		taskIds.push_back(threadpool.addTask(task));
+	}
 
-	int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
-	int myStartIndex = myMinY * ctx.framebufW;
-
-	real* lightPtr = ctx.lightBuffer->begin() + myStartIndex;
-	Color* framebufPtr = ctx.frameBuffer->begin() + myStartIndex;
-	Uint32* wndSurfPtr = reinterpret_cast<Uint32*>(ctx.wndSurf->pixels) + myStartIndex;
-
-	Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
-	Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, *ctx.windowBitShifts);
+	threadpool.waitForMultipleTasks(taskIds);
+	
 
 	/*size_t nThreads = threadpool.getThreadCount();
 	for (size_t i = 0; i < nThreads; ++i)
@@ -207,4 +208,21 @@ void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx, size
 		flatBottom.drawSlice(ctx, currJob.info, true, zoneMinY, zoneMaxY); //TODO: no, this will not work when we implement MT
 		flatTop.drawSlice(ctx, currJob.info, false, zoneMinY, zoneMaxY);
 	}
+}
+
+void RenderQueue::doScreenBlitting(TriangleRenderContext& ctx, size_t threadIndex)
+{
+	auto zone = threadpool.getLimitsForThread(threadIndex, 0, ctx.framebufH);
+	int myMinY = zone.first;
+	int myMaxY = zone.second;	
+
+	int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
+	int myStartIndex = myMinY * ctx.framebufW;
+
+	real* lightPtr = ctx.lightBuffer->begin() + myStartIndex;
+	Color* framebufPtr = ctx.frameBuffer->begin() + myStartIndex;
+	Uint32* wndSurfPtr = reinterpret_cast<Uint32*>(ctx.wndSurf->pixels) + myStartIndex;
+
+	Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
+	Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, *ctx.windowBitShifts);
 }

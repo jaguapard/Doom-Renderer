@@ -69,7 +69,7 @@ size_t Threadpool::getThreadCount() const
 
 std::pair<double, double> Threadpool::getLimitsForThread(size_t threadIndex, double min, double max, size_t threadCount) const
 {
-	size_t nThreads = threadCount != size_t(-1) ? this->getThreadCount() : threadCount;
+	size_t nThreads = threadCount == std::numeric_limits<size_t>::max() ? this->getThreadCount() : threadCount;
 	double minLimit = lerp(min, max, double(threadIndex) / nThreads);
 	double maxLimit = lerp(min, max, double(threadIndex + 1) / nThreads);
 	return std::make_pair(std::clamp(minLimit, min, max), std::clamp(maxLimit, min, max));

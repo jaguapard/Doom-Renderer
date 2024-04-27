@@ -20,9 +20,10 @@ void RenderQueue::addInitialJob(const Triangle& t, int textureIndex, real lightM
 
 void RenderQueue::drawOn(TriangleRenderContext ctx)
 {
-	this->doTransformations();
+	this->doRotationAndClipping(ctx);
+	this->doScreenSpaceTransformAndDraw(ctx);
 
-	size_t nThreads = threadpool.getThreadCount();
+	/*size_t nThreads = threadpool.getThreadCount();
 	for (size_t i = 0; i < nThreads; ++i)
 	{
 		std::function func = [=, &drawJobs]() {
@@ -51,7 +52,7 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 			Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
 			Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, *ctx.windowBitShifts);
 		};
-	}
+	}*/
 }
 
 void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
@@ -108,7 +109,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 
 			currTriangle.tv = { v1,clipped1, v2 };
 			newTriangle.tv = { clipped1, clipped2, v2 };
-			initialJobs.push_back({ newTriangle, currJob.textureIndex, currJob.lightMult });
+			initialJobs.push_back({ newTriangle, currJob.info });
 			continue;
 		}
 
@@ -124,5 +125,43 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			currTriangle.tv[i] = rot[i];
 			continue;
 		}
+	}
+}
+
+void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx)
+{
+	int zoneMinY = 0; //TODO: testing values, remove!
+	int zoneMaxY = 1079;
+
+	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
+	{
+		RenderJob& currJob = initialJobs[nRenderJob];
+		Triangle& currentTriangle = currJob.t;
+		std::array<TexVertex, 3> fullyTransformed;
+		for (int i = 0; i < 3; ++i)
+		{
+			real zInv = 1.0 / currentTriangle.tv[i].spaceCoords.z;
+			Vec3 zDividedWorld = currentTriangle.tv[i].spaceCoords * zInv;
+			Vec3 zDividedUv = currentTriangle.tv[i].textureCoords * zInv;
+			zDividedUv.z = zInv;
+			fullyTransformed[i] = { ctx.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
+		}
+		if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
+		//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
+		std::sort(fullyTransformed.begin(), fullyTransformed.end());
+
+		real splitAlpha = (fullyTransformed[1].spaceCoords.y - fullyTransformed[0].spaceCoords.y) / (fullyTransformed[2].spaceCoords.y - fullyTransformed[0].spaceCoords.y);
+		TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
+
+		Triangle flatBottom;
+		flatBottom.tv = { fullyTransformed[0], fullyTransformed[1], splitVertex };
+
+		Triangle flatTop;
+		flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
+
+		flatBottom.drawSlice(ctx, currJob.info, true, zoneMinY, zoneMaxY);
+		flatTop.drawSlice(ctx, currJob.info, false, zoneMinY, zoneMaxY);
+		//flatTop.addToRenderQueueFinal(context, false);
+		//flatBottom.addToRenderQueueFinal(context, true);
 	}
 }

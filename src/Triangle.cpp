@@ -56,32 +56,7 @@ std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> re
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 void Triangle::prepareScreenSpace(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const
 {
-	std::array<TexVertex, 3> fullyTransformed;
-	for (int i = 0; i < 3; ++i)
-	{
-		real zInv = 1.0 / tv[i].spaceCoords.z;
-		Vec3 zDividedWorld = tv[i].spaceCoords * zInv;
-		Vec3 zDividedUv = tv[i].textureCoords * zInv;
-		zDividedUv.z = zInv;
-		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
-	}
-	if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
-	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
-	std::sort(fullyTransformed.begin(), fullyTransformed.end());
-
-	real splitAlpha = (fullyTransformed[1].spaceCoords.y - fullyTransformed[0].spaceCoords.y) / (fullyTransformed[2].spaceCoords.y - fullyTransformed[0].spaceCoords.y);
-	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
 	
-	Triangle flatBottom;
-	flatBottom.tv = { fullyTransformed[0], fullyTransformed[1], splitVertex };
-	
-	Triangle flatTop;
-	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };	
-
-	flatBottom.drawSlice(context, rj, true, zoneMinY, zoneMaxY);
-	flatTop.drawSlice(context, rj, false, zoneMinY, zoneMaxY);
-	//flatTop.addToRenderQueueFinal(context, false);
-	//flatBottom.addToRenderQueueFinal(context, true);
 }
 
 /*
@@ -93,7 +68,7 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool 
 //	this->drawSlice()
 //}
 
-void Triangle::drawSlice(const TriangleRenderContext& context, const DrawJob& drawJob, bool flatBottom, int zoneMinY, int zoneMaxY) const
+void Triangle::drawSlice(const TriangleRenderContext& context, const DrawInfo& drawInfo, bool flatBottom, int zoneMinY, int zoneMaxY) const
 {
 	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 	real original_yBeg = y1;
@@ -107,7 +82,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const DrawJob& dr
 
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
 	//const Texture& texture = *context.texture;
-	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
+	const Texture& texture = context.textureManager->getTextureByIndex(drawInfo.textureIndex);
 
 	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
 	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
@@ -150,7 +125,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const DrawJob& dr
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
 			bool notFullyTransparent = texturePixel.a > 0;
 			
-			auto lightMult = renderJob.lightMult;
+			auto lightMult = drawInfo.lightMult;
 			if (context.wireframeEnabled)
 			{
 				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = original_yBeg, oye = original_yEnd;

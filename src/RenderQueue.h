@@ -3,19 +3,20 @@
 #include "Threadpool.h"
 #include "Triangle.h"
 
-struct RenderJob //RenderJob is a struct that holds stuff needed for a specific triangle's render
+struct DrawInfo
 {
-	Triangle t;
+	//Triangle flatTop, flatBottom;
 	int textureIndex;
 	real lightMult;
 };
 
-struct DrawJob
+struct RenderJob //RenderJob is a struct that holds stuff needed for a specific triangle's render
 {
-	Triangle flatTop, flatBottom;
-	int textureIndex;
-	real lightMult;
+	Triangle t;
+	DrawInfo info;
 };
+
+
 
 class RenderQueue
 {
@@ -32,5 +33,5 @@ private:
 
 	void doTransformations(TriangleRenderContext& ctx);
 	void doRotationAndClipping(TriangleRenderContext& ctx);
-	void doScreenSpaceTransform(TriangleRenderContext& ctx);
+	void doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx);
 };

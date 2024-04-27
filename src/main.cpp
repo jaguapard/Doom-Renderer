@@ -99,9 +99,10 @@ void program(int argc, char** argv)
 		{ 0,0,0 }, {0,0,0},
 		{ 0.1,32.1,370 }, {0,0,0}, //default view
 		{-96, 70, 784}, {0,0,0}, //doom 2 map 01 player start
+		{189482, 546.032, 55649.3}, {0, -1.1958, 0.170793},
 	};
 
-	int activeCamPosAndAngle = 2;
+	int activeCamPosAndAngle = 3;
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
@@ -195,20 +196,13 @@ void program(int argc, char** argv)
 
 	while (true)
 	{
-		int threadCount = threadpool.getThreadCount();
-		/*taskIds = {
+		taskIds = {
 			threadpool.addTask([&]() {framebuf.clear(); }),
 			threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
 			threadpool.addTask([&]() {zBuffer.clear(); }),
 			threadpool.addTask([&]() {lightBuf.clear(1); }),
 		};		
-		*/
-
-		framebuf.clear();
-		SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0));
-		zBuffer.clear();
-		lightBuf.clear(1);
-		performanceMonitor.registerFrameBegin();
+		
 
 		Vec3 camAdd = { 0,0,0 };
 		if (!benchmarkMode) //benchmark mode will supress any user input
@@ -359,6 +353,7 @@ void program(int argc, char** argv)
 		ctx.wireframeEnabled = wireframeEnabled;
 		ctx.renderQueue = &renderQueue;
 		
+		threadpool.waitForMultipleTasks(taskIds); //it seems that window really doesn't like to be touched before update is done
 		//this is a stupid fix for everything becoming way too blue in debug mode specifically.
 		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
 		auto* wf = wndSurf->format;
@@ -392,9 +387,7 @@ void program(int argc, char** argv)
 		assert(screenW * screenH == framebufW * framebufH);
 		renderQueue.drawOn(ctx);
 		renderQueue.clear();
-		
-
-		
+				
 		if (fogEnabled)
 		{
 			real* zBuffPixels = zBuffer.getRawPixels();
@@ -440,14 +433,14 @@ void program(int argc, char** argv)
 			//framebuf.saveToFile("screenshots/fullframe.png");
 		}
 
-		//windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
+		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
 			performanceMonitor.registerFrameDone();
 			PerformanceMonitor::OptionalInfo info;
 			info.camPos = camPos;
 			info.camAng = camAng;
 			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, &info); 
-			SDL_UpdateWindowSurface(wnd); 
-		//});
+			if (SDL_UpdateWindowSurface(wnd)) throw std::runtime_error(SDL_GetError()); 
+		});
 	}
 }
 

@@ -32,13 +32,13 @@ void Triangle::sortByAscendingTextureY()
 void Triangle::addToRenderQueue(const TriangleRenderContext& context, int textureIndex, real lightMult) const
 {
 	RenderJob rj;
-	rj.t = this;
+	rj.flatTop = *this;
 	rj.lightMult = lightMult;
 	rj.textureIndex = textureIndex;
 	context.renderJobs->push_back(rj);
 }
 
-void Triangle::startRender(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const
+void Triangle::doTransformations(const TriangleRenderContext& context, RenderJobThreadLocal& rjtl) const
 {
 	std::array<TexVertex,3> rot;
 	bool vertexOutside[3] = { false };
@@ -54,6 +54,7 @@ void Triangle::startRender(const TriangleRenderContext& context, const RenderJob
 			if (outsideVertexCount == 3) 
 			{
 				StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
+				std::swap(rjtl.jobs[rjtl.currJobIndex--], rjtl.jobs.back());
 				return; //triangle is completely behind the clipping plane, discard
 			}
 			vertexOutside[i] = true;			

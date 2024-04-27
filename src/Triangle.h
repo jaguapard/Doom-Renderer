@@ -54,18 +54,18 @@ struct Triangle
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
 
 	void addToRenderQueue(const TriangleRenderContext& context, int textureIndex, real lightMult) const;
-	void startRender(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const;
+	void doTransformations(const TriangleRenderContext& context, RenderJobThreadLocal& rjtl) const;
 private:
-	void prepareScreenSpace(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
+	void doScreenSpaceTransform(const TriangleRenderContext& context, RenderJob& rj, int zoneMinY, int zoneMaxY) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 	void drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, bool flatBottom, int zoneMinY, int zoneMaxY) const;
 	//void addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };
 
-struct RenderJob //RenderJob is a struct that holds stuff needed for a specific triangle's render
+struct RenderJobThreadLocal
 {
-	Triangle flatTop, flatBottom;
-	int textureIndex;
-	real lightMult;
+	std::vector<RenderJob>& jobs;
+	size_t& currJobIndex;
+	int zoneMinY, zoneMaxY;
 };
 
 struct TriangleRenderContext //triangle render context holds info shared by all triangle renders
@@ -79,8 +79,6 @@ struct TriangleRenderContext //triangle render context holds info shared by all 
 
 	int doomSkyTextureMarkerIndex;
 	bool wireframeEnabled = false;
-
-	std::vector<RenderJob>* renderJobs;
 
 	real nearPlaneClippingZ = -1;
 };

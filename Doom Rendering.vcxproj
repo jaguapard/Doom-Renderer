@@ -53,6 +53,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\PolygonTriangulator.cpp" />
+    <ClCompile Include="src\RenderQueue.cpp" />
     <ClCompile Include="src\Sky.cpp" />
     <ClCompile Include="src\Statsman.cpp" />
     <ClCompile Include="src\Texture.cpp" />
@@ -77,6 +78,7 @@
     <ClInclude Include="src\PixelBuffer.h" />
     <ClInclude Include="src\PolygonTriangulator.h" />
     <ClInclude Include="src\real.h" />
+    <ClInclude Include="src\RenderQueue.h" />
     <ClInclude Include="src\Sky.h" />
     <ClInclude Include="src\smart.h" />
     <ClInclude Include="src\Statsman.h" />

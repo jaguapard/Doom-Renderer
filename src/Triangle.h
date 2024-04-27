@@ -24,6 +24,7 @@ struct alignas(32) TexVertex
 	}
 
 	TexVertex getClipedToPlane(const TexVertex& dst) const;
+	void assertNoNans() const;
 };
 
 inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
@@ -53,6 +54,8 @@ struct Triangle
 	void sortByAscendingSpaceZ();
 	void sortByAscendingTextureX();
 	void sortByAscendingTextureY();
+	void assertNoNans() const;
+
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
 
 	void addToRenderQueue(const TriangleRenderContext& context, int textureIndex, real lightMult) const;

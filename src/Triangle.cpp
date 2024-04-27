@@ -30,6 +30,11 @@ void Triangle::sortByAscendingTextureY()
 	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
 }
 
+void Triangle::assertNoNans() const
+{
+	for (const auto& t : tv) t.assertNoNans();
+}
+
 std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> rectPoints)
 {
 	Triangle t[2];
@@ -63,6 +68,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const DrawInfo& d
 	real original_yBeg = y1;
 	real original_yEnd = y3;
 
+	assert(!isnan(y1) && !isnan(y3));
 	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
 	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
 	if (yBeg >= zoneMaxY || yEnd < zoneMinY) return;
@@ -88,6 +94,8 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const DrawInfo& d
 		
 		real original_xBeg = left->spaceCoords.x;
 		real original_xEnd = right->spaceCoords.x;
+		assert(!isnan(original_xBeg));
+		assert(!isnan(original_xEnd));
 		real xBeg = std::clamp<real>(left->spaceCoords.x, 0, context.framebufW);
 		real xEnd = std::clamp<real>(right->spaceCoords.x, 0, context.framebufW);
 		real xSpan = right->spaceCoords.x - left->spaceCoords.x;
@@ -143,4 +151,13 @@ TexVertex TexVertex::getClipedToPlane(const TexVertex& dst) const
 	real alpha = inverse_lerp(spaceCoords.z, dst.spaceCoords.z, planeZ);
 	assert(alpha >= 0 && alpha <= 1);
 	return lerp(*this, dst, alpha);
+}
+
+void TexVertex::assertNoNans() const
+{
+	this->spaceCoords.assert_validX();
+	this->spaceCoords.assert_validY();
+	this->spaceCoords.assert_validZ();
+	this->textureCoords.assert_validX();
+	this->textureCoords.assert_validY();
 }

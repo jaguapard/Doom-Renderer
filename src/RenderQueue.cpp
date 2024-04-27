@@ -20,6 +20,8 @@ void RenderQueue::addInitialJob(const Triangle& t, int textureIndex, real lightM
 	rj.info.textureIndex = textureIndex;
 	rj.info.lightMult = lightMult;
 	initialJobs.emplace_back(rj);
+
+	t.assertNoNans();
 }
 
 void RenderQueue::drawOn(TriangleRenderContext ctx)
@@ -88,6 +90,12 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 		{
 			Vec3 off = ctx.ctr->doCamOffset(currTri.tv[i].spaceCoords);
 			Vec3 rt = ctx.ctr->rotate(off);
+			off.assert_validX();
+			off.assert_validY();
+			off.assert_validZ();
+			rt.assert_validX();
+			rt.assert_validY();
+			rt.assert_validZ();
 
 			if (rt.z > -1)
 			{
@@ -96,12 +104,14 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 				{
 					StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
 					std::swap(currJob, initialJobs.back());
+					nRenderJob--;
 					initialJobs.pop_back();
 					goto loopBegin; //triangle is completely behind the clipping plane, discard
 				}
 				vertexOutside[i] = true;
 			}
 			rot[i] = { rt, currTri.tv[i].textureCoords };
+			rot[i].assertNoNans();
 		}
 
 		if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
@@ -131,6 +141,10 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 
 			currTri = t1;
 			initialJobs.push_back({ t2, currJob.info });
+
+			currTri.assertNoNans();
+			t2.assertNoNans();
+
 			indexChange++; //avoid attempting to clip the same triangle twice
 			continue;
 		}
@@ -142,11 +156,13 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds
 			int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
 
-			Triangle clipped = *this;
+			Triangle clipped = currTri;
 			clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 			clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 			clipped.tv[i] = rot[i];
-			return clipped.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
+			currTri = clipped;
+			currTri.assertNoNans();
+			continue;
 		}
 	}
 }
@@ -169,6 +185,7 @@ void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx)
 			zDividedUv.z = zInv;
 			fullyTransformed[i] = { ctx.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
 		}
+		for (auto& it : fullyTransformed) it.assertNoNans();
 		if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
 		//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 		std::sort(fullyTransformed.begin(), fullyTransformed.end());

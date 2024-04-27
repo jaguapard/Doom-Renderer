@@ -434,14 +434,14 @@ void program(int argc, char** argv)
 			//framebuf.saveToFile("screenshots/fullframe.png");
 		}
 
-		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
+		//windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
 			performanceMonitor.registerFrameDone();
 			PerformanceMonitor::OptionalInfo info;
 			info.camPos = camPos;
 			info.camAng = camAng;
 			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, &info); 
 			SDL_UpdateWindowSurface(wnd); 
-		});
+		//});
 	}
 }
 

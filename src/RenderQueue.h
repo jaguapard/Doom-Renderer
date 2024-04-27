@@ -29,7 +29,7 @@ public:
 private:
 	Threadpool& threadpool;
 	std::vector<RenderJob> initialJobs;
-	std::vector<std::vector<DrawJob>> drawJobs; //each thread gets it's own storage for drawJobs it produces
+	//std::vector<std::vector<DrawJob>> drawJobs; //each thread gets it's own storage for drawJobs it produces
 
 	void doTransformations(TriangleRenderContext& ctx);
 	void doRotationAndClipping(TriangleRenderContext& ctx);

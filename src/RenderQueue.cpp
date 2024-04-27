@@ -4,18 +4,22 @@
 RenderQueue::RenderQueue(Threadpool& pool)
 	:threadpool(pool)
 {
-	drawJobs.resize(threadpool.getThreadCount());
+	//drawJobs.resize(threadpool.getThreadCount());
 }
 
 void RenderQueue::clear()
 {
 	initialJobs.clear();
-	drawJobs.clear();
+	//drawJobs.clear();
 }
 
 void RenderQueue::addInitialJob(const Triangle& t, int textureIndex, real lightMult)
 {
-	initialJobs.emplace_back(t, textureIndex, lightMult);
+	RenderJob rj;
+	rj.t = t;
+	rj.info.textureIndex = textureIndex;
+	rj.info.lightMult = lightMult;
+	initialJobs.emplace_back(rj);
 }
 
 void RenderQueue::drawOn(TriangleRenderContext ctx)

@@ -30,11 +30,6 @@ void Triangle::sortByAscendingTextureY()
 	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
 }
 
-void Triangle::doTransformations(const TriangleRenderContext& context, RenderJobThreadLocal& rjtl) const
-{
-	
-}
-
 std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> rectPoints)
 {
 	Triangle t[2];
@@ -51,12 +46,6 @@ std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> re
 		}
 	}
 	return std::make_pair(t[0], t[1]);
-}
-
-//WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-void Triangle::prepareScreenSpace(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const
-{
-	
 }
 
 /*

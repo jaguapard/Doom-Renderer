@@ -126,15 +126,17 @@ std::optional<std::pair<task_id, Threadpool::task_t>> Threadpool::tryGetTask()
 		if (depIt == dependenciesMap.end() || depIt->second.empty())  //second condition should never occur really
 			return { candidateTask }; //if task has no dependendencies, we can just give it to the worker
 
-		size_t depCount = depIt->second.size();
-		size_t finishedDepCount = 0;
-		for (auto& depTaskId : depIt->second)
+		bool allDepsSatisfied = true;
+		for (auto& depTaskId : depIt->second) //if task has dependencies, check if all of them finished
 		{
-			finishedDepCount += isTaskFinished(depTaskId);
+			if (!isTaskFinished(depTaskId)) //task has unfinished dependecies, continue searching
+			{
+				allDepsSatisfied = false;
+				break;
+			}
 		}
 
-		if (depCount == finishedDepCount) return { candidateTask }; //if the task had dependencies, but they have finished, return
-		//else keep looking
+		if (allDepsSatisfied) return { candidateTask }; //if the task had dependencies, but they have finished, return, else keep looking
 	}
 
 	return {}; //no runnable tasks found, return empty optional

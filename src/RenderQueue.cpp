@@ -34,13 +34,26 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 		Threadpool::task_t task = [&, tInd]()
 		{
 			this->doRotationAndClipping(ctx, tInd);
-			this->doScreenSpaceTransformAndDraw(ctx, tInd);
-			this->doScreenBlitting(ctx, tInd);
+			this->doScreenSpaceTransform(ctx, tInd);
 		};
 		
 		taskIds.push_back(threadpool.addTask(task));
 	}
 
+	threadpool.waitForMultipleTasks(taskIds); //wait until all transformations are done
+	taskIds.clear();
+
+
+	for (size_t tInd = 0; tInd < threadpool.getThreadCount(); ++tInd)
+	{
+		Threadpool::task_t task = [&, tInd]()
+			{
+				this->doDraw(ctx, tInd);
+				this->doScreenBlitting(ctx, tInd);
+			};
+
+		taskIds.push_back(threadpool.addTask(task));
+	}
 	threadpool.waitForMultipleTasks(taskIds);
 	
 
@@ -169,7 +182,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx, size_t threa
 	}
 }
 
-void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx, size_t threadIndex)
+void RenderQueue::doScreenSpaceTransform(TriangleRenderContext& ctx, size_t threadIndex)
 {
 	std::vector<RenderJob>& initialJobs = threadJobs[threadIndex];
 	auto zone = threadpool.getLimitsForThread(threadIndex, 0, ctx.framebufH);
@@ -191,23 +204,45 @@ void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx, size
 			zDividedUv.z = zInv;
 			fullyTransformed[i] = { ctx.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
 		}
+		
 		for (auto& it : fullyTransformed) it.assertNoNans();
-		if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
+		if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y)
+		{
+			currJob.shouldDraw = false; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
+			return;
+		}
+
 		//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 		std::sort(fullyTransformed.begin(), fullyTransformed.end());
-
-		real splitAlpha = (fullyTransformed[1].spaceCoords.y - fullyTransformed[0].spaceCoords.y) / (fullyTransformed[2].spaceCoords.y - fullyTransformed[0].spaceCoords.y);
-		TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
-
-		Triangle flatBottom;
-		flatBottom.tv = { fullyTransformed[0], fullyTransformed[1], splitVertex };
-
-		Triangle flatTop;
-		flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };
-
-		flatBottom.drawSlice(ctx, currJob.info, true, zoneMinY, zoneMaxY); //TODO: no, this will not work when we implement MT
-		flatTop.drawSlice(ctx, currJob.info, false, zoneMinY, zoneMaxY);
+		currentTriangle.tv = fullyTransformed;
 	}
+}
+
+void RenderQueue::doDraw(TriangleRenderContext& ctx, size_t threadIndex)
+{
+	auto zone = threadpool.getLimitsForThread(threadIndex, 0, ctx.framebufH);
+	int zoneMinY = zone.first;
+	int zoneMaxY = zone.second;
+
+	for (auto& currJobBlock : threadJobs)
+	{
+		for (auto& currJob : currJobBlock)
+		{
+			const Triangle& t = currJob.t;
+			real splitAlpha = (t.tv[1].spaceCoords.y - t.tv[0].spaceCoords.y) / (t.tv[2].spaceCoords.y - t.tv[0].spaceCoords.y);
+			TexVertex splitVertex = lerp(t.tv[0], t.tv[2], splitAlpha);
+
+			Triangle flatBottom;
+			flatBottom.tv = { t.tv[0], t.tv[1], splitVertex };
+
+			Triangle flatTop;
+			flatTop = { t.tv[1], splitVertex, t.tv[2] };
+
+			flatBottom.drawSlice(ctx, currJob.info, true, zoneMinY, zoneMaxY);
+			flatTop.drawSlice(ctx, currJob.info, false, zoneMinY, zoneMaxY);
+		}
+	}
+	
 }
 
 void RenderQueue::doScreenBlitting(TriangleRenderContext& ctx, size_t threadIndex)

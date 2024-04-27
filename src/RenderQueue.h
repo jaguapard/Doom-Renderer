@@ -34,6 +34,7 @@ private:
 	//std::vector<std::vector<DrawJob>> drawJobs; //each thread gets it's own storage for drawJobs it produces
 
 	void doRotationAndClipping(TriangleRenderContext& ctx, size_t threadIndex);
-	void doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx, size_t threadIndex);
+	void doScreenSpaceTransform(TriangleRenderContext& ctx, size_t threadIndex);
+	void doDraw(TriangleRenderContext& ctx, size_t threadIndex);
 	void doScreenBlitting(TriangleRenderContext& ctx, size_t threadIndex);
 };

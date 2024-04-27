@@ -10,8 +10,6 @@ RenderQueue::RenderQueue(Threadpool& pool)
 void RenderQueue::clear()
 {
 	initialJobs.clear();
-	processedJobs.clear();
-	//drawJobs.clear();
 }
 
 void RenderQueue::addInitialJob(const Triangle& t, int textureIndex, real lightMult)
@@ -80,7 +78,6 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 	int64_t indexChange = 0;
 	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size()-indexChange; ++nRenderJob)
 	{
-	loopBegin:
 		std::array<TexVertex, 3> rot;
 		bool vertexOutside[3] = { false };
 		int outsideVertexCount = 0;
@@ -104,7 +101,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 				if (outsideVertexCount == 3)
 				{
 					StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
-					//triangle is completely behind the clipping plane, discard. We can't use any swapping techiniques, since end elements may be populated with correct triangles (results from clipping). That's why we just make this job as bad
+					//triangle is completely behind the clipping plane, discard. We can't use any swapping techiniques, since end elements may be populated with correct triangles (results from clipping). That's why we just mark this job as bad
 					currJob.shouldDraw = false;
 					break;
 				}
@@ -115,7 +112,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 		}
 
 		if (outsideVertexCount == 3) continue;
-		if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
+		if (outsideVertexCount == 0) //all vertices are in front of camera, just save results
 		{
 			StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
 			currTri.tv = rot;
@@ -140,13 +137,8 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			t1.tv = { v1,clipped1, v2 };
 			t2.tv = { clipped1, clipped2, v2 };
 
-			//currTri = t1;
-			//currTri = t1;
-			//initialJobs[nRenderJob].t = t1;
-			initialJobs[nRenderJob].t = t1;
+			currTri = t1;
 			initialJobs.push_back({ t2, currJob.info });
-			//processedJobs.push_back({ t1, currJob.info });
-			//processedJobs.push_back({ t2, currJob.info });
 
 			t1.assertNoNans();
 			t2.assertNoNans();
@@ -166,10 +158,8 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 			clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 			clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 			clipped.tv[i] = rot[i];
-			//currTri = clipped;
-			initialJobs[nRenderJob].t = clipped;
+			currTri = clipped;
 			clipped.assertNoNans();
-			//processedJobs.push_back({ clipped, currJob.info });
 			continue;
 		}
 	}
@@ -211,7 +201,5 @@ void RenderQueue::doScreenSpaceTransformAndDraw(TriangleRenderContext& ctx)
 
 		flatBottom.drawSlice(ctx, currJob.info, true, zoneMinY, zoneMaxY); //TODO: no, this will not work when we implement MT
 		flatTop.drawSlice(ctx, currJob.info, false, zoneMinY, zoneMaxY);
-		//flatTop.addToRenderQueueFinal(context, false);
-		//flatBottom.addToRenderQueueFinal(context, true);
 	}
 }

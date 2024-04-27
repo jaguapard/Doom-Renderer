@@ -122,16 +122,17 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx)
 
 			const TexVertex& v1 = rot[v1_ind];
 			const TexVertex& v2 = rot[v2_ind];
-			Triangle t1 = *this, t2 = *this;
+			Triangle t1 = currTri, t2 = currTri;
 			TexVertex clipped1 = rot[i].getClipedToPlane(v1);
 			TexVertex clipped2 = rot[i].getClipedToPlane(v2);
 
 			t1.tv = { v1,clipped1, v2 };
 			t2.tv = { clipped1, clipped2, v2 };
 
-			t1.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
-			t2.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
-			return;
+			currTri = t1;
+			initialJobs.push_back({ t2, currJob.info });
+			indexChange++; //avoid attempting to clip the same triangle twice
+			continue;
 		}
 
 		if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)

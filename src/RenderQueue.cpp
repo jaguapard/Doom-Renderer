@@ -208,8 +208,7 @@ void RenderQueue::doScreenSpaceTransform(TriangleRenderContext& ctx, size_t thre
 		for (auto& it : fullyTransformed) it.assertNoNans();
 		if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y)
 		{
-			currJob.shouldDraw = false; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
-			return;
+			continue; //sadly, this doesn't get caught by drawing loop conditions, since NaN wrecks havok there
 		}
 
 		//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
@@ -228,6 +227,7 @@ void RenderQueue::doDraw(TriangleRenderContext& ctx, size_t threadIndex)
 	{
 		for (auto& currJob : currJobBlock)
 		{
+			if (!currJob.shouldDraw) continue;
 			const Triangle& t = currJob.t;
 			real splitAlpha = (t.tv[1].spaceCoords.y - t.tv[0].spaceCoords.y) / (t.tv[2].spaceCoords.y - t.tv[0].spaceCoords.y);
 			TexVertex splitVertex = lerp(t.tv[0], t.tv[2], splitAlpha);

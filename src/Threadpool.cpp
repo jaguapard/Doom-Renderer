@@ -1,5 +1,6 @@
 #include "Threadpool.h"
 #include <cassert>
+#include "helpers.h"
 
 using task_id = Threadpool::task_id;
 using tast_t = Threadpool::task_t;
@@ -64,6 +65,14 @@ void Threadpool::waitForMultipleTasks(const std::vector<task_id>& taskIds)
 size_t Threadpool::getThreadCount() const
 {
 	return this->threads.size();
+}
+
+std::pair<double, double> Threadpool::getLimitsForThread(size_t threadIndex, double min, double max, size_t threadCount) const
+{
+	size_t nThreads = threadCount != size_t(-1) ? this->getThreadCount() : threadCount;
+	double minLimit = lerp(min, max, double(threadIndex) / nThreads);
+	double maxLimit = lerp(min, max, double(threadIndex + 1) / nThreads);
+	return std::make_pair(std::clamp(minLimit, min, max), std::clamp(maxLimit, min, max));
 }
 
 void Threadpool::workerRoutine(size_t workerNumber)

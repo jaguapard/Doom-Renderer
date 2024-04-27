@@ -26,6 +26,7 @@ public:
 	void waitForMultipleTasks(const std::vector<task_id>& taskIds);
 
 	size_t getThreadCount() const;
+	std::pair<double, double> getLimitsForThread(size_t threadIndex, double min, double max, size_t threadCount = size_t(-1)) const;
 private:
 	std::unordered_map<task_id, task_t> unassignedTasks;
 	std::unordered_map<task_id, std::unordered_set<task_id>> dependenciesMap; //map task ids to a set of task ids that must complete before this one starts

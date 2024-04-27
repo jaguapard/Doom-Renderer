@@ -51,33 +51,30 @@ struct Triangle
 	void sortByAscendingSpaceZ();
 	void sortByAscendingTextureX();
 	void sortByAscendingTextureY();
-
-	void addToRenderQueue(const TriangleRenderContext& context) const;
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
-	void drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const;
+
+	void addToRenderQueue(const TriangleRenderContext& context, int textureIndex, real lightMult) const;
+	void startRender(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const;
 private:
-	void prepareScreenSpace(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	void addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
+	void prepareScreenSpace(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
+	void drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, bool flatBottom, int zoneMinY, int zoneMaxY) const;
+	//void addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };
 
-struct RenderJob
+struct RenderJob //RenderJob is a struct that holds stuff needed for a specific triangle's render
 {
-	Triangle t;
-	bool flatBottom;
+	const Triangle* t;
 	int textureIndex;
 	real lightMult;
 };
 
-struct TriangleRenderContext
+struct TriangleRenderContext //triangle render context holds info shared by all triangle renders
 {
 	PixelBuffer<Color>* frameBuffer;
 	PixelBuffer<real>* lightBuffer;
 	ZBuffer* zBuffer;
 	const CoordinateTransformer* ctr;	
 	const TextureManager* textureManager;
-	const Texture* texture;
-	int textureIndex;
-	real lightMult;
 	real framebufW, framebufH;
 
 	int doomSkyTextureMarkerIndex;

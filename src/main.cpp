@@ -185,10 +185,9 @@ void program(int argc, char** argv)
 	bob::Timer benchmarkTimer;
 	performanceMonitor.reset();
 
-	std::vector<RenderJob> renderJobs;
 	TriangleRenderContext ctx;
-
 	Threadpool threadpool; //auto number of threads
+	std::vector<RenderJob> renderJobs;
 	std::vector<Threadpool::task_id> taskIds;
 	Threadpool::task_id windowUpdateTaskId = 0;
 
@@ -358,8 +357,8 @@ void program(int argc, char** argv)
 			{
 				for (const auto& model : sectorWorldModels[nSector])
 				{
-					ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
-					model.addToRenderQueue(ctx);
+					real lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
+					model.addToRenderQueue(ctx, lightMult);
 				}
 			}
 		}
@@ -402,7 +401,8 @@ void program(int argc, char** argv)
 				for (int i = 0; i < renderJobs.size(); ++i)
 				{
 					const RenderJob& myJob = renderJobs[i];
-					myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
+					//myJob.t->drawSlice(ctx, myJob, myMinY, myMaxY);
+					myJob.t->startRender(ctx, myJob, myMinY, myMaxY);
 				}			
 
 				int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;

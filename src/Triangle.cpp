@@ -29,7 +29,16 @@ void Triangle::sortByAscendingTextureY()
 	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
 }
 
-void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
+void Triangle::addToRenderQueue(const TriangleRenderContext& context, int textureIndex, real lightMult) const
+{
+	RenderJob rj;
+	rj.t = this;
+	rj.lightMult = lightMult;
+	rj.textureIndex = textureIndex;
+	context.renderJobs->push_back(rj);
+}
+
+void Triangle::startRender(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const
 {
 	std::array<TexVertex,3> rot;
 	bool vertexOutside[3] = { false };
@@ -57,7 +66,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
 		Triangle prepped = *this;
 		prepped.tv = rot;
-		return prepped.prepareScreenSpace(context);
+		return prepped.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
 	}
 	
 	auto itBeg = std::begin(vertexOutside);
@@ -78,8 +87,8 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		t1.tv = { v1,clipped1, v2 };
 		t2.tv = { clipped1, clipped2, v2};
 
-		t1.prepareScreenSpace(context);
-		t2.prepareScreenSpace(context);
+		t1.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
+		t2.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
 		return;
 	}
 
@@ -94,7 +103,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
 		clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
 		clipped.tv[i] = rot[i];
-		return clipped.prepareScreenSpace(context);
+		return clipped.prepareScreenSpace(context, rj, zoneMinY, zoneMaxY);
 	}
 }
 
@@ -117,7 +126,7 @@ std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> re
 }
 
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
+void Triangle::prepareScreenSpace(const TriangleRenderContext& context, const RenderJob& rj, int zoneMinY, int zoneMaxY) const
 {
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
@@ -141,26 +150,22 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	Triangle flatTop;
 	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };	
 
-	flatTop.addToRenderQueueFinal(context, false);
-	flatBottom.addToRenderQueueFinal(context, true);
+	flatBottom.drawSlice(context, rj, true, zoneMinY, zoneMaxY);
+	flatTop.drawSlice(context, rj, false, zoneMinY, zoneMaxY);
+	//flatTop.addToRenderQueueFinal(context, false);
+	//flatBottom.addToRenderQueueFinal(context, true);
 }
 
+/*
 void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const
 {
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */
 	//if (yBeg < yEnd)
-	{
-		RenderJob rj;
-		rj.flatBottom = flatBottom;
-		rj.t = *this;
-		rj.lightMult = context.lightMult;
-		rj.textureIndex = context.textureIndex;
-		context.renderJobs->push_back(rj);
-	}
-}
+//	this->drawSlice()
+//}
 
-void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
+void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, bool flatBottom, int zoneMinY, int zoneMaxY) const
 {
 	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 	real original_yBeg = y1;
@@ -175,7 +180,6 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
 	//const Texture& texture = *context.texture;
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
-	bool flatBottom = renderJob.flatBottom;
 
 	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
 	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance

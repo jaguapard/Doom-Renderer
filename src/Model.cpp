@@ -42,7 +42,7 @@ Model::Model(const std::vector<Triangle>& triangles, int textureIndex, TextureMa
 	assert(this->triangles.size() > 0);
 }
 
-void Model::addToRenderQueue(TriangleRenderContext ctx) const
+void Model::addToRenderQueue(TriangleRenderContext ctx, real lightMult) const
 {
 	if (this->textureIndex == ctx.doomSkyTextureMarkerIndex) return; //skip sky textured level geometry
 
@@ -57,9 +57,7 @@ void Model::addToRenderQueue(TriangleRenderContext ctx) const
 	return; //if we got here, it means that all points are outside the screen, so no need to draw this model
 	*/
 	render:
-	ctx.texture = &ctx.textureManager->getTextureByIndex(textureIndex);
-	ctx.textureIndex = textureIndex;
-	for (const auto& it : triangles) it.addToRenderQueue(ctx);
+	for (const auto& it : triangles) it.addToRenderQueue(ctx, textureIndex, lightMult);
 }
 
 int Model::getTriangleCount() const

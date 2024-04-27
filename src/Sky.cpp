@@ -103,6 +103,5 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 
 void Sky::addToRenderQueue(TriangleRenderContext ctx)
 {
-	ctx.lightMult = 1;
-	this->skyModel.addToRenderQueue(ctx);
+	this->skyModel.addToRenderQueue(ctx, 1);
 }

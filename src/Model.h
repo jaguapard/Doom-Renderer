@@ -7,7 +7,7 @@ class Model
 public:
 	Model() = default;
 	Model(const std::vector<Triangle>& triangles, int textureIndex, TextureManager& textureManager);
-	void addToRenderQueue(TriangleRenderContext ctx) const;
+	void addToRenderQueue(TriangleRenderContext ctx, real lightMult) const;
 	int getTriangleCount() const;
 	Vec3 getBoundingBoxMidPoint() const;
 private:

@@ -1,5 +1,6 @@
 #include "Triangle.h"
 #include "Statsman.h"
+#include "RenderQueue.h"
 
 #include <functional>
 constexpr real planeZ = -1;
@@ -166,7 +167,7 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool 
 //	this->drawSlice()
 //}
 
-void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, bool flatBottom, int zoneMinY, int zoneMaxY) const
+void Triangle::drawSlice(const TriangleRenderContext& context, const DrawJob& drawJob, bool flatBottom, int zoneMinY, int zoneMaxY) const
 {
 	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 	real original_yBeg = y1;

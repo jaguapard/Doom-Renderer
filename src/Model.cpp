@@ -2,6 +2,7 @@
 #include <functional>
 #include <numeric>
 #include "Statsman.h"
+#include "RenderQueue.h"
 
 Model::Model(const std::vector<Triangle>& triangles, int textureIndex, TextureManager& textureManager)
 {
@@ -57,7 +58,7 @@ void Model::addToRenderQueue(TriangleRenderContext ctx, real lightMult) const
 	return; //if we got here, it means that all points are outside the screen, so no need to draw this model
 	*/
 	render:
-	for (const auto& it : triangles) it.addToRenderQueue(ctx, textureIndex, lightMult);
+	for (const auto& it : triangles) ctx.renderQueue->addInitialJob(it, textureIndex, lightMult);
 }
 
 int Model::getTriangleCount() const

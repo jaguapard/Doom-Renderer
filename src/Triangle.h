@@ -63,7 +63,7 @@ private:
 
 struct RenderJob //RenderJob is a struct that holds stuff needed for a specific triangle's render
 {
-	const Triangle* t;
+	Triangle flatTop, flatBottom;
 	int textureIndex;
 	real lightMult;
 };

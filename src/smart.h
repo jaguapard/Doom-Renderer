@@ -7,7 +7,7 @@ struct FontDeleter
 {
 	void operator()(TTF_Font* f) 
 	{
-		TTF_CloseFont(f);
+		if (f) TTF_CloseFont(f);
 	}
 };
 
@@ -15,7 +15,7 @@ struct SurfaceDeleter
 {
 	void operator()(SDL_Surface* s) 
 	{
-		SDL_FreeSurface(s);
+		if (s) SDL_FreeSurface(s);
 	}
 };
 

@@ -58,20 +58,7 @@ struct Triangle
 
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
 
-	void addToRenderQueue(const TriangleRenderContext& context, int textureIndex, real lightMult) const;
-	//void doTransformations(const TriangleRenderContext& context, RenderJobThreadLocal& rjtl) const;
 	void drawSlice(const TriangleRenderContext& context, const DrawInfo& drawInfo, bool flatBottom, int zoneMinY, int zoneMaxY) const;
-private:
-	//void doScreenSpaceTransform(const TriangleRenderContext& context, RenderJob& rj, int zoneMinY, int zoneMaxY) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	
-	//void addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
-};
-
-struct RenderJobThreadLocal
-{
-	std::vector<RenderJob>& jobs;
-	size_t& currJobIndex;
-	int zoneMinY, zoneMaxY;
 };
 
 struct TriangleRenderContext //triangle render context holds info shared by all triangle renders

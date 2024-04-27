@@ -53,17 +53,10 @@ std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> re
 	return std::make_pair(t[0], t[1]);
 }
 
-/*
-void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const
+void Triangle::drawSlice(const TriangleRenderContext& context, const DrawInfo& drawInfo, bool flatBottom, int zoneMinY, int zoneMaxY) const
 {
 	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
 	"mixing" (linearly interpolating) between two values. */
-	//if (yBeg < yEnd)
-//	this->drawSlice()
-//}
-
-void Triangle::drawSlice(const TriangleRenderContext& context, const DrawInfo& drawInfo, bool flatBottom, int zoneMinY, int zoneMaxY) const
-{
 	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 	real original_yBeg = y1;
 	real original_yEnd = y3;

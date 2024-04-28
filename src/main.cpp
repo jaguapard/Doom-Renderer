@@ -102,7 +102,7 @@ void program(int argc, char** argv)
 		{189482, 546.032, 55649.3}, {0, -1.1958, 0.170793},
 	};
 
-	int activeCamPosAndAngle = 3;
+	int activeCamPosAndAngle = 2;
 	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
@@ -194,6 +194,16 @@ void program(int argc, char** argv)
 	RenderQueue renderQueue(threadpool);
 	Threadpool::task_id windowUpdateTaskId = 0;
 
+	currentMap = &maps["MAP01"];
+	sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+
+	const Vec3 forward = Vec3(0, 0, -1);
+	const Vec3 right = Vec3(1, 0, 0);
+	const Vec3 up = Vec3(0, 1, 0);
+	real pitch = 0;
+	real yaw = 0;
+	real roll = 0;
+
 	while (true)
 	{
 		taskIds = {
@@ -214,9 +224,9 @@ void program(int argc, char** argv)
 				input.handleEvent(ev);
 				if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
 				{
-					camAng += { 0, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, ev.motion.yrel* camAngAdjustmentSpeed_Mouse};
-
-					camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
+					//camAng += { ev.motion.yrel* camAngAdjustmentSpeed_Mouse, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, 0};
+					yaw += ev.motion.yrel * camAngAdjustmentSpeed_Mouse;
+					pitch -= ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
 				}
 				if (ev.type == SDL_MOUSEWHEEL)
 				{
@@ -251,7 +261,12 @@ void program(int argc, char** argv)
 			if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
 			if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
 			if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
-			if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;			
+			if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
+			if (input.wasCharPressedOnThisFrame('C')) camPos = { -96, 70, 784 };
+			if (input.wasCharPressedOnThisFrame('V')) { pitch = 0, yaw = 0, roll = 0; };
+
+			camAng = Vec3(roll, pitch, yaw);
+			camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
 
 			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 			{
@@ -279,16 +294,25 @@ void program(int argc, char** argv)
 
 			//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 			//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
-			if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
-			if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
+			//if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
+			//if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
+			
 			gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
 			fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
 
-			camAdd = -Vec3({ real(input.isButtonHeld(SDL_SCANCODE_D)), real(input.isButtonHeld(SDL_SCANCODE_X)), real(input.isButtonHeld(SDL_SCANCODE_W)) });
-			camAdd += { real(input.isButtonHeld(SDL_SCANCODE_A)), real(input.isButtonHeld(SDL_SCANCODE_Z)), real(input.isButtonHeld(SDL_SCANCODE_S))};
+			Vec3 newForward = forward * Vec3(cos(camAng.x) * sin(camAng.y), -sin(camAng.x), cos(camAng.x) * cos(camAng.y));
+			Vec3 newRight = right * Vec3(cos(camAng.y), 0, -sin(camAng.y));
+			Vec3 newUp = up; //don't transform up for now
+			camAdd = Vec3(0, 0, 0);
+			camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));
+			camAdd -= newForward * real(input.isButtonHeld(SDL_SCANCODE_S));
+			camAdd += newRight * real(input.isButtonHeld(SDL_SCANCODE_D));
+			camAdd -= newRight * real(input.isButtonHeld(SDL_SCANCODE_A));
+			camAdd -= newUp * real(input.isButtonHeld(SDL_SCANCODE_Z));
+			camAdd += newUp * real(input.isButtonHeld(SDL_SCANCODE_X));
 
-			camAng.x = fmod(camAng.x, M_PI);
-			camAng.y = fmod(camAng.y, 2 * M_PI);
+			//camAng.x = fmod(camAng.x, M_PI);
+			//camAng.y = fmod(camAng.y, 2 * M_PI);
 			//camAng.z = fmod(camAng.z, 2*M_PI);
 		}
 		else
@@ -333,11 +357,19 @@ void program(int argc, char** argv)
 		}
 
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
+		
+		
+
 		if (real l = camAdd.len() > 0)
 		{
-			camAdd /= camAdd.len();
-			camAdd = getRotationMatrix(-camAng) * camAdd;
-			camPos += camAdd * flySpeed;
+			if (real len = camAdd.len() != 0)
+			{
+				camAdd /= camAdd.len();
+			}
+			//camAdd.z *= -cos(camAng.y);
+			//camAdd.x *= -sin(camAng.y) ;
+			//camAdd = getRotationMatrix(-camAng) * camAdd;
+			camPos -= camAdd * flySpeed;
 		}
 
 		ctr.prepare(camPos, transformMatrix);

@@ -55,50 +55,18 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 		taskIds.push_back(threadpool.addTask(task));
 	}
 	threadpool.waitForMultipleTasks(taskIds);
-	
-
-	/*size_t nThreads = threadpool.getThreadCount();
-	for (size_t i = 0; i < nThreads; ++i)
-	{
-		std::function func = [=, &drawJobs]() {
-			//int myMinY, myMaxY;
-			int myThreadNum = i;
-			auto limits = threadpool.getLimitsForThread(myThreadNum, 0, ctx.framebufH);
-			
-			int myMinY = limits.first;
-			int myMaxY = limits.second;
-			//if (myThreadNum == threadCount - 1) myMaxY = ctx.framebufH - 1; //avoid going out of bounds
-
-			for (size_t i = 0; i < drawJobs[myThreadNum].size(); ++i)
-			{
-				const DrawJob& myJob = drawJobs[myThreadNum][i];
-				myJob.flatBottom.drawSlice(ctx, myJob, myMinY, myMaxY);
-				//myJob.t->startRender(ctx, myJob, myMinY, myMaxY);
-			}
-
-			int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
-			int myStartIndex = myMinY * ctx.framebufW;
-
-			real* lightPtr = ctx.lightBuffer->begin() + myStartIndex;
-			Color* framebufPtr = ctx.frameBuffer->begin() + myStartIndex;
-			Uint32* wndSurfPtr = reinterpret_cast<Uint32*>(ctx.wndSurf->pixels) + myStartIndex;
-
-			Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
-			Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, *ctx.windowBitShifts);
-		};
-	}*/
 }
 
 void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx, size_t threadIndex)
 {
-	std::vector<RenderJob>& initialJobs = threadJobs[threadIndex];
+	std::vector<RenderJob>& myJobs = threadJobs[threadIndex];
 	int64_t indexChange = 0;
-	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size()-indexChange; ++nRenderJob)
+	for (size_t nRenderJob = 0; nRenderJob < myJobs.size()-indexChange; ++nRenderJob)
 	{
 		std::array<TexVertex, 3> rot;
 		bool vertexOutside[3] = { false };
 		int outsideVertexCount = 0;
-		RenderJob& currJob = initialJobs[nRenderJob];
+		RenderJob& currJob = myJobs[nRenderJob];
 		Triangle& currTri = currJob.t;
 
 		for (int i = 0; i < 3; ++i)
@@ -155,7 +123,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx, size_t threa
 			t2.tv = { clipped1, clipped2, v2 };
 
 			currTri = t1;
-			initialJobs.push_back({ .t = t2, .info = currJob.info });
+			myJobs.push_back({ .t = t2, .info = currJob.info });
 
 			t1.assertNoNans();
 			t2.assertNoNans();
@@ -184,14 +152,14 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx, size_t threa
 
 void RenderQueue::doScreenSpaceTransform(TriangleRenderContext& ctx, size_t threadIndex)
 {
-	std::vector<RenderJob>& initialJobs = threadJobs[threadIndex];
+	std::vector<RenderJob>& myJobs = threadJobs[threadIndex];
 	auto zone = threadpool.getLimitsForThread(threadIndex, 0, ctx.framebufH);
 	int zoneMinY = zone.first;
 	int zoneMaxY = zone.second;
 
-	for (size_t nRenderJob = 0; nRenderJob < initialJobs.size(); ++nRenderJob)
+	for (size_t nRenderJob = 0; nRenderJob < myJobs.size(); ++nRenderJob)
 	{
-		RenderJob& currJob = initialJobs[nRenderJob];
+		RenderJob& currJob = myJobs[nRenderJob];
 		if (!currJob.shouldDraw) continue;
 
 		Triangle& currentTriangle = currJob.t;

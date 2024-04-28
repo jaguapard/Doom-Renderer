@@ -197,7 +197,7 @@ void program(int argc, char** argv)
 	while (true)
 	{
 		taskIds = {
-			threadpool.addTask([&]() {framebuf.clear(); }),
+			threadpool.addTask([&]() {framebuf.clear(); }), //we can safely clean all the buffers immediately after copy to surface, since final output is stored in SDL
 			threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
 			threadpool.addTask([&]() {zBuffer.clear(); }),
 			threadpool.addTask([&]() {lightBuf.clear(1); }),
@@ -353,7 +353,7 @@ void program(int argc, char** argv)
 		ctx.wireframeEnabled = wireframeEnabled;
 		ctx.renderQueue = &renderQueue;
 		
-		threadpool.waitForMultipleTasks(taskIds); //it seems that window really doesn't like to be touched before update is done
+		threadpool.waitForMultipleTasks(taskIds); //it seems that window really doesn't like to be touched before update is done, even just asking for shifts breaks stuff. That's why we wait here
 		//this is a stupid fix for everything becoming way too blue in debug mode specifically.
 		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
 		auto* wf = wndSurf->format;

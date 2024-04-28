@@ -155,7 +155,7 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx, size_t threa
 			t2.tv = { clipped1, clipped2, v2 };
 
 			currTri = t1;
-			initialJobs.push_back({ t2, currJob.info });
+			initialJobs.push_back({ .t = t2, .info = currJob.info });
 
 			t1.assertNoNans();
 			t2.assertNoNans();

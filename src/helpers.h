@@ -16,6 +16,7 @@ inline T lerp(const T& start, const T& end, real amount)
 	return start + (end - start) * amount;
 }
 
+/*
 #ifdef __AVX__
 inline Vec3 lerp(const Vec3& start, const Vec3& end, real amount)
 {
@@ -29,6 +30,7 @@ inline Vec3 lerp(const Vec3& start, const Vec3& end, real amount)
 	return *reinterpret_cast<Vec3*>(&res);
 }
 #endif
+*/
 
 inline real inverse_lerp(real from, real to, real value)
 {

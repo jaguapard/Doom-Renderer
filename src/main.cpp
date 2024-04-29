@@ -347,10 +347,10 @@ void program(int argc, char** argv)
 		camAng.y = fmod(camAng.y, 2 * M_PI);
 		camAng.z = fmod(camAng.z, 2 * M_PI);
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
-		Matrix3 controlsTransform = getRotationMatrix({ camAng.x, -camAng.y, camAng.z });
+		Matrix3 controlsTransform = getRotationMatrix({ camAng.x, camAng.y, camAng.z });
 		
 		Vec3 newForward = Vec3(-controlsTransform.elements[0][2], -controlsTransform.elements[1][2], -controlsTransform.elements[2][2]);
-		Vec3 newRight = Vec3(controlsTransform.elements[0][0], controlsTransform.elements[1][0], controlsTransform.elements[2][0]);
+		Vec3 newRight = Vec3(-controlsTransform.elements[0][0], -controlsTransform.elements[1][0], -controlsTransform.elements[2][0]);
 		Vec3 newUp = up; //don't transform up for now
 		camAdd = Vec3(0, 0, 0);
 		camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));
@@ -367,9 +367,9 @@ void program(int argc, char** argv)
 			{
 				camAdd /= camAdd.len();
 			}
-			camAdd.z = -camAdd.z;
-			camAdd.y = -camAdd.y;
-			camPos -= camAdd * flySpeed;
+			//camAdd.z = -camAdd.z;
+			//camAdd.y = -camAdd.y;
+			camPos += camAdd * flySpeed;
 		}
 
 		ctr.prepare(camPos, transformMatrix);

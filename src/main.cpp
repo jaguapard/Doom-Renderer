@@ -194,15 +194,15 @@ void program(int argc, char** argv)
 	RenderQueue renderQueue(threadpool);
 	Threadpool::task_id windowUpdateTaskId = 0;
 
-	currentMap = &maps["MAP01"];
-	sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+	if (!benchmarkMode)
+	{
+		currentMap = &maps["MAP01"];
+		sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+	}
 
 	const Vec3 forward = Vec3(0, 0, -1);
 	const Vec3 right = Vec3(1, 0, 0);
 	const Vec3 up = Vec3(0, 1, 0);
-	real pitch = 0;
-	real yaw = 0;
-	real roll = 0;
 
 	while (true)
 	{
@@ -225,8 +225,8 @@ void program(int argc, char** argv)
 				if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
 				{
 					//camAng += { ev.motion.yrel* camAngAdjustmentSpeed_Mouse, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, 0};
-					yaw += ev.motion.yrel * camAngAdjustmentSpeed_Mouse;
-					pitch -= ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
+					camAng.y -= ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
+					camAng.z += ev.motion.yrel * camAngAdjustmentSpeed_Mouse;					
 				}
 				if (ev.type == SDL_MOUSEWHEEL)
 				{
@@ -263,10 +263,9 @@ void program(int argc, char** argv)
 			if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
 			if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
 			if (input.wasCharPressedOnThisFrame('C')) camPos = { -96, 70, 784 };
-			if (input.wasCharPressedOnThisFrame('V')) { pitch = 0, yaw = 0, roll = 0; };
+			if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };
 
-			camAng = Vec3(roll, pitch, yaw);
-			camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
+			
 
 			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 			{
@@ -341,7 +340,7 @@ void program(int argc, char** argv)
 
 		camAng.x = fmod(camAng.x, M_PI);
 		camAng.y = fmod(camAng.y, 2 * M_PI);
-		camAng.z = fmod(camAng.z, 2 * M_PI);
+		camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
 		
 		//don't touch this arcanery - it somehow works
@@ -353,8 +352,8 @@ void program(int argc, char** argv)
 		camAdd -= newForward * real(input.isButtonHeld(SDL_SCANCODE_S));
 		camAdd += newRight * real(input.isButtonHeld(SDL_SCANCODE_D));
 		camAdd -= newRight * real(input.isButtonHeld(SDL_SCANCODE_A));
-		camAdd -= newUp * real(input.isButtonHeld(SDL_SCANCODE_Z));
-		camAdd += newUp * real(input.isButtonHeld(SDL_SCANCODE_X));
+		camAdd += newUp * real(input.isButtonHeld(SDL_SCANCODE_Z));
+		camAdd -= newUp * real(input.isButtonHeld(SDL_SCANCODE_X));
 		
 		if (real len = camAdd.len() > 0)
 		{

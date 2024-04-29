@@ -294,13 +294,9 @@ void program(int argc, char** argv)
 
 			//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 			//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
-			//if (input.isButtonHeld(SDL_SCANCODE_C)) camPos = { 0.1,32.1,370 };
-			//if (input.isButtonHeld(SDL_SCANCODE_V)) camAng = { 0,0,0 };
 			
 			gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
-			fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
-
-			
+			fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));			
 		}
 		else
 		{
@@ -347,10 +343,10 @@ void program(int argc, char** argv)
 		camAng.y = fmod(camAng.y, 2 * M_PI);
 		camAng.z = fmod(camAng.z, 2 * M_PI);
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
-		Matrix3 controlsTransform = getRotationMatrix({ camAng.x, camAng.y, camAng.z });
 		
-		Vec3 newForward = Vec3(-controlsTransform.elements[0][2], -controlsTransform.elements[1][2], -controlsTransform.elements[2][2]);
-		Vec3 newRight = Vec3(-controlsTransform.elements[0][0], -controlsTransform.elements[1][0], -controlsTransform.elements[2][0]);
+		//don't touch this arcanery - it somehow works
+		Vec3 newForward = Vec3(-transformMatrix.elements[0][2], -transformMatrix.elements[1][2], -transformMatrix.elements[2][2]);
+		Vec3 newRight =   Vec3(-transformMatrix.elements[0][0], -transformMatrix.elements[1][0], -transformMatrix.elements[2][0]);
 		Vec3 newUp = up; //don't transform up for now
 		camAdd = Vec3(0, 0, 0);
 		camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));
@@ -360,15 +356,9 @@ void program(int argc, char** argv)
 		camAdd -= newUp * real(input.isButtonHeld(SDL_SCANCODE_Z));
 		camAdd += newUp * real(input.isButtonHeld(SDL_SCANCODE_X));
 		
-
-		if (real l = camAdd.len() > 0)
+		if (real len = camAdd.len() > 0)
 		{
-			if (real len = camAdd.len() != 0)
-			{
-				camAdd /= camAdd.len();
-			}
-			//camAdd.z = -camAdd.z;
-			//camAdd.y = -camAdd.y;
+			camAdd /= len;
 			camPos += camAdd * flySpeed;
 		}
 
@@ -462,7 +452,7 @@ void program(int argc, char** argv)
 
 		if (!benchmarkMode && input.wasCharPressedOnThisFrame('U'))
 		{
-			//framebuf.saveToFile("screenshots/fullframe.png");
+			framebuf.saveToFile("screenshots/fullframe.png");
 		}
 
 		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {

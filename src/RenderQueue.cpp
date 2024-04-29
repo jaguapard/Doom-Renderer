@@ -73,12 +73,14 @@ void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx, size_t threa
 		{
 			Vec3 off = ctx.ctr->doCamOffset(currTri.tv[i].spaceCoords);
 			Vec3 rt = ctx.ctr->rotate(off);
-			off.assert_validX();
-			off.assert_validY();
-			off.assert_validZ();
-			rt.assert_validX();
-			rt.assert_validY();
-			rt.assert_validZ();
+			{
+				off.assert_validX();
+				off.assert_validY();
+				off.assert_validZ();
+				rt.assert_validX();
+				rt.assert_validY();
+				rt.assert_validZ();
+			}
 
 			if (rt.z > -1)
 			{

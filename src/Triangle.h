@@ -45,7 +45,7 @@ struct RenderJob;
 struct DrawInfo;
 struct RenderQueue;
 
-struct Triangle
+struct alignas(32) Triangle
 {
 	std::array<TexVertex, 3> tv;
 

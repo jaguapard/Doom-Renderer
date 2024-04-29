@@ -206,6 +206,7 @@ void program(int argc, char** argv)
 
 	while (true)
 	{
+		threadpool.waitUntilTaskCompletes(windowUpdateTaskId);
 		taskIds = {
 			threadpool.addTask([&]() {framebuf.clear(); }), //we can safely clean all the buffers immediately after copy to surface, since final output is stored in SDL
 			threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
@@ -392,6 +393,7 @@ void program(int argc, char** argv)
 		ctx.wndSurf = wndSurf;
 		ctx.windowBitShifts = &shifts;
 
+		renderQueue.clear();
 		if (currentMap)
 		{			
 			for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
@@ -406,9 +408,11 @@ void program(int argc, char** argv)
 		if (skyRenderingMode == SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 		
 		assert(screenW * screenH == framebufW * framebufH);
-		renderQueue.drawOn(ctx);
-		renderQueue.clear();
-				
+		auto drawingTasks = renderQueue.drawOn(ctx, taskIds);
+		
+		/*
+		TODO: this effects must be rewritten/moved to render queue
+		
 		if (fogEnabled)
 		{
 			real* zBuffPixels = zBuffer.getRawPixels();
@@ -453,6 +457,7 @@ void program(int argc, char** argv)
 		{
 			framebuf.saveToFile("screenshots/fullframe.png");
 		}
+		*/
 
 		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
 			performanceMonitor.registerFrameDone();
@@ -461,7 +466,7 @@ void program(int argc, char** argv)
 			info.camAng = camAng;
 			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, &info); 
 			if (SDL_UpdateWindowSurface(wnd)) throw std::runtime_error(SDL_GetError()); 
-		});
+		}, drawingTasks);
 	}
 }
 

@@ -26,7 +26,7 @@ public:
 	void clear();
 	void addInitialJob(const Triangle& t, int textureIndex, real lightMult);
 
-	void drawOn(TriangleRenderContext ctx);
+	std::vector<Threadpool::task_id> drawOn(TriangleRenderContext ctx, std::vector<Threadpool::task_id> dependencies);
 private:
 	Threadpool& threadpool;
 	std::vector<std::vector<RenderJob>> threadJobs;

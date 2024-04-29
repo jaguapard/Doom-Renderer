@@ -25,10 +25,9 @@ void RenderQueue::addInitialJob(const Triangle& t, int textureIndex, real lightM
 	t.assertNoNans();
 }
 
-void RenderQueue::drawOn(TriangleRenderContext ctx)
+std::vector<Threadpool::task_id> RenderQueue::drawOn(TriangleRenderContext ctx, std::vector<Threadpool::task_id> dependencies)
 {
-	std::vector<Threadpool::task_id> taskIds;
-
+	std::vector<Threadpool::task_id> transformationsTasks, drawingTasks;
 	for (size_t tInd = 0; tInd < threadpool.getThreadCount(); ++tInd)
 	{
 		Threadpool::task_t task = [&, tInd]()
@@ -37,12 +36,8 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 			this->doScreenSpaceTransform(ctx, tInd);
 		};
 		
-		taskIds.push_back(threadpool.addTask(task));
+		transformationsTasks.push_back(threadpool.addTask(task, dependencies));
 	}
-
-	threadpool.waitForMultipleTasks(taskIds); //wait until all transformations are done
-	taskIds.clear();
-
 
 	for (size_t tInd = 0; tInd < threadpool.getThreadCount(); ++tInd)
 	{
@@ -52,9 +47,10 @@ void RenderQueue::drawOn(TriangleRenderContext ctx)
 				this->doScreenBlitting(ctx, tInd);
 			};
 
-		taskIds.push_back(threadpool.addTask(task));
+		drawingTasks.push_back(threadpool.addTask(task, { transformationsTasks[tInd] }));
 	}
-	threadpool.waitForMultipleTasks(taskIds);
+
+	return drawingTasks;
 }
 
 void RenderQueue::doRotationAndClipping(TriangleRenderContext& ctx, size_t threadIndex)

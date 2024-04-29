@@ -300,20 +300,7 @@ void program(int argc, char** argv)
 			gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
 			fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
 
-			Vec3 newForward = forward * Vec3(cos(camAng.x) * sin(camAng.y), -sin(camAng.x), cos(camAng.x) * cos(camAng.y));
-			Vec3 newRight = right * Vec3(cos(camAng.y), 0, -sin(camAng.y));
-			Vec3 newUp = up; //don't transform up for now
-			camAdd = Vec3(0, 0, 0);
-			camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));
-			camAdd -= newForward * real(input.isButtonHeld(SDL_SCANCODE_S));
-			camAdd += newRight * real(input.isButtonHeld(SDL_SCANCODE_D));
-			camAdd -= newRight * real(input.isButtonHeld(SDL_SCANCODE_A));
-			camAdd -= newUp * real(input.isButtonHeld(SDL_SCANCODE_Z));
-			camAdd += newUp * real(input.isButtonHeld(SDL_SCANCODE_X));
-
-			//camAng.x = fmod(camAng.x, M_PI);
-			//camAng.y = fmod(camAng.y, 2 * M_PI);
-			//camAng.z = fmod(camAng.z, 2*M_PI);
+			
 		}
 		else
 		{
@@ -356,8 +343,25 @@ void program(int argc, char** argv)
 			}
 		}
 
+		camAng.x = fmod(camAng.x, M_PI);
+		camAng.y = fmod(camAng.y, 2 * M_PI);
+		camAng.z = fmod(camAng.z, 2 * M_PI);
 		Matrix3 transformMatrix = getRotationMatrix(camAng);
+		Matrix3 controlsTransform = getRotationMatrix({ camAng.x, camAng.y, -camAng.z });
 		
+		/*/Vec3 newForward = forward * Vec3(cos(pitch) * sin(roll), -sin(pitch), cos(pitch) * cos(roll));
+			Vec3 newRight = right * Vec3(cos(roll), 0, -sin(roll));*/
+		Vec3 newForward = controlsTransform * forward;
+		Vec3 newRight = controlsTransform * right;
+		Vec3 newUp = up; //don't transform up for now
+		camAdd = Vec3(0, 0, 0);
+		camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));
+		camAdd -= newForward * real(input.isButtonHeld(SDL_SCANCODE_S));
+		camAdd += newRight * real(input.isButtonHeld(SDL_SCANCODE_D));
+		camAdd -= newRight * real(input.isButtonHeld(SDL_SCANCODE_A));
+		camAdd -= newUp * real(input.isButtonHeld(SDL_SCANCODE_Z));
+		camAdd += newUp * real(input.isButtonHeld(SDL_SCANCODE_X));
+
 		
 
 		if (real l = camAdd.len() > 0)
@@ -369,6 +373,9 @@ void program(int argc, char** argv)
 			//camAdd.z *= -cos(camAng.y);
 			//camAdd.x *= -sin(camAng.y) ;
 			//camAdd = getRotationMatrix(-camAng) * camAdd;
+			//camAdd.x = -camAdd.x;
+			camAdd.z = -camAdd.z;
+			camAdd.y = -camAdd.y;
 			camPos -= camAdd * flySpeed;
 		}
 

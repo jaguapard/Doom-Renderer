@@ -33,7 +33,7 @@ private:
 
 	std::recursive_mutex taskListMutex;
 	std::vector<std::thread> threads;
-	std::atomic<task_id> lastFreeTaskId = 0;
+	std::atomic<task_id> lastFreeTaskId = 1;
 
 	std::condition_variable cv;
 	std::mutex cv_mtx;

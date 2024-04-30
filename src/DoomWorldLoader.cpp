@@ -2,6 +2,7 @@
 #include "DoomStructs.h"
 #include "TextureManager.h"
 #include "helpers.h"
+#include "PolygonTriangulator.h"
 
 #include <iostream>
 
@@ -20,6 +21,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 	{
 		Vertex sv = vertices[linedef.startVertex];
 		Vertex ev = vertices[linedef.endVertex];
+		//if ((linedef.startVertex == 124 && linedef.endVertex == 128) || (linedef.startVertex == 128 && linedef.endVertex == 124)) __debugbreak();
 
 		std::array<Vec3, 6> linedef3dVerts;
 		linedef3dVerts[0] = { real(sv.x), 0, real(sv.y) }; //quads originated by a linedef will always only differ in height
@@ -44,6 +46,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 			sectorLinedefs[nSector].push_back(linedef); //make a list of sector's linedefs for further floor and ceiling creation
 
 			SectorInfo sectorInfo;
+			sectorInfo.sidedefNumber = nSidedef;
 			sectorInfo.floorHeight = sector.floorHeight;
 			sectorInfo.ceilingHeight = sector.ceilingHeight;
 			sectorInfo.sectorNumber = nSector;
@@ -59,9 +62,18 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 		}
 
 		std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.floorHeight < si2.floorHeight; });
-		for (const auto& si : linedefSectors) //first add middle sections of walls 
+		//middle section of the wall is a section between higher floor and lower ceiling
 		{
-			auto model = getTrianglesForSectorWallQuads(si.floorHeight, si.ceilingHeight, linedef3dVerts, si, si.middleTexture, textureManager);
+			int higherFloor = linedefSectors[0].floorHeight;
+			int lowerCeiling = linedefSectors[0].ceilingHeight;
+			if (linedefSectors.size() > 1)
+			{
+				higherFloor = std::max(higherFloor, linedefSectors[1].floorHeight);
+				lowerCeiling = std::min(lowerCeiling, linedefSectors[1].ceilingHeight);
+			}
+	
+			const auto& si = linedefSectors[0];
+			auto model = getTrianglesForSectorWallQuads(higherFloor, lowerCeiling, linedef3dVerts, si, si.middleTexture, textureManager);
 			auto& target = sectorModels[si.sectorNumber];
 			target.push_back(model);
 		}
@@ -72,7 +84,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto model = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
+				auto model = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
 				auto& target = sectorModels[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.push_back(model);
 			}
@@ -82,7 +94,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be real sided
+				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
 				auto& target = sectorModels[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.push_back(model);
 			}
@@ -146,7 +158,6 @@ struct XRange
 {
 	int y, minX, maxX; //[minX, maxX)
 };
-#include "PolygonTriangulator.h"
 
 /*returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 DOOM doesn't really give us too many constraints with it's sector shape, so good algorithms like ear clipping may fail (and I'm too lazy to write it anyway) 

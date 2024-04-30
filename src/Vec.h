@@ -2,7 +2,7 @@
 #include <bob/Vec2.h>
 #include <bob/Vec3.h>
 #include "real.h"
-#include "D:\Dropbox\C++\Projects\Bag O' Bicycles\Bag O' Bicycles\SSE_Vec4.h"
+#include <bob\SSE_Vec4.h>
 
 typedef bob::_Vec2<int> Vei2;
 typedef bob::_Vec2<real> Vec2;

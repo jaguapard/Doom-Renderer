@@ -203,6 +203,15 @@ int PolygonBitmap::getMinY() const
 	return polygonMinY;
 }
 
+//returns 1 if 
+int whichVertexLinesShare(const Line& line1, const Line& line2)
+{
+	if (line1.first == line2.first ||
+		line1.first == line2.second) return 1;
+	if (line1.second == line2.first ||
+		line1.second == line2.second) return 2;
+	return -1;
+}
 std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLines)
 {
 	std::vector<Ved2> ret;
@@ -221,32 +230,33 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 
 		std::deque<Line>& currContour = contours.back();
 		std::unordered_set<int> toStay;
-		for (int i = 0; i < polygonLines.size(); ++i)
-		{
-			const int oldContourSize = currContour.size();
-			const Line& currLine = polygonLines[i];
-			if (currLine.first == currContour.back().second) currContour.push_back(currLine); //if current line starts at the tail of current contour, then add it to the back
-			else if (currLine.second == currContour.front().first) currContour.push_front(currLine); //if current line ends at the head of current contour, then add it to the front
-			else
+
+		int preGrowContourSize;
+		do {
+			preGrowContourSize = currContour.size();
+			for (int i = 0; i < polygonLines.size(); ++i)
 			{
-				const Line flippedLine = { currLine.second, currLine.first };
-				if (currLine.second == currContour.back().second) currContour.push_back(flippedLine); //if current line ends at current countour's end, then flip it's direction and add to the back
-				else if (currLine.first == currContour.front().first) currContour.push_front(flippedLine);
+				const int oldContourSize = currContour.size();
+				const Line& currLine = polygonLines[i];
+
+				const Line& head = currContour.front();
+				const Line& tail = currContour.back();
+
+				if (currLine.first == tail.second) currContour.push_back(currLine); //if current line starts at the tail of current contour, then add it to the back
+				else if (currLine.second == head.first) currContour.push_front(currLine);
+
+				assert(currContour.size() >= oldContourSize);
+				assert(currContour.size() - oldContourSize <= 1); //no more than 1 add should be done per iteration
+				if (currContour.size() != oldContourSize)
+				{
+					polygonLines[i--] = std::move(polygonLines.back());
+					polygonLines.pop_back();
+				}
 			}
-			
-			//if (currContour.size() == oldContourSize) toStay.insert(i); //if during all that checks no lines were added, then allow this line to pass to other iterations (it belongs to other coutour)
-			//if (currContour.size() != oldContourSize) polygonLines.erase(polygonLines.begin() + i--); //perhaps, order preservation is n
-			assert(currContour.size() >= oldContourSize);
-			assert(currContour.size() - oldContourSize <= 1); //no more than 1 add should be done per iteration
-			if (currContour.size() != oldContourSize)
-			{
-				polygonLines[i--] = std::move(polygonLines.back());
-				polygonLines.pop_back();
-			}
-		}
+		} while (currContour.size() > preGrowContourSize);
 	}
 
-
+	/*
 	//fan triangulation works only for convex polygons. TODO: split the original polygon into convex ones with no holes
 	for (int i = 1; i < polygonLines.size(); ++i)
 	{
@@ -257,7 +267,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 
 	ret.push_back(polygonLines[0].first);
 	ret.push_back(polygonLines[0].second);
-	ret.push_back(polygonLines[1].first);
+	ret.push_back(polygonLines[1].first);*/
 
 	return ret;
 }

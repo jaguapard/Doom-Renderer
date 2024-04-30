@@ -207,39 +207,19 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 {
 	std::vector<Ved2> ret;
 	if (polygonLines.size() == 0) return ret;
+	if (polygonLines.size() < 3) throw std::runtime_error("Sector triangulation attempted with less than 3 lines!");
 
-	std::vector<Ved2> originalVerts;
-	std::set<Ved2> vertsFilter;
-	for (auto& [v1, v2] : polygonLines) //make a list of unique vertices
+	//fan triangulation works only for convex polygons. TODO: split the original polygon into convex ones with no holes
+	for (int i = 1; i < polygonLines.size(); ++i)
 	{
-		originalVerts.push_back(v1);
-		originalVerts.push_back(v2);
+		ret.push_back(polygonLines[0].first); //fan vertex
+		ret.push_back(polygonLines[i].first);
+		ret.push_back(polygonLines[i].second);
 	}
 
-	std::vector<Ved2> uniqueVerts;
-	for (int i = 0; i < originalVerts.size(); ++i)
-	{
-		if (vertsFilter.find(originalVerts[i]) == vertsFilter.end())
-		{
-			vertsFilter.insert(originalVerts[i]);
-			uniqueVerts.push_back(originalVerts[i]);
-		}
-	}
-
-	if (uniqueVerts.size() < 3) throw std::runtime_error("Sector triangulator attempted to triangulate with less than 3 vertices");
-	uniqueVerts = originalVerts;
-
-	//fan triangulation works only for convex polygons. TODO: split the original polygon into convex ones. We don't care about holes, since they will be covered by other sector's walls. Also, tree sorting may fuck stuff up. 
-	Ved2 fanVertex = uniqueVerts[0];
-	Ved2 second = uniqueVerts[1];
-	Ved2 third = uniqueVerts[2];
-
-	for (int i = 2; i < uniqueVerts.size(); ++i)
-	{
-		ret.push_back(uniqueVerts[0]); //fan vertex
-		ret.push_back(uniqueVerts[i - 1]);
-		ret.push_back(uniqueVerts[i]);
-	}
+	ret.push_back(polygonLines[0].first);
+	ret.push_back(polygonLines[0].second);
+	ret.push_back(polygonLines[1].first);
 
 	return ret;
 }

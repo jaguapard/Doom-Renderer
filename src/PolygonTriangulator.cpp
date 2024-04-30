@@ -5,6 +5,8 @@
 #include "PolygonTriangulator.h"
 #include "Color.h"
 #include <functional>
+#include <set>
+#include <unordered_set>
 
 double scalarCross2d(Ved2 a, Ved2 b)
 {
@@ -203,93 +205,42 @@ int PolygonBitmap::getMinY() const
 
 std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLines)
 {
-	auto bitmap = PolygonBitmap::makeFrom(polygonLines);
-	static int nSector = 0;
-	bitmap.saveTo("sectors_debug/" + std::to_string(nSector) + "_a_initial.png");
-
 	std::vector<Ved2> ret;
-	while (true)
+	if (polygonLines.size() == 0) return ret;
+
+	std::vector<Ved2> originalVerts;
+	std::set<Ved2> vertsFilter;
+	for (auto& [v1, v2] : polygonLines) //make a list of unique vertices
 	{
-		int slopedLineCount = 0;
-		for (auto& it : polygonLines)
-		{
-			slopedLineCount += it.first.x != it.second.x && it.first.y != it.second.y;
-		}
-		if (slopedLineCount == 0) break;
-
-		for (int i = 0; i < polygonLines.size(); ++i)
-		{
-			Line line = polygonLines[i];
-			if (line.first.x == line.second.x || line.first.y == line.second.y) continue; //skip non-sloped lines
-
-			Ved2 newVert = { line.first.x, line.second.y };
-			std::array<Ved2, 3> trianglePoints = { line.first, newVert, line.second };
-			auto carveResult = tryCarve(trianglePoints, bitmap);
-			ret.insert(ret.end(), carveResult.begin(), carveResult.end());
-
-			trianglePoints[1] = { line.second.x, line.first.y };
-			carveResult = tryCarve(trianglePoints, bitmap);
-			ret.insert(ret.end(), carveResult.begin(), carveResult.end());
-		}
-		break;
+		originalVerts.push_back(v1);
+		originalVerts.push_back(v2);
 	}
 
-	bitmap.saveTo("sectors_debug/" + std::to_string(nSector) + "_b_carved.png");
-
-
-	int minX = bitmap.getMinX();
-	int maxX = bitmap.getMaxX();
-	int minY = bitmap.getMinY();
-	int maxY = bitmap.getMaxY();
-	int w = bitmap.getW();
-	int h = bitmap.getH();
-
-	std::vector<SDL_Rect> rects;
-
-	std::function pointOutsidePolygon = [&](const uint8_t v) {return v == OUTSIDE; };
-	while (true)
+	std::vector<Ved2> uniqueVerts;
+	for (int i = 0; i < originalVerts.size(); ++i)
 	{
-		auto firstFreeIt = std::find(bitmap.begin(), bitmap.end(), INSIDE);
-		if (firstFreeIt == bitmap.end()) break;
-
-		int firstFreePos = firstFreeIt - bitmap.begin();
-
-		SDL_Point startingPoint = { firstFreePos % w, firstFreePos / w };
-		int initialWidth = std::find_if(firstFreeIt, bitmap.begin() + (startingPoint.y + 1) * w, pointOutsidePolygon) - firstFreeIt;
-
-		assert(initialWidth > 0);
-		int endX = startingPoint.x + initialWidth;
-		std::fill(firstFreeIt, firstFreeIt + initialWidth, RECTANGLEFIED);
-
-		SDL_Rect r = { startingPoint.x, startingPoint.y, initialWidth, 1 };
-		for (int y = startingPoint.y + 1; y < h; ++y)
+		if (vertsFilter.find(originalVerts[i]) == vertsFilter.end())
 		{
-			auto lineBeg = bitmap.begin() + y * w + startingPoint.x;
-			auto lineEnd = bitmap.begin() + y * w + endX;
-			if (std::find_if(lineBeg, lineEnd, pointOutsidePolygon) != lineEnd) break; // this line has points outside of the polygon, can't expand
-
-			r.h++;
-			//this is a little bit buggy - it overrides previous values, potentially overwriting the CARVED value. It does not cause OUTSIDE to be overwritten though, so it's almost purely cosmetical/visible on sectors_debug pngs
-			std::fill(lineBeg, lineEnd, RECTANGLEFIED);
+			vertsFilter.insert(originalVerts[i]);
+			uniqueVerts.push_back(originalVerts[i]);
 		}
-		r.x += minX;
-		r.y += minY;
-		rects.push_back(r);
 	}
-	bitmap.saveTo("sectors_debug/" + std::to_string(nSector) + "_c_rectified.png");
 
-	for (const auto& it : rects)
+	if (uniqueVerts.size() < 3) throw std::runtime_error("Sector triangulator attempted to triangulate with less than 3 vertices");
+	uniqueVerts = originalVerts;
+
+	//fan triangulation works only for convex polygons. TODO: split the original polygon into convex ones. We don't care about holes, since they will be covered by other sector's walls. Also, tree sorting may fuck stuff up. 
+	Ved2 fanVertex = uniqueVerts[0];
+	Ved2 second = uniqueVerts[1];
+	Ved2 third = uniqueVerts[2];
+
+	for (int i = 2; i < uniqueVerts.size(); ++i)
 	{
-		ret.push_back(Ved2(it.x, it.y));
-		ret.push_back(Ved2(it.x + it.w, it.y));
-		ret.push_back(Ved2(it.x + it.w, it.y + it.h));
-
-		ret.push_back(Ved2(it.x + it.w, it.y + it.h));
-		ret.push_back(Ved2(it.x, it.y + it.h));
-		ret.push_back(Ved2(it.x, it.y));
+		ret.push_back(uniqueVerts[0]); //fan vertex
+		ret.push_back(uniqueVerts[i - 1]);
+		ret.push_back(uniqueVerts[i]);
 	}
 
-	++nSector;
 	return ret;
 }
 

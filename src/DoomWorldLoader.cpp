@@ -110,7 +110,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 		bool debugEnabled = true;
 #endif
 
-		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled ? -1 : 1); //too slow in debug mode
+		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled && false ? -1 : 1); //too slow in debug mode
 		auto& target = sectorModels[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
 		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";
@@ -164,7 +164,7 @@ DOOM doesn't really give us too many constraints with it's sector shape, so good
 */
 std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sectorLinedefs, const std::vector<Vertex>& vertices, int tesselSize)
 {
-	if (tesselSize == -1) return std::vector<Ved2>();
+	if (tesselSize == -1 || sectorLinedefs.size() < 3) return {};
 	assert(sectorLinedefs.size() >= 3);
 
 	std::vector<std::pair<Ved2, Ved2>> polygonLines;

@@ -270,6 +270,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 		copy.saveTo("sectors_debug/" + std::to_string(nSector-1) + "_" + std::to_string(nCont++) + ".png");
 
 		assert(it.size() > 0);
+		assert(it.back().second == it.front().first);
 	}
 	assert(contours.size() > 0);
 
@@ -278,6 +279,8 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 	//outer countours are contours that describe the polygon containing our entire sector, possibly also embedding other sector within it.
 	//To avoid Z-fighting of overlapping polygon or complicated measures to curb it, we must triangulate only the outer contour(s) without holes
 	//In theory, there should be only one outer contour, but it is not guaranteed.
+
+
 
 	/*
 	//fan triangulation works only for convex polygons. TODO: split the original polygon into convex ones with no holes

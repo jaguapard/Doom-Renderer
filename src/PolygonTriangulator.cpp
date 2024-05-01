@@ -218,6 +218,10 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 	if (polygonLines.size() == 0) return ret;
 	if (polygonLines.size() < 3) throw std::runtime_error("Sector triangulation attempted with less than 3 lines!");
 
+	PolygonBitmap bitmap = PolygonBitmap::makeFrom(polygonLines);
+	static int nSector = 0;
+	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + ".png");
+
 	//find contours these lines make
 	std::vector<std::deque<Line>> contours;
 	while (!polygonLines.empty())
@@ -226,10 +230,8 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 		contours.push_back({startingLine});
 		polygonLines[0] = std::move(polygonLines.back());
 		polygonLines.pop_back();
-		//if (polygonLines.size() == 1) break;
 
 		std::deque<Line>& currContour = contours.back();
-		std::unordered_set<int> toStay;
 
 		int preGrowContourSize;
 		do {
@@ -238,12 +240,15 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 			{
 				const int oldContourSize = currContour.size();
 				const Line& currLine = polygonLines[i];
+				Line flippedLine = { currLine.second, currLine.first };
 
 				const Line& head = currContour.front();
 				const Line& tail = currContour.back();
 
 				if (currLine.first == tail.second) currContour.push_back(currLine); //if current line starts at the tail of current contour, then add it to the back
+				else if (currLine.second == tail.second) currContour.push_back(flippedLine); //contours don't care about line's direction, but if we just connect it blindly, then the algorithm will die, so we flip it in case of mismatch
 				else if (currLine.second == head.first) currContour.push_front(currLine);
+				else if (currLine.first == head.first) currContour.push_front(flippedLine);
 
 				assert(currContour.size() >= oldContourSize);
 				assert(currContour.size() - oldContourSize <= 1); //no more than 1 add should be done per iteration
@@ -253,8 +258,26 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 					polygonLines.pop_back();
 				}
 			}
-		} while (currContour.size() > preGrowContourSize);
+		} while (currContour.size() > preGrowContourSize && (currContour.back().second != currContour.front().first)); //try to grow contour while there are still more lines that can continue it and until it gets closed
 	}
+
+	for (auto& it : contours)
+	{
+		auto cont_map = PolygonBitmap::makeFrom(std::vector<Line>(it.begin(), it.end()));
+		auto copy = bitmap;
+		cont_map.blitOver(copy, true, CARVED);
+		static int nCont = 0;
+		copy.saveTo("sectors_debug/" + std::to_string(nSector-1) + "_" + std::to_string(nCont++) + ".png");
+
+		assert(it.size() > 0);
+	}
+	assert(contours.size() > 0);
+
+	//TODO: add inner and outer contour finding
+	//inner contour is a contour inside the polygon, but it describes a polygon that is inside our sector, but is not a part of this sector (i.e. a hole)
+	//outer countours are contours that describe the polygon containing our entire sector, possibly also embedding other sector within it.
+	//To avoid Z-fighting of overlapping polygon or complicated measures to curb it, we must triangulate only the outer contour(s) without holes
+	//In theory, there should be only one outer contour, but it is not guaranteed.
 
 	/*
 	//fan triangulation works only for convex polygons. TODO: split the original polygon into convex ones with no holes

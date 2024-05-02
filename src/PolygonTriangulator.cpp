@@ -218,6 +218,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 	if (polygonLines.size() == 0) return ret;
 	if (polygonLines.size() < 3) throw std::runtime_error("Sector triangulation attempted with less than 3 lines!");
 
+	auto originalLines = polygonLines;
 	PolygonBitmap bitmap = PolygonBitmap::makeFrom(polygonLines);
 	static int nSector = 0;
 	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + ".png");
@@ -282,18 +283,20 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 
 
 
-	/*
+	
 	//fan triangulation works only for convex polygons. TODO: split the original polygon into convex ones with no holes
-	for (int i = 1; i < polygonLines.size(); ++i)
-	{
-		ret.push_back(polygonLines[0].first); //fan vertex
-		ret.push_back(polygonLines[i].first);
-		ret.push_back(polygonLines[i].second);
-	}
 
-	ret.push_back(polygonLines[0].first);
-	ret.push_back(polygonLines[0].second);
-	ret.push_back(polygonLines[1].first);*/
+	Ved2 center(0, 0);
+	for (auto& it : originalLines) center += it.first + it.second;
+	center /= originalLines.size() * 2;
+
+	std::vector<Ved2> points;
+	for (int i = 0; i < originalLines.size(); ++i)
+	{
+		ret.push_back(center); //fan vertex
+		ret.push_back(originalLines[i].first);
+		ret.push_back(originalLines[i].second);
+	};
 
 	return ret;
 }

@@ -24,4 +24,4 @@ struct Polygon
 };
 
 template<class Container>
-inline Polygon::Polygon(const Container& lines) : lines(std::begin(lines), std::end(lines)) {}
+inline Polygon::Polygon(const Container& lines) : lines(std::begin(lines), std::end(lines)) {};

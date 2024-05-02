@@ -5,8 +5,11 @@
 #include "Vec.h"
 #include <string>
 
-typedef std::pair<Ved2, Ved2> Line;
+struct Line
+{
+	Ved2 start, end;
 
+};
 enum PolygonBitmapValue : uint8_t
 {
 	OUTSIDE = 0,

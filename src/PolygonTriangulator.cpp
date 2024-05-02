@@ -13,10 +13,10 @@ double scalarCross2d(Ved2 a, Ved2 b)
 	return a.x * b.y - a.y * b.x;
 }
 
-bool rayCrossesLine(const Ved2& p, const std::pair<Ved2, Ved2>& lines)
+bool rayCrossesLine(const Ved2& p, const Line& line)
 {
-	const Ved2& sv = lines.first;
-	const Ved2& ev = lines.second;
+	const Ved2& sv = line.start;
+	const Ved2& ev = line.end;
 
 	//floating point precision is a bitch here, force use doubles everywhere
 	Ved2 v1 = p - sv;
@@ -46,7 +46,7 @@ bool rayCrossesLine(const Ved2& p, const std::pair<Ved2, Ved2>& lines)
 	static_assert(sizeof(p) == 16);
 }
 
-bool isPointInsidePolygon(const Ved2& p, const std::vector<std::pair<Ved2, Ved2>>& lines)
+bool isPointInsidePolygon(const Ved2& p, const std::vector<Line>& lines)
 {
 	assert(lines.size() >= 3);
 	int intersections = 0;
@@ -203,6 +203,7 @@ int PolygonBitmap::getMinY() const
 	return polygonMinY;
 }
 
+/*
 //returns 1 if 
 int whichVertexLinesShare(const Line& line1, const Line& line2)
 {
@@ -212,6 +213,8 @@ int whichVertexLinesShare(const Line& line1, const Line& line2)
 		line1.second == line2.second) return 2;
 	return -1;
 }
+*/
+
 std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLines)
 {
 	std::vector<Ved2> ret;
@@ -241,15 +244,15 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 			{
 				const int oldContourSize = currContour.size();
 				const Line& currLine = polygonLines[i];
-				Line flippedLine = { currLine.second, currLine.first };
+				Line flippedLine = { currLine.end, currLine.start };
 
 				const Line& head = currContour.front();
 				const Line& tail = currContour.back();
 
-				if (currLine.first == tail.second) currContour.push_back(currLine); //if current line starts at the tail of current contour, then add it to the back
-				else if (currLine.second == tail.second) currContour.push_back(flippedLine); //contours don't care about line's direction, but if we just connect it blindly, then the algorithm will die, so we flip it in case of mismatch
-				else if (currLine.second == head.first) currContour.push_front(currLine);
-				else if (currLine.first == head.first) currContour.push_front(flippedLine);
+				if (currLine.start == tail.end) currContour.push_back(currLine); //if current line starts at the tail of current contour, then add it to the back
+				else if (currLine.end == tail.end) currContour.push_back(flippedLine); //contours don't care about line's direction, but if we just connect it blindly, then the algorithm will die, so we flip it in case of mismatch
+				else if (currLine.end == head.start) currContour.push_front(currLine);
+				else if (currLine.start == head.start) currContour.push_front(flippedLine);
 
 				assert(currContour.size() >= oldContourSize);
 				assert(currContour.size() - oldContourSize <= 1); //no more than 1 add should be done per iteration
@@ -259,7 +262,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 					polygonLines.pop_back();
 				}
 			}
-		} while (currContour.size() > preGrowContourSize && (currContour.back().second != currContour.front().first)); //try to grow contour while there are still more lines that can continue it and until it gets closed
+		} while (currContour.size() > preGrowContourSize && (currContour.back().end != currContour.front().start)); //try to grow contour while there are still more lines that can continue it and until it gets closed
 	}
 
 	for (auto& it : contours)
@@ -284,18 +287,18 @@ std::vector<Ved2> PolygonTriangulator::triangulate(std::vector<Line> polygonLine
 
 
 	
-	//fan triangulation works only for convex polygons. TODO: split the original polygon into convex ones with no holes
+	//fan triangulation works only for simple convex polygons. TODO: split the original polygon into convex ones with no holes
 
 	Ved2 center(0, 0);
-	for (auto& it : originalLines) center += it.first + it.second;
+	for (auto& it : originalLines) center += it.start + it.end;
 	center /= originalLines.size() * 2;
 
 	std::vector<Ved2> points;
 	for (int i = 0; i < originalLines.size(); ++i)
 	{
 		ret.push_back(center); //fan vertex
-		ret.push_back(originalLines[i].first);
-		ret.push_back(originalLines[i].second);
+		ret.push_back(originalLines[i].start);
+		ret.push_back(originalLines[i].end);
 	};
 
 	return ret;
@@ -309,7 +312,7 @@ std::vector<Ved2> PolygonTriangulator::tryCarve(const std::array<Ved2, 3>& trian
 			Line p3 = std::make_pair(line.second, line.first);
 			std::array<Line, 3> candidateTriangle = { p1, p2, p3};*/
 
-	for (int i = 0; i < 3; ++i) triangleLines[i] = std::make_pair(trianglePoints[i], trianglePoints[i < 2 ? i + 1 : 0]);
+	for (int i = 0; i < 3; ++i) triangleLines[i] = { trianglePoints[i], trianglePoints[i < 2 ? i + 1 : 0] };
 	auto triangleBitmap = PolygonBitmap::makeFrom(triangleLines);
 	if (triangleBitmap.areAllPointsInside(bitmap)) //very trivial for now, just check if entire triangle can fit
 	{

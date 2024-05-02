@@ -152,13 +152,6 @@ Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real to
 	return Model(triangles, textureIndex, textureManager);
 }
 
-typedef std::pair<Ved2, Ved2> Line;
-
-struct XRange
-{
-	int y, minX, maxX; //[minX, maxX)
-};
-
 /*returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
 DOOM doesn't really give us too many constraints with it's sector shape, so good algorithms like ear clipping may fail (and I'm too lazy to write it anyway) 
 */
@@ -167,12 +160,12 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 	if (tesselSize == -1 || sectorLinedefs.size() < 3) return {};
 	assert(sectorLinedefs.size() >= 3);
 
-	std::vector<std::pair<Ved2, Ved2>> polygonLines;
+	std::vector<Line> polygonLines;
 	for (const auto& ldf : sectorLinedefs)
 	{
 		Vertex sv = vertices[ldf.startVertex];
 		Vertex ev = vertices[ldf.endVertex];
-		polygonLines.push_back(std::make_pair(Ved2(sv.x, sv.y), Ved2(ev.x, ev.y)));
+		polygonLines.push_back({ Ved2(sv.x, sv.y), Ved2(ev.x, ev.y) });
 	}
 
 	auto ret = PolygonTriangulator::triangulate(polygonLines);

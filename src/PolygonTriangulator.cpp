@@ -76,7 +76,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 
 	for (auto& it : contours)
 	{
-		auto cont_map = PolygonBitmap::makeFrom(std::vector<Line>(it.begin(), it.end()));
+		auto cont_map = PolygonBitmap::makeFrom(it);
 		auto copy = bitmap;
 		cont_map.blitOver(copy, true, CARVED);
 		static int nCont = 0;

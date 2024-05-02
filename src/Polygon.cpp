@@ -38,8 +38,6 @@ bool rayCrossesLine(const Ved2& p, const Line& line)
 	static_assert(sizeof(p) == 16);
 }
 
-Polygon::Polygon(const std::vector<Line>& lines) : lines(lines) {}
-
 bool Polygon::isPointInside(const Ved2& point) const
 {
 	assert(lines.size() >= 3);

@@ -83,7 +83,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 		copy.saveTo("sectors_debug/" + std::to_string(nSector-1) + "_" + std::to_string(nCont++) + ".png");
 
 		assert(it.size() > 0);
-		assert(it.back().second == it.front().first);
+		assert(it.back().end == it.front().start);
 	}
 	assert(contours.size() > 0);
 

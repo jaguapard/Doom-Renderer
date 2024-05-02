@@ -14,4 +14,5 @@ struct Polygon
 	Polygon(const std::vector<Line>& lines);
 
 	bool isPointInside(const Ved2& point) const;
+	Ved2 getCenterPoint() const;
 };

@@ -47,3 +47,10 @@ bool Polygon::isPointInside(const Ved2& point) const
 	for (const auto& it : lines) intersections += rayCrossesLine(point, it);
 	return intersections % 2 == 1;
 }
+
+Ved2 Polygon::getCenterPoint() const
+{
+	Ved2 sum = { 0,0 };
+	for (const auto& it : lines) sum += it.start + it.end;
+	return sum / (lines.size() * 2);
+}

@@ -46,9 +46,26 @@ bool Polygon::isPointInside(const Ved2& point) const
 	return intersections % 2 == 1;
 }
 
+//Line is considered infinite and defined by two points
+bool isPointBehindLine(const Ved2& point, const Line& line)
+{
+	Ved2 lineDir = line.end - line.start;
+	Ved2 normal = { -lineDir.y, lineDir.x };
+
+	Ved2 lineToPoint = point - line.start;
+	double dot = normal.dot(lineToPoint);
+	return dot < 0;
+}
+
 Ved2 Polygon::getCenterPoint() const
 {
 	Ved2 sum = { 0,0 };
 	for (const auto& it : lines) sum += it.start + it.end;
 	return sum / (lines.size() * 2);
+}
+
+std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& line) const
+{
+	Polygon front, back;
+	
 }

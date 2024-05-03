@@ -5,7 +5,7 @@ double scalarCross2d(Ved2 a, Ved2 b)
 	return a.x * b.y - a.y * b.x;
 }
 
-std::optional<Ved2> getRayLineIntersectionPoint(const Ved2& rayOrigin, const Line& line, Ved2 rayDir = { sqrt(2), sqrt(3) })
+std::optional<std::pair<Ved2, double>> getRayLineIntersectionPoint(const Ved2& rayOrigin, const Line& line, Ved2 rayDir = { sqrt(2), sqrt(3) })
 {
 	const Ved2& sv = line.start;
 	const Ved2& ev = line.end;
@@ -23,7 +23,9 @@ std::optional<Ved2> getRayLineIntersectionPoint(const Ved2& rayOrigin, const Lin
 
 	//we are fine with false positives (point is considered inside when it's not), but false negatives are absolutely murderous
 	if (t1 >= 1e-9 && (t2 >= 1e-9 && t2 <= 1.0 - 1e-9))
-		return sv + (ev - sv) * t2;
+		//return std::make_pair(sv + (ev - sv) * t2, t2);
+		//return std::make_pair(rayOrigin + v3 * t1, t1);
+		return std::make_pair(rayOrigin + rayDir * t1, t1);
 	return std::nullopt;
 
 	//these are safeguards against rampant global find-and-replace mishaps breaking everything
@@ -38,16 +40,18 @@ std::optional<Ved2> getRayLineIntersectionPoint(const Ved2& rayOrigin, const Lin
 	static_assert(sizeof(rayDir) == 16);
 }
 
-std::optional<Ved2> getLineToInfiniteLineIntersectionPoint(const Line& line, const Line& infiniteLine)
+std::optional<std::pair<Ved2, double>> getLineToInfiniteLineIntersectionPoint(const Line& line, const Line& infiniteLine)
 {
 	Ved2 infLineDir = infiniteLine.end - infiniteLine.start;
 	auto intersect = getRayLineIntersectionPoint(infiniteLine.start, line, infLineDir);
-	if (!intersect) intersect = getRayLineIntersectionPoint(infiniteLine.start, line, -infLineDir);
-	return intersect;  //2 opposite rays = infinite line
+	if (intersect) return intersect;
+	
+	intersect = getRayLineIntersectionPoint(infiniteLine.start, line, -infLineDir);
+	if (intersect) return std::make_pair(intersect.value().first, -intersect.value().second);
+	return std::nullopt;  //2 opposite rays = infinite line
 }
 bool Polygon::isPointInside(const Ved2& point) const
 {
-	assert(lines.size() >= 3);
 	int intersections = 0;
 	for (const auto& it : lines) intersections += getRayLineIntersectionPoint(point, it).has_value();
 	return intersections % 2 == 1;
@@ -75,6 +79,8 @@ std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& splitLine) const
 {
 	Polygon front, back;
 	Ved2 splitLineDir = splitLine.end - splitLine.start;
+	double minIntersectT = std::numeric_limits<double>::infinity();
+	double maxIntersectT = -minIntersectT;
 	for (const auto& it : this->lines)
 	{
 		auto intersect = getLineToInfiniteLineIntersectionPoint(it, splitLine);
@@ -87,14 +93,24 @@ std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& splitLine) const
 		}
 
 		//otherwise it means that this line is partially behind and partially in front of splitting line. We must split it and put the pieces into correct polygons
-		Ved2 splitPoint = intersect.value();
+		Ved2 splitPoint = intersect.value().first;
 		Line piece1 = { it.start, splitPoint };
 		Line piece2 = { splitPoint, it.end };
 
 		(isPointBehindLine(it.start, splitLine) ? back : front).lines.push_back(piece1);
 		(isPointBehindLine(it.end, splitLine) ? back : front).lines.push_back(piece2);
+		minIntersectT = std::min(minIntersectT, intersect.value().second);
+		maxIntersectT = std::max(maxIntersectT, intersect.value().second);
 	}
 
 	//TODO: make sure polygons are closed? Add splitting line to them?
+	Line plug;
+	plug.start = splitLine.start + splitLineDir * minIntersectT;
+	plug.end = splitLine.start + splitLineDir * maxIntersectT;
+	if (front.lines.size() > 0 && back.lines.size() > 0) //stitch the cut
+	{
+		front.lines.push_back(plug); 
+		back.lines.push_back(plug);
+	}
 	return std::make_pair(front, back);
 }

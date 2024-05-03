@@ -35,6 +35,10 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 	static int nSector = 0;
 	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + ".png");
 
+	auto p = polygon.splitByLine({ {0,0},{1,1} });
+	PolygonBitmap::makeFrom(p.first).saveTo("sectors_debug/" + std::to_string(nSector-1) + "_split1.png");
+	PolygonBitmap::makeFrom(p.second).saveTo("sectors_debug/" + std::to_string(nSector-1) + "_split2.png");
+	/*
 	//find contours these lines make
 	std::vector<std::deque<Line>> contours;
 	while (!polygon.lines.empty())
@@ -107,7 +111,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 		ret.push_back(originalLines[i].start);
 		ret.push_back(originalLines[i].end);
 	};
-
+	*/
 	return ret;
 }
 

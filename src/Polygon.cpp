@@ -66,7 +66,7 @@ std::vector<Polygon> Polygon::createContours() const
 	while (!polygon.lines.empty())
 	{
 		Line startingLine = polygon.lines[0];
-		contours.push_back({ startingLine });
+		contours.push_back(Polygon(std::deque<Line>(1, startingLine)));
 		polygon.lines[0] = std::move(polygon.lines.back());
 		polygon.lines.pop_back();
 
@@ -143,6 +143,8 @@ Ved2 Polygon::getCenterPoint() const
 
 std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& splitLine) const
 {
+	static int nSector = -1;
+	++nSector;
 	Polygon front, back;
 	Ved2 splitLineDir = splitLine.end - splitLine.start;
 	double minIntersectT = std::numeric_limits<double>::infinity();
@@ -178,5 +180,8 @@ std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& splitLine) const
 		front.lines.push_back(plug); 
 		back.lines.push_back(plug);
 	}
+
+	PolygonBitmap::makeFrom(front).saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_split1.png");
+	PolygonBitmap::makeFrom(back).saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_split2.png");
 	return std::make_pair(front, back);
 }

@@ -32,9 +32,8 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 	Polygon originalPolygon = polygon;
 	auto originalLines = polygon.lines;
 
+	originalPolygon.createContours();
 	auto p = polygon.splitByLine({ {0,0},{1,1} });
-	PolygonBitmap::makeFrom(p.first).saveTo("sectors_debug/" + std::to_string(nSector-1) + "_split1.png");
-	PolygonBitmap::makeFrom(p.second).saveTo("sectors_debug/" + std::to_string(nSector-1) + "_split2.png");
 	/*
 	
 

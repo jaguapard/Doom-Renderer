@@ -59,7 +59,7 @@ void PolygonBitmap::saveTo(std::string path)
 	{
 		for (int x = 0; x < w; ++x)
 		{
-			uint8_t value = getPixelUnsafe(x, y);
+			uint8_t value = getPixelUnsafe(x, h - 1 - y); //y is inverted in our coordinate system compared to Doom (our bitmap: +y = down, Doom: +y = up)
 			Color c = palette[value];
 			pixels[y * w + x] = c;
 		}

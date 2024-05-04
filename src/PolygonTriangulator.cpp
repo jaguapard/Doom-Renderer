@@ -31,65 +31,12 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 
 	Polygon originalPolygon = polygon;
 	auto originalLines = polygon.lines;
-	PolygonBitmap bitmap = PolygonBitmap::makeFrom(polygon);
-	static int nSector = 0;
-	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + ".png");
 
 	auto p = polygon.splitByLine({ {0,0},{1,1} });
 	PolygonBitmap::makeFrom(p.first).saveTo("sectors_debug/" + std::to_string(nSector-1) + "_split1.png");
 	PolygonBitmap::makeFrom(p.second).saveTo("sectors_debug/" + std::to_string(nSector-1) + "_split2.png");
 	/*
-	//find contours these lines make
-	std::vector<std::deque<Line>> contours;
-	while (!polygon.lines.empty())
-	{
-		Line startingLine = polygon.lines[0];
-		contours.push_back({startingLine});
-		polygon.lines[0] = std::move(polygon.lines.back());
-		polygon.lines.pop_back();
-
-		std::deque<Line>& currContour = contours.back();
-
-		int preGrowContourSize;
-		do {
-			preGrowContourSize = currContour.size();
-			for (int i = 0; i < polygon.lines.size(); ++i)
-			{
-				const int oldContourSize = currContour.size();
-				const Line& currLine = polygon.lines[i];
-				Line flippedLine = { currLine.end, currLine.start };
-
-				const Line& head = currContour.front();
-				const Line& tail = currContour.back();
-
-				if (currLine.start == tail.end) currContour.push_back(currLine); //if current line starts at the tail of current contour, then add it to the back
-				else if (currLine.end == tail.end) currContour.push_back(flippedLine); //contours don't care about line's direction, but if we just connect it blindly, then the algorithm will die, so we flip it in case of mismatch
-				else if (currLine.end == head.start) currContour.push_front(currLine);
-				else if (currLine.start == head.start) currContour.push_front(flippedLine);
-
-				assert(currContour.size() >= oldContourSize);
-				assert(currContour.size() - oldContourSize <= 1); //no more than 1 add should be done per iteration
-				if (currContour.size() != oldContourSize)
-				{
-					polygon.lines[i--] = std::move(polygon.lines.back());
-					polygon.lines.pop_back();
-				}
-			}
-		} while (currContour.size() > preGrowContourSize && (currContour.back().end != currContour.front().start)); //try to grow contour while there are still more lines that can continue it and until it gets closed
-	}
-
-	for (auto& it : contours)
-	{
-		auto cont_map = PolygonBitmap::makeFrom(it);
-		auto copy = bitmap;
-		cont_map.blitOver(copy, true, CARVED);
-		static int nCont = 0;
-		copy.saveTo("sectors_debug/" + std::to_string(nSector-1) + "_" + std::to_string(nCont++) + ".png");
-
-		assert(it.size() > 0);
-		assert(it.back().end == it.front().start);
-	}
-	assert(contours.size() > 0);
+	
 
 	//TODO: add inner and outer contour finding
 	//inner contour is a contour inside the polygon, but it describes a polygon that is inside our sector, but is not a part of this sector (i.e. a hole)

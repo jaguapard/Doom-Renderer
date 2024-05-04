@@ -1,4 +1,5 @@
 #pragma once
+#include <deque>
 #include <vector>
 #include "Vec.h"
 
@@ -10,12 +11,14 @@ struct Line
 
 struct Polygon
 {
-	std::vector<Line> lines;
+	std::deque<Line> lines;
 	
 	Polygon() = default;
 
 	template <class Container>
 	Polygon(const Container& lines);
+
+	std::vector<Polygon> createContours() const;
 
 	bool isPointInside(const Ved2& point) const;
 	Ved2 getCenterPoint() const;

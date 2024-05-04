@@ -33,6 +33,8 @@ public:
 	static std::vector<Contour> getContoursOfPolygon(Polygon polygon);
 	bool isClosed() const;
 	Contour closeByLine(const Line& line) const;
+
+	bool isOutsideForPolygon(const Polygon& polygon) const;
 private:
 	std::deque<Line> lines;
 

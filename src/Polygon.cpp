@@ -1,6 +1,7 @@
 #include "Polygon.h"
 #include "PolygonBitmap.h"
 #include <cassert>
+#include "helpers.h"
 
 double scalarCross2d(Ved2 a, Ved2 b)
 {
@@ -89,8 +90,13 @@ std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& splitLine) const
 	++nSector;
 	Polygon front, back;
 	Ved2 splitLineDir = splitLine.end - splitLine.start;
-	double minIntersectT = std::numeric_limits<double>::infinity();
-	double maxIntersectT = -minIntersectT;
+	
+	struct IntersectData
+	{
+		bool onOutsideContour, behindSplittingLine;
+		double t;
+		Ved2 intersectPoint;
+	};
 	for (const auto& it : this->lines)
 	{
 		auto intersect = getLineToInfiniteLineIntersectionPoint(it, splitLine);
@@ -193,6 +199,20 @@ std::vector<Contour> Contour::getContoursOfPolygon(Polygon polygon)
 bool Contour::isClosed() const
 {
 	return lines.size() >= 3 && lines.back().end == lines.front().start;
+}
+
+bool Contour::isOutsideForPolygon(const Polygon& polygon) const
+{
+	Ved2 p1 = this->lines[0].start;
+	Ved2 p2 = this->lines[1].end;
+	Ved2 pn = this->lines[0].end;
+	assert(this->lines[0].end == this->lines[1].start);
+
+	double eps = 1e-6; //try to make a tiny step inside the contour
+	Ved2 np1 = lerp(pn, p1, eps);
+	Ved2 np2 = lerp(pn, p2, eps);
+	Ved2 testPoint = lerp(np1, np2, 0.5);
+	return polygon.isPointInside(testPoint); //if the test point is inside the polygon, it means that this contour describes it's outer edges, if not - then it's a hole inside the polygon
 }
 
 Contour Contour::closeByLine(const Line& line) const

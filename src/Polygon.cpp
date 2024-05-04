@@ -194,6 +194,7 @@ std::vector<Contour> Contour::getContoursOfPolygon(Polygon polygon)
 	}
 
 	int nCont = 0;
+	//if (nSector-1 == 10) __debugbreak();
 	for (auto& it : contours)
 	{
 		auto cont_map = PolygonBitmap::makeFrom(it.getLines());
@@ -223,17 +224,32 @@ const std::deque<Line>& Contour::getLines() const
 
 bool Contour::isOutsideForPolygon(const Polygon& polygon) const
 {
-	Ved2 p1 = this->lines.front().end;
-	Ved2 p2 = this->lines.back().start;
-	Ved2 pn = this->lines.front().start;
-	//assert(this->lines[0].end == this->lines[1].start);
+	for (int i = 1; i < this->lines.size(); ++i)
+	{
+		Ved2 p1 = this->lines[i].end;
+		Ved2 p2 = this->lines[i-1].start;
+		Ved2 pn = this->lines[i].start;
 
-	double eps = 1e-6; //try to make a tiny step inside the contour
-	Ved2 np1 = lerp(pn, p1, eps);
-	Ved2 np2 = lerp(pn, p2, eps);
-	Ved2 testPoint = lerp(np1, np2, 0.5);
-	return polygon.isPointInside(testPoint); //if the test point is inside the polygon, it means that this contour describes it's outer edges, if not - then it's a hole inside the polygon
-	//TODO: if vertex is a reflex, should interpolate pn->p1/2 (np1/2) by -eps instead of eps
+		Ved2 o1 = p1 - pn;
+		Ved2 o2 = p2 - pn;
+		double det = o1.x * o2.y - o1.y * o2.x;
+		double dot = o1.dot(o2);
+		double angle = atan2(det, dot);
+
+		double eps = 1e-6; //try to make a tiny step inside the contour
+		if (angle > M_PI - eps) continue; //if all three vertices are collinear, the algorithm breaks, try other ones
+		//if (det < 0) eps = -eps;
+		if (angle < 0) eps = -eps; //if vertex is a reflex, then flip interpolation direction (not working, some angles are reflected around 360 (depends on vertex order)
+		
+
+		Ved2 np1 = lerp(pn, p1, eps);
+		Ved2 np2 = lerp(pn, p2, eps);
+		Ved2 testPoint = lerp(np1, np2, 0.5);
+		return polygon.isPointInside(testPoint); //if the test point is inside the polygon, it means that this contour describes it's outer edges, if not - then it's a hole inside the polygon
+		//TODO: if vertex is a reflex, should interpolate pn->p1/2 (np1/2) by -eps instead of eps
+	}
+	//assert(this->lines[0].end == this->lines[1].start);
+	throw std::runtime_error("All vertices are collinear");
 }
 
 Contour Contour::closeByLine(const Line& line) const

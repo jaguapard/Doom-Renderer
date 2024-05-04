@@ -53,67 +53,9 @@ std::optional<std::pair<Ved2, double>> getLineToInfiniteLineIntersectionPoint(co
 	return std::nullopt;  //2 opposite rays = infinite line
 }
 
-std::vector<Polygon> Polygon::createContours() const
+std::vector<Contour> Polygon::createContours() const
 {
-	//find contours these lines make
-	std::vector<Polygon> contours;
-	Polygon polygon = *this;
-
-	PolygonBitmap bitmap = PolygonBitmap::makeFrom(polygon);
-	static int nSector = 0;
-	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + ".png");
-
-	while (!polygon.lines.empty())
-	{
-		Line startingLine = polygon.lines[0];
-		contours.push_back(Polygon(std::deque<Line>(1, startingLine)));
-		polygon.lines[0] = std::move(polygon.lines.back());
-		polygon.lines.pop_back();
-
-		std::deque<Line>& currContour = contours.back().lines;
-
-		int preGrowContourSize;
-		do {
-			preGrowContourSize = currContour.size();
-			for (int i = 0; i < polygon.lines.size(); ++i)
-			{
-				const int oldContourSize = currContour.size();
-				const Line& currLine = polygon.lines[i];
-				Line flippedLine = { currLine.end, currLine.start };
-
-				const Line& head = currContour.front();
-				const Line& tail = currContour.back();
-
-				if (currLine.start == tail.end) currContour.push_back(currLine); //if current line starts at the tail of current contour, then add it to the back
-				else if (currLine.end == tail.end) currContour.push_back(flippedLine); //contours don't care about line's direction, but if we just connect it blindly, then the algorithm will die, so we flip it in case of mismatch
-				else if (currLine.end == head.start) currContour.push_front(currLine);
-				else if (currLine.start == head.start) currContour.push_front(flippedLine);
-
-				assert(currContour.size() >= oldContourSize);
-				assert(currContour.size() - oldContourSize <= 1); //no more than 1 add should be done per iteration
-				if (currContour.size() != oldContourSize)
-				{
-					polygon.lines[i--] = std::move(polygon.lines.back());
-					polygon.lines.pop_back();
-				}
-			}
-		} while (currContour.size() > preGrowContourSize && (currContour.back().end != currContour.front().start)); //try to grow contour while there are still more lines that can continue it and until it gets closed
-	}
-
-	for (auto& it : contours)
-	{
-		auto cont_map = PolygonBitmap::makeFrom(it);
-		auto copy = bitmap;
-		cont_map.blitOver(copy, true, CARVED);
-		static int nCont = 0;
-		copy.saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_" + std::to_string(nCont++) + ".png");
-
-		assert(!it.lines.empty());
-		assert(it.lines.back().end == it.lines.front().start);
-	}
-	assert(contours.size() > 0);
-
-	return contours;
+	return Contour::getContoursOfPolygon(*this);
 }
 
 bool Polygon::isPointInside(const Ved2& point) const
@@ -184,4 +126,79 @@ std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& splitLine) const
 	PolygonBitmap::makeFrom(front).saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_split1.png");
 	PolygonBitmap::makeFrom(back).saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_split2.png");
 	return std::make_pair(front, back);
+}
+
+std::vector<Contour> Contour::getContoursOfPolygon(Polygon polygon)
+{
+	//find contours these lines make
+	std::vector<Contour> contours;
+
+	PolygonBitmap bitmap = PolygonBitmap::makeFrom(polygon);
+	static int nSector = 0;
+	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + ".png");
+
+	while (!polygon.lines.empty())
+	{
+		Line startingLine = polygon.lines[0];
+		contours.push_back(std::deque<Line>(1, startingLine));
+		polygon.lines[0] = std::move(polygon.lines.back());
+		polygon.lines.pop_back();
+
+		std::deque<Line>& currContour = contours.back().lines;
+
+		int preGrowContourSize;
+		do {
+			preGrowContourSize = currContour.size();
+			for (int i = 0; i < polygon.lines.size(); ++i)
+			{
+				const int oldContourSize = currContour.size();
+				const Line& currLine = polygon.lines[i];
+				Line flippedLine = { currLine.end, currLine.start };
+
+				const Line& head = currContour.front();
+				const Line& tail = currContour.back();
+
+				if (currLine.start == tail.end) currContour.push_back(currLine); //if current line starts at the tail of current contour, then add it to the back
+				else if (currLine.end == tail.end) currContour.push_back(flippedLine); //contours don't care about line's direction, but if we just connect it blindly, then the algorithm will die, so we flip it in case of mismatch
+				else if (currLine.end == head.start) currContour.push_front(currLine);
+				else if (currLine.start == head.start) currContour.push_front(flippedLine);
+
+				assert(currContour.size() >= oldContourSize);
+				assert(currContour.size() - oldContourSize <= 1); //no more than 1 add should be done per iteration
+				if (currContour.size() != oldContourSize)
+				{
+					polygon.lines[i--] = std::move(polygon.lines.back());
+					polygon.lines.pop_back();
+				}
+			}
+		} while (currContour.size() > preGrowContourSize && (currContour.back().end != currContour.front().start)); //try to grow contour while there are still more lines that can continue it and until it gets closed
+	}
+
+	for (auto& it : contours)
+	{
+		auto cont_map = PolygonBitmap::makeFrom(it);
+		auto copy = bitmap;
+		cont_map.blitOver(copy, true, CARVED);
+		static int nCont = 0;
+		copy.saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_" + std::to_string(nCont++) + ".png");
+
+		assert(!it.lines.empty());
+		assert(it.lines.back().end == it.lines.front().start);
+	}
+	assert(contours.size() > 0);
+
+	return contours;
+}
+
+bool Contour::isClosed() const
+{
+	return lines.size() >= 3 && lines.back().end == lines.front().start;
+}
+
+Contour Contour::closeByLine(const Line& line) const
+{
+	if (this->isClosed()) return *this;
+
+	Contour copy = *this;
+	return copy;
 }

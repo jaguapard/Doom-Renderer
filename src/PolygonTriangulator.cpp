@@ -32,7 +32,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 	Polygon originalPolygon = polygon;
 	auto originalLines = polygon.lines;
 
-	originalPolygon.createContours();
+	//originalPolygon.createContours();
 	auto p = polygon.splitByLine({ {0,0},{1,1} });
 	/*
 	

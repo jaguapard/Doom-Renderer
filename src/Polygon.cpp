@@ -86,18 +86,26 @@ Ved2 Polygon::getCenterPoint() const
 
 std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& splitLine) const
 {
-	static int nSector = -1;
-	++nSector;
+	static int nSector1 = 0;
+	++nSector1;
 	Polygon front, back;
 	Ved2 splitLineDir = splitLine.end - splitLine.start;
-	
+	double minIntersectT = std::numeric_limits<double>::infinity();
+	double maxIntersectT = -std::numeric_limits<double>::infinity();
 	struct IntersectData
 	{
 		bool onOutsideContour, behindSplittingLine;
 		double t;
 		Ved2 intersectPoint;
 	};
-	for (const auto& it : this->lines)
+
+	auto contours = Contour::getContoursOfPolygon(*this);
+	Contour outerContour;
+	for (auto& it : contours) if (it.isOutsideForPolygon(*this)) {
+		outerContour = it; break;
+	}
+
+	for (const auto& it : outerContour.getLines())
 	{
 		auto intersect = getLineToInfiniteLineIntersectionPoint(it, splitLine);
 
@@ -123,14 +131,18 @@ std::pair<Polygon, Polygon> Polygon::splitByLine(const Line& splitLine) const
 	Line plug;
 	plug.start = splitLine.start + splitLineDir * minIntersectT;
 	plug.end = splitLine.start + splitLineDir * maxIntersectT;
+	//if (nSector1 == 19) __debugbreak();
 	if (front.lines.size() > 0 && back.lines.size() > 0) //stitch the cut. This does not work, since line indiscriminantly covers up stuff, even if they are outside the sector
 	{
-		front.lines.push_back(plug); 
-		back.lines.push_back(plug);
+		if (minIntersectT != std::numeric_limits<double>::infinity() && maxIntersectT != -std::numeric_limits<double>::infinity())
+		{
+			front.lines.push_back(plug);
+			back.lines.push_back(plug);
+		}
 	}
 
-	PolygonBitmap::makeFrom(front).saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_split1.png");
-	PolygonBitmap::makeFrom(back).saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_split2.png");
+	//PolygonBitmap::makeFrom(front).saveTo("sectors_debug/" + std::to_string(nSector1 - 1) + "_split1.png");
+	//PolygonBitmap::makeFrom(back).saveTo("sectors_debug/" + std::to_string(nSector1 - 1) + "_split2.png");
 	return std::make_pair(front, back);
 }
 
@@ -138,6 +150,7 @@ std::vector<Contour> Contour::getContoursOfPolygon(Polygon polygon)
 {
 	//find contours these lines make
 	std::vector<Contour> contours;
+	Polygon originalPolygon = polygon;
 
 	PolygonBitmap bitmap = PolygonBitmap::makeFrom(polygon);
 	static int nSector = 0;
@@ -180,13 +193,15 @@ std::vector<Contour> Contour::getContoursOfPolygon(Polygon polygon)
 		} while (currContour.size() > preGrowContourSize && (currContour.back().end != currContour.front().start)); //try to grow contour while there are still more lines that can continue it and until it gets closed
 	}
 
+	int nCont = 0;
 	for (auto& it : contours)
 	{
-		auto cont_map = PolygonBitmap::makeFrom(it);
+		auto cont_map = PolygonBitmap::makeFrom(it.getLines());
 		auto copy = bitmap;
 		cont_map.blitOver(copy, true, CARVED);
-		static int nCont = 0;
-		copy.saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_" + std::to_string(nCont++) + ".png");
+		
+		std::string type = it.isOutsideForPolygon(originalPolygon) ? "out" : "in";
+		copy.saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_" + std::to_string(nCont++) + "_" + type + ".png");
 
 		assert(!it.lines.empty());
 		assert(it.lines.back().end == it.lines.front().start);
@@ -201,18 +216,24 @@ bool Contour::isClosed() const
 	return lines.size() >= 3 && lines.back().end == lines.front().start;
 }
 
+const std::deque<Line>& Contour::getLines() const
+{
+	return this->lines;
+}
+
 bool Contour::isOutsideForPolygon(const Polygon& polygon) const
 {
-	Ved2 p1 = this->lines[0].start;
-	Ved2 p2 = this->lines[1].end;
-	Ved2 pn = this->lines[0].end;
-	assert(this->lines[0].end == this->lines[1].start);
+	Ved2 p1 = this->lines.front().end;
+	Ved2 p2 = this->lines.back().start;
+	Ved2 pn = this->lines.front().start;
+	//assert(this->lines[0].end == this->lines[1].start);
 
 	double eps = 1e-6; //try to make a tiny step inside the contour
 	Ved2 np1 = lerp(pn, p1, eps);
 	Ved2 np2 = lerp(pn, p2, eps);
 	Ved2 testPoint = lerp(np1, np2, 0.5);
 	return polygon.isPointInside(testPoint); //if the test point is inside the polygon, it means that this contour describes it's outer edges, if not - then it's a hole inside the polygon
+	//TODO: if vertex is a reflex, should interpolate pn->p1/2 (np1/2) by -eps instead of eps
 }
 
 Contour Contour::closeByLine(const Line& line) const

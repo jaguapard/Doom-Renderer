@@ -30,6 +30,10 @@ struct Polygon
 class Contour
 {
 public:
+	Contour() = default;
+
+	const std::deque<Line>& getLines() const;
+
 	static std::vector<Contour> getContoursOfPolygon(Polygon polygon);
 	bool isClosed() const;
 	Contour closeByLine(const Line& line) const;

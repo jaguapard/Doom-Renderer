@@ -55,7 +55,7 @@ void operator delete(void* block)
 	return _aligned_free(block);
 }
 
-enum SkyRenderingMode
+enum SkyRenderingMode : uint32_t
 {
 	NONE,
 	ROTATING,
@@ -75,6 +75,13 @@ struct CmdArg
 		STRING,
 		NONE, //single arg (no value), a switch
 	};
+};
+
+enum class WheelAdjustmentMode : uint32_t
+{
+	FLY_SPEED,
+	FOV,
+	COUNT,
 };
 
 std::map<std::string, CmdArg> parseCmdArgs(int argc, char** argv)
@@ -124,6 +131,9 @@ void program(int argc, char** argv)
 	real fogMaxIntensityDist = 600;
 	bool mouseCaptured = false;
 	bool wireframeEnabled = false;
+	real nearPlaneZ = -1;
+	real fovMult = 1;
+	WheelAdjustmentMode wheelAdjMod = WheelAdjustmentMode::FLY_SPEED;
 
 	PerformanceMonitor performanceMonitor;
 	bool performanceMonitorDisplayEnabled = true;
@@ -223,13 +233,13 @@ void program(int argc, char** argv)
 				input.handleEvent(ev);
 				if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
 				{
-					//camAng += { ev.motion.yrel* camAngAdjustmentSpeed_Mouse, ev.motion.xrel * -camAngAdjustmentSpeed_Mouse, 0};
 					camAng.y -= ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
 					camAng.z += ev.motion.yrel * camAngAdjustmentSpeed_Mouse;					
 				}
 				if (ev.type == SDL_MOUSEWHEEL)
 				{
-					flySpeed *= pow(1.05, ev.wheel.y);
+					if (wheelAdjMod == WheelAdjustmentMode::FLY_SPEED) flySpeed *= pow(1.05, ev.wheel.y);
+					if (wheelAdjMod == WheelAdjustmentMode::FOV) fovMult *= pow(1.05, ev.wheel.y);
 				}
 
 				if (ev.type == SDL_QUIT) return;
@@ -262,9 +272,9 @@ void program(int argc, char** argv)
 			if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
 			if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
 			if (input.wasCharPressedOnThisFrame('C')) camPos = { -96, 70, 784 };
-			if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };
-
-			
+			if (input.wasCharPressedOnThisFrame('K')) wheelAdjMod = static_cast<WheelAdjustmentMode>((uint32_t(wheelAdjMod) + 1) % uint32_t(WheelAdjustmentMode::COUNT));
+			if (input.wasCharPressedOnThisFrame('L')) fovMult = 1;
+			if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };			
 
 			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 			{
@@ -371,7 +381,9 @@ void program(int argc, char** argv)
 		ctx.framebufH = framebufH;
 		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
 		ctx.wireframeEnabled = wireframeEnabled;
-		ctx.renderJobs = &renderJobs;		
+		ctx.renderJobs = &renderJobs;
+		ctx.nearPlaneClippingZ = nearPlaneZ;
+		ctx.fovMult = fovMult;
 
 		if (currentMap)
 		{			

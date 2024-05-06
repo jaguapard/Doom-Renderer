@@ -86,4 +86,5 @@ struct TriangleRenderContext
 	std::vector<RenderJob>* renderJobs;
 
 	real nearPlaneClippingZ = -1;
+	real fovMult = 1;
 };

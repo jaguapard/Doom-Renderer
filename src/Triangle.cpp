@@ -121,7 +121,7 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	std::array<TexVertex, 3> fullyTransformed;
 	for (int i = 0; i < 3; ++i)
 	{
-		real zInv = 1.0 / tv[i].spaceCoords.z;
+		real zInv = context.fovMult / tv[i].spaceCoords.z;
 		Vec3 zDividedWorld = tv[i].spaceCoords * zInv;
 		Vec3 zDividedUv = tv[i].textureCoords * zInv;
 		zDividedUv.z = zInv;

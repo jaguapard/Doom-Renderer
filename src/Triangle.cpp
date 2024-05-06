@@ -2,7 +2,6 @@
 #include "Statsman.h"
 
 #include <functional>
-constexpr real planeZ = -1;
 
 void Triangle::sortByAscendingSpaceX()
 {
@@ -39,7 +38,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		Vec3 off = context.ctr->doCamOffset(tv[i].spaceCoords);
 		Vec3 rt = context.ctr->rotate(off);
 
-		if (rt.z > planeZ)
+		if (rt.z > context.nearPlaneClippingZ)
 		{
 			outsideVertexCount++;
 			if (outsideVertexCount == 3) 
@@ -72,8 +71,8 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		const TexVertex& v1 = rot[v1_ind];
 		const TexVertex& v2 = rot[v2_ind];
 		Triangle t1 = *this, t2 = *this;
-		TexVertex clipped1 = rot[i].getClipedToPlane(v1);
-		TexVertex clipped2 = rot[i].getClipedToPlane(v2);
+		TexVertex clipped1 = rot[i].getClipedToPlane(v1, context.nearPlaneClippingZ);
+		TexVertex clipped2 = rot[i].getClipedToPlane(v2, context.nearPlaneClippingZ);
 				
 		t1.tv = { v1,clipped1, v2 };
 		t2.tv = { clipped1, clipped2, v2};
@@ -91,8 +90,8 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
 
 		Triangle clipped = *this;
-		clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
-		clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
+		clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i], context.nearPlaneClippingZ);
+		clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i], context.nearPlaneClippingZ);
 		clipped.tv[i] = rot[i];
 		return clipped.prepareScreenSpace(context);
 	}
@@ -242,7 +241,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	}
 }
 
-TexVertex TexVertex::getClipedToPlane(const TexVertex& dst) const
+TexVertex TexVertex::getClipedToPlane(const TexVertex& dst, real planeZ) const
 {
 	real alpha = inverse_lerp(spaceCoords.z, dst.spaceCoords.z, planeZ);
 	assert(alpha >= 0 && alpha <= 1);

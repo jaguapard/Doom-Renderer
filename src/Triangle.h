@@ -23,7 +23,7 @@ struct alignas(32) TexVertex
 		return spaceCoords.y < b.spaceCoords.y;
 	}
 
-	TexVertex getClipedToPlane(const TexVertex& dst) const;
+	TexVertex getClipedToPlane(const TexVertex& dst, real planeZ) const;
 };
 
 inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)

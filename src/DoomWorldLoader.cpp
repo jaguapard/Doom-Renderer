@@ -114,7 +114,10 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled ? -1 : 1); //too slow in debug mode
 		auto& target = sectorModels[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
-		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";
+
+		size_t sum = 0;
+		for (auto& it : triangulation) sum += it.getTriangleCount();
+		std::cout << "Sector " << nSector << " got split into " << sum << " triangles.\n";
 	}
 
 	return sectorModels;

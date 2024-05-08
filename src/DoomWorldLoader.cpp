@@ -211,6 +211,7 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 			t[j / 3].tv[j % 3].textureCoords = Vec3(uv.x, uv.z);
 		}
 
+		std::swap(t[1].tv[1], t[1].tv[2]); //normal of the ceiling must be opposite that of floor
 		trisFloor.push_back(t[0]);
 		trisCeiling.push_back(t[1]);
 	}

@@ -31,6 +31,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 		linedef3dVerts[3] = { real(ev.x), 0, real(ev.y) };
 		linedef3dVerts[4] = { real(sv.x), -1, real(sv.y) };
 		linedef3dVerts[5] = { real(ev.x), -1, real(ev.y) };
+		std::swap(linedef3dVerts[1], linedef3dVerts[2]);
 
 		std::array<int, 2> sidedefNumbers = { linedef.frontSidedef, linedef.backSidedef };
 

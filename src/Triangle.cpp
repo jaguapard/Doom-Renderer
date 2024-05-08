@@ -51,8 +51,11 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		rot[i] = { rt, tv[i].textureCoords };
 	}
 
-	Vec3 normal = (rot[2].spaceCoords - rot[0].spaceCoords).cross3d(rot[1].spaceCoords - rot[0].spaceCoords);
-	if (rot[0].spaceCoords.dot(normal) >= 0) return;
+	if (context.backfaceCullingEnabled)
+	{
+		Vec3 normal = (rot[2].spaceCoords - rot[0].spaceCoords).cross3d(rot[1].spaceCoords - rot[0].spaceCoords);
+		if (rot[0].spaceCoords.dot(normal) >= 0) return;
+	}
 	
 	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
 	{

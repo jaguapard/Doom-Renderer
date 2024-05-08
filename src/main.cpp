@@ -131,6 +131,7 @@ void program(int argc, char** argv)
 	real fogMaxIntensityDist = 600;
 	bool mouseCaptured = false;
 	bool wireframeEnabled = false;
+	bool backfaceCullingEnabled = true;
 	real nearPlaneZ = -1;
 	real fovMult = 1;
 	WheelAdjustmentMode wheelAdjMod = WheelAdjustmentMode::FLY_SPEED;
@@ -275,6 +276,7 @@ void program(int argc, char** argv)
 			if (input.wasCharPressedOnThisFrame('K')) wheelAdjMod = static_cast<WheelAdjustmentMode>((uint32_t(wheelAdjMod) + 1) % uint32_t(WheelAdjustmentMode::COUNT));
 			if (input.wasCharPressedOnThisFrame('L')) fovMult = 1;
 			if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };			
+			if (input.wasCharPressedOnThisFrame('R')) backfaceCullingEnabled ^= 1;
 
 			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 			{
@@ -381,6 +383,7 @@ void program(int argc, char** argv)
 		ctx.framebufH = framebufH;
 		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
 		ctx.wireframeEnabled = wireframeEnabled;
+		ctx.backfaceCullingEnabled = backfaceCullingEnabled;
 		ctx.renderJobs = &renderJobs;
 		ctx.nearPlaneClippingZ = nearPlaneZ;
 		ctx.fovMult = fovMult;

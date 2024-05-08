@@ -25,13 +25,12 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 
 		std::array<Vec3, 6> linedef3dVerts;
 		linedef3dVerts[0] = { real(sv.x), 0, real(sv.y) }; //quads originated by a linedef will always only differ in height
-		linedef3dVerts[1] = { real(ev.x), 0, real(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
-		linedef3dVerts[2] = { real(sv.x), -1, real(sv.y) }; //-1 = lower
+		linedef3dVerts[1] = { real(sv.x), -1, real(sv.y) }; //-1 = lower
+		linedef3dVerts[2] = { real(ev.x), 0, real(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
 
 		linedef3dVerts[3] = { real(ev.x), 0, real(ev.y) };
 		linedef3dVerts[4] = { real(sv.x), -1, real(sv.y) };
 		linedef3dVerts[5] = { real(ev.x), -1, real(ev.y) };
-		std::swap(linedef3dVerts[1], linedef3dVerts[2]);
 
 		std::array<int, 2> sidedefNumbers = { linedef.frontSidedef, linedef.backSidedef };
 

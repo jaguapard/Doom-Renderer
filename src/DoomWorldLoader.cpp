@@ -211,9 +211,20 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 			t[j / 3].tv[j % 3].textureCoords = Vec3(uv.x, uv.z);
 		}
 
-		std::swap(t[1].tv[1], t[1].tv[2]); //normal of the ceiling must be opposite that of floor
 		trisFloor.push_back(t[0]);
 		trisCeiling.push_back(t[1]);
+	}
+
+	assert(trisFloor.size() == trisCeiling.size());
+	for (int i = 0; i < trisFloor.size(); ++i)
+	{
+		const Vec3 up = { 0, 1, 0 };
+		Vec3 nf = trisFloor[i].getNormalVector();
+		Vec3 nc = trisCeiling[i].getNormalVector();
+
+		//enforce proper vertex order. Floor normals must point up, and ceiling ones must point down
+		if (nf.dot(up) <= 0) std::swap(trisFloor[i].tv[1], trisFloor[i].tv[2]);
+		if (nc.dot(up) > 0) std::swap(trisCeiling[i].tv[1], trisCeiling[i].tv[2]);
 	}
 	return { Model(trisFloor, floorTextureIndex, textureManager), Model(trisCeiling, ceilingTextureIndex, textureManager) };
 }

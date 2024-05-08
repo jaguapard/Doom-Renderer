@@ -71,3 +71,13 @@ Vec3 Model::getBoundingBoxMidPoint() const
 {
 	return std::accumulate(boundingBox.begin(), boundingBox.end(), Vec3(0, 0, 0)) / boundingBox.size();
 }
+
+const std::vector<Triangle>& Model::getTriangles() const
+{
+	return triangles;
+}
+
+void Model::swapVertexOrder()
+{
+	for (auto& it : triangles) std::swap(it.tv[1], it.tv[2]);
+}

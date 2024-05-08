@@ -10,6 +10,9 @@ public:
 	void addToRenderQueue(TriangleRenderContext ctx) const;
 	int getTriangleCount() const;
 	Vec3 getBoundingBoxMidPoint() const;
+	const std::vector<Triangle>& getTriangles() const;
+
+	void swapVertexOrder();
 private:
 	std::vector<Triangle> triangles;
 	int textureIndex;

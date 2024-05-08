@@ -55,6 +55,8 @@ struct Triangle
 	void addToRenderQueue(const TriangleRenderContext& context) const;
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
 	void drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const;
+
+	Vec3 getNormalVector() const;
 private:
 	void prepareScreenSpace(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 	void addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords

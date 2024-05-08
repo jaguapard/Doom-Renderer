@@ -244,6 +244,11 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	}
 }
 
+Vec3 Triangle::getNormalVector() const
+{
+	return (tv[2].spaceCoords - tv[0].spaceCoords).cross3d(tv[1].spaceCoords - tv[0].spaceCoords);
+}
+
 TexVertex TexVertex::getClipedToPlane(const TexVertex& dst, real planeZ) const
 {
 	real alpha = inverse_lerp(spaceCoords.z, dst.spaceCoords.z, planeZ);

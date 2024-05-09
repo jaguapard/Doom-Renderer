@@ -13,5 +13,6 @@
 |K|Switch mouse wheel action. Cycles between: fly speed adjustment, FOV adjustment|
 |L|Reset FOV back to default value|
 |R|Toggle backface culling|
+|Left CTRL|Capture mouse into the window|
 |_G_|_Toggle fog (disabled for now)_|
 |_J_|_Switch to next sky rendering mode (deprecated)_|

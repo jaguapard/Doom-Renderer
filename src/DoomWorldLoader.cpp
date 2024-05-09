@@ -84,7 +84,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto model = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto model = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager);
 				auto& target = sectorModels[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.push_back(model);
 			}
@@ -94,7 +94,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager);
 				auto& target = sectorModels[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.push_back(model);
 			}

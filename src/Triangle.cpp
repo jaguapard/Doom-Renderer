@@ -152,21 +152,17 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 
 void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const
 {
-	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
-	"mixing" (linearly interpolating) between two values. */
-	//if (yBeg < yEnd)
-	{
-		RenderJob rj;
-		rj.flatBottom = flatBottom;
-		rj.t = *this;
-		rj.lightMult = context.lightMult;
-		rj.textureIndex = context.textureIndex;
-		context.renderJobs->push_back(rj);
-	}
+	RenderJob rj;
+	rj.flatBottom = flatBottom;
+	rj.t = *this;
+	rj.lightMult = context.lightMult;
+	rj.textureIndex = context.textureIndex;
+	context.renderJobs->push_back(rj);
 }
 
 void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
+	//Scanline rasterization algorithm
 	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 	real original_yBeg = y1;
 	real original_yEnd = y3;
@@ -177,7 +173,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	yBeg = std::max<real>(yBeg, zoneMinY);
 	yEnd = std::min<real>(yEnd, zoneMaxY);
 
-	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
+	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
 	//const Texture& texture = *context.texture;
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
 	bool flatBottom = renderJob.flatBottom;
@@ -214,7 +210,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++xInt)
 		{			
 			interpolatedDividedUv += interpolatedDividedUvStep;
-			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
+			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 
 			int pixelIndex = yInt * bufW + xInt; //all buffers have the same size, so we can use a single index
 			bool occluded = (*(context.zBuffer))[pixelIndex] <= interpolatedDividedUv.z;

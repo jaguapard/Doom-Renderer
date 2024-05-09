@@ -131,7 +131,7 @@ void program(int argc, char** argv)
 	real fogMaxIntensityDist = 600;
 	bool mouseCaptured = false;
 	bool wireframeEnabled = false;
-	bool backfaceCullingEnabled = true;
+	bool backfaceCullingEnabled = false;
 	real nearPlaneZ = -1;
 	real fovMult = 1;
 	WheelAdjustmentMode wheelAdjMod = WheelAdjustmentMode::FLY_SPEED;

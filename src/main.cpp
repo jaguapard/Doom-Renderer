@@ -512,6 +512,7 @@ void program(int argc, char** argv)
 			std::map<std::string, std::string> perfmonInfo;
 			perfmonInfo["Cam pos"] = vecToStr(camPos);
 			perfmonInfo["Cam ang"] = vecToStr(camAng);
+			perfmonInfo["Fly speed"] = std::to_string(flySpeed) + "/frame";
 			perfmonInfo["Backface culling"] = backfaceCullingEnabled ? "enabled" : "disabled";
 			performanceMonitor.registerFrameDone();
 			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);

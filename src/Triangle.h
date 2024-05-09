@@ -50,7 +50,7 @@ inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
 struct TriangleRenderContext;
 struct RenderJob;
 
-struct Triangle
+struct alignas(32) Triangle
 {
 	union {
 		std::array<TexVertex, 3> tv;

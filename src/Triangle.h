@@ -15,8 +15,16 @@
 
 struct alignas(32) TexVertex
 {
-	Vec3 spaceCoords; //this can mean different things inside different contexts, world or screen space
-	Vec3 textureCoords; //this too, but it's either normal uv's, or z-divided ones
+	union {
+		struct {
+			Vec3 spaceCoords; //this can mean different things inside different contexts, world or screen space
+			Vec3 textureCoords; //this too, but it's either normal uv's, or z-divided ones
+		};
+		struct {
+			real x, y, z, w;
+			real u, v, _pad1, _pad2;
+		};
+	};
 
 	bool operator<(const TexVertex& b) const
 	{

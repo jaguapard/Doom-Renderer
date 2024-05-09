@@ -89,12 +89,14 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 				target.push_back(model);
 			}
 
+			auto preSortLinedefSectors = linedefSectors;
 			std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.ceilingHeight < si2.ceilingHeight; });
 			{   //upper sections
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
 				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager);
+				if (preSortLinedefSectors[0].sectorNumber == linedefSectors[0].sectorNumber) model.swapVertexOrder();
 				auto& target = sectorModels[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.push_back(model);
 			}

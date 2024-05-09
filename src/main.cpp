@@ -101,7 +101,7 @@ void program(int argc, char** argv)
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
 	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());
 
-	auto maps = WadLoader::loadWad("D:/Games/GZDoom/DOOM2.wad"); //can't redistribute commercial wads!
+	auto maps = WadLoader::loadWad("doom2.wad"); //can't redistribute commercial wads!
 	//loadWad("data/test_maps/STUPID.wad");
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");

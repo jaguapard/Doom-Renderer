@@ -16,7 +16,7 @@ Texture::Texture(std::string name)
 	{
 		std::string path;
 		if (name.size() > 1 && name[1] == ':') path = name; //TODO: a dirty hack to tell absolute paths from relative 
-		else path = "D:/Games/GZDoom/Doom2_unpacked/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
+		else path = "data/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
 
 		Smart_Surface surf = Smart_Surface(IMG_Load(path.c_str()));
 

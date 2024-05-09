@@ -124,30 +124,28 @@ std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> re
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 {
-	std::array<TexVertex, 3> fullyTransformed;
+	Triangle screenSpaceTriangle;
 	for (int i = 0; i < 3; ++i)
 	{
 		real zInv = context.fovMult / tv[i].spaceCoords.z;
 		Vec3 zDividedWorld = tv[i].spaceCoords * zInv;
 		Vec3 zDividedUv = tv[i].textureCoords * zInv;
 		zDividedUv.z = zInv;
-		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
+		screenSpaceTriangle.tv[i] = { context.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
 	}
-	if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
+	if (screenSpaceTriangle.y1 == screenSpaceTriangle.y2 && screenSpaceTriangle.y2 == screenSpaceTriangle.y3) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
-	std::sort(fullyTransformed.begin(), fullyTransformed.end());
+	screenSpaceTriangle.sortByAscendingSpaceY();
 
-	real splitAlpha = (fullyTransformed[1].spaceCoords.y - fullyTransformed[0].spaceCoords.y) / (fullyTransformed[2].spaceCoords.y - fullyTransformed[0].spaceCoords.y);
-	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
-	
-	Triangle flatBottom;
-	flatBottom.tv = { fullyTransformed[0], fullyTransformed[1], splitVertex };
-	
-	Triangle flatTop;
-	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };	
+	real splitAlpha = (screenSpaceTriangle.y2 - screenSpaceTriangle.y1) / (screenSpaceTriangle.y3 - screenSpaceTriangle.y1);
+	TexVertex splitVertex = lerp(screenSpaceTriangle.tv[0], screenSpaceTriangle.tv[2], splitAlpha);
 
-	flatTop.addToRenderQueueFinal(context, false);
-	flatBottom.addToRenderQueueFinal(context, true);
+	TexVertex v2_copy = screenSpaceTriangle.tv[2];
+	screenSpaceTriangle.tv[2] = splitVertex;
+	screenSpaceTriangle.addToRenderQueueFinal(context, true); //flat bottom part
+
+	screenSpaceTriangle.tv = { screenSpaceTriangle.tv[1], splitVertex, v2_copy };
+	screenSpaceTriangle.addToRenderQueueFinal(context, false); //flat top part
 }
 
 void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const
@@ -163,7 +161,6 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool 
 void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
 	//Scanline rasterization algorithm
-	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
 	real original_yBeg = y1;
 	real original_yEnd = y3;
 

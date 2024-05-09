@@ -144,7 +144,9 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	screenSpaceTriangle.tv[2] = splitVertex;
 	screenSpaceTriangle.addToRenderQueueFinal(context, true); //flat bottom part
 
-	screenSpaceTriangle.tv = { screenSpaceTriangle.tv[1], splitVertex, v2_copy };
+	//screenSpaceTriangle.tv = { screenSpaceTriangle.tv[1], splitVertex, v2_copy };
+	screenSpaceTriangle.tv[0] = splitVertex;
+	screenSpaceTriangle.tv[2] = v2_copy;
 	screenSpaceTriangle.addToRenderQueueFinal(context, false); //flat top part
 }
 

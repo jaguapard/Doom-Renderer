@@ -32,7 +32,7 @@ void PerformanceMonitor::registerFrameDone(bool remember)
 	}
 }
 
-void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const OptionalInfo* optionalInfo)
+void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::map<std::string, std::string>& additionalInfo)
 {
 	std::string text = PercentileInfo(frameNumber, frameTimesMs).toString();
 	std::stringstream ss;
@@ -45,10 +45,9 @@ void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftC
 		ss << (statsman-oldStats).toString() << "\n";
 	}
 
-	if (optionalInfo)
+	for (const auto& [key, value] : additionalInfo)
 	{
-		ss << "Pos: " << optionalInfo->camPos.x << " " << optionalInfo->camPos.y << " " << optionalInfo->camPos.z << "\n";
-		ss << "Ang: " << optionalInfo->camAng.x << " " << optionalInfo->camAng.y << " " << optionalInfo->camAng.z << "\n";
+		ss << key << ": " << value << "\n";
 	}
 
 	auto s = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(font.get(), ss.str().c_str(), {255,255,255,SDL_ALPHA_OPAQUE}, 600));

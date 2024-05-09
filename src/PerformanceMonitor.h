@@ -3,6 +3,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include <deque>
+#include <map>
 
 #include "smart.h"
 #include "Statsman.h"
@@ -17,7 +18,7 @@ public:
 	void reset();
 	void registerFrameBegin(); //must be called before any drawing and processing is attempted
 	void registerFrameDone(bool remember = true);
-	void drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const OptionalInfo* optionalInfo = nullptr);
+	void drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::map<std::string, std::string>& additionalInfo);
 
 	struct PercentileInfo
 	{
@@ -29,11 +30,6 @@ public:
 	};
 
 	PercentileInfo getPercentileInfo() const;
-
-	struct OptionalInfo
-	{
-		Vec3 camPos, camAng;
-	};
 private:
 	Smart_Font font;
 	bob::Timer timer;

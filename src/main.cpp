@@ -89,6 +89,12 @@ std::map<std::string, CmdArg> parseCmdArgs(int argc, char** argv)
 	std::string validKeys = { "benchmark" };
 	return {};
 }
+
+std::string vecToStr(const Vec3& v)
+{
+	return std::to_string(v.x) + " " + std::to_string(v.y) + " " + std::to_string(v.z);
+}
+
 void program(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
@@ -503,11 +509,12 @@ void program(int argc, char** argv)
 		}
 
 		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
+			std::map<std::string, std::string> perfmonInfo;
+			perfmonInfo["Cam pos"] = vecToStr(camPos);
+			perfmonInfo["Cam ang"] = vecToStr(camAng);
+			perfmonInfo["Backface culling"] = backfaceCullingEnabled ? "enabled" : "disabled";
 			performanceMonitor.registerFrameDone();
-			PerformanceMonitor::OptionalInfo info;
-			info.camPos = camPos;
-			info.camAng = camAng;
-			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, &info); 
+			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
 			if (SDL_UpdateWindowSurface(wnd)) throw std::runtime_error(SDL_GetError()); 
 		});
 	}

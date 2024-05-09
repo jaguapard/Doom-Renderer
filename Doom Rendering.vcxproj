@@ -89,6 +89,11 @@
     <ClInclude Include="src\WadLoader.h" />
     <ClInclude Include="src\ZBuffer.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="docs\Backface culling.md" />
+    <None Include="docs\Controls.md" />
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

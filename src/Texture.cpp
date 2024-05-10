@@ -81,8 +81,8 @@ Color Texture::getPixel(int x, int y) const
 	int h = pixels.getH();
 	x %= w; //TODO: this is very slow. Our textures do not change size at runtime, so it can be optimized by fast integer modulo techiques
 	y %= h;
-	x += (x < 0) ? w : 0; //can't just flip the sign of modulo - that will make textures reflect around 0, i.e. x=-1 will map to 1 instead of (w-1)
-	y += (y < 0) ? h : 0;
+	if (x < 0) x += w; //can't just flip the sign of modulo - that will make textures reflect around 0, i.e. x=-1 will map to 1 instead of (w-1)
+	if (y < 0) y += h;
 	return pixels.getPixelUnsafe(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
 #endif
 }

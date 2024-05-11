@@ -163,9 +163,6 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool 
 void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
 	//Scanline rasterization algorithm
-	real original_yBeg = y1;
-	real original_yEnd = y3;
-
 	if (y1 >= zoneMaxY || y3 < zoneMinY) return;
 	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
 	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
@@ -222,7 +219,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			auto lightMult = renderJob.lightMult;
 			if (context.wireframeEnabled)
 			{
-				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = original_yBeg, oye = original_yEnd;
+				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = y1, oye = y3;
 				bool leftEdge = rx == oxb;
 				bool rightEdge = rx == oxe;
 				bool topEdge = flatBottom && ry == oyb;

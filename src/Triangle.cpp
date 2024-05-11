@@ -180,6 +180,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	auto& frameBuf = *context.frameBuffer;
 	auto& lightBuf = *context.lightBuffer;
 	auto& depthBuf = *context.zBuffer;
+	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
@@ -200,7 +201,6 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		
 		Vec3 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
 		Vec3 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
-		int bufW = context.frameBuffer->getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 		int yInt = int(y);
 		int xInt = int(xBeg);
 		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++xInt)

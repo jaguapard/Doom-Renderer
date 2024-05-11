@@ -166,6 +166,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	real original_yBeg = y1;
 	real original_yEnd = y3;
 
+	if (y1 >= zoneMaxY || y3 < zoneMinY) return;
 	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
 	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
 	if (yBeg >= zoneMaxY || yEnd < zoneMinY) return;
@@ -177,8 +178,8 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
 	bool flatBottom = renderJob.flatBottom;
 
-	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
-	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+	const TexVertex& lerpDst1 = tv[2-flatBottom]; //flat top and flat bottom triangles require different interpolation points
+	const TexVertex& lerpSrc2 = tv[1-flatBottom]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 
 	real ypStep = 1.0 / ySpan;
 	real yp = (yBeg - y1) / ySpan;

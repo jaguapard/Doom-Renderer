@@ -175,15 +175,12 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
 	bool flatBottom = renderJob.flatBottom;
 
-	const TexVertex& lerpDst1 = tv[2-flatBottom]; //flat top and flat bottom triangles require different interpolation points
-	const TexVertex& lerpSrc2 = tv[1-flatBottom]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
-
 	real ypStep = 1.0 / ySpan;
 	real yp = (yBeg - y1) / ySpan;
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
-		TexVertex scanlineTv1 = lerp(tv[0], lerpDst1, yp); 
-		TexVertex scanlineTv2 = lerp(lerpSrc2, tv[2], yp);
+		TexVertex scanlineTv1 = lerp(tv[0], tv[2 - flatBottom], yp); //flat top and flat bottom triangles require different interpolation points
+		TexVertex scanlineTv2 = lerp(tv[1 - flatBottom], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 		const TexVertex* left = &scanlineTv1;
 		const TexVertex* right = &scanlineTv2;
 		if (left->spaceCoords.x > right->spaceCoords.x) std::swap(left, right);

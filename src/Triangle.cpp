@@ -164,11 +164,8 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 {
 	//Scanline rasterization algorithm
 	if (y1 >= zoneMaxY || y3 < zoneMinY) return;
-	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
-	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
-	if (yBeg >= zoneMaxY || yEnd < zoneMinY) return;
-	yBeg = std::max<real>(yBeg, zoneMinY);
-	yEnd = std::min<real>(yEnd, zoneMaxY);
+	real yBeg = std::clamp<real>(y1, zoneMinY, zoneMaxY);
+	real yEnd = std::clamp<real>(y3, zoneMinY, zoneMaxY);
 
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
 	//const Texture& texture = *context.texture;

@@ -509,13 +509,17 @@ void program(int argc, char** argv)
 		}
 
 		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
-			std::map<std::string, std::string> perfmonInfo;
-			perfmonInfo["Cam pos"] = vecToStr(camPos);
-			perfmonInfo["Cam ang"] = vecToStr(camAng);
-			perfmonInfo["Fly speed"] = std::to_string(flySpeed) + "/frame";
-			perfmonInfo["Backface culling"] = backfaceCullingEnabled ? "enabled" : "disabled";
 			performanceMonitor.registerFrameDone();
-			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
+			if (performanceMonitorDisplayEnabled)
+			{
+				std::map<std::string, std::string> perfmonInfo;
+				perfmonInfo["Cam pos"] = vecToStr(camPos);
+				perfmonInfo["Cam ang"] = vecToStr(camAng);
+				perfmonInfo["Fly speed"] = std::to_string(flySpeed) + "/frame";
+				perfmonInfo["Backface culling"] = backfaceCullingEnabled ? "enabled" : "disabled";
+				perfmonInfo["FOV"] = std::to_string(2 * atan(1 / fovMult) * 180 / M_PI) + " degrees";
+				performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
+			}
 			if (SDL_UpdateWindowSurface(wnd)) throw std::runtime_error(SDL_GetError()); 
 		});
 	}

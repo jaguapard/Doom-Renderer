@@ -190,12 +190,12 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		
 		real original_xBeg = left->spaceCoords.x;
 		real original_xEnd = right->spaceCoords.x;
-		real xBeg = std::clamp<real>(left->spaceCoords.x, 0, context.framebufW);
-		real xEnd = std::clamp<real>(right->spaceCoords.x, 0, context.framebufW);
-		real xSpan = right->spaceCoords.x - left->spaceCoords.x;
+		real xBeg = std::clamp<real>(original_xBeg, 0, context.framebufW);
+		real xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
+		real xSpan = original_xEnd - original_xBeg;
 
 		real xpStep = 1.0 / xSpan;
-		real xp = (xBeg - left->spaceCoords.x) / xSpan;
+		real xp = (xBeg - original_xBeg) / xSpan;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
 		

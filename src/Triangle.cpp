@@ -177,16 +177,18 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 
 	real ypStep = 1.0 / ySpan;
 	real yp = (yBeg - y1) / ySpan;
+	auto& frameBuf = *context.frameBuffer;
+	auto& lightBuf = *context.lightBuffer;
+	auto& depthBuf = *context.zBuffer;
+
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
-		TexVertex scanlineTv1 = lerp(tv[0], tv[2 - flatBottom], yp); //flat top and flat bottom triangles require different interpolation points
-		TexVertex scanlineTv2 = lerp(tv[1 - flatBottom], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
-		const TexVertex* left = &scanlineTv1;
-		const TexVertex* right = &scanlineTv2;
-		if (left->spaceCoords.x > right->spaceCoords.x) std::swap(left, right);
+		TexVertex leftTv = lerp(tv[0], tv[2 - flatBottom], yp); //flat top and flat bottom triangles require different interpolation points
+		TexVertex rightTv = lerp(tv[1 - flatBottom], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+		if (leftTv.spaceCoords.x > rightTv.spaceCoords.x) std::swap(leftTv, rightTv);
 		
-		real original_xBeg = left->spaceCoords.x;
-		real original_xEnd = right->spaceCoords.x;
+		real original_xBeg = leftTv.spaceCoords.x;
+		real original_xEnd = rightTv.spaceCoords.x;
 		real xBeg = std::clamp<real>(original_xBeg, 0, context.framebufW);
 		real xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
 		real xSpan = original_xEnd - original_xBeg;
@@ -196,8 +198,8 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
 		
-		Vec3 interpolatedDividedUvStep = (right->textureCoords - left->textureCoords) * xpStep;
-		Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
+		Vec3 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
+		Vec3 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
 		int bufW = context.frameBuffer->getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 		int yInt = int(y);
 		int xInt = int(xBeg);
@@ -207,7 +209,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 
 			int pixelIndex = yInt * bufW + xInt; //all buffers have the same size, so we can use a single index
-			bool occluded = (*(context.zBuffer))[pixelIndex] <= interpolatedDividedUv.z;
+			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
 
 			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
@@ -229,9 +231,9 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			}
 			if (notFullyTransparent) //fully transparent pixels do not need to be considered for drawing
 			{
-				(*context.frameBuffer)[pixelIndex] = texturePixel;
-				(*context.lightBuffer)[pixelIndex] = lightMult;
-				(*context.zBuffer)[pixelIndex] = interpolatedDividedUv.z;
+				frameBuf[pixelIndex] = texturePixel;
+				lightBuf[pixelIndex] = lightMult;
+				depthBuf[pixelIndex] = interpolatedDividedUv.z;
 			}
 		}
 	}

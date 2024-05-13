@@ -9,6 +9,9 @@ public:
 	Matrix3 operator*(const Matrix3& other) const;
 	Vec3 operator*(const Vec3& v3) const;
 	real elements[3][3];
+
+	Matrix3 transposed() const;
+	Vec3 multiplyByTransposed(const Vec3& v3) const;
 };
 
 Matrix3 rotateX(real theta);

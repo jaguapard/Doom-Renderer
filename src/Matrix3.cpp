@@ -48,6 +48,28 @@ Vec3 Matrix3::operator*(const Vec3& v3) const
 	};
 }
 
+Matrix3 Matrix3::transposed() const
+{
+	Matrix3 ret;
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 3; ++j)
+		{
+			ret.elements[i][j] = this->elements[j][i];
+		}
+	}
+	return ret;
+}
+
+Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
+{
+	return {
+		v3.x * elements[0][0] + v3.y * elements[0][1] + v3.z * elements[0][2],
+		v3.x * elements[1][0] + v3.y * elements[1][1] + v3.z * elements[1][2],
+		v3.x * elements[2][0] + v3.y * elements[2][1] + v3.z * elements[2][2],
+	};
+}
+
 Matrix3 rotateX(real theta)
 {
 	const real sinTheta = sin(theta);

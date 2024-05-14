@@ -1,5 +1,6 @@
 #include "Threadpool.h"
 #include <cassert>
+#include "helpers.h"
 
 using task_id = Threadpool::task_id;
 using tast_t = Threadpool::task_t;
@@ -10,34 +11,53 @@ Threadpool::Threadpool()
 	if (std::thread::hardware_concurrency() == 0) threadCount = 1; //hardware_concurrency can return 0
 	this->spawnThreads(threadCount);
 }
+
 Threadpool::Threadpool(size_t numThreads)
 {
 	spawnThreads(numThreads);
 }
-Threadpool::task_id Threadpool::addTask(task_t taskFunc)
+
+task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies, std::optional<task_id> wantedId)
 {
 	std::lock_guard lck(taskListMutex);
-	this->unassignedTasks[lastFreeTaskId++] = taskFunc;
-
-	//std::unique_lock cv_lck(cv_mtx);
-	cv.notify_one();
-
-	return lastFreeTaskId - 1;
-}
-task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies)
-{
-	std::lock_guard lck(taskListMutex);
-	this->unassignedTasks[lastFreeTaskId++] = taskFunc;
-	task_id id = lastFreeTaskId - 1;
-
-	this->dependenciesMap[id].insert(dependencies.begin(), dependencies.end());
+	task_id id;
+	if (wantedId)
+	{
+		task_id wid = wantedId.value();
+		if (reservedTaskIds.find(wid) == reservedTaskIds.end()) throw std::runtime_error("Threadpool: attempted to add task with reserved ID while that ID has not been reserved!");
+		reservedTaskIds.erase(wid);
+		id = wid;
+	}
+	else
+	{
+		id = lastFreeTaskId++;
+	}
+	
+	this->unassignedTasks[id] = taskFunc;
+	if (!dependencies.empty()) this->dependenciesMap[id].insert(dependencies.begin(), dependencies.end());
 	cv.notify_one();
 
 	return id;
 }
+
+std::vector<task_id> Threadpool::reserveTaskIds(size_t count)
+{
+	std::vector<task_id> ret(count);
+	std::lock_guard lck(taskListMutex);
+	task_id taskId = lastFreeTaskId;
+
+	for (int i = 0; i < count; ++i)
+	{
+		reservedTaskIds.insert(taskId + i);
+		ret.push_back(taskId + i);
+	}
+
+	lastFreeTaskId += count;
+	return ret;
+}
+
 void Threadpool::waitUntilTaskCompletes(task_id taskIndex)
 {
-	
 	{
 		if (taskIndex >= lastFreeTaskId) throw std::runtime_error("Attempting to wait for non-existant task.");
 		if (isTaskFinished(taskIndex)) return;
@@ -58,6 +78,14 @@ void Threadpool::waitForMultipleTasks(const std::vector<task_id>& taskIds)
 size_t Threadpool::getThreadCount() const
 {
 	return this->threads.size();
+}
+
+std::pair<double, double> Threadpool::getLimitsForThread(size_t threadIndex, double min, double max, std::optional<size_t> threadCount) const
+{
+	size_t nThreads = threadCount ? threadCount.value() : this->getThreadCount();
+	double minLimit = lerp(min, max, double(threadIndex) / nThreads);
+	double maxLimit = lerp(min, max, double(threadIndex + 1) / nThreads);
+	return std::make_pair(std::clamp(minLimit, min, max), std::clamp(maxLimit, min, max));
 }
 
 void Threadpool::workerRoutine(size_t workerNumber)
@@ -113,7 +141,7 @@ std::optional<std::pair<task_id, Threadpool::task_t>> Threadpool::tryGetTask()
 		//else keep looking
 	}
 
-	return {}; //no runnable tasks found, return empty optional
+	return std::nullopt; //no runnable tasks found, return empty optional
 }
 
 void Threadpool::markTaskFinished(task_id taskId)
@@ -139,7 +167,8 @@ bool Threadpool::isTaskFinished(task_id taskId)
 	std::lock_guard lck(taskListMutex);
 	assert(taskId < lastFreeTaskId); //there's nothing really wrong about asking for finish status of not yet added task, but that's probably a mistake on caller's end
 	if (taskId >= lastFreeTaskId) return false; //TODO: maybe throw here?
-	return 
+	return
+		reservedTaskIds.find(taskId) == reservedTaskIds.end() &&
 		inProgressTasks.find(taskId) == inProgressTasks.end() &&
 		unassignedTasks.find(taskId) == unassignedTasks.end();
 }

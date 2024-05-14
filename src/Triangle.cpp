@@ -50,7 +50,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
 	if (context.backfaceCullingEnabled)
 	{
-		Vec3 normal = (rotated.tv[2].spaceCoords - rotated.tv[0].spaceCoords).cross3d(rotated.tv[1].spaceCoords - rotated.tv[0].spaceCoords);
+		Vec3 normal = rotated.getNormalVector();
 		if (rotated.tv[0].spaceCoords.dot(normal) >= 0)
 		{
 			StatCount(statsman.triangles.verticesOutside[outsideVertexCount]--); //if a triangle is culled by backface culling, it will not get a chance to be split, so stats will be wrong

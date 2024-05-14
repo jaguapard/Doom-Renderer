@@ -66,19 +66,13 @@ Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
 #ifdef __AVX2__
 	__m256 zeros = _mm256_setzero_ps();
 	__m256 vv = _mm256_broadcast_ps(&v3.sseVec);
-	__m256 m12 = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[0]));
-	__m256 m34 = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[2]));
 
-	m12 = _mm256_hadd_ps(m12, zeros);
-	m12 = _mm256_hadd_ps(m12, zeros); //2 horizontal adds in sequence crush everything into bits [0..31] and [128..159]. Only they have nonzero values
-	m34 = _mm256_hadd_ps(m34, zeros);
-	m34 = _mm256_hadd_ps(m34, zeros); //now lower 32 bits of each 128 lane have our final vector values
+	__m256 preSum_xy = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[0])); //sum elements 0-3 to get result x, 4-7 for y
+	__m256 preSum_zw = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[2])); //sum elements 0-3 to get result z, 4-7 for z
 
-	__m256i permMask1 = _mm256_set_epi32(7, 7, 7, 7, 7, 7, 4, 0); //permute 2 ret values into bits [0..63]
-	__m256i permMask2 = _mm256_set_epi32(7, 7, 7, 7, 4, 0, 7, 7); //permute 2 ret values into bits [64..127]
-	__m256 perm_m12 = _mm256_permutevar8x32_ps(m12, permMask1);
-	__m256 perm_m34 = _mm256_permutevar8x32_ps(m34, permMask2);
-	__m256 ret = _mm256_blend_ps(perm_m12, perm_m34, 0b1100); //blend the final result into one 128 bit vector
+	__m256 preSum_xyzw = _mm256_hadd_ps(preSum_xy, preSum_zw); //after this we need to sum pairs of elements to get final result
+	__m256 shuffled_xyzw = _mm256_hadd_ps(preSum_xyzw, zeros); //after this we have result. xy are in elements 0, 4 and zw is in 1, 5
+	__m256 ret = _mm256_permutevar8x32_ps(shuffled_xyzw, _mm256_set_epi32(7, 7, 7, 7, 5, 1, 4, 0)); //this permute moves the elements into proper order
 	return _mm256_castps256_ps128(ret);
 #elif 0
 	//mn = v3 * elements[n]. Ret should be: (add up everything in m1, add up everything in m2 ...)

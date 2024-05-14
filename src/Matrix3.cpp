@@ -2,9 +2,9 @@
 #include <cmath>
 Matrix3::Matrix3()
 {
-	for (unsigned char x = 0; x < 3; ++x)
+	for (unsigned char x = 0; x < 4; ++x)
 	{
-		for (unsigned char y = 0; y < 3; ++y)
+		for (unsigned char y = 0; y < 4; ++y)
 		{
 			this->elements[x][y] = 0.0;
 		}
@@ -63,6 +63,32 @@ Matrix3 Matrix3::transposed() const
 
 Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
 {
+	//mn = v3 * elements[n]. Ret should be: (add up everything in m1, add up everything in m2 ...)
+	__m128 zeros = _mm_setzero_ps();
+	__m128 m1 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&elements[0]));
+	m1 = _mm_hadd_ps(m1, zeros);
+	m1 = _mm_hadd_ps(m1, zeros);
+
+	__m128 m2 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&elements[1]));
+	m2 = _mm_hadd_ps(m2, zeros);
+	m2 = _mm_hadd_ps(m2, zeros);
+
+	__m128 m3 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&elements[2]));
+	m3 = _mm_hadd_ps(m3, zeros);
+	m3 = _mm_hadd_ps(m3, zeros);
+
+	__m128 m4 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&elements[3]));
+	m4 = _mm_hadd_ps(m4, zeros);
+	m4 = _mm_hadd_ps(m4, zeros);
+
+	__m128i ret2 = _mm_bslli_si128(_mm_castps_si128(m2), 4);
+	__m128i ret3 = _mm_bslli_si128(_mm_castps_si128(m3), 8);
+	__m128i ret4 = _mm_bslli_si128(_mm_castps_si128(m4), 12);
+	
+	__m128i ret12 = _mm_or_si128(_mm_castps_si128(m1), ret2);
+	__m128i ret34 = _mm_or_si128(ret3, ret4);
+	
+	return _mm_castsi128_ps(_mm_or_si128(ret12, ret34));
 	return {
 		v3.x * elements[0][0] + v3.y * elements[0][1] + v3.z * elements[0][2],
 		v3.x * elements[1][0] + v3.y * elements[1][1] + v3.z * elements[1][2],
@@ -74,33 +100,46 @@ Matrix3 rotateX(real theta)
 {
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
-	return{
-		cosTheta, sinTheta, 0.0,
-		-sinTheta, cosTheta, 0.0,
-		0.0,    0.0,   1.0
+	Matrix3 ret;	
+	real e[4][4] = {
+		{cosTheta, sinTheta, 0.0, 0.0},
+		{-sinTheta, cosTheta, 0.0, 0.0},
+		{0.0,    0.0,   1.0, 0.0},
+		{0.0,0.0,0.0,0.0},
 	};
+	memcpy(&ret.elements[0][0], &e[0][0], sizeof(e));
+	return ret;
 }
 
 Matrix3 rotateY(real theta)
 {
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
-	return{
-		cosTheta, 0.0,-sinTheta,
-		0.0,   1.0, 0.0,
-		sinTheta, 0.0, cosTheta
+	Matrix3 ret;
+	real e[4][4] = {
+		{cosTheta, 0.0,-sinTheta, 0.0},
+		{0.0,   1.0, 0.0, 0.0 },
+		{ sinTheta, 0.0, cosTheta, 0.0 },
+		{0.0, 0.0, 0.0, 0.0},
 	};
+	memcpy(&ret.elements[0][0], &e[0][0], sizeof(e));
+	return ret;
 }
 
 Matrix3 rotateZ(real theta)
 {
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
-	return{
-		1.0, 0.0,   0.0,
-		0.0, cosTheta, sinTheta,
-		0.0,-sinTheta, cosTheta,
+
+	Matrix3 ret;
+	real e[4][4] = {
+		{1.0, 0.0,   0.0, 0.0},
+		{0.0, cosTheta, sinTheta, 0.0},
+		{0.0,-sinTheta, cosTheta, 0.0 },
+		{0.0, 0.0, 0.0, 0.0},
 	};
+	memcpy(&ret.elements[0][0], &e[0][0], sizeof(e));
+	return ret;
 }
 
 

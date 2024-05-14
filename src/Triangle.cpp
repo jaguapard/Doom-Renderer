@@ -30,76 +30,63 @@ void Triangle::sortByAscendingTextureY()
 
 void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 {
-	std::array<TexVertex,3> rot;
+	//std::array<TexVertex, 3> rot;
+	Triangle rotated;
 	bool vertexOutside[3] = { false };
 	int outsideVertexCount = 0;
 	for (int i = 0; i < 3; ++i)
 	{
 		Vec3 off = context.ctr->doCamOffset(tv[i].spaceCoords);
-		Vec3 rt = context.ctr->rotate(off);
+		rotated.tv[i].spaceCoords = context.ctr->rotate(off);
+		rotated.tv[i].textureCoords = tv[i].textureCoords;
 
-		if (rt.z > context.nearPlaneClippingZ)
+		if (rotated.tv[i].z > context.nearPlaneClippingZ)
 		{
 			outsideVertexCount++;
-			if (outsideVertexCount == 3) 
-			{
-				StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
-				return; //triangle is completely behind the clipping plane, discard
-			}
-			vertexOutside[i] = true;			
+			vertexOutside[i] = true;
 		}
-		rot[i] = { rt, tv[i].textureCoords };
 	}
 
+	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
 	if (context.backfaceCullingEnabled)
 	{
-		Vec3 normal = (rot[2].spaceCoords - rot[0].spaceCoords).cross3d(rot[1].spaceCoords - rot[0].spaceCoords);
-		if (rot[0].spaceCoords.dot(normal) >= 0) return;
+		Vec3 normal = (rotated.tv[2].spaceCoords - rotated.tv[0].spaceCoords).cross3d(rotated.tv[1].spaceCoords - rotated.tv[0].spaceCoords);
+		if (rotated.tv[0].spaceCoords.dot(normal) >= 0)
+		{
+			StatCount(statsman.triangles.verticesOutside[outsideVertexCount]--); //if a triangle is culled by backface culling, it will not get a chance to be split, so stats will be wrong
+			return;
+		}
 	}
-	
-	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
-	{
-		StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
-		Triangle prepped = *this;
-		prepped.tv = rot;
-		return prepped.prepareScreenSpace(context);
-	}
-	
-	auto itBeg = std::begin(vertexOutside);
-	auto itEnd = std::end(vertexOutside);
+
+	if (outsideVertexCount == 3) return;
+	if (outsideVertexCount == 0) return rotated.prepareScreenSpace(context); //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
+
+	//search for one of a kind vertex (outside if outsideVertexCount==1, else inside)
+	int i = std::find(std::begin(vertexOutside), std::end(vertexOutside), outsideVertexCount == 1) - std::begin(vertexOutside);
+	int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds lookups
+	int v2_ind = i < 2 ? i + 1 : 0;
+	const TexVertex& v1 = rotated.tv[v1_ind];
+	const TexVertex& v2 = rotated.tv[v2_ind];
+
 	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
 	{
-		StatCount(statsman.triangles.singleVertexOutOfScreenSplits++);
-		int i = std::find(itBeg, itEnd, true) - itBeg;
-		int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds
-		int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
+		TexVertex clipped1 = rotated.tv[i].getClipedToPlane(v1, context.nearPlaneClippingZ);
+		TexVertex clipped2 = rotated.tv[i].getClipedToPlane(v2, context.nearPlaneClippingZ);
 
-		const TexVertex& v1 = rot[v1_ind];
-		const TexVertex& v2 = rot[v2_ind];
-		Triangle t1 = *this, t2 = *this;
-		TexVertex clipped1 = rot[i].getClipedToPlane(v1, context.nearPlaneClippingZ);
-		TexVertex clipped2 = rot[i].getClipedToPlane(v2, context.nearPlaneClippingZ);
-				
-		t1.tv = { v1,clipped1, v2 };
-		t2.tv = { clipped1, clipped2, v2};
+		Triangle t1 = { v1,       clipped1, v2 };
+		Triangle t2 = { clipped1, clipped2, v2 };
 
 		t1.prepareScreenSpace(context);
 		t2.prepareScreenSpace(context);
-		return;
 	}
 
 	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
 	{
-		StatCount(statsman.triangles.doubleVertexOutOfScreenSplits++);
-		int i = std::find(itBeg, itEnd, false) - itBeg;		
-		int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds
-		int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
-
-		Triangle clipped = *this;
-		clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i], context.nearPlaneClippingZ);
-		clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i], context.nearPlaneClippingZ);
-		clipped.tv[i] = rot[i];
-		return clipped.prepareScreenSpace(context);
+		Triangle clipped;
+		clipped.tv[v1_ind] = v1.getClipedToPlane(rotated.tv[i], context.nearPlaneClippingZ);
+		clipped.tv[v2_ind] = v2.getClipedToPlane(rotated.tv[i], context.nearPlaneClippingZ);
+		clipped.tv[i] = rotated.tv[i];
+		clipped.prepareScreenSpace(context);
 	}
 }
 

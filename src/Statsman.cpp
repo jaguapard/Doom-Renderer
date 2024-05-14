@@ -29,10 +29,7 @@ std::string Statsman::toString()
     ss << VAR_PRINT(zBuffer.writes) << "\n";
     ss << VAR_PRINT(zBuffer.writeDisabledTests) << "\n";
 
-    ss << VAR_PRINT(triangles.zeroVerticesOutsideDraws) << "\n";
-    ss << VAR_PRINT(triangles.singleVertexOutOfScreenSplits) << "\n";
-    ss << VAR_PRINT(triangles.doubleVertexOutOfScreenSplits) << "\n";
-    ss << VAR_PRINT(triangles.tripleVerticeOutOfScreenDiscards) << "\n";
+    for (int i = 0; i < 4; ++i) ss << VAR_PRINT(triangles.verticesOutside[i]) << "\n";
 
     ss << VAR_PRINT(textures.pixelFetches) << "\n";
 

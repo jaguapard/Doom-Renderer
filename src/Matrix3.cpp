@@ -63,6 +63,24 @@ Matrix3 Matrix3::transposed() const
 
 Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
 {
+#ifdef __AVX2__
+	__m256 zeros = _mm256_setzero_ps();
+	__m256 vv = _mm256_broadcast_ps(&v3.sseVec);
+	__m256 m12 = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[0]));
+	__m256 m34 = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[2]));
+
+	m12 = _mm256_hadd_ps(m12, zeros);
+	m12 = _mm256_hadd_ps(m12, zeros); //2 horizontal adds in sequence crush everything into bits [0..31] and [128..159]. Only they have nonzero values
+	m34 = _mm256_hadd_ps(m34, zeros);
+	m34 = _mm256_hadd_ps(m34, zeros); //now lower 32 bits of each 128 lane have our final vector values
+
+	__m256i permMask1 = _mm256_set_epi32(7, 7, 7, 7, 7, 7, 4, 0); //permute 2 ret values into bits [0..63]
+	__m256i permMask2 = _mm256_set_epi32(7, 7, 7, 7, 4, 0, 7, 7); //permute 2 ret values into bits [64..127]
+	__m256 perm_m12 = _mm256_permutevar8x32_ps(m12, permMask1);
+	__m256 perm_m34 = _mm256_permutevar8x32_ps(m34, permMask2);
+	__m256 ret = _mm256_blend_ps(perm_m12, perm_m34, 0b1100); //blend the final result into one 128 bit vector
+	return _mm256_castps256_ps128(ret);
+#elif 0
 	//mn = v3 * elements[n]. Ret should be: (add up everything in m1, add up everything in m2 ...)
 	__m128 zeros = _mm_setzero_ps();
 	__m128 m1 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&elements[0]));
@@ -89,11 +107,13 @@ Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
 	__m128i ret34 = _mm_or_si128(ret3, ret4);
 	
 	return _mm_castsi128_ps(_mm_or_si128(ret12, ret34));
+#else
 	return {
 		v3.x * elements[0][0] + v3.y * elements[0][1] + v3.z * elements[0][2],
 		v3.x * elements[1][0] + v3.y * elements[1][1] + v3.z * elements[1][2],
 		v3.x * elements[2][0] + v3.y * elements[2][1] + v3.z * elements[2][2],
 	};
+#endif
 }
 
 Matrix3 rotateX(real theta)

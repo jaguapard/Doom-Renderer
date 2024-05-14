@@ -187,9 +187,9 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		Vec3 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
 		int yInt = int(y);
 		int xInt = int(xBeg);
-		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++xInt)
+		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must happen
+		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++xInt, interpolatedDividedUv += interpolatedDividedUvStep)
 		{			
-			interpolatedDividedUv += interpolatedDividedUvStep;
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 
 			int pixelIndex = yInt * bufW + xInt; //all buffers have the same size, so we can use a single index

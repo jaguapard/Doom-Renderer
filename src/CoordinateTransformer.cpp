@@ -8,13 +8,13 @@ CoordinateTransformer::CoordinateTransformer(int w, int h)
 	this->_shift = { widthToHeightAspectRatio / 2, 0.5, 0 };
 }
 
-void CoordinateTransformer::prepare(const Vec3& camPos, const Matrix3& rotation)
+void CoordinateTransformer::prepare(const Vec3 camPos, const Matrix3& rotation)
 {
 	this->camPos = camPos;
 	this->rotation = rotation.transposed();
 }
 
-Vec3 CoordinateTransformer::toScreenCoords(const Vec3& v) const
+Vec3 CoordinateTransformer::toScreenCoords(const Vec3 v) const
 {
 	assert(this->_shift.z == 0.0); //ensure to not touch z
 	Vec3 camOffset = v - camPos;
@@ -26,23 +26,23 @@ Vec3 CoordinateTransformer::toScreenCoords(const Vec3& v) const
 	return final;
 }
 
-Vec3 CoordinateTransformer::screenSpaceToPixels(const Vec3& v) const
+Vec3 CoordinateTransformer::screenSpaceToPixels(const Vec3 v) const
 {
 	assert(this->_shift.z == 0.0); //ensure to not touch z
 	return (v + this->_shift) * h;
 }
 
-Vec3 CoordinateTransformer::doCamOffset(const Vec3& v) const
+Vec3 CoordinateTransformer::doCamOffset(const Vec3 v) const
 {
 	return v - camPos;
 }
 
-Vec3 CoordinateTransformer::rotate(const Vec3& v) const
+Vec3 CoordinateTransformer::rotate(const Vec3 v) const
 {
 	return rotation.multiplyByTransposed(v);
 }
 
-Vec3 CoordinateTransformer::shift(const Vec3& v) const
+Vec3 CoordinateTransformer::shift(const Vec3 v) const
 {
 	assert(this->_shift.z == 0.0); //ensure to not touch z
 	return v + this->_shift;

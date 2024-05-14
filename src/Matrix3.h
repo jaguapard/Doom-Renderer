@@ -8,7 +8,7 @@ public:
 	Matrix3(real e11, real e12, real e13, real e21, real e22, real e23, real e31, real e32, real e33);
 	Matrix3 operator*(const Matrix3& other) const;
 	Vec3 operator*(const Vec3& v3) const;
-	real elements[3][3];
+	alignas(32) real elements[4][4];
 
 	Matrix3 transposed() const;
 	Vec3 multiplyByTransposed(const Vec3& v3) const;

@@ -196,10 +196,9 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
 
-			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
-			bool notFullyTransparent = texturePixel.a > 0;
-			
+			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);			
 			auto lightMult = renderJob.lightMult;
+
 			if (context.wireframeEnabled)
 			{
 				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = y1, oye = y3;
@@ -213,7 +212,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 					lightMult = 1;
 				}
 			}
-			if (notFullyTransparent) //fully transparent pixels do not need to be considered for drawing
+			if (texturePixel.a > 0) //fully transparent pixels do not need to be considered for drawing
 			{
 				frameBuf[pixelIndex] = texturePixel;
 				lightBuf[pixelIndex] = lightMult;

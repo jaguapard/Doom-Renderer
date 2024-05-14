@@ -5,16 +5,11 @@
 using task_id = Threadpool::task_id;
 using tast_t = Threadpool::task_t;
 
-Threadpool::Threadpool()
+Threadpool::Threadpool(std::optional<size_t> numThreads)
 {
-	size_t threadCount = std::max(1u, std::thread::hardware_concurrency() - 1); //don't crowd out the main thread, unless it is impossible 
+	size_t threadCount = numThreads.value_or(std::max(1u, std::thread::hardware_concurrency() - 1)); //don't crowd out the main thread, unless it is impossible 
 	if (std::thread::hardware_concurrency() == 0) threadCount = 1; //hardware_concurrency can return 0
 	this->spawnThreads(threadCount);
-}
-
-Threadpool::Threadpool(size_t numThreads)
-{
-	spawnThreads(numThreads);
 }
 
 task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies, std::optional<task_id> wantedId)
@@ -150,6 +145,7 @@ void Threadpool::markTaskFinished(task_id taskId)
 	unassignedTasks.erase(taskId);
 	inProgressTasks.erase(taskId);
 	dependenciesMap.erase(taskId);
+	reservedTaskIds.erase(taskId);
 }
 
 void Threadpool::markTaskAsInProgress(task_id taskId)

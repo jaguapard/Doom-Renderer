@@ -16,8 +16,7 @@ public:
 	typedef std::function<void()> task_t;
 	typedef size_t task_id;
 
-	Threadpool();
-	Threadpool(size_t numThreads);
+	Threadpool(std::optional<size_t> numThreads = std::nullopt);
 
 	//add a task to the pool. If `dependencies` is not empty, then the task will only start if all tasks with ids in `dependecies` have finished
 	//if wantedId is not nullopt, then the threadpool will attempt to give the specified ID to the added task. This will fail if the ID was not reserved beforehand

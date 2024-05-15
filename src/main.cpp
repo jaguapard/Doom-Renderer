@@ -33,6 +33,7 @@
 #include "Model.h"
 #include "Threadpool.h"
 #include "GameStates/MainGame.h"
+#include "GameStates/BenchmarkState.h"
 
 #include <thread>
 #include <functional>
@@ -82,9 +83,7 @@ void program(int argc, char** argv)
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
 	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());
-	
-
-	
+	// 	
 	//loadWad("data/test_maps/STUPID.wad");
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");
@@ -92,83 +91,36 @@ void program(int argc, char** argv)
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
-	/*
-	bool benchmarkMode = argc > 1 && (!strcmpi(argv[1], "benchmark"));
-	int benchmarkModeFrames = argc > 2 ? atoi(argv[2]) : -1;
-	int benchmarkModeFramesRemaining;
-	std::string benchmarkPassName;
-	if (argc > 3) benchmarkPassName = argv[3];
-
-	if (benchmarkMode)
-	{
-		if (benchmarkModeFrames < 1)
-		{
-			std::cout << "Benchmark mode frame count not set. Defaulting to 1000.\n";
-			benchmarkModeFrames = 1000;
-		}
-		std::cout << "Benchmark mode selected. Running...\n";
-
-		benchmarkModeFramesRemaining = benchmarkModeFrames;
-		camPos = { 441, 877, -488 };
-		camAng = { 0,0,-0.43 };
-		
-		currentMap = &maps.at("MAP15");
-		sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
-
-		performanceMonitorDisplayEnabled = false;
-		wireframeEnabled = false;
-		mouseCaptured = false;
-		fogEnabled = false;
-		skyRenderingMode = SPHERE;
-	}
-
-	bob::Timer benchmarkTimer;
-	*/
-
 	GameStateInitData initData;
 	initData.wnd = wnd;
 	initData.argc = argc;
 	initData.argv = argv;
-	std::unique_ptr<GameStateBase> currGameState = std::make_unique<MainGame>(initData, threadpool);
+
+	std::unique_ptr<GameStateBase> currGameState;
+	bool benchmarkMode = argc > 1 && (!strcmpi(argv[1], "benchmark"));
+
+	if (benchmarkMode) currGameState = std::make_unique<BenchmarkState>(initData, &threadpool);
+	else currGameState = std::make_unique<MainGame>(initData, &threadpool);
 
 	while (true)
 	{
 		currGameState->beginNewFrame();
 
-		/*
-		if (!benchmarkMode) //benchmark mode will supress any user input
-		{*/
-			SDL_Event ev;
-			while (SDL_PollEvent(&ev))
-			{
-				currGameState->handleInputEvent(ev);
-				if (ev.type == SDL_QUIT) return;
-			}
-			currGameState->postEventPollingRoutine();
-			
-		/* }
-		else
+		SDL_Event ev;
+		while (SDL_PollEvent(&ev))
 		{
-			SDL_Event ev;
-			while (SDL_PollEvent(&ev)) {}; //prevent window from freezing
-			camAng.y = (1 - double(benchmarkModeFrames-benchmarkModeFramesRemaining) / benchmarkModeFrames) * 2 * M_PI;
-			if (!benchmarkModeFramesRemaining--)
-			{
-				auto info = performanceMonitor.getPercentileInfo();
-				std::stringstream ss;
-				ss << "\n" << benchmarkModeFrames << " frames rendered in " << benchmarkTimer.getTime() << " s\n";
-				ss << info.fps_avg << " avg, " << "1% low: " << info.fps_1pct_low << ", " << "0.1% low: " << info.fps_point1pct_low << "\n";
-				if (!benchmarkPassName.empty()) ss << "Comment: " << benchmarkPassName << "\n";
+			currGameState->handleInputEvent(ev);
+			if (ev.type == SDL_QUIT) return;
+		}
 
-				std::cout << ss.str();
-				std::ofstream f("benchmarks.txt", std::ios::app);
-				f << ss.str() << "\n";
-				break;
-			}
-		} */
+		currGameState->postEventPollingRoutine();
+		currGameState->update();
+		currGameState->draw();
+		currGameState->endFrame();
+			
 
 		/*
-		if (skyRenderingMode == ROTATING)
+		//if (skyRenderingMode == ROTATING)
 		{
 			const Texture& skyTexture = textureManager.getTextureByName("RSKY1");
 			int skyTextureWidth = skyTexture.getW();
@@ -189,8 +141,7 @@ void program(int argc, char** argv)
 			}
 		}*/
 
-		currGameState->update();
-		currGameState->draw();
+		
 		//assert(screenW * screenH == framebufW * framebufH);
 		/*
 		if (fogEnabled)
@@ -239,7 +190,7 @@ void program(int argc, char** argv)
 		}
 		*/
 
-		currGameState->endFrame();
+		
 	}
 }
 

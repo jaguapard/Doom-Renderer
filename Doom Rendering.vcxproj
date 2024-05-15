@@ -48,6 +48,7 @@
     <ClCompile Include="src\C_Input.cpp" />
     <ClCompile Include="src\DoomMap.cpp" />
     <ClCompile Include="src\DoomWorldLoader.cpp" />
+    <ClCompile Include="src\GameStates\BenchmarkState.cpp" />
     <ClCompile Include="src\GameStates\MainGame.cpp" />
     <ClCompile Include="src\Matrix4.cpp" />
     <ClCompile Include="src\Model.cpp" />
@@ -74,6 +75,7 @@
     <ClInclude Include="src\DoomMap.h" />
     <ClInclude Include="src\DoomStructs.h" />
     <ClInclude Include="src\DoomWorldLoader.h" />
+    <ClInclude Include="src\GameStates\BenchmarkState.h" />
     <ClInclude Include="src\GameStates\GameStateBase.h" />
     <ClInclude Include="src\GameStates\MainGame.h" />
     <ClInclude Include="src\Matrix4.h" />

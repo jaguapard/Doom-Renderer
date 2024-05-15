@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 
-MainGame::MainGame(GameStateInitData data, Threadpool& threadpool) : threadpool(threadpool)
+MainGame::MainGame(GameStateInitData data, Threadpool* threadpool) : threadpool(threadpool)
 {
 	initData = data;
 	defaultMap = "MAP01";
@@ -18,10 +18,10 @@ void MainGame::beginNewFrame()
 	input.beginNewFrame();
 
 	bufferClearingTaskIds = {
-			threadpool.addTask([&]() {framebuf.clear(); }),
-			threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
-			threadpool.addTask([&]() {zBuffer.clear(); }),
-			threadpool.addTask([&]() {lightBuf.clear(1); }),
+			threadpool->addTask([&]() {framebuf.clear(); }),
+			threadpool->addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
+			threadpool->addTask([&]() {zBuffer.clear(); }),
+			threadpool->addTask([&]() {lightBuf.clear(1); }),
 	};
 }
 
@@ -173,7 +173,7 @@ std::string vecToStr(const Vec3& v)
 
 void MainGame::draw()
 {
-	int threadCount = threadpool.getThreadCount();
+	int threadCount = threadpool->getThreadCount();
 	std::array<uint32_t, 4> shifts = getShiftsForWindow();
 	TriangleRenderContext ctx = makeTriangleRenderContext();
 	std::vector<RenderJob> renderJobs = makeRenderJobsList(ctx);
@@ -209,13 +209,13 @@ void MainGame::draw()
 			Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
 			Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
 			};
-		renderTaskIds.push_back(threadpool.addTask(f, bufferClearingTaskIds));
+		renderTaskIds.push_back(threadpool->addTask(f, bufferClearingTaskIds));
 	}
 
-	threadpool.waitForMultipleTasks(renderTaskIds);
+	threadpool->waitForMultipleTasks(renderTaskIds);
 	renderJobs.clear();
 
-	windowUpdateTaskId = threadpool.addTask([&, this]() {
+	windowUpdateTaskId = threadpool->addTask([&, this]() {
 		performanceMonitor.registerFrameDone();
 		if (performanceMonitorDisplayEnabled)
 		{

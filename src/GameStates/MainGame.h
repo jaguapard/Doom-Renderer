@@ -24,7 +24,8 @@
 class MainGame : public GameStateBase
 {
 public:
-	MainGame(GameStateInitData data, Threadpool& threadpool);
+	MainGame() = default;
+	MainGame(GameStateInitData data, Threadpool* threadpool);
 	virtual void beginNewFrame();
 	virtual void handleInputEvent(SDL_Event& ev);
 	virtual void postEventPollingRoutine();
@@ -98,7 +99,7 @@ protected:
 	int currSkyTextureIndex = 2;
 	std::vector<std::string> skyTextures;
 
-	Threadpool& threadpool;
+	Threadpool* threadpool;
 	std::vector<Threadpool::task_id> bufferClearingTaskIds;
 	Threadpool::task_id windowUpdateTaskId = 0;
 

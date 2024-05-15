@@ -249,6 +249,7 @@ void MainGame::loadMap(std::string mapName)
 std::vector<RenderJob> MainGame::makeRenderJobsList(TriangleRenderContext ctx)
 {
 	std::vector<RenderJob> renderJobs;
+	ctx.renderJobs = &renderJobs;
 
 	if (currentMap)
 	{

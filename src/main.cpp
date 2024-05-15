@@ -358,7 +358,7 @@ void program(int argc, char** argv)
 		camAng.x = fmod(camAng.x, M_PI);
 		camAng.y = fmod(camAng.y, 2 * M_PI);
 		camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
-		Matrix3 transformMatrix = getRotationMatrix(camAng);
+		Matrix3 transformMatrix = Matrix3::rotationXYZ(camAng);
 		
 		//don't touch this arcanery - it somehow works
 		Vec3 newForward = Vec3(-transformMatrix.elements[0][2], -transformMatrix.elements[1][2], -transformMatrix.elements[2][2]);

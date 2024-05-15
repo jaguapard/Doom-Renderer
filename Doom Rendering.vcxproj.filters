@@ -161,6 +161,9 @@
     <ClInclude Include="src\GameStates\GameStateBase.h">
       <Filter>Header Files\GameStates</Filter>
     </ClInclude>
+    <ClInclude Include="src\GameStates\MainGame.h">
+      <Filter>Header Files\GameStates</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\Backface culling.md" />

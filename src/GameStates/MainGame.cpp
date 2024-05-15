@@ -15,7 +15,7 @@ void MainGame::beginNewFrame()
 
 	bufferClearingTaskIds = {
 			threadpool.addTask([&]() {framebuf.clear(); }),
-			threadpool.addTask([&]() {SDL_FillRect(wnd->surf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
+			threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
 			threadpool.addTask([&]() {zBuffer.clear(); }),
 			threadpool.addTask([&]() {lightBuf.clear(1); }),
 	};
@@ -127,6 +127,9 @@ void MainGame::postEventPollingRoutine()
 
 void MainGame::init()
 {
+	wnd = initData.wnd;
+	wndSurf = SDL_GetWindowSurface(wnd);
+
 	camPosAndAngArchieve = {
 	   { 0,0,0 }, {0,0,0},
 	   { 0.1,32.1,370 }, {0,0,0}, //default view
@@ -136,8 +139,8 @@ void MainGame::init()
 	camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
-	framebufW = initData.wnd->surf->w;
-	framebufH = initData.wnd->surf->h;
+	framebufW = wndSurf->w;
+	framebufH = wndSurf->h;
 
 	framebuf = { framebufW, framebufH };
 	lightBuf = { framebufW, framebufH };
@@ -169,13 +172,13 @@ std::string vecToStr(const Vec3& v)
 void MainGame::draw()
 {
 	int threadCount = threadpool.getThreadCount();
-	std::array<uint32_t, 4> shifts = getShiftsForWindow(initData.wnd);
+	std::array<uint32_t, 4> shifts = getShiftsForWindow();
 	TriangleRenderContext ctx = makeTriangleRenderContext();
 	std::vector<RenderJob> renderJobs = makeRenderJobsList(ctx);
 
 	real* lightStart = lightBuf.begin();
 	Color* framebufStart = framebuf.begin();
-	Uint32* wndSurfStart = reinterpret_cast<Uint32*>(initData.wnd->surf->pixels);
+	Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
 	std::vector<Threadpool::task_id> renderTaskIds;
 
 	for (int tNum = 0; tNum < threadCount; ++tNum)
@@ -222,7 +225,7 @@ void MainGame::draw()
 			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / fovMult) * 180 / M_PI) + " degrees";
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
-			performanceMonitor.drawOn(initData.wnd->surf, { 0,0 }, perfmonInfo);
+			performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
 		}
 		if (SDL_UpdateWindowSurface(initData.wnd)) throw std::runtime_error(SDL_GetError());
 	});
@@ -283,11 +286,11 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	return ctx;
 }
 
-std::array<uint32_t, 4> MainGame::getShiftsForWindow(SDL_Window* wnd)
+std::array<uint32_t, 4> MainGame::getShiftsForWindow()
 {
 	//this is a stupid fix for everything becoming way too blue in debug mode specifically.
 	//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
-	auto* wf = wnd->surf->format;
+	auto* wf = wndSurf->format;
 	std::array<uint32_t, 4> shifts = { wf->Rshift, wf->Gshift, wf->Bshift };
 	uint32_t missingShift = 24;
 	for (int i = 0; i < 3; ++i)

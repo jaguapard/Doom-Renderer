@@ -48,6 +48,8 @@ protected:
 	};
 
 	GameStateInitData initData;
+	SDL_Window* wnd;
+	SDL_Surface* wndSurf;
 	std::vector<Vec3> camPosAndAngArchieve;
 
 	int activeCamPosAndAngle = 2;
@@ -110,5 +112,5 @@ protected:
 
 	TriangleRenderContext makeTriangleRenderContext();
 	std::vector<RenderJob> makeRenderJobsList(TriangleRenderContext ctx);
-	std::array<uint32_t, 4> getShiftsForWindow(SDL_Window* wnd);
+	std::array<uint32_t, 4> getShiftsForWindow();
 };

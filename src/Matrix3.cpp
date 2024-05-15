@@ -101,9 +101,10 @@ Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
 	return _mm_castsi128_ps(_mm_or_si128(ret12, ret34));
 #else
 	return {
-		v3.x * elements[0][0] + v3.y * elements[0][1] + v3.z * elements[0][2],
-		v3.x * elements[1][0] + v3.y * elements[1][1] + v3.z * elements[1][2],
-		v3.x * elements[2][0] + v3.y * elements[2][1] + v3.z * elements[2][2],
+		v3.x * elements[0][0] + v3.y * elements[0][1] + v3.z * elements[0][2] + v3.w * elements[0][3],
+		v3.x * elements[1][0] + v3.y * elements[1][1] + v3.z * elements[1][2] + v3.w * elements[1][3],
+		v3.x * elements[2][0] + v3.y * elements[2][1] + v3.z * elements[2][2] + v3.w * elements[2][3],
+		v3.x * elements[3][0] + v3.y * elements[3][1] + v3.z * elements[3][2] + v3.w * elements[3][3],
 	};
 #endif
 }
@@ -118,7 +119,7 @@ Matrix3 rotateX(real theta)
 		{-sinTheta, cosTheta, 0.0, 0.0},
 		{0.0,    0.0,   1.0, 0.0},
 		{0.0,0.0,0.0,0.0},
-	};
+};
 	memcpy(&ret.elements[0][0], &e[0][0], sizeof(e));
 	return ret;
 }

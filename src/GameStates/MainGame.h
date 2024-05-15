@@ -103,7 +103,7 @@ protected:
 	Threadpool::task_id windowUpdateTaskId = 0;
 
 	std::map<std::string, DoomMap> maps;
-
+	std::string defaultMap;
 
 
 

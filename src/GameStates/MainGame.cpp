@@ -5,7 +5,11 @@
 MainGame::MainGame(GameStateInitData data, Threadpool& threadpool) : threadpool(threadpool)
 {
 	initData = data;
+	defaultMap = "MAP01";
 	init();
+
+	this->changeMapTo(defaultMap);
+	performanceMonitor.reset();
 }
 
 void MainGame::beginNewFrame()
@@ -160,8 +164,6 @@ void MainGame::init()
 	}
 	
 	maps = WadLoader::loadWad("doom2.wad"); //can't redistribute commercial wads!
-	this->changeMapTo("MAP01");
-	performanceMonitor.reset();
 }
 
 std::string vecToStr(const Vec3& v)

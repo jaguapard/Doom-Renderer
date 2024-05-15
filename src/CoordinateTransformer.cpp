@@ -17,7 +17,7 @@ void CoordinateTransformer::prepare(const Vec3 camPos, const Matrix4& rotation)
 	translation.elements[1][3] = -camPos.y;
 	translation.elements[2][3] = -camPos.z;
 	translation.elements[3][3] = 1;
-	this->translationRotation = rotation * translation;
+	this->rotationTranslation = rotation * translation;
 	//this->translationRotation = translation * rotation;
 }
 
@@ -39,10 +39,10 @@ Vec3 CoordinateTransformer::screenSpaceToPixels(const Vec3 v) const
 	return (v + this->_shift) * h;
 }
 
-Vec3 CoordinateTransformer::translateAndRotate(Vec3 v) const
+Vec3 CoordinateTransformer::rotateAndTranslate(Vec3 v) const
 {
 	v.w = 1;
-	Vec3 interm = translationRotation * v;
+	Vec3 interm = rotationTranslation * v;
 	return interm;
 }
 
@@ -54,5 +54,5 @@ Vec3 CoordinateTransformer::shift(const Vec3 v) const
 
 Matrix4 CoordinateTransformer::getCurrentTransformationMatrix() const
 {
-	return translationRotation;
+	return rotationTranslation;
 }

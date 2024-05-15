@@ -187,7 +187,7 @@ void program(int argc, char** argv)
 
 		benchmarkModeFramesRemaining = benchmarkModeFrames;
 		camPos = { 441, 877, -488 };
-		camAng = { 0,0,0.43 };
+		camAng = { 0,0,-0.43 };
 		
 		currentMap = &maps.at("MAP15");
 		sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
@@ -318,7 +318,7 @@ void program(int argc, char** argv)
 		{
 			SDL_Event ev;
 			while (SDL_PollEvent(&ev)) {}; //prevent window from freezing
-			camAng.y = double(benchmarkModeFrames-benchmarkModeFramesRemaining) / benchmarkModeFrames * 2 * M_PI;
+			camAng.y = (1 - double(benchmarkModeFrames-benchmarkModeFramesRemaining) / benchmarkModeFrames) * 2 * M_PI;
 			if (!benchmarkModeFramesRemaining--)
 			{
 				auto info = performanceMonitor.getPercentileInfo();

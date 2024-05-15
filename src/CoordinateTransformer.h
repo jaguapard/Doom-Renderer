@@ -4,6 +4,7 @@
 class CoordinateTransformer
 {
 public:
+	CoordinateTransformer() = default;
 	CoordinateTransformer(int w, int h);
 	void prepare(const Vec3 camPos, const Vec3 camAng);
 	Vec3 screenSpaceToPixels(const Vec3 v) const;

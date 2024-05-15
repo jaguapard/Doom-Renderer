@@ -3,16 +3,17 @@
 
 Matrix3 Matrix3::operator*(const Matrix3& other) const
 {
-	Matrix3 ret;
-	ret.elements[0][0] = this->elements[0][0] * other.elements[0][0] + this->elements[0][1] * other.elements[1][0] + this->elements[0][2] * other.elements[2][0];
-	ret.elements[1][0] = this->elements[1][0] * other.elements[0][0] + this->elements[1][1] * other.elements[1][0] + this->elements[1][2] * other.elements[2][0];
-	ret.elements[2][0] = this->elements[2][0] * other.elements[0][0] + this->elements[2][1] * other.elements[1][0] + this->elements[2][2] * other.elements[2][0];
-	ret.elements[0][1] = this->elements[0][0] * other.elements[0][1] + this->elements[0][1] * other.elements[1][1] + this->elements[0][2] * other.elements[2][1];
-	ret.elements[1][1] = this->elements[1][0] * other.elements[0][1] + this->elements[1][1] * other.elements[1][1] + this->elements[1][2] * other.elements[2][1];
-	ret.elements[2][1] = this->elements[2][0] * other.elements[0][1] + this->elements[2][1] * other.elements[1][1] + this->elements[2][2] * other.elements[2][1];
-	ret.elements[0][2] = this->elements[0][0] * other.elements[0][2] + this->elements[0][1] * other.elements[1][2] + this->elements[0][2] * other.elements[2][2];
-	ret.elements[1][2] = this->elements[1][0] * other.elements[0][2] + this->elements[1][1] * other.elements[1][2] + this->elements[1][2] * other.elements[2][2];
-	ret.elements[2][2] = this->elements[2][0] * other.elements[0][2] + this->elements[2][1] * other.elements[1][2] + this->elements[2][2] * other.elements[2][2];
+	Matrix3 ret = Matrix3::zeros();
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			for (int k = 0; k < 4; ++k)
+			{
+				ret.elements[i][j] += this->elements[i][k] * other.elements[k][j];
+			}
+		}
+	}
 	return ret;
 }
 
@@ -130,8 +131,15 @@ Matrix3 Matrix3::rotationXYZ(const Vec3& angle)
 
 Matrix3 Matrix3::identity(float value, int dim)
 {
+	assert(dim > 0 && dim <= 4);
+	Matrix3 ret = Matrix3::zeros();
+	for (int i = 0; i < dim; ++i) ret.elements[i][i] = value;
+	return ret;
+}
+
+Matrix3 Matrix3::zeros()
+{
 	Matrix3 ret;
 	memset(&ret, 0, sizeof(ret));
-	for (int i = 0; i < dim; ++i) ret.elements[i][i] = value;
 	return ret;
 }

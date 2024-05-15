@@ -21,5 +21,6 @@ public:
 	static Matrix3 rotationZ(float theta);
 	static Matrix3 rotationXYZ(const Vec3& angle);
 	static Matrix3 identity(float value = 1.0, int dim = 4);
+	static Matrix3 zeros();
 };
 

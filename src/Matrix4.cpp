@@ -102,7 +102,7 @@ Matrix4 Matrix4::rotationX(float theta)
 		bob::_SSE_Vec4_float(cosTheta,	sinTheta, 0.0, 0.0),
 		bob::_SSE_Vec4_float(-sinTheta, cosTheta, 0.0, 0.0),
 		bob::_SSE_Vec4_float(0.0,		0.0,	  1.0, 0.0),
-		bob::_SSE_Vec4_float(0.0,		0.0,	  0.0, 0.0),
+		bob::_SSE_Vec4_float(0.0,		0.0,	  0.0, 1.0),
 	};
 }
 
@@ -114,7 +114,7 @@ Matrix4 Matrix4::rotationY(float theta)
 		bob::_SSE_Vec4_float(cosTheta,  0.0,	-sinTheta,	0.0),
 		bob::_SSE_Vec4_float(0.0,		1.0,	0.0,		0.0),
 		bob::_SSE_Vec4_float(sinTheta,  0.0,	cosTheta,	0.0),
-		bob::_SSE_Vec4_float(0.0,		0.0,	0.0,		0.0),
+		bob::_SSE_Vec4_float(0.0,		0.0,	0.0,		1.0),
 	};
 }
 
@@ -126,7 +126,7 @@ Matrix4 Matrix4::rotationZ(float theta)
 		bob::_SSE_Vec4_float(1.0,	0.0,		0.0,		0.0),
 		bob::_SSE_Vec4_float(0.0,	cosTheta,	sinTheta,	0.0),
 		bob::_SSE_Vec4_float(0.0,	-sinTheta,	cosTheta,	0.0),
-		bob::_SSE_Vec4_float(0.0,	0.0,		0.0,		0.0),
+		bob::_SSE_Vec4_float(0.0,	0.0,		0.0,		1.0),
 	};
 }
 

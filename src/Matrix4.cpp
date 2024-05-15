@@ -36,9 +36,9 @@ Vec3 Matrix4::operator*(const Vec3& v3) const
 Matrix4 Matrix4::transposed() const
 {
 	Matrix4 ret;
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
-		for (int j = 0; j < 3; ++j)
+		for (int j = 0; j < 4; ++j)
 		{
 			ret.elements[i][j] = this->elements[j][i];
 		}

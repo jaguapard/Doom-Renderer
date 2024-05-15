@@ -48,6 +48,7 @@
     <ClCompile Include="src\C_Input.cpp" />
     <ClCompile Include="src\DoomMap.cpp" />
     <ClCompile Include="src\DoomWorldLoader.cpp" />
+    <ClCompile Include="src\GameStates\MainGame.cpp" />
     <ClCompile Include="src\Matrix4.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\PerformanceMonitor.cpp" />

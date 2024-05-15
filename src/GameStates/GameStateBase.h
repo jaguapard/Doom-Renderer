@@ -6,6 +6,8 @@
 struct GameStateInitData
 {
 	SDL_Window* wnd;
+	int argc;
+	char** argv;
 };
 
 class GameStateBase

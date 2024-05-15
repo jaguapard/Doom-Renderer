@@ -32,6 +32,7 @@
 #include "WadLoader.h"
 #include "Model.h"
 #include "Threadpool.h"
+#include "GameStates/MainGame.h"
 
 #include <thread>
 #include <functional>
@@ -55,14 +56,6 @@ void operator delete(void* block)
 	return _aligned_free(block);
 }
 
-enum SkyRenderingMode : uint32_t
-{
-	NONE,
-	ROTATING,
-	SPHERE,
-	COUNT
-};
-
 struct CmdArg
 {
 	std::string originalValue;
@@ -75,13 +68,6 @@ struct CmdArg
 		STRING,
 		NONE, //single arg (no value), a switch
 	};
-};
-
-enum class WheelAdjustmentMode : uint32_t
-{
-	FLY_SPEED,
-	FOV,
-	COUNT,
 };
 
 std::map<std::string, CmdArg> parseCmdArgs(int argc, char** argv)
@@ -97,78 +83,31 @@ std::string vecToStr(const Vec3& v)
 
 void program(int argc, char** argv)
 {
+	Threadpool threadpool;
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
 	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());
+	
 
-	auto maps = WadLoader::loadWad("doom2.wad"); //can't redistribute commercial wads!
+	
 	//loadWad("data/test_maps/STUPID.wad");
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");
 
-	Vec3 camPosAndAngArchieve[] = {
-		{ 0,0,0 }, {0,0,0},
-		{ 0.1,32.1,370 }, {0,0,0}, //default view
-		{-96, 70, 784}, {0,0,0}, //doom 2 map 01 player start
-	};
-
-	int activeCamPosAndAngle = 2;
-	Vec3 camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
-	Vec3 camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
-
-	int framebufW = 1920;
-	int framebufH = 1080;
-	int screenW = 1920;
-	int screenH = 1080;
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenW, screenH, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
-	PixelBuffer<Color> framebuf(framebufW, framebufH);
-	PixelBuffer<real> lightBuf(framebufW, framebufH);
-	ZBuffer zBuffer(framebufW, framebufH);
-
-	C_Input input;
-	CoordinateTransformer ctr(framebufW, framebufH);
 	
-	uint64_t frames = 0;
-	real flySpeed = 6;
-	real gamma = 1.3;
-	bool fogEnabled = false;
-	real fogMaxIntensityDist = 600;
-	bool mouseCaptured = false;
-	bool wireframeEnabled = false;
-	bool backfaceCullingEnabled = false;
-	real nearPlaneZ = -1;
-	real fovMult = 1;
-	WheelAdjustmentMode wheelAdjMod = WheelAdjustmentMode::FLY_SPEED;
+	
+	
 
-	PerformanceMonitor performanceMonitor;
-	bool performanceMonitorDisplayEnabled = true;
+	
 
-	std::string warpTo;
+	
 
-	real camAngAdjustmentSpeed_Mouse = 1e-3;
-	real camAngAdjustmentSpeed_Keyboard = 3e-2;
-
-	std::vector<std::vector<Model>> sectorWorldModels;
-	TextureManager textureManager;
-	DoomMap* currentMap = nullptr;
-
-	SkyRenderingMode skyRenderingMode = SPHERE;
-	Sky sky("RSKY1", textureManager);
-	int currSkyTextureIndex = 2;
-	std::vector<std::string> skyTextures;
-	skyTextures.push_back("RSKY2");
-	skyTextures.push_back("RSKY3");
-	skyTextures.push_back("RSKY1");
-	{
-		std::ifstream f("data/sky_textures.txt");
-		std::string line;
-		while (std::getline(f, line))
-		{
-			skyTextures.push_back(line);
-		}
-	}
+	
+	
+	
 
 	bool benchmarkMode = argc > 1 && (!strcmpi(argv[1], "benchmark"));
 	int benchmarkModeFrames = argc > 2 ? atoi(argv[2]) : -1;
@@ -200,14 +139,9 @@ void program(int argc, char** argv)
 	}
 
 	bob::Timer benchmarkTimer;
-	performanceMonitor.reset();
 
 	std::vector<RenderJob> renderJobs;
 	TriangleRenderContext ctx;
-
-	Threadpool threadpool; //auto number of threads
-	std::vector<Threadpool::task_id> taskIds;
-	Threadpool::task_id windowUpdateTaskId = 0;
 
 	if (!benchmarkMode)
 	{

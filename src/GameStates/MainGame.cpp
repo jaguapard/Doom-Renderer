@@ -52,7 +52,7 @@ void MainGame::postEventPollingRoutine()
 		std::string mapToLoad = "MAP" + warpTo;
 		std::cout << "Loading map " << mapToLoad << "...\n";
 
-		this->loadMap(warpTo);
+		this->changeMapTo(mapToLoad);
 		warpTo.clear();
 	}
 
@@ -160,7 +160,7 @@ void MainGame::init()
 	}
 	
 	maps = WadLoader::loadWad("doom2.wad"); //can't redistribute commercial wads!
-	loadMap("MAP01");
+	this->changeMapTo("MAP01");
 	performanceMonitor.reset();
 }
 
@@ -239,9 +239,9 @@ void MainGame::update()
 {
 }
 
-void MainGame::loadMap(std::string mapName)
+void MainGame::changeMapTo(std::string mapName)
 {
-	currentMap = &maps["MAP01"];
+	currentMap = &maps.at(mapName);
 	sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
 	performanceMonitor.reset();
 }

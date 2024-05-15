@@ -108,7 +108,7 @@ protected:
 
 
 	void init();
-	void loadMap(std::string mapName);
+	void changeMapTo(std::string mapName);
 
 	TriangleRenderContext makeTriangleRenderContext();
 	std::vector<RenderJob> makeRenderJobsList(TriangleRenderContext ctx);

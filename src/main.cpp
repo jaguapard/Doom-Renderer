@@ -358,11 +358,11 @@ void program(int argc, char** argv)
 		//camAng.z = fmod(camAng.z, M_PI);
 		camAng.y = fmod(camAng.y, 2*M_PI);
 		camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
-		Matrix4 transformMatrix = Matrix4::rotationXYZ(camAng);
+		Matrix4 rotationOnlyMatrix = Matrix4::rotationXYZ(camAng);
 		
 		//don't touch this arcanery - it somehow works
-		Vec3 newForward = Vec3(-transformMatrix.elements[2][0], -transformMatrix.elements[2][1], -transformMatrix.elements[2][2]);
-		Vec3 newRight =   Vec3(-transformMatrix.elements[0][0], -transformMatrix.elements[0][1], -transformMatrix.elements[0][2]);
+		Vec3 newForward = Vec3(-rotationOnlyMatrix[2][0], -rotationOnlyMatrix[2][1], -rotationOnlyMatrix[2][2]);
+		Vec3 newRight =   Vec3(-rotationOnlyMatrix[0][0], -rotationOnlyMatrix[0][1], -rotationOnlyMatrix[0][2]);
 		Vec3 newUp = up; //don't transform up for now
 		camAdd = Vec3(0, 0, 0);
 		camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));
@@ -378,8 +378,7 @@ void program(int argc, char** argv)
 			camPos += camAdd * flySpeed;
 		}
 
-		ctr.prepare(camPos, transformMatrix);
-		
+		ctr.prepare(camPos, camAng);		
 		ctx.ctr = &ctr;
 		ctx.frameBuffer = &framebuf;
 		ctx.lightBuffer = &lightBuf;

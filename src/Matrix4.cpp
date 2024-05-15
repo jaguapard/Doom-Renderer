@@ -89,6 +89,16 @@ Matrix4 Matrix4::transposed() const
 	return ret;
 }
 
+const bob::_SSE_Vec4_float& Matrix4::operator[](int i) const
+{
+	return val[i];
+}
+
+bob::_SSE_Vec4_float& Matrix4::operator[](int i)
+{
+	return const_cast<bob::_SSE_Vec4_float&>(const_cast<const Matrix4*>(this)->operator[](i));
+}
+
 std::string Matrix4::toString(int precision) const
 {
 	std::stringstream ss;

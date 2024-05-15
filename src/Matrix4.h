@@ -17,6 +17,9 @@ public:
 	Matrix4 transposed() const;
 	Vec3 multiplyByTransposed(const Vec3& v3) const;
 
+	const bob::_SSE_Vec4_float& operator[](int i) const;
+	bob::_SSE_Vec4_float& operator[](int i);
+
 	std::string toString(int precision = 5) const;
 
 	static Matrix4 rotationX(float theta);

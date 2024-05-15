@@ -27,32 +27,6 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const
 
 Vec3 Matrix4::operator*(const Vec3& v3) const
 {
-	Vec3 ret(0, 0, 0, 0);
-	for (int i = 0; i < 4; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-		{
-			ret.val[i] += this->elements[i][j] * v3.val[j];
-		}
-	}
-	return ret;
-}
-
-Matrix4 Matrix4::transposed() const
-{
-	Matrix4 ret;
-	for (int i = 0; i < 4; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-		{
-			ret.elements[i][j] = this->elements[j][i];
-		}
-	}
-	return ret;
-}
-
-Vec3 Matrix4::multiplyByTransposed(const Vec3& v3) const
-{
 #ifdef __AVX2__
 	__m256 vv = _mm256_broadcast_ps(&v3.sseVec);
 	__m256 preSum_xy = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&val[0])); //sum elements 0-3 to get result x, 4-7 for y
@@ -84,19 +58,35 @@ Vec3 Matrix4::multiplyByTransposed(const Vec3& v3) const
 	__m128i ret2 = _mm_bslli_si128(_mm_castps_si128(m2), 4);
 	__m128i ret3 = _mm_bslli_si128(_mm_castps_si128(m3), 8);
 	__m128i ret4 = _mm_bslli_si128(_mm_castps_si128(m4), 12);
-	
+
 	__m128i ret12 = _mm_or_si128(_mm_castps_si128(m1), ret2);
 	__m128i ret34 = _mm_or_si128(ret3, ret4);
-	
+
 	return _mm_castsi128_ps(_mm_or_si128(ret12, ret34));
 #else
-	return {
-		v3.x * elements[0][0] + v3.y * elements[0][1] + v3.z * elements[0][2] + v3.w * elements[0][3],
-		v3.x * elements[1][0] + v3.y * elements[1][1] + v3.z * elements[1][2] + v3.w * elements[1][3],
-		v3.x * elements[2][0] + v3.y * elements[2][1] + v3.z * elements[2][2] + v3.w * elements[2][3],
-		v3.x * elements[3][0] + v3.y * elements[3][1] + v3.z * elements[3][2] + v3.w * elements[3][3],
-	};
+	Vec3 ret(0, 0, 0, 0);
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			ret.val[i] += this->elements[i][j] * v3.val[j];
+		}
+	}
+	return ret;
 #endif
+}
+
+Matrix4 Matrix4::transposed() const
+{
+	Matrix4 ret;
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			ret.elements[i][j] = this->elements[j][i];
+		}
+	}
+	return ret;
 }
 
 std::string Matrix4::toString(int precision) const

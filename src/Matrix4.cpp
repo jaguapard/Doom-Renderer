@@ -25,12 +25,15 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const
 
 Vec3 Matrix4::operator*(const Vec3& v3) const
 {
-	return{
-		v3.x * this->elements[0][0] + v3.y * this->elements[1][0] + v3.z * this->elements[2][0] + v3.w * this->elements[3][0],
-		v3.x * this->elements[0][1] + v3.y * this->elements[1][1] + v3.z * this->elements[2][1] + v3.w * this->elements[3][1],
-		v3.x * this->elements[0][2] + v3.y * this->elements[1][2] + v3.z * this->elements[2][2] + v3.w * this->elements[3][2],
-		v3.x * this->elements[0][3] + v3.y * this->elements[1][3] + v3.z * this->elements[2][3] + v3.w * this->elements[3][3],
-	};
+	Vec3 ret(0, 0, 0, 0);
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			ret.val[i] += this->elements[i][j] * v3.val[j];
+		}
+	}
+	return ret;
 }
 
 Matrix4 Matrix4::transposed() const
@@ -98,11 +101,18 @@ Matrix4 Matrix4::rotationX(float theta)
 {
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
-	return {
+	/*return {
 		bob::_SSE_Vec4_float(cosTheta,	sinTheta, 0.0, 0.0),
 		bob::_SSE_Vec4_float(-sinTheta, cosTheta, 0.0, 0.0),
 		bob::_SSE_Vec4_float(0.0,		0.0,	  1.0, 0.0),
 		bob::_SSE_Vec4_float(0.0,		0.0,	  0.0, 1.0),
+	};*/
+
+	return {
+		bob::_SSE_Vec4_float(1, 0,			0,			0),
+		bob::_SSE_Vec4_float(0, cosTheta,	-sinTheta,	0),
+		bob::_SSE_Vec4_float(0, sinTheta,	cosTheta,	0),
+		bob::_SSE_Vec4_float(0, 0,			0,			1),
 	};
 }
 
@@ -111,9 +121,9 @@ Matrix4 Matrix4::rotationY(float theta)
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
 	return {
-		bob::_SSE_Vec4_float(cosTheta,  0.0,	-sinTheta,	0.0),
+		bob::_SSE_Vec4_float(cosTheta,  0.0,	sinTheta,	0.0),
 		bob::_SSE_Vec4_float(0.0,		1.0,	0.0,		0.0),
-		bob::_SSE_Vec4_float(sinTheta,  0.0,	cosTheta,	0.0),
+		bob::_SSE_Vec4_float(-sinTheta,  0.0,	cosTheta,	0.0),
 		bob::_SSE_Vec4_float(0.0,		0.0,	0.0,		1.0),
 	};
 }
@@ -123,9 +133,9 @@ Matrix4 Matrix4::rotationZ(float theta)
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
 	return {
-		bob::_SSE_Vec4_float(1.0,	0.0,		0.0,		0.0),
-		bob::_SSE_Vec4_float(0.0,	cosTheta,	sinTheta,	0.0),
-		bob::_SSE_Vec4_float(0.0,	-sinTheta,	cosTheta,	0.0),
+		bob::_SSE_Vec4_float(cosTheta,	-sinTheta,		0.0,		0.0),
+		bob::_SSE_Vec4_float(sinTheta,	cosTheta,	0,	0.0),
+		bob::_SSE_Vec4_float(0.0,	0,	1,	0.0),
 		bob::_SSE_Vec4_float(0.0,	0.0,		0.0,		1.0),
 	};
 }

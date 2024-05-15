@@ -36,8 +36,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	int outsideVertexCount = 0;
 	for (int i = 0; i < 3; ++i)
 	{
-		Vec3 off = context.ctr->doCamOffset(tv[i].spaceCoords);
-		rotated.tv[i].spaceCoords = context.ctr->rotate(off);
+		rotated.tv[i].spaceCoords = context.ctr->translateAndRotate(tv[i].spaceCoords);
 		rotated.tv[i].textureCoords = tv[i].textureCoords;
 
 		if (rotated.tv[i].z > context.nearPlaneClippingZ)

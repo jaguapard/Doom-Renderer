@@ -66,7 +66,7 @@ Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
 #ifdef __AVX2__
 	__m256 vv = _mm256_broadcast_ps(&v3.sseVec);
 	__m256 preSum_xy = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[0])); //sum elements 0-3 to get result x, 4-7 for y
-	__m256 preSum_zw = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[2])); //sum elements 0-3 to get result z, 4-7 for z
+	__m256 preSum_zw = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&elements[2])); //sum elements 0-3 to get result z, 4-7 for w
 
 	__m256 preSum_xyzw = _mm256_hadd_ps(preSum_xy, preSum_zw); //after this we need to sum pairs of elements to get final result
 	__m256 shuffled_xyzw = _mm256_hadd_ps(preSum_xyzw, preSum_xyzw); //after this we have result. xy are in elements 0, 4 and zw is in 1, 5. Other elements are just duplicated copies of them

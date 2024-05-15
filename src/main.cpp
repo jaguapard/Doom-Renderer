@@ -240,8 +240,8 @@ void program(int argc, char** argv)
 				input.handleEvent(ev);
 				if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
 				{
-					camAng.y -= ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
-					camAng.z += ev.motion.yrel * camAngAdjustmentSpeed_Mouse;					
+					camAng.y += ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
+					camAng.z -= ev.motion.yrel * camAngAdjustmentSpeed_Mouse;					
 				}
 				if (ev.type == SDL_MOUSEWHEEL)
 				{
@@ -355,14 +355,16 @@ void program(int argc, char** argv)
 			}
 		}
 
-		camAng.x = fmod(camAng.x, M_PI);
-		camAng.y = fmod(camAng.y, 2 * M_PI);
+		//camAng.z = fmod(camAng.z, M_PI);
+		camAng.y = fmod(camAng.y, 2*M_PI);
 		camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
 		Matrix4 transformMatrix = Matrix4::rotationXYZ(camAng);
 		
 		//don't touch this arcanery - it somehow works
-		Vec3 newForward = Vec3(-transformMatrix.elements[0][2], -transformMatrix.elements[1][2], -transformMatrix.elements[2][2]);
-		Vec3 newRight =   Vec3(-transformMatrix.elements[0][0], -transformMatrix.elements[1][0], -transformMatrix.elements[2][0]);
+		Vec3 newForward = Vec3(transformMatrix.elements[0][2], transformMatrix.elements[1][2], -transformMatrix.elements[2][2]);
+		Vec3 newRight =   Vec3(transformMatrix.elements[0][0], transformMatrix.elements[1][0], transformMatrix.elements[2][0]);
+		//Vec3 newForward = transformMatrix * Vec3(0, 0, -1);
+		//Vec3 newRight = transformMatrix * Vec3(1, 0, 0);
 		Vec3 newUp = up; //don't transform up for now
 		camAdd = Vec3(0, 0, 0);
 		camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));

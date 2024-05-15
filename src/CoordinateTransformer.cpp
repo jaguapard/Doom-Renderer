@@ -18,6 +18,7 @@ void CoordinateTransformer::prepare(const Vec3 camPos, const Matrix4& rotation)
 	translation.elements[2][3] = -camPos.z;
 	translation.elements[3][3] = 1;
 	this->translationRotation = rotation * translation;
+	//this->translationRotation = translation * rotation;
 }
 
 /*Vec3 CoordinateTransformer::toScreenCoords(const Vec3 v) const

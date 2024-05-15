@@ -101,18 +101,11 @@ Matrix4 Matrix4::rotationX(float theta)
 {
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
-	/*return {
+	return {
 		bob::_SSE_Vec4_float(cosTheta,	sinTheta, 0.0, 0.0),
 		bob::_SSE_Vec4_float(-sinTheta, cosTheta, 0.0, 0.0),
 		bob::_SSE_Vec4_float(0.0,		0.0,	  1.0, 0.0),
 		bob::_SSE_Vec4_float(0.0,		0.0,	  0.0, 1.0),
-	};*/
-
-	return {
-		bob::_SSE_Vec4_float(1, 0,			0,			0),
-		bob::_SSE_Vec4_float(0, cosTheta,	-sinTheta,	0),
-		bob::_SSE_Vec4_float(0, sinTheta,	cosTheta,	0),
-		bob::_SSE_Vec4_float(0, 0,			0,			1),
 	};
 }
 
@@ -121,9 +114,9 @@ Matrix4 Matrix4::rotationY(float theta)
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
 	return {
-		bob::_SSE_Vec4_float(cosTheta,  0.0,	sinTheta,	0.0),
+		bob::_SSE_Vec4_float(cosTheta,  0.0,	-sinTheta,	0.0),
 		bob::_SSE_Vec4_float(0.0,		1.0,	0.0,		0.0),
-		bob::_SSE_Vec4_float(-sinTheta,  0.0,	cosTheta,	0.0),
+		bob::_SSE_Vec4_float(sinTheta,  0.0,	cosTheta,	0.0),
 		bob::_SSE_Vec4_float(0.0,		0.0,	0.0,		1.0),
 	};
 }
@@ -133,16 +126,16 @@ Matrix4 Matrix4::rotationZ(float theta)
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
 	return {
-		bob::_SSE_Vec4_float(cosTheta,	-sinTheta,		0.0,		0.0),
-		bob::_SSE_Vec4_float(sinTheta,	cosTheta,	0,	0.0),
-		bob::_SSE_Vec4_float(0.0,	0,	1,	0.0),
+		bob::_SSE_Vec4_float(1.0,	0.0,		0.0,		0.0),
+		bob::_SSE_Vec4_float(0.0,	cosTheta,	sinTheta,	0.0),
+		bob::_SSE_Vec4_float(0.0,	-sinTheta,	cosTheta,	0.0),
 		bob::_SSE_Vec4_float(0.0,	0.0,		0.0,		1.0),
 	};
 }
 
 Matrix4 Matrix4::rotationXYZ(const Vec3& angle)
 {
-	return rotationX(angle.x) * rotationY(angle.y) * rotationZ(angle.z);
+	return rotationZ(angle.z) * rotationY(angle.y) * rotationX(angle.x);
 }
 
 Matrix4 Matrix4::identity(float value, int dim)

@@ -13,10 +13,10 @@ void CoordinateTransformer::prepare(const Vec3 camPos, const Matrix4& rotation)
 	//this->camPos = camPos;
 
 	Matrix4 translation = Matrix4::identity();
-	translation.elements[0][3] = -camPos.x;
-	translation.elements[1][3] = -camPos.y;
-	translation.elements[2][3] = -camPos.z;
-	translation.elements[3][3] = 1;
+	translation[0][3] = -camPos.x;
+	translation[1][3] = -camPos.y;
+	translation[2][3] = -camPos.z;
+	translation[3][3] = 1;
 	this->rotationTranslation = rotation * translation;
 	//this->translationRotation = translation * rotation;
 }

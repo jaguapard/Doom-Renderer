@@ -32,6 +32,7 @@ BenchmarkState::BenchmarkState(GameStateInitData data, Threadpool* threadpool)
 
 	this->changeMapTo(defaultMap);
 	performanceMonitor.reset();
+	benchmarkTimer.restart();
 }
 
 void BenchmarkState::handleInputEvent(SDL_Event& ev)

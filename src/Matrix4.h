@@ -1,5 +1,6 @@
 #pragma once
 #include "Vec.h"
+#include <string>
 
 class alignas(32) Matrix4
 {
@@ -15,6 +16,8 @@ public:
 
 	Matrix4 transposed() const;
 	Vec3 multiplyByTransposed(const Vec3& v3) const;
+
+	std::string toString(int precision = 5) const;
 
 	static Matrix4 rotationX(float theta);
 	static Matrix4 rotationY(float theta);

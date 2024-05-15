@@ -10,6 +10,8 @@ public:
 
 	Vec3 translateAndRotate(Vec3 v) const;
 	Vec3 shift(const Vec3 v) const;
+
+	Matrix4 getCurrentTransformationMatrix() const;
 private:
 	int w, h;
 

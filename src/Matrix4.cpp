@@ -1,5 +1,7 @@
 #include "Matrix4.h"
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 
 Matrix4::Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst)
 {
@@ -97,6 +99,35 @@ Vec3 Matrix4::multiplyByTransposed(const Vec3& v3) const
 #endif
 }
 
+std::string Matrix4::toString(int precision) const
+{
+	std::stringstream ss;
+	ss.precision(precision);
+
+	std::string s[16];
+	int sInd = 0;
+	int maxLen = -1;
+
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			ss << elements[i][j];
+			s[sInd++] = ss.str();
+			ss.str("");
+			maxLen = std::max<int>(s[sInd - 1].length(), maxLen);
+		}
+	}
+
+	std::string ret;
+	for (int i = 0; i < 16; ++i)
+	{
+		ret += std::string(7+precision - s[i].size(), ' ') + s[i];
+		if (i % 4 == 3) ret += '\n';
+	}
+	return ret;
+}
+
 Matrix4 Matrix4::rotationX(float theta)
 {
 	const real sinTheta = sin(theta);
@@ -136,6 +167,8 @@ Matrix4 Matrix4::rotationZ(float theta)
 Matrix4 Matrix4::rotationXYZ(const Vec3& angle)
 {
 	return rotationZ(angle.z) * rotationY(angle.y) * rotationX(angle.x);
+	//return rotationX(angle.x) * rotationY(angle.y) * rotationZ(angle.z);
+	//return (rotationZ(angle.z) * rotationY(angle.y) * rotationX(angle.x)).transposed();
 }
 
 Matrix4 Matrix4::identity(float value, int dim)

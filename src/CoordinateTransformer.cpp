@@ -51,3 +51,8 @@ Vec3 CoordinateTransformer::shift(const Vec3 v) const
 	assert(this->_shift.z == 0.0); //ensure to not touch z
 	return v + this->_shift;
 }
+
+Matrix4 CoordinateTransformer::getCurrentTransformationMatrix() const
+{
+	return translationRotation;
+}

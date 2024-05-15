@@ -131,7 +131,7 @@ void program(int argc, char** argv)
 	CoordinateTransformer ctr(framebufW, framebufH);
 	
 	uint64_t frames = 0;
-	real flySpeed = 15;
+	real flySpeed = 6;
 	real gamma = 1.3;
 	bool fogEnabled = false;
 	real fogMaxIntensityDist = 600;
@@ -510,7 +510,7 @@ void program(int argc, char** argv)
 			//framebuf.saveToFile("screenshots/fullframe.png");
 		}
 
-		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng]() {
+		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng, ctr]() {
 			performanceMonitor.registerFrameDone();
 			if (performanceMonitorDisplayEnabled)
 			{
@@ -520,6 +520,8 @@ void program(int argc, char** argv)
 				perfmonInfo["Fly speed"] = std::to_string(flySpeed) + "/frame";
 				perfmonInfo["Backface culling"] = backfaceCullingEnabled ? "enabled" : "disabled";
 				perfmonInfo["FOV"] = std::to_string(2 * atan(1 / fovMult) * 180 / M_PI) + " degrees";
+
+				perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
 				performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
 			}
 			if (SDL_UpdateWindowSurface(wnd)) throw std::runtime_error(SDL_GetError()); 

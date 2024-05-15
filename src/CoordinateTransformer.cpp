@@ -8,7 +8,7 @@ CoordinateTransformer::CoordinateTransformer(int w, int h)
 	this->_shift = { widthToHeightAspectRatio / 2, 0.5, 0 };
 }
 
-void CoordinateTransformer::prepare(const Vec3 camPos, const Matrix3& rotation)
+void CoordinateTransformer::prepare(const Vec3 camPos, const Matrix4& rotation)
 {
 	this->camPos = camPos;
 	this->rotation = rotation.transposed();

@@ -1,9 +1,15 @@
-#include "Matrix3.h"
+#include "Matrix4.h"
 #include <cmath>
 
-Matrix3 Matrix3::operator*(const Matrix3& other) const
+Matrix4::Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst)
 {
-	Matrix3 ret = Matrix3::zeros();
+	assert(lst.size() == 4);
+	for (int i = 0; i < 4; ++i) this->val[i] = *(lst.begin() + i);
+}
+
+Matrix4 Matrix4::operator*(const Matrix4& other) const
+{
+	Matrix4 ret = Matrix4::zeros();
 	for (int i = 0; i < 4; ++i)
 	{
 		for (int j = 0; j < 4; ++j)
@@ -17,7 +23,7 @@ Matrix3 Matrix3::operator*(const Matrix3& other) const
 	return ret;
 }
 
-Vec3 Matrix3::operator*(const Vec3& v3) const
+Vec3 Matrix4::operator*(const Vec3& v3) const
 {
 	return{
 		v3.x * this->elements[0][0] + v3.y * this->elements[1][0] + v3.z * this->elements[2][0] + v3.w * this->elements[3][0],
@@ -27,9 +33,9 @@ Vec3 Matrix3::operator*(const Vec3& v3) const
 	};
 }
 
-Matrix3 Matrix3::transposed() const
+Matrix4 Matrix4::transposed() const
 {
-	Matrix3 ret;
+	Matrix4 ret;
 	for (int i = 0; i < 3; ++i)
 	{
 		for (int j = 0; j < 3; ++j)
@@ -40,7 +46,7 @@ Matrix3 Matrix3::transposed() const
 	return ret;
 }
 
-Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
+Vec3 Matrix4::multiplyByTransposed(const Vec3& v3) const
 {
 #ifdef __AVX2__
 	__m256 vv = _mm256_broadcast_ps(&v3.sseVec);
@@ -88,7 +94,7 @@ Vec3 Matrix3::multiplyByTransposed(const Vec3& v3) const
 #endif
 }
 
-Matrix3 Matrix3::rotationX(float theta)
+Matrix4 Matrix4::rotationX(float theta)
 {
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
@@ -100,7 +106,7 @@ Matrix3 Matrix3::rotationX(float theta)
 	};
 }
 
-Matrix3 Matrix3::rotationY(float theta)
+Matrix4 Matrix4::rotationY(float theta)
 {
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
@@ -112,7 +118,7 @@ Matrix3 Matrix3::rotationY(float theta)
 	};
 }
 
-Matrix3 Matrix3::rotationZ(float theta)
+Matrix4 Matrix4::rotationZ(float theta)
 {
 	const real sinTheta = sin(theta);
 	const real cosTheta = cos(theta);
@@ -124,22 +130,22 @@ Matrix3 Matrix3::rotationZ(float theta)
 	};
 }
 
-Matrix3 Matrix3::rotationXYZ(const Vec3& angle)
+Matrix4 Matrix4::rotationXYZ(const Vec3& angle)
 {
 	return rotationX(angle.x) * rotationY(angle.y) * rotationZ(angle.z);
 }
 
-Matrix3 Matrix3::identity(float value, int dim)
+Matrix4 Matrix4::identity(float value, int dim)
 {
 	assert(dim > 0 && dim <= 4);
-	Matrix3 ret = Matrix3::zeros();
+	Matrix4 ret = Matrix4::zeros();
 	for (int i = 0; i < dim; ++i) ret.elements[i][i] = value;
 	return ret;
 }
 
-Matrix3 Matrix3::zeros()
+Matrix4 Matrix4::zeros()
 {
-	Matrix3 ret;
+	Matrix4 ret;
 	memset(&ret, 0, sizeof(ret));
 	return ret;
 }

@@ -1,11 +1,11 @@
 #pragma once
 #include "Vec.h"
-#include "Matrix3.h"
+#include "Matrix4.h"
 class CoordinateTransformer
 {
 public:
 	CoordinateTransformer(int w, int h);
-	void prepare(const Vec3 camPos, const Matrix3& rotation);
+	void prepare(const Vec3 camPos, const Matrix4& rotation);
 	Vec3 toScreenCoords(const Vec3 v) const;
 	Vec3 screenSpaceToPixels(const Vec3 v) const;
 
@@ -15,7 +15,7 @@ public:
 private:
 	int w, h;
 	Vec3 camPos;
-	Matrix3 rotation;
+	Matrix4 rotation;
 	Vec3 _shift;
 	real widthToHeightAspectRatio;
 };

@@ -97,18 +97,7 @@ void program(int argc, char** argv)
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenW, screenH, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
-	
-	
-	
-
-	
-
-	
-
-	
-	
-	
-
+	/*
 	bool benchmarkMode = argc > 1 && (!strcmpi(argv[1], "benchmark"));
 	int benchmarkModeFrames = argc > 2 ? atoi(argv[2]) : -1;
 	int benchmarkModeFramesRemaining;
@@ -139,15 +128,7 @@ void program(int argc, char** argv)
 	}
 
 	bob::Timer benchmarkTimer;
-
-	std::vector<RenderJob> renderJobs;
-	TriangleRenderContext ctx;
-
-	if (!benchmarkMode)
-	{
-		currentMap = &maps["MAP01"];
-		sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
-	}
+	*/
 
 	const Vec3 forward = Vec3(0, 0, -1);
 	const Vec3 right = Vec3(1, 0, 0);
@@ -167,7 +148,6 @@ void program(int argc, char** argv)
 		Vec3 camAdd = { 0,0,0 };
 		if (!benchmarkMode) //benchmark mode will supress any user input
 		{
-			input.beginNewFrame();
 			SDL_Event ev;
 			while (SDL_PollEvent(&ev))
 			{
@@ -312,33 +292,6 @@ void program(int argc, char** argv)
 			camPos += camAdd * flySpeed;
 		}
 
-		ctr.prepare(camPos, camAng);		
-		ctx.ctr = &ctr;
-		ctx.frameBuffer = &framebuf;
-		ctx.lightBuffer = &lightBuf;
-		ctx.textureManager = &textureManager;
-		ctx.zBuffer = &zBuffer;
-		ctx.framebufW = framebufW;
-		ctx.framebufH = framebufH;
-		ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
-		ctx.wireframeEnabled = wireframeEnabled;
-		ctx.backfaceCullingEnabled = backfaceCullingEnabled;
-		ctx.renderJobs = &renderJobs;
-		ctx.nearPlaneClippingZ = nearPlaneZ;
-		ctx.fovMult = fovMult;
-
-		if (currentMap)
-		{			
-			for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
-			{
-				for (const auto& model : sectorWorldModels[nSector])
-				{
-					ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
-					model.addToRenderQueue(ctx);
-				}
-			}
-		}
-		if (skyRenderingMode == SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 		
 		assert(screenW * screenH == framebufW * framebufH);
 		int pixelCount = framebufW * framebufH;

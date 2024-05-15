@@ -8,6 +8,11 @@ MainGame::MainGame(GameStateInitData data, Threadpool& threadpool) : threadpool(
 	init();
 }
 
+void MainGame::beginNewFrame()
+{
+	input.beginNewFrame();
+}
+
 void MainGame::init()
 {
 	camPosAndAngArchieve = {
@@ -49,4 +54,44 @@ void MainGame::loadMap(std::string mapName)
 	currentMap = &maps["MAP01"];
 	sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
 	performanceMonitor.reset();
+}
+
+std::vector<RenderJob> MainGame::makeRenderJobsList(TriangleRenderContext ctx)
+{
+	std::vector<RenderJob> renderJobs;
+
+	if (currentMap)
+	{
+		for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
+		{
+			for (const auto& model : sectorWorldModels[nSector])
+			{
+				ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
+				model.addToRenderQueue(ctx);
+			}
+		}
+	}
+	if (skyRenderingMode == SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
+
+	return renderJobs;
+}
+
+TriangleRenderContext MainGame::makeTriangleRenderContext()
+{
+	TriangleRenderContext ctx;
+	ctr.prepare(camPos, camAng);
+	ctx.ctr = &ctr;
+	ctx.frameBuffer = &framebuf;
+	ctx.lightBuffer = &lightBuf;
+	ctx.textureManager = &textureManager;
+	ctx.zBuffer = &zBuffer;
+	ctx.framebufW = framebufW;
+	ctx.framebufH = framebufH;
+	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
+	ctx.wireframeEnabled = wireframeEnabled;
+	ctx.backfaceCullingEnabled = backfaceCullingEnabled;
+	ctx.nearPlaneClippingZ = nearPlaneZ;
+	ctx.fovMult = fovMult;
+
+	return ctx;
 }

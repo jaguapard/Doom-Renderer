@@ -16,6 +16,7 @@
 #include "../TextureManager.h"
 #include "../Threadpool.h"
 #include "../WadLoader.h"
+#include "../Triangle.h"
 
 class MainGame : public GameStateBase
 {
@@ -97,6 +98,12 @@ protected:
 
 	std::map<std::string, DoomMap> maps;
 
+
+
+
 	void init();
 	void loadMap(std::string mapName);
+
+	TriangleRenderContext makeTriangleRenderContext();
+	std::vector<RenderJob> makeRenderJobsList(TriangleRenderContext ctx);
 };

@@ -361,10 +361,8 @@ void program(int argc, char** argv)
 		Matrix4 transformMatrix = Matrix4::rotationXYZ(camAng);
 		
 		//don't touch this arcanery - it somehow works
-		Vec3 newForward = Vec3(transformMatrix.elements[0][2], transformMatrix.elements[1][2], -transformMatrix.elements[2][2]);
-		Vec3 newRight =   Vec3(transformMatrix.elements[0][0], transformMatrix.elements[1][0], transformMatrix.elements[2][0]);
-		//Vec3 newForward = transformMatrix * Vec3(0, 0, -1);
-		//Vec3 newRight = transformMatrix * Vec3(1, 0, 0);
+		Vec3 newForward = Vec3(-transformMatrix.elements[2][0], -transformMatrix.elements[2][1], -transformMatrix.elements[2][2]);
+		Vec3 newRight =   Vec3(-transformMatrix.elements[0][0], -transformMatrix.elements[0][1], -transformMatrix.elements[0][2]);
 		Vec3 newUp = up; //don't transform up for now
 		camAdd = Vec3(0, 0, 0);
 		camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));

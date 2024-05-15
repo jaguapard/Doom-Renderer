@@ -76,11 +76,6 @@ std::map<std::string, CmdArg> parseCmdArgs(int argc, char** argv)
 	return {};
 }
 
-std::string vecToStr(const Vec3& v)
-{
-	return std::to_string(v.x) + " " + std::to_string(v.y) + " " + std::to_string(v.z);
-}
-
 void program(int argc, char** argv)
 {
 	Threadpool threadpool;
@@ -94,7 +89,7 @@ void program(int argc, char** argv)
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");
 
-	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenW, screenH, 0);
+	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
 	/*
@@ -130,104 +125,28 @@ void program(int argc, char** argv)
 	bob::Timer benchmarkTimer;
 	*/
 
-	const Vec3 forward = Vec3(0, 0, -1);
-	const Vec3 right = Vec3(1, 0, 0);
-	const Vec3 up = Vec3(0, 1, 0);
+	GameStateInitData initData;
+	initData.wnd = wnd;
+	initData.argc = argc;
+	initData.argv = argv;
+	std::unique_ptr<GameStateBase> currGameState = std::make_unique<MainGame>(initData, threadpool);
 
 	while (true)
 	{
-		int threadCount = threadpool.getThreadCount();
-		taskIds = {
-			threadpool.addTask([&]() {framebuf.clear(); }),
-			threadpool.addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
-			threadpool.addTask([&]() {zBuffer.clear(); }),
-			threadpool.addTask([&]() {lightBuf.clear(1); }),
-		};		
-		performanceMonitor.registerFrameBegin();
+		currGameState->beginNewFrame();
 
-		Vec3 camAdd = { 0,0,0 };
+		/*
 		if (!benchmarkMode) //benchmark mode will supress any user input
-		{
+		{*/
 			SDL_Event ev;
 			while (SDL_PollEvent(&ev))
 			{
-				input.handleEvent(ev);
-				if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
-				{
-					camAng.y += ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
-					camAng.z -= ev.motion.yrel * camAngAdjustmentSpeed_Mouse;					
-				}
-				if (ev.type == SDL_MOUSEWHEEL)
-				{
-					if (wheelAdjMod == WheelAdjustmentMode::FLY_SPEED) flySpeed *= pow(1.05, ev.wheel.y);
-					if (wheelAdjMod == WheelAdjustmentMode::FOV) fovMult *= pow(1.05, ev.wheel.y);
-				}
-
+				currGameState->handleInputEvent(ev);
 				if (ev.type == SDL_QUIT) return;
 			}
-
-			for (char c = '0'; c <= '9'; ++c)
-			{
-				if (input.wasCharPressedOnThisFrame(c))
-				{
-					warpTo += c;
-					break;
-				}
-			}
-
-			if (warpTo.length() == 2)
-			{
-				std::string mapToLoad = "MAP" + warpTo;
-				std::cout << "Loading map " << mapToLoad << "...\n";
-
-				currentMap = &maps[mapToLoad];
-				sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
-
-				warpTo.clear();
-				performanceMonitor.reset();
-			}
-
-			//xoring with 1 == toggle true->false or false->true
-			if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
-			if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
-			if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
-			if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
-			if (input.wasCharPressedOnThisFrame('C')) camPos = { -96, 70, 784 };
-			if (input.wasCharPressedOnThisFrame('K')) wheelAdjMod = static_cast<WheelAdjustmentMode>((uint32_t(wheelAdjMod) + 1) % uint32_t(WheelAdjustmentMode::COUNT));
-			if (input.wasCharPressedOnThisFrame('L')) fovMult = 1;
-			if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };			
-			if (input.wasCharPressedOnThisFrame('R')) backfaceCullingEnabled ^= 1;
-
-			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
-			{
-				mouseCaptured ^= 1;
-				SDL_SetRelativeMouseMode(mouseCaptured ? SDL_TRUE : SDL_FALSE);
-			}
-
-			bool skyChanged = false;
-			if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LEFT))
-			{
-				currSkyTextureIndex--;
-				skyChanged = true;
-			}
-			else if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_RIGHT))
-			{
-				currSkyTextureIndex++;
-				skyChanged = true;
-			}
-
-			if (currSkyTextureIndex < 0) currSkyTextureIndex = skyTextures.size() - 1;
-			else currSkyTextureIndex %= skyTextures.size();
-
-			if (skyChanged) sky = Sky(skyTextures[currSkyTextureIndex], textureManager);
-
-
-			//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
-			//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
+			currGameState->postEventPollingRoutine();
 			
-			gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
-			fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));			
-		}
+		/* }
 		else
 		{
 			SDL_Event ev;
@@ -246,8 +165,9 @@ void program(int argc, char** argv)
 				f << ss.str() << "\n";
 				break;
 			}
-		}
+		} */
 
+		/*
 		if (skyRenderingMode == ROTATING)
 		{
 			const Texture& skyTexture = textureManager.getTextureByName("RSKY1");
@@ -267,88 +187,12 @@ void program(int argc, char** argv)
 					framebuf.setPixelUnsafe(x, y, skyColor);
 				}
 			}
-		}
+		}*/
 
-		//camAng.z = fmod(camAng.z, M_PI);
-		camAng.y = fmod(camAng.y, 2*M_PI);
-		camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
-		Matrix4 rotationOnlyMatrix = Matrix4::rotationXYZ(camAng);
-		
-		//don't touch this arcanery - it somehow works
-		Vec3 newForward = Vec3(-rotationOnlyMatrix[2][0], -rotationOnlyMatrix[2][1], -rotationOnlyMatrix[2][2]);
-		Vec3 newRight =   Vec3(-rotationOnlyMatrix[0][0], -rotationOnlyMatrix[0][1], -rotationOnlyMatrix[0][2]);
-		Vec3 newUp = up; //don't transform up for now
-		camAdd = Vec3(0, 0, 0);
-		camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));
-		camAdd -= newForward * real(input.isButtonHeld(SDL_SCANCODE_S));
-		camAdd += newRight * real(input.isButtonHeld(SDL_SCANCODE_D));
-		camAdd -= newRight * real(input.isButtonHeld(SDL_SCANCODE_A));
-		camAdd += newUp * real(input.isButtonHeld(SDL_SCANCODE_Z));
-		camAdd -= newUp * real(input.isButtonHeld(SDL_SCANCODE_X));
-		
-		if (real len = camAdd.len() > 0)
-		{
-			camAdd /= len;
-			camPos += camAdd * flySpeed;
-		}
-
-		
-		assert(screenW * screenH == framebufW * framebufH);
-		int pixelCount = framebufW * framebufH;
-		int startPixels = 0;
-		int threadStep = pixelCount / threadCount;
-		real* lightStart = lightBuf.begin();
-		Color* framebufStart = framebuf.begin();
-		Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
-
-		//this is a stupid fix for everything becoming way too blue in debug mode specifically.
-		//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
-		auto* wf = wndSurf->format;
-		std::array<uint32_t, 4> shifts = { wf->Rshift, wf->Gshift, wf->Bshift };
-		uint32_t missingShift = 24;
-		for (int i = 0; i < 3; ++i)
-		{
-			if (std::find(std::begin(shifts), std::end(shifts), i * 8) == std::end(shifts))
-			{
-				missingShift = i * 8;
-				break;
-			}
-		}
-		shifts[3] = missingShift;
-
-		auto renderDependencies = taskIds;
-		for (int tNum = 0; tNum < threadCount; ++tNum)
-		{
-			//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
-			//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
-			Threadpool::task_t f = [=, &renderJobs]() {
-				int myThreadNum = tNum;
-				int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
-				int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
-				if (myThreadNum == threadCount - 1) myMaxY = ctx.framebufH - 1; //avoid going out of bounds
-
-				for (int i = 0; i < renderJobs.size(); ++i)
-				{
-					const RenderJob& myJob = renderJobs[i];
-					myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
-				}			
-
-				int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
-				int myStartIndex = myMinY * ctx.framebufW;
-
-				real* lightPtr = lightStart + myStartIndex;
-				Color* framebufPtr = framebufStart + myStartIndex;
-				Uint32* wndSurfPtr = wndSurfStart + myStartIndex;
-
-				Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
-				Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
-			};
-			taskIds.push_back(threadpool.addTask(f, renderDependencies));
-		}
-		
-		for (auto& it : taskIds) threadpool.waitUntilTaskCompletes(it);
-		renderJobs.clear();
-
+		currGameState->update();
+		currGameState->draw();
+		//assert(screenW * screenH == framebufW * framebufH);
+		/*
 		if (fogEnabled)
 		{
 			real* zBuffPixels = zBuffer.getRawPixels();
@@ -393,23 +237,9 @@ void program(int argc, char** argv)
 		{
 			//framebuf.saveToFile("screenshots/fullframe.png");
 		}
+		*/
 
-		windowUpdateTaskId = threadpool.addTask([&, camPos, camAng, ctr]() {
-			performanceMonitor.registerFrameDone();
-			if (performanceMonitorDisplayEnabled)
-			{
-				std::map<std::string, std::string> perfmonInfo;
-				perfmonInfo["Cam pos"] = vecToStr(camPos);
-				perfmonInfo["Cam ang"] = vecToStr(camAng);
-				perfmonInfo["Fly speed"] = std::to_string(flySpeed) + "/frame";
-				perfmonInfo["Backface culling"] = backfaceCullingEnabled ? "enabled" : "disabled";
-				perfmonInfo["FOV"] = std::to_string(2 * atan(1 / fovMult) * 180 / M_PI) + " degrees";
-
-				perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
-				performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
-			}
-			if (SDL_UpdateWindowSurface(wnd)) throw std::runtime_error(SDL_GetError()); 
-		});
+		currGameState->endFrame();
 	}
 }
 

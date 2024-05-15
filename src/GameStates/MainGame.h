@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <array>
 
 #include "GameStateBase.h"
 #include "../Vec.h"
@@ -18,12 +19,15 @@
 #include "../WadLoader.h"
 #include "../Triangle.h"
 
+#include <SDL/SDL.h>
+
 class MainGame : public GameStateBase
 {
 public:
 	MainGame(GameStateInitData data, Threadpool& threadpool);
 	virtual void beginNewFrame();
 	virtual void handleInputEvent(SDL_Event& ev);
+	virtual void postEventPollingRoutine();
 	virtual void update();
 	virtual void draw();
 	virtual void endFrame();
@@ -93,7 +97,7 @@ protected:
 	std::vector<std::string> skyTextures;
 
 	Threadpool& threadpool;
-	std::vector<Threadpool::task_id> taskIds;
+	std::vector<Threadpool::task_id> bufferClearingTaskIds;
 	Threadpool::task_id windowUpdateTaskId = 0;
 
 	std::map<std::string, DoomMap> maps;
@@ -106,4 +110,5 @@ protected:
 
 	TriangleRenderContext makeTriangleRenderContext();
 	std::vector<RenderJob> makeRenderJobsList(TriangleRenderContext ctx);
+	std::array<uint32_t, 4> getShiftsForWindow(SDL_Window* wnd);
 };

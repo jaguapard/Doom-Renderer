@@ -216,7 +216,6 @@ void MainGame::draw()
 	}
 
 	threadpool->waitForMultipleTasks(renderTaskIds);
-	renderJobs.clear();
 
 	windowUpdateTaskId = threadpool->addTask([&, this]() {
 		performanceMonitor.registerFrameDone();

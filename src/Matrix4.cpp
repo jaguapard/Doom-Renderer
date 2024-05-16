@@ -89,6 +89,21 @@ Matrix4 Matrix4::transposed() const
 	return ret;
 }
 
+Vec3 Matrix4::multiplyByTransposed(const Vec3 v3) const
+{
+	__m128 x = _mm_set1_ps(v3.x);
+	__m128 y = _mm_set1_ps(v3.y);
+	__m128 z = _mm_set1_ps(v3.z);
+	__m128 w = _mm_set1_ps(v3.w);
+
+	__m128 p1 = _mm_mul_ps(x, this->val[0].sseVec);
+	__m128 p2 = _mm_mul_ps(y, this->val[1].sseVec);
+	__m128 p3 = _mm_mul_ps(z, this->val[2].sseVec);
+	__m128 p4 = _mm_mul_ps(w, this->val[3].sseVec);
+
+	return _mm_add_ps(_mm_add_ps(p1, p2), _mm_add_ps(p3, p4));
+}
+
 const bob::_SSE_Vec4_float& Matrix4::operator[](int i) const
 {
 	return val[i];

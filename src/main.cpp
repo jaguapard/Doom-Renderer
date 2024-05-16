@@ -48,7 +48,15 @@ Statsman statsman;
 void* operator new(size_t n)
 {
 	StatCount(statsman.memory.allocsByNew++);
-	return _aligned_malloc(n, 64);
+#ifdef __AVX512__
+	constexpr size_t alignmentRequirement = 64;
+#elif __AVX__
+	constexpr size_t alignmentRequirement = 32;
+#else 
+	constexpr size_t alignmentRequirement = 16;
+#endif
+
+	return _aligned_malloc(n, alignmentRequirement);
 }
 
 void operator delete(void* block)

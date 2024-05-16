@@ -25,7 +25,7 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const
 	return ret;
 }
 
-Vec3 Matrix4::operator*(const Vec3& v3) const
+Vec3 Matrix4::operator*(const Vec3 v3) const
 {
 #ifdef __AVX2__
 	__m256 vv = _mm256_broadcast_ps(&v3.sseVec);

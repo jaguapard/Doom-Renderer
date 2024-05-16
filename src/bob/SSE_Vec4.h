@@ -4,7 +4,8 @@
 #include <iterator>
 
 
-#include "immintrin.h"
+#include <immintrin.h>
+#include <smmintrin.h>
 
 namespace bob
 {

@@ -8,14 +8,14 @@ public:
 	Matrix4() = default;
 	Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst);
 	Matrix4 operator*(const Matrix4& other) const;
-	Vec3 operator*(const Vec3& v3) const;
+	Vec3 operator*(const Vec3 v3) const;
 	union {
 		bob::_SSE_Vec4_float val[4];
 		float elements[4][4];
 	};
 
 	Matrix4 transposed() const;
-	Vec3 multiplyByTransposed(const Vec3& v3) const;
+	Vec3 multiplyByTransposed(const Vec3 v3) const;
 
 	const bob::_SSE_Vec4_float& operator[](int i) const;
 	bob::_SSE_Vec4_float& operator[](int i);

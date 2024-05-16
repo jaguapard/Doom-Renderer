@@ -5,9 +5,8 @@
 class BenchmarkState : public MainGame
 {
 public:
-	BenchmarkState(GameStateInitData data, Threadpool* threadpool);
-	virtual void handleInputEvent(SDL_Event& ev);
-	virtual void postEventPollingRoutine();
+	BenchmarkState(GameStateInitData data);
+	virtual void handleInput();
 	virtual void update();
 
 protected:

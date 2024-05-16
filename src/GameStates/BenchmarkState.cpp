@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-BenchmarkState::BenchmarkState(GameStateInitData data, Threadpool* threadpool)
+BenchmarkState::BenchmarkState(GameStateInitData data)
 {
 	this->threadpool = threadpool;
 	initData = data;
@@ -35,13 +35,12 @@ BenchmarkState::BenchmarkState(GameStateInitData data, Threadpool* threadpool)
 	benchmarkTimer.restart();
 }
 
-void BenchmarkState::handleInputEvent(SDL_Event& ev)
+void BenchmarkState::handleInput() //benchmark mode doesn't care about input
 {
+	SDL_Event ev;
+	while (SDL_PollEvent(&ev)) {}; //avoid window being marked "not responding"
 }
 
-void BenchmarkState::postEventPollingRoutine()
-{
-}
 
 void BenchmarkState::update()
 {
@@ -57,5 +56,6 @@ void BenchmarkState::update()
 		std::cout << ss.str();
 		std::ofstream f("benchmarks.txt", std::ios::app);
 		f << ss.str() << "\n";
+		throw GameStateSwitch();
 	}
 }

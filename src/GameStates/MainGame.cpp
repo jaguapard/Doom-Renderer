@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 
-MainGame::MainGame(GameStateInitData data, Threadpool* threadpool) : threadpool(threadpool)
+MainGame::MainGame(GameStateInitData data)
 {
 	initData = data;
 	defaultMap = "MAP01";
@@ -25,23 +25,25 @@ void MainGame::beginNewFrame()
 	};
 }
 
-void MainGame::handleInputEvent(SDL_Event& ev)
+void MainGame::handleInput()
 {
-	input.handleEvent(ev);
-	if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
+	SDL_Event ev;
+	while (SDL_PollEvent(&ev))
 	{
-		camAng.y += ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
-		camAng.z -= ev.motion.yrel * camAngAdjustmentSpeed_Mouse;
+		input.handleEvent(ev);
+		if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
+		{
+			camAng.y += ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
+			camAng.z -= ev.motion.yrel * camAngAdjustmentSpeed_Mouse;
+		}
+		if (ev.type == SDL_MOUSEWHEEL)
+		{
+			if (wheelAdjMod == WheelAdjustmentMode::FLY_SPEED) flySpeed *= pow(1.05, ev.wheel.y);
+			if (wheelAdjMod == WheelAdjustmentMode::FOV) fovMult *= pow(1.05, ev.wheel.y);
+		}
+		if (ev.type == SDL_QUIT) throw GameStateSwitch();
 	}
-	if (ev.type == SDL_MOUSEWHEEL)
-	{
-		if (wheelAdjMod == WheelAdjustmentMode::FLY_SPEED) flySpeed *= pow(1.05, ev.wheel.y);
-		if (wheelAdjMod == WheelAdjustmentMode::FOV) fovMult *= pow(1.05, ev.wheel.y);
-	}
-}
 
-void MainGame::postEventPollingRoutine()
-{
 	for (char c = '0'; c <= '9'; ++c)
 	{
 		if (input.wasCharPressedOnThisFrame(c))
@@ -131,6 +133,7 @@ void MainGame::postEventPollingRoutine()
 
 void MainGame::init()
 {
+	threadpool = initData.threadpool;
 	wnd = initData.wnd;
 	wndSurf = SDL_GetWindowSurface(wnd);
 
@@ -162,7 +165,7 @@ void MainGame::init()
 			skyTextures.push_back(line);
 		}
 	}
-	
+
 	maps = WadLoader::loadWad("doom2.wad"); //can't redistribute commercial wads!
 }
 

@@ -95,28 +95,19 @@ void program(int argc, char** argv)
 	initData.wnd = wnd;
 	initData.argc = argc;
 	initData.argv = argv;
+	initData.threadpool = &threadpool;
 
-	std::unique_ptr<GameStateBase> currGameState;
+	std::shared_ptr<GameStateBase> currGameState;
 	bool benchmarkMode = argc > 1 && (!strcmpi(argv[1], "benchmark"));
 
-	if (benchmarkMode) currGameState = std::make_unique<BenchmarkState>(initData, &threadpool);
-	else currGameState = std::make_unique<MainGame>(initData, &threadpool);
+	if (benchmarkMode) currGameState = std::make_shared<BenchmarkState>(initData);
+	else currGameState = std::make_shared<MainGame>(initData);
 
 	while (true)
 	{
-		currGameState->beginNewFrame();
-
-		SDL_Event ev;
-		while (SDL_PollEvent(&ev))
-		{
-			currGameState->handleInputEvent(ev);
-			if (ev.type == SDL_QUIT) return;
-		}
-
-		currGameState->postEventPollingRoutine();
-		currGameState->update();
-		currGameState->draw();
-		currGameState->endFrame();
+		GameStateSwitch sw = currGameState->run();
+		if (sw.nextState) currGameState = sw.nextState;
+		else break;
 			
 
 		/*

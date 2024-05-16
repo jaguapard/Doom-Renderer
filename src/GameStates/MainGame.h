@@ -25,10 +25,10 @@ class MainGame : public GameStateBase
 {
 public:
 	MainGame() = default;
-	MainGame(GameStateInitData data, Threadpool* threadpool);
+	MainGame(GameStateInitData data);
 	virtual void beginNewFrame();
-	virtual void handleInputEvent(SDL_Event& ev);
-	virtual void postEventPollingRoutine();
+	virtual void handleInput();
+
 	virtual void update();
 	virtual void draw();
 	virtual void endFrame();
@@ -51,8 +51,9 @@ protected:
 	GameStateInitData initData;
 	SDL_Window* wnd;
 	SDL_Surface* wndSurf;
-	std::vector<Vec3> camPosAndAngArchieve;
+	Threadpool* threadpool;
 
+	std::vector<Vec3> camPosAndAngArchieve;
 	int activeCamPosAndAngle = 2;
 	Vec3 camPos;
 	Vec3 camAng;
@@ -66,7 +67,6 @@ protected:
 	PixelBuffer<real> lightBuf;
 	ZBuffer zBuffer;
 
-	C_Input input;
 	CoordinateTransformer ctr;
 
 	uint64_t frames = 0;
@@ -99,7 +99,6 @@ protected:
 	int currSkyTextureIndex = 2;
 	std::vector<std::string> skyTextures;
 
-	Threadpool* threadpool;
 	std::vector<Threadpool::task_id> bufferClearingTaskIds;
 	Threadpool::task_id windowUpdateTaskId = 0;
 

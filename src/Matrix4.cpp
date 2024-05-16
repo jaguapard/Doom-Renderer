@@ -69,7 +69,7 @@ Vec3 Matrix4::operator*(const Vec3 v3) const
 	{
 		for (int j = 0; j < 4; ++j)
 		{
-			ret.val[i] += this->elements[i][j] * v3.val[j];
+			ret.val[i] += (*this)[i][j] * v3[j];
 		}
 	}
 	return ret;

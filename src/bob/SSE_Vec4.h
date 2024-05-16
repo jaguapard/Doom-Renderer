@@ -236,6 +236,16 @@ namespace bob
 
 	inline float _SSE_Vec4_float::dot(const _SSE_Vec4_float other) const
 	{
+		if (SSE_ENABLED)
+		{
+			__m128 r1 = _mm_mul_ps(sseVec, other.sseVec);
+			__m128 shuf = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+			__m128 sums = _mm_add_ps(r1, shuf);
+
+			shuf = _mm_movehl_ps(shuf, sums);
+			sums = _mm_add_ss(sums, shuf);
+			return _mm_cvtss_f32(sums);
+		}
 		return x * other.x + y * other.y + z * other.z + w * other.w;
 	}
 

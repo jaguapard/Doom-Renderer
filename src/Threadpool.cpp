@@ -35,13 +35,13 @@ task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies, 
 	return id;
 }
 
-std::vector<task_id> Threadpool::reserveTaskIds(size_t count)
+std::vector<task_id> Threadpool::reserveTaskIds(uint64_t count)
 {
 	std::vector<task_id> ret(count);
 	std::lock_guard lck(taskListMutex);
 	task_id taskId = lastFreeTaskId;
 
-	for (size_t i = 0; i < count; ++i)
+	for (uint64_t i = 0; i < count; ++i)
 	{
 		reservedTaskIds.insert(taskId + i);
 		ret.push_back(taskId + i);

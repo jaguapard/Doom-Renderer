@@ -14,7 +14,7 @@ class Threadpool
 {
 public:
 	typedef std::function<void()> task_t;
-	typedef size_t task_id;
+	typedef uint64_t task_id;
 
 	Threadpool(std::optional<size_t> numThreads = std::nullopt);
 
@@ -22,7 +22,7 @@ public:
 	//if wantedId is not nullopt, then the threadpool will attempt to give the specified ID to the added task. This will fail if the ID was not reserved beforehand
 	task_id addTask(task_t taskFunc, std::vector<task_id> dependencies = {}, std::optional<task_id> wantedId = std::nullopt);
 
-	std::vector<task_id> reserveTaskIds(size_t count);
+	std::vector<task_id> reserveTaskIds(uint64_t count);
 
 	void waitUntilTaskCompletes(task_id taskIndex);
 	void waitForMultipleTasks(const std::vector<task_id>& taskIds);

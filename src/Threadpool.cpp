@@ -35,13 +35,13 @@ task_id Threadpool::addTask(task_t taskFunc, std::vector<task_id> dependencies, 
 	return id;
 }
 
-std::vector<task_id> Threadpool::reserveTaskIds(size_t count)
+std::vector<task_id> Threadpool::reserveTaskIds(uint64_t count)
 {
 	std::vector<task_id> ret(count);
 	std::lock_guard lck(taskListMutex);
 	task_id taskId = lastFreeTaskId;
 
-	for (int i = 0; i < count; ++i)
+	for (uint64_t i = 0; i < count; ++i)
 	{
 		reservedTaskIds.insert(taskId + i);
 		ret.push_back(taskId + i);
@@ -125,15 +125,15 @@ std::optional<std::pair<task_id, Threadpool::task_t>> Threadpool::tryGetTask()
 		if (depIt == dependenciesMap.end() || depIt->second.empty())  //second condition should never occur really
 			return { candidateTask }; //if task has no dependendencies, we can just give it to the worker
 
-		size_t depCount = depIt->second.size();
-		size_t finishedDepCount = 0;
 		for (auto& depTaskId : depIt->second)
 		{
-			finishedDepCount += isTaskFinished(depTaskId);
+			if (!isTaskFinished(depTaskId)) goto tryNextTask;
 		}
 
-		if (depCount == finishedDepCount) return { candidateTask }; //if the task had dependencies, but they have finished, return
-		//else keep looking
+		return { candidateTask }; //if the task had dependencies, but they have finished, return
+		
+	tryNextTask: 
+		continue; //else keep looking
 	}
 
 	return std::nullopt; //no runnable tasks found, return empty optional
@@ -156,6 +156,7 @@ void Threadpool::markTaskAsInProgress(task_id taskId)
 
 	unassignedTasks.erase(taskId);
 	inProgressTasks.insert(taskId);
+	reservedTaskIds.erase(taskId);
 }
 
 bool Threadpool::isTaskFinished(task_id taskId)

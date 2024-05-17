@@ -25,12 +25,12 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const
 	return ret;
 }
 
-Vec3 Matrix4::operator*(const Vec3& v3) const
+Vec3 Matrix4::operator*(const Vec3 v) const
 {
 #ifdef __AVX2__
-	__m256 vv = _mm256_broadcast_ps(&v3.sseVec);
-	__m256 preSum_xy = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&val[0])); //sum elements 0-3 to get result x, 4-7 for y
-	__m256 preSum_zw = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&val[2])); //sum elements 0-3 to get result z, 4-7 for w
+	__m256 vv = _mm256_broadcast_ps(&v.sseVec);
+	__m256 preSum_xy = _mm256_mul_ps(vv, ymm0); //sum elements 0-3 to get result x, 4-7 for y
+	__m256 preSum_zw = _mm256_mul_ps(vv, ymm1); //sum elements 0-3 to get result z, 4-7 for w
 
 	__m256 preSum_xyzw = _mm256_hadd_ps(preSum_xy, preSum_zw); //after this we need to sum pairs of elements to get final result
 	__m256 shuffled_xyzw = _mm256_hadd_ps(preSum_xyzw, preSum_xyzw); //after this we have result. xy are in elements 0, 4 and zw is in 1, 5. Other elements are just duplicated copies of them
@@ -39,19 +39,19 @@ Vec3 Matrix4::operator*(const Vec3& v3) const
 #elif 0 //too much stuff, scalar may be faster
 	//mn = v3 * elements[n]. Ret should be: (add up everything in m1, add up everything in m2 ...)
 	__m128 zeros = _mm_setzero_ps();
-	__m128 m1 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&val[0]));
+	__m128 m1 = _mm_mul_ps(v.sseVec, *reinterpret_cast<const __m128*>(&val[0]));
 	m1 = _mm_hadd_ps(m1, zeros);
 	m1 = _mm_hadd_ps(m1, zeros);
 
-	__m128 m2 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&val[1]));
+	__m128 m2 = _mm_mul_ps(v.sseVec, *reinterpret_cast<const __m128*>(&val[1]));
 	m2 = _mm_hadd_ps(m2, zeros);
 	m2 = _mm_hadd_ps(m2, zeros);
 
-	__m128 m3 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&val[2]));
+	__m128 m3 = _mm_mul_ps(v.sseVec, *reinterpret_cast<const __m128*>(&val[2]));
 	m3 = _mm_hadd_ps(m3, zeros);
 	m3 = _mm_hadd_ps(m3, zeros);
 
-	__m128 m4 = _mm_mul_ps(v3.sseVec, *reinterpret_cast<const __m128*>(&val[3]));
+	__m128 m4 = _mm_mul_ps(v.sseVec, *reinterpret_cast<const __m128*>(&val[3]));
 	m4 = _mm_hadd_ps(m4, zeros);
 	m4 = _mm_hadd_ps(m4, zeros);
 
@@ -69,7 +69,7 @@ Vec3 Matrix4::operator*(const Vec3& v3) const
 	{
 		for (int j = 0; j < 4; ++j)
 		{
-			ret.val[i] += this->elements[i][j] * v3.val[j];
+			ret.val[i] += (*this)[i][j] * v[j];
 		}
 	}
 	return ret;
@@ -87,6 +87,21 @@ Matrix4 Matrix4::transposed() const
 		}
 	}
 	return ret;
+}
+
+Vec3 Matrix4::multiplyByTransposed(const Vec3 v) const
+{
+	__m128 x = _mm_set1_ps(v.x);
+	__m128 y = _mm_set1_ps(v.y);
+	__m128 z = _mm_set1_ps(v.z);
+	__m128 w = _mm_set1_ps(v.w);
+
+	__m128 p1 = _mm_mul_ps(x, xmm0);
+	__m128 p2 = _mm_mul_ps(y, xmm1);
+	__m128 p3 = _mm_mul_ps(z, xmm2);
+	__m128 p4 = _mm_mul_ps(w, xmm3);
+
+	return _mm_add_ps(_mm_add_ps(p1, p2), _mm_add_ps(p3, p4));
 }
 
 const bob::_SSE_Vec4_float& Matrix4::operator[](int i) const

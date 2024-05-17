@@ -154,7 +154,6 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	real yEnd = std::clamp<real>(y3, zoneMinY, zoneMaxY);
 
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
-	//const Texture& texture = *context.texture;
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
 	bool flatBottom = renderJob.flatBottom;
 
@@ -184,14 +183,12 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		
 		Vec3 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
 		Vec3 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
-		int yInt = int(y);
-		int xInt = int(xBeg);
+		int pixelIndex = int(y) * bufW + int(xBeg); //all buffers have the same size, so we can use a single index
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must happen
-		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++xInt, interpolatedDividedUv += interpolatedDividedUvStep)
+		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++pixelIndex, interpolatedDividedUv += interpolatedDividedUvStep)
 		{			
 			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 
-			int pixelIndex = yInt * bufW + xInt; //all buffers have the same size, so we can use a single index
 			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
 

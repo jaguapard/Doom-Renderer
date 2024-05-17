@@ -6,6 +6,7 @@ CoordinateTransformer::CoordinateTransformer(int w, int h)
 	this->h = h;
 	real widthToHeightAspectRatio = real(w) / h;
 	this->_shift = { widthToHeightAspectRatio / 2, 0.5, 0 };
+	this->hVec = Vec3(h, h, 1, 1);
 }
 
 void CoordinateTransformer::prepare(const Vec3 camPos, const Vec3 camAng)
@@ -36,7 +37,7 @@ void CoordinateTransformer::prepare(const Vec3 camPos, const Vec3 camAng)
 Vec3 CoordinateTransformer::screenSpaceToPixels(const Vec3 v) const
 {
 	assert(this->_shift.z == 0.0); //ensure to not touch z
-	return (v + this->_shift) * h;
+	return (v + this->_shift) * hVec;
 }
 
 static const __m128 wOne = _mm_set1_ps(1);

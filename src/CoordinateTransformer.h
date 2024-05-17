@@ -18,5 +18,6 @@ private:
 
 	Matrix4 rotationTranslation;
 	Vec3 _shift;
+	Vec3 hVec;
 	real widthToHeightAspectRatio;
 };

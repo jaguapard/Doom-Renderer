@@ -2,7 +2,7 @@
 #include "Vec.h"
 #include <string>
 
-class alignas(32) Matrix4
+class alignas(64) Matrix4
 {
 public:
 	union {

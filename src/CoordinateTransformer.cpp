@@ -2,8 +2,6 @@
 
 CoordinateTransformer::CoordinateTransformer(int w, int h)
 {
-	this->w = w;
-	this->h = h;
 	real widthToHeightAspectRatio = real(w) / h;
 	this->_shift = { widthToHeightAspectRatio / 2, 0.5, 0 };
 	this->hVec = Vec3(h, h, 1, 1);

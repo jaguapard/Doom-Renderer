@@ -5,17 +5,19 @@
 class alignas(32) Matrix4
 {
 public:
-	Matrix4() = default;
-	Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst);
-	Matrix4 operator*(const Matrix4& other) const;
-	Vec3 operator*(const Vec3 v3) const;
 	union {
 		bob::_SSE_Vec4_float val[4];
 		float elements[4][4];
 	};
 
+	Matrix4() = default;
+	Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst);
+
+	Matrix4 operator*(const Matrix4& other) const; //result = this * other
+	Vec3 operator*(const Vec3 v) const;
+
 	Matrix4 transposed() const;
-	Vec3 multiplyByTransposed(const Vec3 v3) const;
+	Vec3 multiplyByTransposed(const Vec3 v) const; //result = A^T * x (multiply transposed matrix by column vector v)
 
 	const bob::_SSE_Vec4_float& operator[](int i) const;
 	bob::_SSE_Vec4_float& operator[](int i);

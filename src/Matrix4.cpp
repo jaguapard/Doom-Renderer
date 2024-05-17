@@ -29,8 +29,8 @@ Vec3 Matrix4::operator*(const Vec3 v) const
 {
 #ifdef __AVX2__
 	__m256 vv = _mm256_broadcast_ps(&v.sseVec);
-	__m256 preSum_xy = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&val[0])); //sum elements 0-3 to get result x, 4-7 for y
-	__m256 preSum_zw = _mm256_mul_ps(vv, *reinterpret_cast<const __m256*>(&val[2])); //sum elements 0-3 to get result z, 4-7 for w
+	__m256 preSum_xy = _mm256_mul_ps(vv, ymm0); //sum elements 0-3 to get result x, 4-7 for y
+	__m256 preSum_zw = _mm256_mul_ps(vv, ymm1); //sum elements 0-3 to get result z, 4-7 for w
 
 	__m256 preSum_xyzw = _mm256_hadd_ps(preSum_xy, preSum_zw); //after this we need to sum pairs of elements to get final result
 	__m256 shuffled_xyzw = _mm256_hadd_ps(preSum_xyzw, preSum_xyzw); //after this we have result. xy are in elements 0, 4 and zw is in 1, 5. Other elements are just duplicated copies of them
@@ -96,10 +96,10 @@ Vec3 Matrix4::multiplyByTransposed(const Vec3 v) const
 	__m128 z = _mm_set1_ps(v.z);
 	__m128 w = _mm_set1_ps(v.w);
 
-	__m128 p1 = _mm_mul_ps(x, this->val[0].sseVec);
-	__m128 p2 = _mm_mul_ps(y, this->val[1].sseVec);
-	__m128 p3 = _mm_mul_ps(z, this->val[2].sseVec);
-	__m128 p4 = _mm_mul_ps(w, this->val[3].sseVec);
+	__m128 p1 = _mm_mul_ps(x, xmm0);
+	__m128 p2 = _mm_mul_ps(y, xmm1);
+	__m128 p3 = _mm_mul_ps(z, xmm2);
+	__m128 p4 = _mm_mul_ps(w, xmm3);
 
 	return _mm_add_ps(_mm_add_ps(p1, p2), _mm_add_ps(p3, p4));
 }

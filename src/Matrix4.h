@@ -8,6 +8,8 @@ public:
 	union {
 		bob::_SSE_Vec4_float val[4];
 		float elements[4][4];
+		struct { __m128 xmm0, xmm1, xmm2, xmm3; };
+		struct { __m256 ymm0, ymm1; };
 	};
 
 	Matrix4() = default;

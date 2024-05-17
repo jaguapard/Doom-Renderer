@@ -179,7 +179,7 @@ void MainGame::draw()
 	int threadCount = threadpool->getThreadCount();
 	std::array<uint32_t, 4> shifts = getShiftsForWindow();
 	TriangleRenderContext ctx = makeTriangleRenderContext();
-	std::vector<RenderJob> renderJobs = makeRenderJobsList(ctx);
+	fillRenderJobsList(ctx, renderJobs);
 
 	real* lightStart = lightBuf.begin();
 	Color* framebufStart = framebuf.begin();
@@ -190,7 +190,7 @@ void MainGame::draw()
 	{
 		//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
 		//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
-		Threadpool::task_t f = [=, &renderJobs]() {
+		Threadpool::task_t f = [=]() {
 			int myThreadNum = tNum;
 			int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
 			int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
@@ -216,6 +216,7 @@ void MainGame::draw()
 	}
 
 	threadpool->waitForMultipleTasks(renderTaskIds);
+	renderJobs.clear();
 
 	windowUpdateTaskId = threadpool->addTask([&, this]() {
 		performanceMonitor.registerFrameDone();
@@ -250,9 +251,8 @@ void MainGame::changeMapTo(std::string mapName)
 	performanceMonitor.reset();
 }
 
-std::vector<RenderJob> MainGame::makeRenderJobsList(TriangleRenderContext ctx)
+void MainGame::fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJob>& renderJobs)
 {
-	std::vector<RenderJob> renderJobs;
 	ctx.renderJobs = &renderJobs;
 
 	if (currentMap)
@@ -268,7 +268,7 @@ std::vector<RenderJob> MainGame::makeRenderJobsList(TriangleRenderContext ctx)
 	}
 	if (skyRenderingMode == SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 
-	return renderJobs;
+	
 }
 
 TriangleRenderContext MainGame::makeTriangleRenderContext()

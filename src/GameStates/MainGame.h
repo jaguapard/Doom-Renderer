@@ -105,12 +105,13 @@ protected:
 	std::map<std::string, DoomMap> maps;
 	std::string defaultMap;
 
+	std::vector<RenderJob> renderJobs;
 
 
 	void init();
 	void changeMapTo(std::string mapName);
 
 	TriangleRenderContext makeTriangleRenderContext();
-	std::vector<RenderJob> makeRenderJobsList(TriangleRenderContext ctx);
+	void fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJob>& renderJobs);
 	std::array<uint32_t, 4> getShiftsForWindow();
 };

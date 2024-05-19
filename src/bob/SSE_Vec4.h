@@ -111,7 +111,8 @@ namespace bob
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator/(const float other) const
 	{
 		if (SSE_ENABLED) return _mm_div_ps(this->sseVec, _mm_set1_ps(other));
-		return _SSE_Vec4_float(x / other, y / other, z / other, w / other);
+		float reciprocal = 1.0 / other;
+		return *this * reciprocal;
 	}
 
 

@@ -63,22 +63,3 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 	if (outTris) free(outTris);
 	return ret;
 }
-
-std::vector<Ved2> PolygonTriangulator::tryCarve(const std::array<Ved2, 3>& trianglePoints, PolygonBitmap& bitmap)
-{
-	std::vector<Line> triangleLines(3);
-	/*/Line p1 = std::make_pair(line.first, newVert);
-			Line p2 = std::make_pair(newVert, line.second);
-			Line p3 = std::make_pair(line.second, line.first);
-			std::array<Line, 3> candidateTriangle = { p1, p2, p3};*/
-
-	for (int i = 0; i < 3; ++i) triangleLines[i] = { trianglePoints[i], trianglePoints[i < 2 ? i + 1 : 0] };
-	auto triangleBitmap = PolygonBitmap::makeFrom(triangleLines);
-	if (triangleBitmap.areAllPointsInside(bitmap)) //very trivial for now, just check if entire triangle can fit
-	{
-		triangleBitmap.blitOver(bitmap, true, CARVED);
-		return std::vector<Ved2>(trianglePoints.begin(), trianglePoints.end());
-	}
-
-	return std::vector<Ved2>();
-}

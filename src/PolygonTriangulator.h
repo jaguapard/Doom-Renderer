@@ -13,6 +13,5 @@ class PolygonTriangulator
 {
 public:
 	static std::vector<Ved2> triangulate(Polygon polygon);
-private:	
-	static std::vector<Ved2> tryCarve(const std::array<Ved2, 3>& trianglePoints, PolygonBitmap& bitmap);
+private:
 };

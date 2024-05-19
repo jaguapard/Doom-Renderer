@@ -105,14 +105,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 
 	for (int nSector = 0; nSector < sectors.size(); ++nSector)
 	{
-		//tessel size of 1 causes a ton of flickering and floor/ceiling disappearing depending on camera movement. TODO: implement varying sizes in orcishTriangulation()
-#ifdef NDEBUG
-		bool debugEnabled = false;
-#else
-		bool debugEnabled = true;
-#endif
-
-		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled && false ? -1 : 1); //too slow in debug mode
+		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager);
 		auto& target = sectorModels[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
 
@@ -157,12 +150,11 @@ Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real to
 	return Model(triangles, textureIndex, textureManager);
 }
 
-/*returns a vector of triangles. UV and Y world coord MUST BE SET AFTERWARDS BY THE CALLER!
-DOOM doesn't really give us too many constraints with it's sector shape, so good algorithms like ear clipping may fail (and I'm too lazy to write it anyway) 
-*/
-std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sectorLinedefs, const std::vector<Vertex>& vertices, int tesselSize)
+std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const Sector& sector, const std::vector<Linedef>& sectorLinedefs, const std::vector<Vertex>& vertices, TextureManager& textureManager)
 {
-	if (tesselSize == -1 || sectorLinedefs.size() < 3) return {};
+	std::vector<Triangle> trisFloor, trisCeiling;
+
+	if (sectorLinedefs.size() < 3) return {};
 	assert(sectorLinedefs.size() >= 3);
 
 	std::vector<Line> polygonLines;
@@ -173,15 +165,7 @@ std::vector<Ved2> DoomWorldLoader::orcishTriangulation(std::vector<Linedef> sect
 		polygonLines.push_back({ Ved2(sv.x, sv.y), Ved2(ev.x, ev.y) });
 	}
 
-	auto ret = PolygonTriangulator::triangulate(polygonLines);
-
-	return ret;
-}
-
-std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const Sector& sector, const std::vector<Linedef>& sectorLinedefs, const std::vector<Vertex>& vertices, TextureManager& textureManager, int tesselSize)
-{
-	std::vector<Triangle> trisFloor, trisCeiling;
-	auto polygonSplit = orcishTriangulation(sectorLinedefs, vertices, tesselSize);	
+	auto polygonSplit = PolygonTriangulator::triangulate(polygonLines);
 	if (polygonSplit.empty()) return {};
 
 	real minX = std::min_element(polygonSplit.begin(), polygonSplit.end(), [](const Ved2& v1, const Ved2& v2) {return v1.x < v2.x; })->x;

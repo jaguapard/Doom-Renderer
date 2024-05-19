@@ -11,17 +11,11 @@
 #include "Polygon.h"
 #include "PolygonBitmap.h"
 
-/*
-//returns 1 if 
-int whichVertexLinesShare(const Line& line1, const Line& line2)
-{
-	if (line1.first == line2.first ||
-		line1.first == line2.second) return 1;
-	if (line1.second == line2.first ||
-		line1.second == line2.second) return 2;
-	return -1;
-}
-*/
+#include <GLUTesselator/src/tessellate.h>
+//#pragma comment(lib, "GLUTesselator.lib")
+#pragma comment(lib, "D:/Dropbox/_Programming/C++/Projects/Doom Rendering/x64/Debug/GLUTesselator.lib")
+
+extern "C" void gluTesselate(double** verts, int* nverts, int** tris, int* ntris, const double** contoursbegin, const double** contoursend);
 
 std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 {
@@ -29,35 +23,34 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 	if (polygon.lines.size() == 0) return ret;
 	if (polygon.lines.size() < 3) throw std::runtime_error("Sector triangulation attempted with less than 3 lines!");
 
-	Polygon originalPolygon = polygon;
-	auto originalLines = polygon.lines;
+	auto contours = polygon.createContours(); //make contours and convert data to feed it into GLUTesselator
+	std::vector<double> rawVerts;
+	std::vector<size_t> contourOffsets = { 0 };
 
-	//originalPolygon.createContours();
-	auto p = polygon.splitByLine({ {0,0},{1,1} });
-	/*
-	
-
-	//TODO: add inner and outer contour finding
-	//inner contour is a contour inside the polygon, but it describes a polygon that is inside our sector, but is not a part of this sector (i.e. a hole)
-	//outer countours are contours that describe the polygon containing our entire sector, possibly also embedding other sector within it.
-	//To avoid Z-fighting of overlapping polygon or complicated measures to curb it, we must triangulate only the outer contour(s) without holes
-	//In theory, there should be only one outer contour, but it is not guaranteed.
-
-
-
-	
-	//fan triangulation works only for simple convex polygons. TODO: split the original polygon into convex ones with no holes
-
-	Ved2 center = originalPolygon.getCenterPoint();
-
-	std::vector<Ved2> points;
-	for (int i = 0; i < originalLines.size(); ++i)
+	for (const auto& cont : contours)
 	{
-		ret.push_back(center); //fan vertex
-		ret.push_back(originalLines[i].start);
-		ret.push_back(originalLines[i].end);
-	};
-	*/
+		const auto& lines = cont.getLines();
+		for (size_t i = 0; i < lines.size(); ++i)
+		{
+			rawVerts.push_back(lines[i].start.x);
+			rawVerts.push_back(lines[i].start.y);
+		}
+		contourOffsets.push_back(rawVerts.size());
+	}
+
+	std::vector<double*> contourAddrs;
+	for (auto& it : contourOffsets) contourAddrs.push_back(rawVerts.data() + it);
+
+	const double* cb = contourAddrs.front();
+	const double* ce = contourAddrs.back();
+	const double** contoursBegin = &cb;
+	const double** contoursEnd = &ce;
+	double* outVerts;
+	int* outTris;
+
+	int out_nVerts, out_nTris;
+	gluTesselate(&outVerts, &out_nVerts, &outTris, &out_nTris, contoursBegin, contoursEnd); //back+1?
+	//tessellate(&outVerts, &out_nVerts, &outTris, &out_nTris, contoursBegin, contoursEnd); //back+1?
 	return ret;
 }
 

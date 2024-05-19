@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34714.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Doom Rendering", "Doom Rendering.vcxproj", "{6336F006-DC74-44E4-8698-7497FB8CB2C6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GLUTesselator", "..\GLUTesselator\GLUTesselator.vcxproj", "{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -45,6 +47,30 @@ Global
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelSSE|x64.Build.0 = RelSSE|x64
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelSSE|x86.ActiveCfg = RelSSE|Win32
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelSSE|x86.Build.0 = RelSSE|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.Debug|x64.ActiveCfg = Debug|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.Debug|x64.Build.0 = Debug|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.Debug|x86.ActiveCfg = Debug|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.Debug|x86.Build.0 = Debug|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelClang|x64.ActiveCfg = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelClang|x64.Build.0 = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelClang|x86.ActiveCfg = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelClang|x86.Build.0 = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelDbgInfo|x64.ActiveCfg = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelDbgInfo|x64.Build.0 = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelDbgInfo|x86.ActiveCfg = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelDbgInfo|x86.Build.0 = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.Release|x64.ActiveCfg = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.Release|x64.Build.0 = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.Release|x86.ActiveCfg = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.Release|x86.Build.0 = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelLegacy|x64.ActiveCfg = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelLegacy|x64.Build.0 = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelLegacy|x86.ActiveCfg = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelLegacy|x86.Build.0 = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelSSE|x64.ActiveCfg = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelSSE|x64.Build.0 = Release|x64
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelSSE|x86.ActiveCfg = Release|Win32
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}.RelSSE|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

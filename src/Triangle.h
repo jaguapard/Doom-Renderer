@@ -38,12 +38,10 @@ struct alignas(32) TexVertex
 inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
 {
 #ifdef __AVX__
-	__m256 tv1 = _mm256_load_ps(reinterpret_cast<const float*>(&t1));
-	__m256 tv2 = _mm256_load_ps(reinterpret_cast<const float*>(&t2));
-	__m256 t = _mm256_set1_ps(amount);
-	__m256 diff = _mm256_sub_ps(tv2, tv1); //result = tv1 + diff*amount
-	__m256 res = _mm256_fmadd_ps(diff, t, tv1); //a*b+c
-	return *reinterpret_cast<TexVertex*>(&res);
+	__m256 t = _mm256_broadcast_ss(&amount);
+	__m256 diff = _mm256_sub_ps(t2.ymm, t1.ymm); //result = tv1 + diff*amount
+	__m256 res = _mm256_fmadd_ps(diff, t, t1.ymm); //a*b+c
+	return { .ymm = res };
 #endif
 	return { lerp(t1.spaceCoords, t2.spaceCoords, amount), lerp(t1.textureCoords, t2.textureCoords,amount) };
 }

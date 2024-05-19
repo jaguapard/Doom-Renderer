@@ -358,7 +358,10 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-
+*.tlog
+*.dll
+*.exe
+*doom2.wad
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 *.png
@@ -366,4 +369,4 @@ FodyWeavers.xsd
 /data/sky_textures.txt
 /benchmarks.txt
 /screenshots
-/doom2.wad
+/Doom Rendering/RelLegacy

@@ -20,7 +20,11 @@ namespace bob
 			float val[4];
 		};
 	private:
+#if _M_IX86_FP >= 2 //TODO: this is not a good enough way. It only detects SSE2, we use SSE4.1 somewhere as well. 
 		static constexpr bool SSE_ENABLED = true;
+#else
+		static constexpr bool SSE_ENABLED = false;
+#endif
 	public:
 		_SSE_Vec4_float() = default;
 		_SSE_Vec4_float(const float x);

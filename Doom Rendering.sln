@@ -15,6 +15,8 @@ Global
 		RelDbgInfo|x86 = RelDbgInfo|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
+		RelLegacy|x64 = RelLegacy|x64
+		RelLegacy|x86 = RelLegacy|x86
 		RelSSE|x64 = RelSSE|x64
 		RelSSE|x86 = RelSSE|x86
 	EndGlobalSection
@@ -35,6 +37,10 @@ Global
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.Release|x64.Build.0 = Release|x64
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.Release|x86.ActiveCfg = Release|Win32
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.Release|x86.Build.0 = Release|Win32
+		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelLegacy|x64.ActiveCfg = RelLegacy|x64
+		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelLegacy|x64.Build.0 = RelLegacy|x64
+		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelLegacy|x86.ActiveCfg = RelLegacy|Win32
+		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelLegacy|x86.Build.0 = RelLegacy|Win32
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelSSE|x64.ActiveCfg = RelSSE|x64
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelSSE|x64.Build.0 = RelSSE|x64
 		{6336F006-DC74-44E4-8698-7497FB8CB2C6}.RelSSE|x86.ActiveCfg = RelSSE|Win32

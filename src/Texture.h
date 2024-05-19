@@ -6,6 +6,7 @@
 
 #include "Color.h"
 #include "PixelBuffer.h"
+#include "Vec.h"
 
 enum class TextureDebugMode
 {

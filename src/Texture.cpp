@@ -58,6 +58,19 @@ Texture::Texture(std::string name)
 	this->checkForTransparentPixels();
 }
 
+Color Texture::getPixel(Vec3 coords) const
+{
+	Vec3 div = coords / dimensionsFloat;
+	__m128i truncDiv = _mm_cvtps_epi32(div);
+	__m128i truncCoords = _mm_cvtps_epi32(coords);
+
+	__m128i muls = _mm_mul_epi32(truncDiv, dimensionsInt);
+	__m128i mod = _mm_sub_epi32(truncCoords, muls);
+	__m128i abs = _mm_abs_epi32(mod);
+
+	return pixels.getPixelUnsafe(abs.m128i_i32[0], abs.m128i_i32[1]);
+}
+
 Color Texture::getPixel(int x, int y) const
 {
 	//assert(abs(x) < 32768); //the "smart" approach does have limitations, but since we chose 64 bit ints and 32 bit shifts,

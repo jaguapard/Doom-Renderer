@@ -197,7 +197,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
 
-			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);			
+			Color texturePixel = texture.getPixel(uvCorrected);			
 			auto lightMult = renderJob.lightMult;
 
 			if (context.wireframeEnabled)

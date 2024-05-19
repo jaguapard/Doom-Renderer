@@ -1,8 +1,8 @@
 #pragma once
-#include <bob/Vec2.h>
-#include <bob/Vec3.h>
+#include "bob/Vec2.h"
+#include "bob/Vec3.h"
 #include "real.h"
-#include <bob\SSE_Vec4.h>
+#include "bob/SSE_Vec4.h"
 
 typedef bob::_Vec2<int> Vei2;
 typedef bob::_Vec2<real> Vec2;

@@ -363,6 +363,7 @@ MigrationBackup/
 *.exe
 *.dll
 *doom2.wad
+*.recipe
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
@@ -371,4 +372,3 @@ FodyWeavers.xsd
 /data/sky_textures.txt
 /benchmarks.txt
 /screenshots
-*.recipe

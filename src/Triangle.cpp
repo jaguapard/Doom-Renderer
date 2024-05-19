@@ -2,7 +2,6 @@
 #include "Statsman.h"
 
 #include <functional>
-constexpr real planeZ = -1;
 
 void Triangle::sortByAscendingSpaceX()
 {
@@ -31,70 +30,62 @@ void Triangle::sortByAscendingTextureY()
 
 void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 {
-	std::array<TexVertex,3> rot;
+	//std::array<TexVertex, 3> rot;
+	Triangle rotated;
 	bool vertexOutside[3] = { false };
 	int outsideVertexCount = 0;
 	for (int i = 0; i < 3; ++i)
 	{
-		Vec3 off = context.ctr->doCamOffset(tv[i].spaceCoords);
-		Vec3 rt = context.ctr->rotate(off);
+		rotated.tv[i].spaceCoords = context.ctr->rotateAndTranslate(tv[i].spaceCoords);
+		rotated.tv[i].textureCoords = tv[i].textureCoords;
 
-		if (rt.z > planeZ)
+		if (rotated.tv[i].z > context.nearPlaneClippingZ)
 		{
 			outsideVertexCount++;
-			if (outsideVertexCount == 3) 
-			{
-				StatCount(statsman.triangles.tripleVerticeOutOfScreenDiscards++);
-				return; //triangle is completely behind the clipping plane, discard
-			}
-			vertexOutside[i] = true;			
+			vertexOutside[i] = true;
 		}
-		rot[i] = { rt, tv[i].textureCoords };
 	}
-	
-	if (outsideVertexCount == 0) //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
+
+	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
+	if (context.backfaceCullingEnabled)
 	{
-		StatCount(statsman.triangles.zeroVerticesOutsideDraws++);
-		Triangle prepped = *this;
-		prepped.tv = rot;
-		return prepped.prepareScreenSpace(context);
+		Vec3 normal = rotated.getNormalVector();
+		if (rotated.tv[0].spaceCoords.dot(normal) >= 0)
+		{
+			StatCount(statsman.triangles.verticesOutside[outsideVertexCount]--); //if a triangle is culled by backface culling, it will not get a chance to be split, so stats will be wrong
+			return;
+		}
 	}
-	
-	auto itBeg = std::begin(vertexOutside);
-	auto itEnd = std::end(vertexOutside);
+
+	if (outsideVertexCount == 3) return;
+	if (outsideVertexCount == 0) return rotated.prepareScreenSpace(context); //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
+
+	//search for one of a kind vertex (outside if outsideVertexCount==1, else inside)
+	int i = std::find(std::begin(vertexOutside), std::end(vertexOutside), outsideVertexCount == 1) - std::begin(vertexOutside);
+	int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds lookups
+	int v2_ind = i < 2 ? i + 1 : 0;
+	const TexVertex& v1 = rotated.tv[v1_ind];
+	const TexVertex& v2 = rotated.tv[v2_ind];
+
 	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
 	{
-		StatCount(statsman.triangles.singleVertexOutOfScreenSplits++);
-		int i = std::find(itBeg, itEnd, true) - itBeg;
-		int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds
-		int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
+		TexVertex clipped1 = rotated.tv[i].getClipedToPlane(v1, context.nearPlaneClippingZ);
+		TexVertex clipped2 = rotated.tv[i].getClipedToPlane(v2, context.nearPlaneClippingZ);
 
-		const TexVertex& v1 = rot[v1_ind];
-		const TexVertex& v2 = rot[v2_ind];
-		Triangle t1 = *this, t2 = *this;
-		TexVertex clipped1 = rot[i].getClipedToPlane(v1);
-		TexVertex clipped2 = rot[i].getClipedToPlane(v2);
-				
-		t1.tv = { v1,clipped1, v2 };
-		t2.tv = { clipped1, clipped2, v2};
+		Triangle t1 = { v1,       clipped1, v2 };
+		Triangle t2 = { clipped1, clipped2, v2 };
 
 		t1.prepareScreenSpace(context);
 		t2.prepareScreenSpace(context);
-		return;
 	}
 
 	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
 	{
-		StatCount(statsman.triangles.doubleVertexOutOfScreenSplits++);
-		int i = std::find(itBeg, itEnd, false) - itBeg;		
-		int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds
-		int v2_ind = i < 2 ? i + 1 : 0; //we only "change" the existing vertex
-
-		Triangle clipped = *this;
-		clipped.tv[v1_ind] = rot[v1_ind].getClipedToPlane(rot[i]);
-		clipped.tv[v2_ind] = rot[v2_ind].getClipedToPlane(rot[i]);
-		clipped.tv[i] = rot[i];
-		return clipped.prepareScreenSpace(context);
+		Triangle clipped;
+		clipped.tv[v1_ind] = v1.getClipedToPlane(rotated.tv[i], context.nearPlaneClippingZ);
+		clipped.tv[v2_ind] = v2.getClipedToPlane(rotated.tv[i], context.nearPlaneClippingZ);
+		clipped.tv[i] = rotated.tv[i];
+		clipped.prepareScreenSpace(context);
 	}
 }
 
@@ -119,130 +110,125 @@ std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> re
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 {
-	std::array<TexVertex, 3> fullyTransformed;
+	Triangle screenSpaceTriangle;
 	for (int i = 0; i < 3; ++i)
 	{
-		real zInv = 1.0 / tv[i].spaceCoords.z;
-		Vec3 zDividedWorld = tv[i].spaceCoords * zInv;
-		Vec3 zDividedUv = tv[i].textureCoords * zInv;
-		zDividedUv.z = zInv;
-		fullyTransformed[i] = { context.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
+		real zInv = context.fovMult / tv[i].spaceCoords.z;
+#ifdef __AVX__
+		screenSpaceTriangle.tv[i].ymm = _mm256_mul_ps(tv[i].ymm, _mm256_broadcast_ss(&zInv));
+#else
+		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
+		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
+#endif
+		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
+		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
 	}
-	if (fullyTransformed[0].spaceCoords.y == fullyTransformed[1].spaceCoords.y && fullyTransformed[1].spaceCoords.y == fullyTransformed[2].spaceCoords.y) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
+
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
-	std::sort(fullyTransformed.begin(), fullyTransformed.end());
+	screenSpaceTriangle.sortByAscendingSpaceY();
+	if (screenSpaceTriangle.y3 - screenSpaceTriangle.y1 == 0) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
 
-	real splitAlpha = (fullyTransformed[1].spaceCoords.y - fullyTransformed[0].spaceCoords.y) / (fullyTransformed[2].spaceCoords.y - fullyTransformed[0].spaceCoords.y);
-	TexVertex splitVertex = lerp(fullyTransformed[0], fullyTransformed[2], splitAlpha);
-	
-	Triangle flatBottom;
-	flatBottom.tv = { fullyTransformed[0], fullyTransformed[1], splitVertex };
-	
-	Triangle flatTop;
-	flatTop = { fullyTransformed[1], splitVertex, fullyTransformed[2] };	
+	real splitAlpha = (screenSpaceTriangle.y2 - screenSpaceTriangle.y1) / (screenSpaceTriangle.y3 - screenSpaceTriangle.y1);
+	TexVertex splitVertex = lerp(screenSpaceTriangle.tv[0], screenSpaceTriangle.tv[2], splitAlpha);
 
-	flatTop.addToRenderQueueFinal(context, false);
-	flatBottom.addToRenderQueueFinal(context, true);
+	TexVertex v2_copy = screenSpaceTriangle.tv[2];
+	screenSpaceTriangle.tv[2] = splitVertex;
+	screenSpaceTriangle.addToRenderQueueFinal(context, false); //flat bottom part
+
+	//screenSpaceTriangle.tv = { screenSpaceTriangle.tv[1], splitVertex, v2_copy };
+	screenSpaceTriangle.tv[0] = splitVertex;
+	screenSpaceTriangle.tv[2] = v2_copy;
+	screenSpaceTriangle.addToRenderQueueFinal(context, true); //flat top part
 }
 
-void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const
+void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatTop) const
 {
-	/*Main idea: we are interpolating between lines of the triangle. All the next mathy stuff can be imagined as walking from a to b,
-	"mixing" (linearly interpolating) between two values. */
-	//if (yBeg < yEnd)
-	{
-		RenderJob rj;
-		rj.flatBottom = flatBottom;
-		rj.t = *this;
-		rj.lightMult = context.lightMult;
-		rj.textureIndex = context.textureIndex;
-		context.renderJobs->push_back(rj);
-	}
+	RenderJob rj;
+	rj.flatTop = flatTop;
+	rj.t = *this;
+	rj.lightMult = context.lightMult;
+	rj.textureIndex = context.textureIndex;
+	context.renderJobs->push_back(rj);
 }
 
 void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
-	real x1 = tv[0].spaceCoords.x, x2 = tv[1].spaceCoords.x, x3 = tv[2].spaceCoords.x, y1 = tv[0].spaceCoords.y, y2 = tv[1].spaceCoords.y, y3 = tv[2].spaceCoords.y;
-	real original_yBeg = y1;
-	real original_yEnd = y3;
+	//Scanline rasterization algorithm
+	if (y1 >= zoneMaxY || y3 < zoneMinY) return;
+	real yBeg = std::clamp<real>(y1, zoneMinY, zoneMaxY);
+	real yEnd = std::clamp<real>(y3, zoneMinY, zoneMaxY);
 
-	real yBeg = std::clamp<real>(y1, 0, context.framebufH);
-	real yEnd = std::clamp<real>(y3, 0, context.framebufH);
-	if (yBeg >= zoneMaxY || yEnd < zoneMinY) return;
-	yBeg = std::max<real>(yBeg, zoneMinY);
-	yEnd = std::min<real>(yEnd, zoneMaxY - 1e-6);
-
-	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0, unless triangle is 0 thick, then it will be killed by loop conditions before division by 0 can occur  
-	//const Texture& texture = *context.texture;
+	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
-	bool flatBottom = renderJob.flatBottom;
-
-	const TexVertex& lerpDst1 = flatBottom ? tv[1] : tv[2]; //flat top and flat bottom triangles require different interpolation points
-	const TexVertex& lerpSrc2 = flatBottom ? tv[0] : tv[1]; //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+	bool flatTop = renderJob.flatTop;
 
 	real ypStep = 1.0 / ySpan;
 	real yp = (yBeg - y1) / ySpan;
+	auto& frameBuf = *context.frameBuffer;
+	auto& lightBuf = *context.lightBuffer;
+	auto& depthBuf = *context.zBuffer;
+	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
+
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
-		TexVertex scanlineTv1 = lerp(tv[0], lerpDst1, yp); 
-		TexVertex scanlineTv2 = lerp(lerpSrc2, tv[2], yp);
-		const TexVertex* left = &scanlineTv1;
-		const TexVertex* right = &scanlineTv2;
-		if (left->spaceCoords.x > right->spaceCoords.x) std::swap(left, right);
+		TexVertex leftTv = lerp(tv[0], tv[flatTop+1], yp); //flat top and flat bottom triangles require different interpolation points
+		TexVertex rightTv = lerp(tv[flatTop], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+		if (leftTv.spaceCoords.x > rightTv.spaceCoords.x) std::swap(leftTv, rightTv);
 		
-		real original_xBeg = left->spaceCoords.x;
-		real original_xEnd = right->spaceCoords.x;
-		real xBeg = std::clamp<real>(left->spaceCoords.x, 0, context.framebufW);
-		real xEnd = std::clamp<real>(right->spaceCoords.x, 0, context.framebufW);
-		real xSpan = right->spaceCoords.x - left->spaceCoords.x;
+		real original_xBeg = leftTv.spaceCoords.x;
+		real original_xEnd = rightTv.spaceCoords.x;
+		real xBeg = std::clamp<real>(original_xBeg, 0, context.framebufW);
+		real xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
+		real xSpan = original_xEnd - original_xBeg;
 
 		real xpStep = 1.0 / xSpan;
-		real xp = (xBeg - left->spaceCoords.x) / xSpan;
+		real xp = (xBeg - original_xBeg) / xSpan;
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
 		
-		Vec3 interpolatedDividedUvStep = (right->textureCoords - left->textureCoords) * xpStep;
-		Vec3 interpolatedDividedUv = lerp(left->textureCoords, right->textureCoords, xp);
-		int bufW = context.frameBuffer->getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
-		int yInt = int(y);
-		int xInt = int(xBeg);
-		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++xInt)
+		Vec3 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
+		Vec3 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
+		int pixelIndex = int(y) * bufW + int(xBeg); //all buffers have the same size, so we can use a single index
+		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must happen
+		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++pixelIndex, interpolatedDividedUv += interpolatedDividedUvStep)
 		{			
-			interpolatedDividedUv += interpolatedDividedUvStep;
-			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z; //TODO: 3rd division is useless
+			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 
-			int pixelIndex = yInt * bufW + xInt; //all buffers have the same size, so we can use a single index
-			bool occluded = (*(context.zBuffer))[pixelIndex] <= interpolatedDividedUv.z;
+			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
 
-			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);
-			bool notFullyTransparent = texturePixel.a > 0;
-			
+			Color texturePixel = texture.getPixel(uvCorrected.x, uvCorrected.y);			
 			auto lightMult = renderJob.lightMult;
+
 			if (context.wireframeEnabled)
 			{
-				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = original_yBeg, oye = original_yEnd;
+				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = y1, oye = y3;
 				bool leftEdge = rx == oxb;
 				bool rightEdge = rx == oxe;
-				bool topEdge = flatBottom && ry == oyb;
-				bool bottomEdge = !flatBottom && ry == oye;
+				bool topEdge = !flatTop && ry == oyb;
+				bool bottomEdge = flatTop && ry == oye;
 				if (leftEdge || rightEdge || topEdge || bottomEdge)
 				{
 					texturePixel = Color(255, 255, 255);
 					lightMult = 1;
 				}
 			}
-			if (notFullyTransparent) //fully transparent pixels do not need to be considered for drawing
+			if (texturePixel.a > 0) //fully transparent pixels do not need to be considered for drawing
 			{
-				(*context.frameBuffer)[pixelIndex] = texturePixel;
-				(*context.lightBuffer)[pixelIndex] = lightMult;
-				(*context.zBuffer)[pixelIndex] = interpolatedDividedUv.z;
+				frameBuf[pixelIndex] = texturePixel;
+				lightBuf[pixelIndex] = lightMult;
+				depthBuf[pixelIndex] = interpolatedDividedUv.z;
 			}
 		}
 	}
 }
 
-TexVertex TexVertex::getClipedToPlane(const TexVertex& dst) const
+Vec3 Triangle::getNormalVector() const
+{
+	return (tv[2].spaceCoords - tv[0].spaceCoords).cross3d(tv[1].spaceCoords - tv[0].spaceCoords);
+}
+
+TexVertex TexVertex::getClipedToPlane(const TexVertex& dst, real planeZ) const
 {
 	real alpha = inverse_lerp(spaceCoords.z, dst.spaceCoords.z, planeZ);
 	assert(alpha >= 0 && alpha <= 1);

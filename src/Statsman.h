@@ -25,10 +25,7 @@ public:
 	struct Triangles
 	{
 		uint64_t
-			tripleVerticeOutOfScreenDiscards = 0,
-			doubleVertexOutOfScreenSplits = 0,
-			singleVertexOutOfScreenSplits = 0,
-			zeroVerticesOutsideDraws = 0;
+			verticesOutside[4] = { 0 };
 	};
 	struct Textures
 	{

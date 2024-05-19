@@ -79,7 +79,7 @@ inline std::string toThousandsSeparatedString(int64_t value, std::string sep = "
 		positive /= 1000;
 	}
 
-	ret.pop_back(); //due to how algorithm works, there's always a unnecessary trailing separator after last digit. Just remove it
+	ret.pop_back(); //due to how algorithm works, there's always an unnecessary trailing separator after last digit. Just remove it
 	if (value < 0) ret = "-" + ret;
 	return ret;
 }

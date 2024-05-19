@@ -25,8 +25,8 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 
 		std::array<Vec3, 6> linedef3dVerts;
 		linedef3dVerts[0] = { real(sv.x), 0, real(sv.y) }; //quads originated by a linedef will always only differ in height
-		linedef3dVerts[1] = { real(ev.x), 0, real(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
-		linedef3dVerts[2] = { real(sv.x), -1, real(sv.y) }; //-1 = lower
+		linedef3dVerts[1] = { real(sv.x), -1, real(sv.y) }; //-1 = lower
+		linedef3dVerts[2] = { real(ev.x), 0, real(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
 
 		linedef3dVerts[3] = { real(ev.x), 0, real(ev.y) };
 		linedef3dVerts[4] = { real(sv.x), -1, real(sv.y) };
@@ -84,17 +84,19 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto model = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto model = getTrianglesForSectorWallQuads(low.floorHeight, high.floorHeight, linedef3dVerts, high, low.lowerTexture, textureManager);
 				auto& target = sectorModels[low.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.push_back(model);
 			}
 
+			auto preSortLinedefSectors = linedefSectors;
 			std::sort(linedefSectors.begin(), linedefSectors.end(), [](const SectorInfo& si1, const SectorInfo& si2) {return si1.ceilingHeight < si2.ceilingHeight; });
 			{   //upper sections
 				SectorInfo low = linedefSectors[0];
 				SectorInfo high = linedefSectors[1];
 
-				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager); //TODO: should probably do two calls, since the linedef can be double sided
+				auto model = getTrianglesForSectorWallQuads(low.ceilingHeight, high.ceilingHeight, linedef3dVerts, high, high.upperTexture, textureManager);
+				if (preSortLinedefSectors[0].sectorNumber == linedefSectors[0].sectorNumber) model.swapVertexOrder();
 				auto& target = sectorModels[high.sectorNumber]; //TODO: think about which sector to assign this triangles to
 				target.push_back(model);
 			}
@@ -113,7 +115,10 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 		auto triangulation = triangulateFloorsAndCeilingsForSector(sectors[nSector], sectorLinedefs[nSector], vertices, textureManager, debugEnabled && false ? -1 : 1); //too slow in debug mode
 		auto& target = sectorModels[nSector];
 		target.insert(target.end(), triangulation.begin(), triangulation.end());
-		std::cout << "Sector " << nSector << " got split into " << triangulation.size() << " triangles.\n";
+
+		size_t sum = 0;
+		for (auto& it : triangulation) sum += it.getTriangleCount();
+		std::cout << "Sector " << nSector << " got split into " << sum << " triangles.\n";
 	}
 
 	return sectorModels;
@@ -202,6 +207,18 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 
 		trisFloor.push_back(t[0]);
 		trisCeiling.push_back(t[1]);
+	}
+
+	assert(trisFloor.size() == trisCeiling.size());
+	for (int i = 0; i < trisFloor.size(); ++i)
+	{
+		const Vec3 up = { 0, 1, 0 };
+		Vec3 nf = trisFloor[i].getNormalVector();
+		Vec3 nc = trisCeiling[i].getNormalVector();
+
+		//enforce proper vertex order. Floor normals must point up, and ceiling ones must point down
+		if (nf.dot(up) <= 0) std::swap(trisFloor[i].tv[1], trisFloor[i].tv[2]);
+		if (nc.dot(up) > 0) std::swap(trisCeiling[i].tv[1], trisCeiling[i].tv[2]);
 	}
 	return { Model(trisFloor, floorTextureIndex, textureManager), Model(trisCeiling, ceilingTextureIndex, textureManager) };
 }

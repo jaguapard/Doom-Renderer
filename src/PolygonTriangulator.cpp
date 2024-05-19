@@ -11,9 +11,7 @@
 #include "Polygon.h"
 #include "PolygonBitmap.h"
 
-#include <GLUTesselator/src/tessellate.h>
-//#pragma comment(lib, "GLUTesselator.lib")
-#pragma comment(lib, "D:/Dropbox/_Programming/C++/Projects/Doom Rendering/x64/Release/GLUTesselator.lib")
+#pragma comment(lib, "GLUTesselator.lib")
 
 extern "C" void gluTesselate(double** verts, int* nverts, int** tris, int* ntris, const double** contoursbegin, const double** contoursend);
 

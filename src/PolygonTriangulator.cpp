@@ -41,16 +41,13 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 	std::vector<double*> contourAddrs;
 	for (auto& it : contourOffsets) contourAddrs.push_back(rawVerts.data() + it);
 
-	const double* cb = contourAddrs.front();
-	const double* ce = contourAddrs.back();
-	const double** contoursBegin = &cb;
-	const double** contoursEnd = &ce;
+	const double** contoursBegin = (const double**)&contourAddrs.front();
+	const double** contoursEnd = (const double**)(& contourAddrs.back()) + 1;
 	double* outVerts;
 	int* outTris;
 
 	int out_nVerts, out_nTris;
-	gluTesselate(&outVerts, &out_nVerts, &outTris, &out_nTris, contoursBegin, contoursEnd); //back+1?
-	//tessellate(&outVerts, &out_nVerts, &outTris, &out_nTris, contoursBegin, contoursEnd); //back+1?
+	gluTesselate(&outVerts, &out_nVerts, &outTris, &out_nTris, contoursBegin, contoursEnd);
 	return ret;
 }
 

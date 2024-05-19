@@ -115,8 +115,7 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	{
 		real zInv = context.fovMult / tv[i].spaceCoords.z;
 #ifdef __AVX__
-		__m256 v_zInv = _mm256_broadcast_ss(&zInv);
-		screenSpaceTriangle.tv[i].ymm = _mm256_mul_ps(tv[i].ymm, v_zInv);
+		screenSpaceTriangle.tv[i].ymm = _mm256_mul_ps(tv[i].ymm, _mm256_broadcast_ss(&zInv));
 #else
 		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
 		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
@@ -124,9 +123,10 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
 		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
 	}
-	if (screenSpaceTriangle.y1 == screenSpaceTriangle.y2 && screenSpaceTriangle.y2 == screenSpaceTriangle.y3) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
+
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 	screenSpaceTriangle.sortByAscendingSpaceY();
+	if (screenSpaceTriangle.y3 - screenSpaceTriangle.y1 == 0) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
 
 	real splitAlpha = (screenSpaceTriangle.y2 - screenSpaceTriangle.y1) / (screenSpaceTriangle.y3 - screenSpaceTriangle.y1);
 	TexVertex splitVertex = lerp(screenSpaceTriangle.tv[0], screenSpaceTriangle.tv[2], splitAlpha);

@@ -29,6 +29,8 @@ public:
 
 	size_t getThreadCount() const;
 	std::pair<double, double> getLimitsForThread(size_t threadIndex, double min, double max, std::optional<size_t> threadCount = std::nullopt) const;
+
+	~Threadpool() noexcept;
 private:
 	std::unordered_map<task_id, task_t> unassignedTasks;
 	std::unordered_map<task_id, std::unordered_set<task_id>> dependenciesMap; //map task ids to a set of task ids that must complete before this one starts
@@ -36,11 +38,14 @@ private:
 	std::unordered_set<task_id> reservedTaskIds;
 
 	std::recursive_mutex taskListMutex;
-	std::vector<std::thread> threads;
+	std::vector<std::jthread> threads;
 	std::atomic<task_id> lastFreeTaskId = 1;
 
 	std::condition_variable cv;
 	std::mutex cv_mtx;
+
+	std::atomic_bool threadpoolMarkedForTermination = false;
+	std::vector<bool> threadTerminated;
 
 	void workerRoutine(size_t workerNumber);
 	void spawnThreads(size_t numThreads);

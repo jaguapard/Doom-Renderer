@@ -83,14 +83,32 @@ std::pair<double, double> Threadpool::getLimitsForThread(size_t threadIndex, dou
 	return std::make_pair(std::clamp(minLimit, min, max), std::clamp(maxLimit, min, max));
 }
 
+Threadpool::~Threadpool() noexcept
+{
+	this->threadpoolMarkedForTermination = true; //signal all threads that it's time to stop
+	{
+		std::unique_lock cv_lck(cv_mtx);
+		cv.notify_all();
+	}
+
+	std::unique_lock cv_lck(cv_mtx);
+	cv.wait(cv_lck, [&]() { 
+		std::lock_guard taskLck(taskListMutex); //wait until all threads finish. They "signal" their termination by setting a flag in threadTerminated vector
+		for (const auto& it : threadTerminated) if (!it) return false;
+		return true;
+	});
+}
+
 void Threadpool::workerRoutine(size_t workerNumber)
 {
-	while (true)
+	while (!this->threadpoolMarkedForTermination)
 	{
 		std::pair<task_id, task_t> myTask;
 		{ //wait until there are runnable tasks
 			std::unique_lock cv_lck(cv_mtx);
 			cv.wait(cv_lck, [&]() {
+				if (this->threadpoolMarkedForTermination) return true; //wake up instantly if it's time to stop
+
 				std::lock_guard taskLck(taskListMutex); //do everything under the aegis of mutex to avoid other threads stealing our job between conditional awake and us marking the task as in-progress
 				auto ret = tryGetTask();
 				if (!ret.has_value()) return false;
@@ -101,16 +119,29 @@ void Threadpool::workerRoutine(size_t workerNumber)
 			});
 		}
 
+		if (this->threadpoolMarkedForTermination) break;
+
 		myTask.second();
 		markTaskFinished(myTask.first);
 
 		std::unique_lock cv_lck(cv_mtx);
 		cv.notify_all();
 	}
+
+	{
+		std::lock_guard taskLck(taskListMutex);
+		threadTerminated[workerNumber] = true;
+	}
+
+	std::unique_lock cv_lck(cv_mtx);
+	cv.notify_all();
 }
 
 void Threadpool::spawnThreads(size_t numThreads)
 {
+	threadTerminated.clear();
+	threadTerminated = std::vector<bool>(numThreads, false);
+
 	for (size_t i = 0; i < numThreads; ++i)
 		threads.emplace_back(&Threadpool::workerRoutine, this, i);
 }

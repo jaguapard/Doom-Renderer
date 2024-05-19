@@ -44,6 +44,7 @@
 #undef main
 
 Statsman statsman;
+Threadpool threadpool; //the Threadpool is eternal and omniscient - it gives birth and death to everything in this world.
 
 void* operator new(size_t n)
 {
@@ -87,7 +88,6 @@ std::map<std::string, CmdArg> parseCmdArgs(int argc, char** argv)
 
 void program(int argc, char** argv)
 {
-	Threadpool threadpool;
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
 	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());

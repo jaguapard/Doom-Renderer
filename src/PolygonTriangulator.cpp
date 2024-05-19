@@ -13,7 +13,7 @@
 
 #include <GLUTesselator/src/tessellate.h>
 //#pragma comment(lib, "GLUTesselator.lib")
-#pragma comment(lib, "D:/Dropbox/_Programming/C++/Projects/Doom Rendering/x64/Debug/GLUTesselator.lib")
+#pragma comment(lib, "D:/Dropbox/_Programming/C++/Projects/Doom Rendering/x64/Release/GLUTesselator.lib")
 
 extern "C" void gluTesselate(double** verts, int* nverts, int** tris, int* ntris, const double** contoursbegin, const double** contoursend);
 
@@ -42,12 +42,25 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 	for (auto& it : contourOffsets) contourAddrs.push_back(rawVerts.data() + it);
 
 	const double** contoursBegin = (const double**)&contourAddrs.front();
-	const double** contoursEnd = (const double**)(& contourAddrs.back()) + 1;
+	const double** contoursEnd = (const double**)(&contourAddrs.back()) + 1;
 	double* outVerts;
 	int* outTris;
 
 	int out_nVerts, out_nTris;
 	gluTesselate(&outVerts, &out_nVerts, &outTris, &out_nTris, contoursBegin, contoursEnd);
+
+	for (int i = 0; i < out_nTris; ++i)
+	{
+		int vert_inds[] = {outTris[i * 3], outTris[i * 3 + 1], outTris[i * 3 + 2]};
+		for (int j = 0; j < 3; ++j)
+		{
+			Ved2 vec = { outVerts[vert_inds[j] * 2], outVerts[vert_inds[j] * 2 + 1] };
+			ret.push_back(vec);
+		}
+	}
+	
+	if (outVerts) free(outVerts);
+	if (outTris) free(outTris);
 	return ret;
 }
 

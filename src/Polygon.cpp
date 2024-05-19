@@ -152,10 +152,6 @@ std::vector<Contour> Contour::getContoursOfPolygon(Polygon polygon)
 	std::vector<Contour> contours;
 	Polygon originalPolygon = polygon;
 
-	PolygonBitmap bitmap = PolygonBitmap::makeFrom(polygon);
-	static int nSector = 0;
-	bitmap.saveTo("sectors_debug/" + std::to_string(nSector++) + ".png");
-
 	while (!polygon.lines.empty())
 	{
 		Line startingLine = polygon.lines[0];
@@ -193,21 +189,12 @@ std::vector<Contour> Contour::getContoursOfPolygon(Polygon polygon)
 		} while (currContour.size() > preGrowContourSize && (currContour.back().end != currContour.front().start)); //try to grow contour while there are still more lines that can continue it and until it gets closed
 	}
 
-	int nCont = 0;
-	//if (nSector-1 == 10) __debugbreak();
+	assert(contours.size() > 0);
 	for (auto& it : contours)
 	{
-		auto cont_map = PolygonBitmap::makeFrom(it.getLines());
-		auto copy = bitmap;
-		cont_map.blitOver(copy, true, CARVED);
-		
-		std::string type = it.isOutsideForPolygon(originalPolygon) ? "out" : "in";
-		copy.saveTo("sectors_debug/" + std::to_string(nSector - 1) + "_" + std::to_string(nCont++) + "_" + type + ".png");
-
 		assert(!it.lines.empty());
 		assert(it.lines.back().end == it.lines.front().start);
-	}
-	assert(contours.size() > 0);
+	}	
 
 	return contours;
 }

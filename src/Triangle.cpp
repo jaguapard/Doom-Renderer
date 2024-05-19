@@ -133,18 +133,18 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 
 	TexVertex v2_copy = screenSpaceTriangle.tv[2];
 	screenSpaceTriangle.tv[2] = splitVertex;
-	screenSpaceTriangle.addToRenderQueueFinal(context, true); //flat bottom part
+	screenSpaceTriangle.addToRenderQueueFinal(context, false); //flat bottom part
 
 	//screenSpaceTriangle.tv = { screenSpaceTriangle.tv[1], splitVertex, v2_copy };
 	screenSpaceTriangle.tv[0] = splitVertex;
 	screenSpaceTriangle.tv[2] = v2_copy;
-	screenSpaceTriangle.addToRenderQueueFinal(context, false); //flat top part
+	screenSpaceTriangle.addToRenderQueueFinal(context, true); //flat top part
 }
 
-void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const
+void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatTop) const
 {
 	RenderJob rj;
-	rj.flatBottom = flatBottom;
+	rj.flatTop = flatTop;
 	rj.t = *this;
 	rj.lightMult = context.lightMult;
 	rj.textureIndex = context.textureIndex;
@@ -160,7 +160,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
-	bool flatBottom = renderJob.flatBottom;
+	bool flatTop = renderJob.flatTop;
 
 	real ypStep = 1.0 / ySpan;
 	real yp = (yBeg - y1) / ySpan;
@@ -171,8 +171,8 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
-		TexVertex leftTv = lerp(tv[0], tv[2 - flatBottom], yp); //flat top and flat bottom triangles require different interpolation points
-		TexVertex rightTv = lerp(tv[1 - flatBottom], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+		TexVertex leftTv = lerp(tv[0], tv[flatTop+1], yp); //flat top and flat bottom triangles require different interpolation points
+		TexVertex rightTv = lerp(tv[flatTop], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 		if (leftTv.spaceCoords.x > rightTv.spaceCoords.x) std::swap(leftTv, rightTv);
 		
 		real original_xBeg = leftTv.spaceCoords.x;
@@ -205,8 +205,8 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = y1, oye = y3;
 				bool leftEdge = rx == oxb;
 				bool rightEdge = rx == oxe;
-				bool topEdge = flatBottom && ry == oyb;
-				bool bottomEdge = !flatBottom && ry == oye;
+				bool topEdge = !flatTop && ry == oyb;
+				bool bottomEdge = flatTop && ry == oye;
 				if (leftEdge || rightEdge || topEdge || bottomEdge)
 				{
 					texturePixel = Color(255, 255, 255);

@@ -76,13 +76,13 @@ struct alignas(32) Triangle
 	Vec3 getNormalVector() const;
 private:
 	void prepareScreenSpace(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	void addToRenderQueueFinal(const TriangleRenderContext& context, bool flatBottom) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
+	void addToRenderQueueFinal(const TriangleRenderContext& context, bool flatTop) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };
 
 struct RenderJob
 {
 	Triangle t;
-	bool flatBottom;
+	bool flatTop;
 	int textureIndex;
 	real lightMult;
 };

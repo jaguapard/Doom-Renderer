@@ -171,4 +171,7 @@ void Texture::populateInverses(int w, int h)
 	hInverse = UINT32_MAX / h + 1;
 	bigW = pixels.getW() * 65536;
 	bigH = pixels.getH() * 65536;
+
+	this->dimensionsFloat = Vec3(w, h, 0, 0);
+	this->dimensionsInt = _mm_setr_epi32(w, h, 0, 0);
 }

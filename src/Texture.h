@@ -22,6 +22,7 @@ class Texture
 {
 public:
 	Texture(std::string name);
+	Color getPixel(Vec3 coords) const; //z and w values are ignored
 	Color getPixel(int x, int y) const;
 	Color getPixelAtUV(real u, real v) const;
 
@@ -36,6 +37,9 @@ private:
 	bool _hasOnlyOpaquePixels = true;
 	int64_t wInverse, hInverse; //inverse values for removing idiv
 	int bigW, bigH;
+
+	Vec3 dimensionsFloat;
+	__m128i dimensionsInt;
 
 	void checkForTransparentPixels();
 	//static constexpr int FRACBITS = 16;

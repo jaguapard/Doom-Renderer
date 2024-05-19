@@ -24,6 +24,7 @@ struct alignas(32) TexVertex
 			real x, y, z, w;
 			real u, v, _pad1, _pad2;
 		};
+		__m256 ymm;
 	};
 
 	bool operator<(const TexVertex& b) const
@@ -58,6 +59,9 @@ struct alignas(32) Triangle
 			real x1, y1, z1, w1, u1, v1, _pad01, _pad02;
 			real x2, y2, z2, w2, u2, v2, _pad11, _pad12;
 			real x3, y3, z3, w3, u3, v3, _pad21, _pad22;
+		};
+		struct {
+			__m256 ymm1, ymm2, ymm3;
 		};
 	};
 

@@ -9,12 +9,12 @@ public:
 	Model(const std::vector<Triangle>& triangles, int textureIndex, TextureManager& textureManager);
 	void addToRenderQueue(TriangleRenderContext ctx) const;
 	int getTriangleCount() const;
-	Vec3 getBoundingBoxMidPoint() const;
+	Vec4 getBoundingBoxMidPoint() const;
 	const std::vector<Triangle>& getTriangles() const;
 
 	void swapVertexOrder();
 private:
 	std::vector<Triangle> triangles;
 	int textureIndex;
-	std::array<Vec3, 8> boundingBox; //8 points to check clipping and collision against
+	std::array<Vec4, 8> boundingBox; //8 points to check clipping and collision against
 };

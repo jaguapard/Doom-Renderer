@@ -108,14 +108,14 @@ void MainGame::handleInput()
 	camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
 	Matrix4 rotationOnlyMatrix = Matrix4::rotationXYZ(camAng);
 
-	const Vec3 forward = Vec3(0, 0, -1);
-	const Vec3 right = Vec3(1, 0, 0);
-	const Vec3 up = Vec3(0, 1, 0);
+	const Vec4 forward = Vec4(0, 0, -1);
+	const Vec4 right = Vec4(1, 0, 0);
+	const Vec4 up = Vec4(0, 1, 0);
 	//don't touch this arcanery - it somehow works
-	Vec3 newForward = Vec3(-rotationOnlyMatrix[2][0], -rotationOnlyMatrix[2][1], -rotationOnlyMatrix[2][2]);
-	Vec3 newRight = Vec3(-rotationOnlyMatrix[0][0], -rotationOnlyMatrix[0][1], -rotationOnlyMatrix[0][2]);
-	Vec3 newUp = up; //don't transform up for now
-	Vec3 camAdd = Vec3(0, 0, 0);
+	Vec4 newForward = Vec4(-rotationOnlyMatrix[2][0], -rotationOnlyMatrix[2][1], -rotationOnlyMatrix[2][2]);
+	Vec4 newRight = Vec4(-rotationOnlyMatrix[0][0], -rotationOnlyMatrix[0][1], -rotationOnlyMatrix[0][2]);
+	Vec4 newUp = up; //don't transform up for now
+	Vec4 camAdd = Vec4(0, 0, 0);
 
 	camAdd += newForward * real(input.isButtonHeld(SDL_SCANCODE_W));
 	camAdd -= newForward * real(input.isButtonHeld(SDL_SCANCODE_S));
@@ -169,7 +169,7 @@ void MainGame::init()
 	maps = WadLoader::loadWad("doom2.wad"); //can't redistribute commercial wads!
 }
 
-std::string vecToStr(const Vec3& v)
+std::string vecToStr(const Vec4& v)
 {
 	return std::to_string(v.x) + " " + std::to_string(v.y) + " " + std::to_string(v.z);
 }

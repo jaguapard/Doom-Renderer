@@ -25,7 +25,7 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const
 	return ret;
 }
 
-Vec3 Matrix4::operator*(const Vec3 v) const
+Vec4 Matrix4::operator*(const Vec4 v) const
 {
 #ifdef __AVX2__
 	__m256 vv = _mm256_broadcast_ps(&v.sseVec);
@@ -64,7 +64,7 @@ Vec3 Matrix4::operator*(const Vec3 v) const
 
 	return _mm_castsi128_ps(_mm_or_si128(ret12, ret34));
 #else
-	Vec3 ret(0, 0, 0, 0);
+	Vec4 ret(0, 0, 0, 0);
 	for (int i = 0; i < 4; ++i)
 	{
 		for (int j = 0; j < 4; ++j)
@@ -89,7 +89,7 @@ Matrix4 Matrix4::transposed() const
 	return ret;
 }
 
-Vec3 Matrix4::multiplyByTransposed(const Vec3 v) const
+Vec4 Matrix4::multiplyByTransposed(const Vec4 v) const
 {
 	__m128 x = _mm_set1_ps(v.x);
 	__m128 y = _mm_set1_ps(v.y);
@@ -179,7 +179,7 @@ Matrix4 Matrix4::rotationZ(float theta)
 	};
 }
 
-Matrix4 Matrix4::rotationXYZ(const Vec3& angle)
+Matrix4 Matrix4::rotationXYZ(const Vec4& angle)
 {
 	return rotationZ(angle.z) * rotationY(angle.y) * rotationX(angle.x);
 	//return rotationX(angle.x) * rotationY(angle.y) * rotationZ(angle.z);

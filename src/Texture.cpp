@@ -58,10 +58,10 @@ Texture::Texture(std::string name)
 	this->checkForTransparentPixels();
 }
 
-Color Texture::getPixel(Vec3 coords) const
+Color Texture::getPixel(Vec4 coords) const
 {
 	StatCount(statsman.textures.pixelFetches++);
-	Vec3 div = coords / dimensionsFloat;
+	Vec4 div = coords / dimensionsFloat;
 	__m128i truncDiv = _mm_cvtps_epi32(div);
 	__m128i truncCoords = _mm_cvtps_epi32(coords);
 
@@ -189,6 +189,6 @@ void Texture::populateInverses(int w, int h)
 	bigW = pixels.getW() * 65536;
 	bigH = pixels.getH() * 65536;
 
-	this->dimensionsFloat = Vec3(w, h, 0, 0);
+	this->dimensionsFloat = Vec4(w, h, 0, 0);
 	this->dimensionsInt = _mm_setr_epi32(w, h, 0, 0);
 }

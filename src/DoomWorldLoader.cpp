@@ -23,7 +23,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 		Vertex ev = vertices[linedef.endVertex];
 		//if ((linedef.startVertex == 124 && linedef.endVertex == 128) || (linedef.startVertex == 128 && linedef.endVertex == 124)) __debugbreak();
 
-		std::array<Vec3, 6> linedef3dVerts;
+		std::array<Vec4, 6> linedef3dVerts;
 		linedef3dVerts[0] = { real(sv.x), 0, real(sv.y) }; //quads originated by a linedef will always only differ in height
 		linedef3dVerts[1] = { real(sv.x), -1, real(sv.y) }; //-1 = lower
 		linedef3dVerts[2] = { real(ev.x), 0, real(ev.y) }; //0 in y coordinate means that it expects the higher of two heights,
@@ -117,12 +117,12 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 	return sectorModels;
 }
 
-Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real topHeight, const std::array<Vec3, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
+Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real topHeight, const std::array<Vec4, 6>& quadVerts, const SectorInfo& sectorInfo, const std::string& textureName, TextureManager& textureManager)
 {
 	Model ret;
 	if (textureName.empty() || textureName == "-" || bottomHeight == topHeight) return ret; //nonsensical arrangement or undefined texture
 
-	Vec3 origin;
+	Vec4 origin;
 	if (bottomHeight > topHeight) std::swap(bottomHeight, topHeight);
 
 	std::vector<Triangle> triangles;
@@ -133,12 +133,12 @@ Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real to
 		Triangle t;
 		for (int j = 0; j < 3; ++j)
 		{
-			Vec3 cookedVert = quadVerts[i * 3 + j];
+			Vec4 cookedVert = quadVerts[i * 3 + j];
 			cookedVert.y = cookedVert.y == 0 ? topHeight : bottomHeight;
 			t.tv[j].spaceCoords = cookedVert;
 			if (i * 3 + j == 0) origin = cookedVert; //if this is the first vertice processed, then save it as an origin for following texture coordinate calculation
 
-			Vec3 worldOffset = t.tv[j].spaceCoords - origin;
+			Vec4 worldOffset = t.tv[j].spaceCoords - origin;
 			Vec2 uvPrefab;
 			uvPrefab.x = std::max(abs(worldOffset.x), abs(worldOffset.z)) == abs(worldOffset.x) ? worldOffset.x : worldOffset.z;
 			uvPrefab.y = worldOffset.y;
@@ -182,11 +182,11 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 		{
 			bool isFloor = j < 3;
 			Ved2 _2vert = polygonSplit[i + j % 3];
-			Vec3 vert = Vec3(real(_2vert.x), 0, real(_2vert.y));
-			Vec3 uv = vert - Vec3(uvOffset.x, uvOffset.y);
+			Vec4 vert = Vec4(real(_2vert.x), 0, real(_2vert.y));
+			Vec4 uv = vert - Vec4(uvOffset.x, uvOffset.y);
 			t[j / 3].tv[j % 3].spaceCoords = vert;
 			t[j/3].tv[j%3].spaceCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
-			t[j / 3].tv[j % 3].textureCoords = Vec3(uv.x, uv.z);
+			t[j / 3].tv[j % 3].textureCoords = Vec4(uv.x, uv.z);
 		}
 
 		trisFloor.push_back(t[0]);
@@ -196,9 +196,9 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 	assert(trisFloor.size() == trisCeiling.size());
 	for (int i = 0; i < trisFloor.size(); ++i)
 	{
-		const Vec3 up = { 0, 1, 0 };
-		Vec3 nf = trisFloor[i].getNormalVector();
-		Vec3 nc = trisCeiling[i].getNormalVector();
+		const Vec4 up = { 0, 1, 0 };
+		Vec4 nf = trisFloor[i].getNormalVector();
+		Vec4 nc = trisCeiling[i].getNormalVector();
 
 		//enforce proper vertex order. Floor normals must point up, and ceiling ones must point down
 		if (nf.dot(up) <= 0) std::swap(trisFloor[i].tv[1], trisFloor[i].tv[2]);

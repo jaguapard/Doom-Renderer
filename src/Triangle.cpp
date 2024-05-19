@@ -49,7 +49,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
 	if (context.backfaceCullingEnabled)
 	{
-		Vec3 normal = rotated.getNormalVector();
+		Vec4 normal = rotated.getNormalVector();
 		if (rotated.tv[0].spaceCoords.dot(normal) >= 0)
 		{
 			StatCount(statsman.triangles.verticesOutside[outsideVertexCount]--); //if a triangle is culled by backface culling, it will not get a chance to be split, so stats will be wrong
@@ -186,13 +186,13 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		//xBeg = ceil(xBeg + 0.5);
 		//xEnd = ceil(xEnd + 0.5);
 		
-		Vec3 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
-		Vec3 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
+		Vec4 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
+		Vec4 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
 		int pixelIndex = int(y) * bufW + int(xBeg); //all buffers have the same size, so we can use a single index
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must happen
 		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++pixelIndex, interpolatedDividedUv += interpolatedDividedUvStep)
 		{			
-			Vec3 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
+			Vec4 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 
 			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
@@ -223,7 +223,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	}
 }
 
-Vec3 Triangle::getNormalVector() const
+Vec4 Triangle::getNormalVector() const
 {
 	return (tv[2].spaceCoords - tv[0].spaceCoords).cross3d(tv[1].spaceCoords - tv[0].spaceCoords);
 }

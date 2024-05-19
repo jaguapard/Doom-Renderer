@@ -17,7 +17,7 @@ inline T lerp(const T& start, const T& end, real amount)
 }
 
 #ifdef __AVX__
-inline Vec3 lerp(const Vec3& start, const Vec3& end, real amount)
+inline Vec4 lerp(const Vec4& start, const Vec4& end, real amount)
 {
 	__m256i mask = _mm256_set_epi32(-1, -1, -1, 0, 0, 0, 0, 0);
 	__m256 src = _mm256_loadu_ps(reinterpret_cast<const float*>(&start));
@@ -26,7 +26,7 @@ inline Vec3 lerp(const Vec3& start, const Vec3& end, real amount)
 	
 	__m256 diff = _mm256_sub_ps(dst, src);
 	__m256 res = _mm256_fmadd_ps(diff, am, src);
-	return *reinterpret_cast<Vec3*>(&res);
+	return *reinterpret_cast<Vec4*>(&res);
 }
 #endif
 

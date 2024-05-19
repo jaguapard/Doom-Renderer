@@ -4,10 +4,10 @@ CoordinateTransformer::CoordinateTransformer(int w, int h)
 {
 	real widthToHeightAspectRatio = real(w) / h;
 	this->_shift = { widthToHeightAspectRatio / 2, 0.5, 0 };
-	this->hVec = Vec3(h, h, 1, 1);
+	this->hVec = Vec4(h, h, 1, 1);
 }
 
-void CoordinateTransformer::prepare(const Vec3 camPos, const Vec3 camAng)
+void CoordinateTransformer::prepare(const Vec4 camPos, const Vec4 camAng)
 {
 	//this->camPos = camPos;
 	Matrix4 rotation = Matrix4::rotationXYZ(camAng);
@@ -20,33 +20,33 @@ void CoordinateTransformer::prepare(const Vec3 camPos, const Vec3 camAng)
 	//this->translationRotation = translation * rotation;
 }
 
-/*Vec3 CoordinateTransformer::toScreenCoords(const Vec3 v) const
+/*Vec4 CoordinateTransformer::toScreenCoords(const Vec4 v) const
 {
 	assert(this->_shift.z == 0.0); //ensure to not touch z
-	Vec3 camOffset = v - camPos;
-	Vec3 rot = rotation.multiplyByTransposed(camOffset);
-	Vec3 perspective = rot / rot.z; //screen space coords of vector
+	Vec4 camOffset = v - camPos;
+	Vec4 rot = rotation.multiplyByTransposed(camOffset);
+	Vec4 perspective = rot / rot.z; //screen space coords of vector
 
-	Vec3 shifted = perspective + this->_shift; //convert so (0,0) in `perspective` corresponds to center of the screen
-	Vec3 final = shifted * h;
+	Vec4 shifted = perspective + this->_shift; //convert so (0,0) in `perspective` corresponds to center of the screen
+	Vec4 final = shifted * h;
 	return final;
 }*/
 
-Vec3 CoordinateTransformer::screenSpaceToPixels(const Vec3 v) const
+Vec4 CoordinateTransformer::screenSpaceToPixels(const Vec4 v) const
 {
 	assert(this->_shift.z == 0.0); //ensure to not touch z
 	return (v + this->_shift) * hVec;
 }
 
 static const __m128 wOne = _mm_set1_ps(1);
-Vec3 CoordinateTransformer::rotateAndTranslate(Vec3 v) const
+Vec4 CoordinateTransformer::rotateAndTranslate(Vec4 v) const
 {
 	v = _mm_blend_ps(v.sseVec, wOne, 0b1000); //same as v.w = 1, but it's slightly faster
-	Vec3 interm = rotationTranslation * v;
+	Vec4 interm = rotationTranslation * v;
 	return interm;
 }
 
-Vec3 CoordinateTransformer::shift(const Vec3 v) const
+Vec4 CoordinateTransformer::shift(const Vec4 v) const
 {
 	assert(this->_shift.z == 0.0); //ensure to not touch z
 	return v + this->_shift;

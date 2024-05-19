@@ -53,10 +53,10 @@ protected:
 	SDL_Surface* wndSurf;
 	Threadpool* threadpool;
 
-	std::vector<Vec3> camPosAndAngArchieve;
+	std::vector<Vec4> camPosAndAngArchieve;
 	int activeCamPosAndAngle = 2;
-	Vec3 camPos;
-	Vec3 camAng;
+	Vec4 camPos;
+	Vec4 camAng;
 
 	int framebufW = 1920;
 	int framebufH = 1080;

@@ -6,15 +6,15 @@ class CoordinateTransformer
 public:
 	CoordinateTransformer() = default;
 	CoordinateTransformer(int w, int h);
-	void prepare(const Vec3 camPos, const Vec3 camAng);
-	Vec3 screenSpaceToPixels(const Vec3 v) const;
+	void prepare(const Vec4 camPos, const Vec4 camAng);
+	Vec4 screenSpaceToPixels(const Vec4 v) const;
 
-	Vec3 rotateAndTranslate(Vec3 v) const;
-	Vec3 shift(const Vec3 v) const;
+	Vec4 rotateAndTranslate(Vec4 v) const;
+	Vec4 shift(const Vec4 v) const;
 
 	Matrix4 getCurrentTransformationMatrix() const;
 private:
 	Matrix4 rotationTranslation;
-	Vec3 _shift;
-	Vec3 hVec;
+	Vec4 _shift;
+	Vec4 hVec;
 };

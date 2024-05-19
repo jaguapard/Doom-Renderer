@@ -114,10 +114,15 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	for (int i = 0; i < 3; ++i)
 	{
 		real zInv = context.fovMult / tv[i].spaceCoords.z;
-		Vec3 zDividedWorld = tv[i].spaceCoords * zInv;
-		Vec3 zDividedUv = tv[i].textureCoords * zInv;
-		zDividedUv.z = zInv;
-		screenSpaceTriangle.tv[i] = { context.ctr->screenSpaceToPixels(zDividedWorld), zDividedUv };
+#ifdef __AVX__
+		__m256 v_zInv = _mm256_broadcast_ss(&zInv);
+		screenSpaceTriangle.tv[i].ymm = _mm256_mul_ps(tv[i].ymm, v_zInv);
+#else
+		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
+		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
+#endif
+		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
+		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
 	}
 	if (screenSpaceTriangle.y1 == screenSpaceTriangle.y2 && screenSpaceTriangle.y2 == screenSpaceTriangle.y3) return; //sadly, this doesn't get caught by loop conditions, since NaN wrecks havok there
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits

@@ -60,6 +60,7 @@ namespace bob
 
 		float& operator[](int i);
 		const float& operator[](int i) const;
+		operator __m128() const;
 
 		float product() const;
 		float len() const;
@@ -173,6 +174,11 @@ namespace bob
 	inline const float& _SSE_Vec4_float::operator[](int i) const
 	{
 		return this->val[i];
+	}
+
+	inline _SSE_Vec4_float::operator __m128() const
+	{
+		return sseVec;
 	}
 
 	inline float& _SSE_Vec4_float::operator[](int i)

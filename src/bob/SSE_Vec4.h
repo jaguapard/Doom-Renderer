@@ -233,6 +233,7 @@ namespace bob
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator-() const
 	{
+		if (SSE_ENABLED) return _mm_sub_ps(_mm_setzero_ps(), xmm);
 		return _SSE_Vec4_float(-x, -y, -z, -w);
 	}
 

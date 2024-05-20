@@ -13,7 +13,7 @@ namespace bob
 	{
 		union
 		{
-			__m128 sseVec;
+			__m128 xmm;
 			struct { float x, y, z, w; };
 			//struct { float r, g, b, a; };
 			float val[4];
@@ -78,7 +78,7 @@ namespace bob
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y, const float z) : x(x), y(y), z(z), w(0) {}
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y, const float z, const float w) : x(x), y(y), z(z), w(w) {}
 
-	inline _SSE_Vec4_float::_SSE_Vec4_float(const __m128 v) : sseVec(v){}
+	inline _SSE_Vec4_float::_SSE_Vec4_float(const __m128 v) : xmm(v){}
 
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const std::initializer_list<float> list)
 	{
@@ -90,28 +90,28 @@ namespace bob
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator+(const float other) const
 	{
-		if (SSE_ENABLED) return _mm_add_ps(this->sseVec, _mm_set1_ps(other));
+		if (SSE_ENABLED) return _mm_add_ps(this->xmm, _mm_set1_ps(other));
 		return _SSE_Vec4_float(x + other, y + other, z + other, w + other);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator-(const float other) const
 	{
-		if (SSE_ENABLED) return _mm_sub_ps(this->sseVec, _mm_set1_ps(other));
+		if (SSE_ENABLED) return _mm_sub_ps(this->xmm, _mm_set1_ps(other));
 		return _SSE_Vec4_float(x - other, y - other, z - other, w - other);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator*(const float other) const
 	{
-		if (SSE_ENABLED) return _mm_mul_ps(this->sseVec, _mm_set1_ps(other));
+		if (SSE_ENABLED) return _mm_mul_ps(this->xmm, _mm_set1_ps(other));
 		return _SSE_Vec4_float(x * other, y * other, z * other, w * other);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator/(const float other) const
 	{
-		if (SSE_ENABLED) return _mm_div_ps(this->sseVec, _mm_set1_ps(other));
+		if (SSE_ENABLED) return _mm_div_ps(this->xmm, _mm_set1_ps(other));
 		float reciprocal = 1.0 / other;
 		return *this * reciprocal;
 	}
@@ -147,27 +147,27 @@ namespace bob
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator+(const _SSE_Vec4_float other) const
 	{
-		if (SSE_ENABLED) return _mm_add_ps(this->sseVec, other.sseVec);
+		if (SSE_ENABLED) return _mm_add_ps(this->xmm, other.xmm);
 		return _SSE_Vec4_float(x + other.x, y + other.y, z + other.z, w + other.w);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator-(const _SSE_Vec4_float other) const
 	{
-		if (SSE_ENABLED) return _mm_sub_ps(this->sseVec, other.sseVec);
+		if (SSE_ENABLED) return _mm_sub_ps(this->xmm, other.xmm);
 		return _SSE_Vec4_float(x - other.x, y - other.y, z - other.z, w - other.w);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator*(const _SSE_Vec4_float other) const
 	{
-		if (SSE_ENABLED) return _mm_mul_ps(this->sseVec, other.sseVec);
+		if (SSE_ENABLED) return _mm_mul_ps(this->xmm, other.xmm);
 		return _SSE_Vec4_float(x * other.x, y * other.y, z * other.z, w * other.w);
 	}
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator/(const _SSE_Vec4_float other) const
 	{
-		if (SSE_ENABLED) return _mm_div_ps(this->sseVec, other.sseVec);
+		if (SSE_ENABLED) return _mm_div_ps(this->xmm, other.xmm);
 		return _SSE_Vec4_float(x / other.x, y / other.y, z / other.z, w / other.w);
 	}
 
@@ -178,7 +178,7 @@ namespace bob
 
 	inline _SSE_Vec4_float::operator __m128() const
 	{
-		return sseVec;
+		return xmm;
 	}
 
 	inline float& _SSE_Vec4_float::operator[](int i)
@@ -248,7 +248,7 @@ namespace bob
 	{
 		if (SSE_ENABLED)
 		{
-			__m128 r1 = _mm_mul_ps(sseVec, other.sseVec);
+			__m128 r1 = _mm_mul_ps(xmm, other.xmm);
 			__m128 shuf = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
 			__m128 sums = _mm_add_ps(r1, shuf);
 

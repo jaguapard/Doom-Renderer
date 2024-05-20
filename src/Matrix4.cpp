@@ -28,7 +28,7 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const
 Vec4 Matrix4::operator*(const Vec4 v) const
 {
 #ifdef __AVX2__
-	__m256 vv = _mm256_broadcast_ps(&v.sseVec);
+	__m256 vv = _mm256_broadcast_ps(&v.xmm);
 	__m256 preSum_xy = _mm256_mul_ps(vv, ymm0); //sum elements 0-3 to get result x, 4-7 for y
 	__m256 preSum_zw = _mm256_mul_ps(vv, ymm1); //sum elements 0-3 to get result z, 4-7 for w
 
@@ -39,19 +39,19 @@ Vec4 Matrix4::operator*(const Vec4 v) const
 #elif 0 //too much stuff, scalar may be faster
 	//mn = v3 * elements[n]. Ret should be: (add up everything in m1, add up everything in m2 ...)
 	__m128 zeros = _mm_setzero_ps();
-	__m128 m1 = _mm_mul_ps(v.sseVec, *reinterpret_cast<const __m128*>(&val[0]));
+	__m128 m1 = _mm_mul_ps(v.xmm, *reinterpret_cast<const __m128*>(&val[0]));
 	m1 = _mm_hadd_ps(m1, zeros);
 	m1 = _mm_hadd_ps(m1, zeros);
 
-	__m128 m2 = _mm_mul_ps(v.sseVec, *reinterpret_cast<const __m128*>(&val[1]));
+	__m128 m2 = _mm_mul_ps(v.xmm, *reinterpret_cast<const __m128*>(&val[1]));
 	m2 = _mm_hadd_ps(m2, zeros);
 	m2 = _mm_hadd_ps(m2, zeros);
 
-	__m128 m3 = _mm_mul_ps(v.sseVec, *reinterpret_cast<const __m128*>(&val[2]));
+	__m128 m3 = _mm_mul_ps(v.xmm, *reinterpret_cast<const __m128*>(&val[2]));
 	m3 = _mm_hadd_ps(m3, zeros);
 	m3 = _mm_hadd_ps(m3, zeros);
 
-	__m128 m4 = _mm_mul_ps(v.sseVec, *reinterpret_cast<const __m128*>(&val[3]));
+	__m128 m4 = _mm_mul_ps(v.xmm, *reinterpret_cast<const __m128*>(&val[3]));
 	m4 = _mm_hadd_ps(m4, zeros);
 	m4 = _mm_hadd_ps(m4, zeros);
 

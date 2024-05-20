@@ -227,7 +227,7 @@ namespace bob
 
 	inline float _SSE_Vec4_float::lenSq() const
 	{
-		return x * x + y * y + z * z + w * w; //dot product with itself
+		return dot(*this);
 	}
 
 

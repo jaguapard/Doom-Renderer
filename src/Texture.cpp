@@ -62,14 +62,16 @@ Color Texture::getPixel(const Vec4& coords) const
 {
 	constexpr int ROUND_MODE = _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC;
 	StatCount(statsman.textures.pixelFetches++);
+
+	Vec4 dimFlt = this->dimensionsFloat; //make a local copy of dimensions to avoid going into the memory for them.
 	Vec4 roundCoords = _mm_round_ps(coords, ROUND_MODE);
-	Vec4 div = roundCoords / dimensionsFloat;
+	Vec4 div = roundCoords / dimFlt;
 
 	Vec4 roundDiv = _mm_round_ps(div, ROUND_MODE);
-	Vec4 mod = roundCoords - roundDiv * dimensionsFloat;
+	Vec4 mod = roundCoords - roundDiv * dimFlt;
 	
 	__m128 cmp = _mm_cmplt_ps(mod, _mm_setzero_ps());
-	Vec4 add = _mm_and_ps(cmp, dimensionsFloat);
+	Vec4 add = _mm_and_ps(cmp, dimFlt);
 	Vec4 res = mod + add;
 
 	__m128i fin = _mm_cvtps_epi32(res);

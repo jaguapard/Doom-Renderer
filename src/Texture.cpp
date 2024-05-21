@@ -192,6 +192,6 @@ void Texture::populateInverses(int w, int h)
 	bigW = pixels.getW() * 65536;
 	bigH = pixels.getH() * 65536;
 
-	this->dimensionsFloat = Vec4(w, h, 0, 0);
-	this->dimensionsInt = _mm_setr_epi32(w, h, 0, 0);
+	const_cast<Vec4&>(this->dimensionsFloat) = Vec4(w, h, 0, 0);
+	const_cast<__m128i&>(this->dimensionsInt) = _mm_setr_epi32(w, h, 0, 0);
 }

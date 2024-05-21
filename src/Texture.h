@@ -39,8 +39,8 @@ private:
 	int64_t wInverse, hInverse; //inverse values for removing idiv
 	int bigW, bigH;
 
-	Vec4 dimensionsFloat;
-	__m128i dimensionsInt;
+	const Vec4 dimensionsFloat;
+	const __m128i dimensionsInt;
 
 	void checkForTransparentPixels();
 	//static constexpr int FRACBITS = 16;

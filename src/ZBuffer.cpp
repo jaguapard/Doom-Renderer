@@ -9,7 +9,7 @@ ZBuffer::ZBuffer(int w, int h) : PixelBuffer<real>(w, h)
 bool ZBuffer::test(int x, int y, real depth)
 {
 	StatCount(statsman.zBuffer.depthTests++);
-	bool cmp = depth < this->getPixelUnsafe(x, y);
+	bool cmp = depth < this->getPixel(x, y);
 	return cmp;
 }
 

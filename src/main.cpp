@@ -176,7 +176,7 @@ void program(int argc, char** argv)
 			{
 				for (int x = 0; x < framebufW; x++)
 				{
-					real pixel = zBuffer.getPixelUnsafe(x, y);
+					real pixel = zBuffer.getPixel(x, y);
 					real depth = -1.0 / pixel;
 					f << x << " " << y << " " << depth << "\n";
 				}

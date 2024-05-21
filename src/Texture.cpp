@@ -74,7 +74,7 @@ Color Texture::getPixel(const Vec4& coords) const
 	Vec4 add = _mm_and_ps(cmp, dimFlt);
 	Vec4 res = mod + add;
 
-	return pixels.getPixelUnsafe(res);
+	return pixels.getPixel(res);
 }
 
 Color Texture::getPixel(int x, int y) const
@@ -94,7 +94,7 @@ Color Texture::getPixel(int x, int y) const
 	int64_t divH = yPreShift >> 32;
 	int64_t tx = px - divW * pixels.getW();
 	int64_t ty = py - divH * pixels.getH();
-	return pixels.getPixelUnsafe(tx, ty); //due to previous manipulations with input x and y, it should never go out of bounds
+	return pixels.getPixel(tx, ty); //due to previous manipulations with input x and y, it should never go out of bounds
 #else
 	int w = pixels.getW();
 	int h = pixels.getH();
@@ -102,7 +102,7 @@ Color Texture::getPixel(int x, int y) const
 	y %= h;
 	if (x < 0) x += w; //can't just flip the sign of modulo - that will make textures reflect around 0, i.e. x=-1 will map to 1 instead of (w-1)
 	if (y < 0) y += h;
-	return pixels.getPixelUnsafe(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
+	return pixels.getPixel(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
 #endif
 }
 

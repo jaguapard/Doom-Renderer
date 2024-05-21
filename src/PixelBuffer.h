@@ -43,9 +43,9 @@ public:
 	int getH() const;
 	const PixelBufferSize& getSize() const;
 	
-	T getPixelUnsafe(int x, int y) const; //does not perform bounds checks
-	T getPixelUnsafe(const __m128i& pos) const; //returns a pixel from x=pos[0], y=pos[1], other values are ignored
-	T getPixelUnsafe(const Vec4& pos) const; 
+	T getPixel(int x, int y) const; //does not perform bounds checks
+	T getPixel(const __m128i& pos) const; //returns a pixel from x=pos[0], y=pos[1], other values are ignored
+	T getPixel(const Vec4& pos) const; 
 
 	void setPixelUnsafe(int x, int y, const T& px); //does not perform bounds checks
 
@@ -100,21 +100,21 @@ inline int PixelBuffer<T>::getH() const
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixelUnsafe(int x, int y) const
+inline T PixelBuffer<T>::getPixel(int x, int y) const
 {
 	return at(x, y);
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixelUnsafe(const __m128i& pos) const
+inline T PixelBuffer<T>::getPixel(const __m128i& pos) const
 {
-	return getPixelUnsafe(_mm_extract_epi32(pos, 0), _mm_extract_epi32(pos, 1));
+	return getPixel(_mm_extract_epi32(pos, 0), _mm_extract_epi32(pos, 1));
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixelUnsafe(const Vec4& pos) const
+inline T PixelBuffer<T>::getPixel(const Vec4& pos) const
 {
-	return getPixelUnsafe(_mm_cvtps_epi32(pos.xmm));
+	return getPixel(_mm_cvtps_epi32(pos.xmm));
 }
 
 template<typename T>
@@ -216,7 +216,7 @@ inline void PixelBuffer<T>::saveToFile(const std::string& path) const
 	{
 		for (int x = 0; x < size.w; ++x)
 		{
-			pix[y * size.w + x] = this->toColor(this->getPixelUnsafe(x, y));
+			pix[y * size.w + x] = this->toColor(this->getPixel(x, y));
 		}
 	}
 

@@ -59,7 +59,7 @@ void PolygonBitmap::saveTo(std::string path)
 	{
 		for (int x = 0; x < size.w; ++x)
 		{
-			uint8_t value = getPixelUnsafe(x, size.h - 1 - y); //y is inverted in our coordinate system compared to Doom (our bitmap: +y = down, Doom: +y = up)
+			uint8_t value = getPixel(x, size.h - 1 - y); //y is inverted in our coordinate system compared to Doom (our bitmap: +y = down, Doom: +y = up)
 			Color c = palette[value];
 			pixels[y * size.w + x] = c;
 		}
@@ -79,7 +79,7 @@ void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides, Polygon
 	{
 		for (int x = 0; x < size.w; ++x)
 		{
-			uint8_t val = this->getPixelUnsafe(x, y);
+			uint8_t val = this->getPixel(x, y);
 			assert(val != NONE);
 			if (doNotBlitOutsides && val == OUTSIDE) continue;
 			if (val != OUTSIDE && valueOverride != NONE) val = valueOverride;

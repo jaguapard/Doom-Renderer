@@ -74,8 +74,7 @@ Color Texture::getPixel(const Vec4& coords) const
 	Vec4 add = _mm_and_ps(cmp, dimFlt);
 	Vec4 res = mod + add;
 
-	__m128i fin = _mm_cvtps_epi32(res);
-	return pixels.getPixelUnsafe(_mm_extract_epi32(fin, 0), _mm_extract_epi32(fin, 1));
+	return pixels.getPixelUnsafe(res);
 }
 
 Color Texture::getPixel(int x, int y) const

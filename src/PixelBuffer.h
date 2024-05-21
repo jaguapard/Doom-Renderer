@@ -102,10 +102,7 @@ inline T PixelBuffer<T>::getPixelUnsafe(int x, int y) const
 template<typename T>
 inline T PixelBuffer<T>::getPixelUnsafe(const __m128i& pos) const
 {
-	__m128i pitch = _mm_mul_epi32(pos, wVec);
-	//return (*this)[_mm_extract_epi32(pitch, 0) + _mm_extract_epi32(pitch, 1)];
-	__m128i ind = _mm_hadd_epi32(pitch, pitch);
-	return (*this)[_mm_extract_epi32(ind, 0)];
+	return getPixelUnsafe(_mm_extract_epi32(pos, 0), _mm_extract_epi32(pos, 1));
 }
 
 template<typename T>

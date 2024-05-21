@@ -58,21 +58,23 @@ Texture::Texture(std::string name)
 	this->checkForTransparentPixels();
 }
 
+static constexpr int ROUND_MODE = _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC;
+
 Color Texture::getPixel(Vec4 coords) const
 {
 	StatCount(statsman.textures.pixelFetches++);
-	Vec4 div = coords / dimensionsFloat;
-	__m128i truncDiv = _mm_cvtps_epi32(div);
-	__m128i truncCoords = _mm_cvtps_epi32(coords);
+	Vec4 roundCoords = _mm_round_ps(coords, ROUND_MODE);
+	Vec4 div = roundCoords / dimensionsFloat;
 
-	__m128i muls = _mm_mullo_epi32(truncDiv, dimensionsInt);
-	__m128i mod = _mm_sub_epi32(truncCoords, muls);
+	Vec4 roundDiv = _mm_round_ps(div, ROUND_MODE);
+	Vec4 mod = roundCoords - roundDiv * dimensionsFloat;
+	
+	__m128 cmp = _mm_cmplt_ps(mod, _mm_setzero_ps());
+	Vec4 add = _mm_and_ps(cmp, dimensionsFloat);
+	Vec4 res = mod + add;
 
-	__m128i cmp = _mm_cmplt_epi32(mod, _mm_setzero_si128());
-	__m128i add = _mm_and_si128(dimensionsInt, cmp);
-	__m128i res = _mm_add_epi32(mod, add);
-
-	return pixels.getPixelUnsafe(_mm_extract_epi32(res, 0), _mm_extract_epi32(res, 1));
+	__m128i fin = _mm_cvtps_epi32(res);
+	return pixels.getPixelUnsafe(_mm_extract_epi32(fin, 0), _mm_extract_epi32(fin, 1));
 }
 
 Color Texture::getPixel(int x, int y) const

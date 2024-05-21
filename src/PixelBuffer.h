@@ -42,16 +42,11 @@ public:
 	int getW() const;
 	int getH() const;
 	const PixelBufferSize& getSize() const;
-
-	T getPixel(int x, int y, bool& outOfBounds) const; //Returns a pixel at (x,y) and sets `outOfBounds` to false if the point is in bounds. Else, returns default constructed T and sets `outOfBounds` to true
-	
 	
 	T getPixelUnsafe(int x, int y) const; //does not perform bounds checks
 	T getPixelUnsafe(const __m128i& pos) const; //returns a pixel from x=pos[0], y=pos[1], other values are ignored
 	T getPixelUnsafe(const Vec4& pos) const; 
 
-
-	bool setPixel(int x, int y, const T& px); //if pixel was set, returns true. Else (pixel is out of bounds) returns false
 	void setPixelUnsafe(int x, int y, const T& px); //does not perform bounds checks
 
 	bool isOutOfBounds(int x, int y) const;
@@ -105,14 +100,6 @@ inline int PixelBuffer<T>::getH() const
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixel(int x, int y, bool& outOfBounds) const
-{
-	if (isInBounds(x, y)) return at(x, y);
-	outOfBounds = true;
-	return T();
-}
-
-template<typename T>
 inline T PixelBuffer<T>::getPixelUnsafe(int x, int y) const
 {
 	return at(x, y);
@@ -128,17 +115,6 @@ template<typename T>
 inline T PixelBuffer<T>::getPixelUnsafe(const Vec4& pos) const
 {
 	return getPixelUnsafe(_mm_cvtps_epi32(pos.xmm));
-}
-
-template<typename T>
-inline bool PixelBuffer<T>::setPixel(int x, int y, const T& px)
-{
-	if (isInBounds(x, y)) 
-	{
-		at(x, y) = px;
-		return true;
-	}
-	else return false;
 }
 
 template<typename T>

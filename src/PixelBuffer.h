@@ -9,6 +9,8 @@
 #include <SDL/SDL.h>
 
 #include "Color.h"
+#include "Vec.h"
+
 template <typename T>
 class PixelBuffer
 {
@@ -20,7 +22,13 @@ public:
 	int getH() const;
 
 	T getPixel(int x, int y, bool& outOfBounds) const; //Returns a pixel at (x,y) and sets `outOfBounds` to false if the point is in bounds. Else, returns default constructed T and sets `outOfBounds` to true
+	
+	
 	T getPixelUnsafe(int x, int y) const; //does not perform bounds checks
+	T getPixelUnsafe(const __m128i& pos) const; //returns a pixel from x=pos[0], y=pos[1], other values are ignored
+	T getPixelUnsafe(const Vec4& pos) const; 
+
+
 	bool setPixel(int x, int y, const T& px); //if pixel was set, returns true. Else (pixel is out of bounds) returns false
 	void setPixelUnsafe(int x, int y, const T& px); //does not perform bounds checks
 
@@ -43,19 +51,28 @@ public:
 protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
-	
+	void assignSizes(int w, int h);
+
 	std::vector<T> store;
-	const int w, h; //pixel buffers are not being meant resized, however, no default ctor hurts a lot. So we have "quasi-const" w and h. The only way to change this values is to assign a new PixelBuffer to this one, i.e. no other operations will disturb the size;
+
+	//pixel buffers are not being meant resized, however, no default ctor hurts a lot. 
+	//So we have "quasi-const" w and h. The only way to change this values is to assign a new PixelBuffer to this one, 
+	//i.e. no other operations will disturb the size
+	const int w, h;
+	const __m128i dimensionsInt;
+	const __m128i wVec;
+	const Vec4 dimensionsFloat;	
 };
 
 template<typename T>
 inline PixelBuffer<T>::PixelBuffer() : w(0), h(0) {};
 
 template<typename T>
-inline PixelBuffer<T>::PixelBuffer(int w, int h) : w(w), h(h)
+inline PixelBuffer<T>::PixelBuffer(int w, int h) :w(0), h(0)
 {
 	store.resize(w * h);
 	store.shrink_to_fit();
+	this->assignSizes(w, h);
 }
 
 template<typename T>
@@ -82,6 +99,21 @@ template<typename T>
 inline T PixelBuffer<T>::getPixelUnsafe(int x, int y) const
 {
 	return at(x, y);
+}
+
+template<typename T>
+inline T PixelBuffer<T>::getPixelUnsafe(const __m128i& pos) const
+{
+	__m128i pitch = _mm_mul_epi32(pos, wVec);
+	//return (*this)[_mm_extract_epi32(pitch, 0) + _mm_extract_epi32(pitch, 1)];
+	__m128i ind = _mm_hadd_epi32(pitch, pitch);
+	return (*this)[_mm_extract_epi32(ind, 0)];
+}
+
+template<typename T>
+inline T PixelBuffer<T>::getPixelUnsafe(const Vec4& pos) const
+{
+	return getPixelUnsafe(_mm_cvtps_epi32(pos.xmm));
 }
 
 template<typename T>
@@ -232,8 +264,7 @@ inline void PixelBuffer<T>::operator=(const PixelBuffer<T>& other)
 	this->store = other.store;
 	store.shrink_to_fit();
 
-	const_cast<int&>(w) = other.w;
-	const_cast<int&>(h) = other.h;
+	this->assignSizes(other.w, other.h);
 }
 
 template<typename T>
@@ -250,4 +281,16 @@ inline const T& PixelBuffer<T>::at(int x, int y) const
 	assert(x < w);
 	assert(y < h);
 	return store[y * w + x];
+}
+
+template<typename T>
+inline void PixelBuffer<T>::assignSizes(int w, int h)
+{
+	const_cast<int&>(w) = w;
+	const_cast<int&>(h) = h;
+	
+	const_cast<__m128i&>(dimensionsInt) = _mm_setr_epi32(w, h, 0, 0);
+	const_cast<Vec4&>(dimensionsFloat) = Vec4(w, h, 0, 0);
+
+	const_cast<__m128i&>(wVec) = _mm_setr_epi32(w, 1, 0, 0);
 }

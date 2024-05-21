@@ -55,20 +55,18 @@ protected:
 
 	std::vector<T> store;
 
-	//pixel buffers are not being meant resized, however, no default ctor hurts a lot. 
-	//So we have "quasi-const" w and h. The only way to change this values is to assign a new PixelBuffer to this one, 
-	//i.e. no other operations will disturb the size
-	const int w, h;
-	const __m128i dimensionsInt;
-	const __m128i wVec;
-	const Vec4 dimensionsFloat;	
+	//a bunch of precomputed and properly formatted values for SIMD
+	int w, h;
+	__m128i dimensionsInt;
+	__m128i wVec;
+	Vec4 dimensionsFloat;	
 };
 
 template<typename T>
-inline PixelBuffer<T>::PixelBuffer() : w(0), h(0) {};
+inline PixelBuffer<T>::PixelBuffer() {};
 
 template<typename T>
-inline PixelBuffer<T>::PixelBuffer(int w, int h) :w(0), h(0)
+inline PixelBuffer<T>::PixelBuffer(int w, int h)
 {
 	store.resize(w * h);
 	store.shrink_to_fit();
@@ -259,7 +257,7 @@ inline Color PixelBuffer<uint8_t>::toColor(uint8_t value) const
 template<typename T>
 inline void PixelBuffer<T>::operator=(const PixelBuffer<T>& other)
 {
-	if (w != 0 && h != 0 && (w != other.w || h != other.h)) throw std::runtime_error("Attempted to assign pixel buffer of mismatched size");
+	//if (w != 0 && h != 0 && (w != other.w || h != other.h)) throw std::runtime_error("Attempted to assign pixel buffer of mismatched size");
 	
 	this->store = other.store;
 	store.shrink_to_fit();
@@ -286,11 +284,11 @@ inline const T& PixelBuffer<T>::at(int x, int y) const
 template<typename T>
 inline void PixelBuffer<T>::assignSizes(int w, int h)
 {
-	const_cast<int&>(w) = w;
-	const_cast<int&>(h) = h;
+	this->w = w;
+	this->h = h;
 	
-	const_cast<__m128i&>(dimensionsInt) = _mm_setr_epi32(w, h, 0, 0);
-	const_cast<Vec4&>(dimensionsFloat) = Vec4(w, h, 0, 0);
+	this->dimensionsInt = _mm_setr_epi32(w, h, 0, 0);
+	this->dimensionsFloat = Vec4(w, h, 0, 0);
 
-	const_cast<__m128i&>(wVec) = _mm_setr_epi32(w, 1, 0, 0);
+	this->wVec = _mm_setr_epi32(w, 1, 0, 0);
 }

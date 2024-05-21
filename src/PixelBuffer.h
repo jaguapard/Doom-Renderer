@@ -13,7 +13,7 @@ template <typename T>
 class PixelBuffer
 {
 public:
-	PixelBuffer() = default;
+	PixelBuffer();
 	PixelBuffer(int w, int h);
 
 	int getW() const;
@@ -38,17 +38,24 @@ public:
 
 	void saveToFile(const std::string& path) const;
 	virtual Color toColor(T value) const;
+
+	void operator=(const PixelBuffer<T>& other);
 protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
+	
 	std::vector<T> store;
-	int w, h;
+	const int w, h; //pixel buffers are not being meant resized, however, no default ctor hurts a lot. So we have "quasi-const" w and h. The only way to change this values is to assign a new PixelBuffer to this one, i.e. no other operations will disturb the size;
 };
+
+template<typename T>
+inline PixelBuffer<T>::PixelBuffer() : w(0), h(0) {};
 
 template<typename T>
 inline PixelBuffer<T>::PixelBuffer(int w, int h) : w(w), h(h)
 {
 	store.resize(w * h);
+	store.shrink_to_fit();
 }
 
 template<typename T>
@@ -215,6 +222,18 @@ template<>
 inline Color PixelBuffer<uint8_t>::toColor(uint8_t value) const
 {
 	return Color(value, value, value);
+}
+
+template<typename T>
+inline void PixelBuffer<T>::operator=(const PixelBuffer<T>& other)
+{
+	if (w != 0 && h != 0 && (w != other.w || h != other.h)) throw std::runtime_error("Attempted to assign pixel buffer of mismatched size");
+	
+	this->store = other.store;
+	store.shrink_to_fit();
+
+	const_cast<int&>(w) = other.w;
+	const_cast<int&>(h) = other.h;
 }
 
 template<typename T>

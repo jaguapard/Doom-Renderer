@@ -11,6 +11,27 @@
 #include "Color.h"
 #include "Vec.h"
 
+//template <typename T>
+struct PixelBufferSize
+{
+	int w, h;
+	__m128i dimensionsInt;
+	__m128i pitchVec;
+	Vec4 dimensionsFloat;
+
+	PixelBufferSize() = default;
+	PixelBufferSize(int w, int h)
+	{
+		this->w = w;
+		this->h = h;
+
+		this->dimensionsInt = _mm_setr_epi32(w, h, 0, 0);
+		this->dimensionsFloat = Vec4(w, h, 0, 0);
+
+		this->pitchVec = _mm_setr_epi32(h, 1, 0, 0);
+	}
+};
+
 template <typename T>
 class PixelBuffer
 {
@@ -20,6 +41,7 @@ public:
 
 	int getW() const;
 	int getH() const;
+	const PixelBufferSize& getSize() const;
 
 	T getPixel(int x, int y, bool& outOfBounds) const; //Returns a pixel at (x,y) and sets `outOfBounds` to false if the point is in bounds. Else, returns default constructed T and sets `outOfBounds` to true
 	
@@ -56,10 +78,7 @@ protected:
 	std::vector<T> store;
 
 	//a bunch of precomputed and properly formatted values for SIMD
-	int w, h;
-	__m128i dimensionsInt;
-	__m128i wVec;
-	Vec4 dimensionsFloat;	
+	PixelBufferSize size;
 };
 
 template<typename T>
@@ -76,13 +95,13 @@ inline PixelBuffer<T>::PixelBuffer(int w, int h)
 template<typename T>
 inline int PixelBuffer<T>::getW() const
 {
-	return w;
+	return size.w;
 }
 
 template<typename T>
 inline int PixelBuffer<T>::getH() const
 {
-	return h;
+	return size.h;
 }
 
 template<typename T>
@@ -137,7 +156,7 @@ inline bool PixelBuffer<T>::isOutOfBounds(int x, int y) const
 template<typename T>
 inline bool PixelBuffer<T>::isInBounds(int x, int y) const
 {
-	return x >= 0 && y >= 0 && x < w && y < h;
+	return x >= 0 && y >= 0 && x < size.w && y < size.h;
 }
 
 template<typename T>
@@ -216,17 +235,17 @@ inline const T& PixelBuffer<T>::operator[](int i) const
 template<typename T>
 inline void PixelBuffer<T>::saveToFile(const std::string& path) const
 {
-	std::vector<Uint32> pix(w*h);
-	for (int y = 0; y < h; ++y)
+	std::vector<Uint32> pix(size.w*size.h);
+	for (int y = 0; y < size.h; ++y)
 	{
-		for (int x = 0; x < w; ++x)
+		for (int x = 0; x < size.w; ++x)
 		{
-			pix[y * w + x] = this->toColor(this->getPixelUnsafe(x, y));
+			pix[y * size.w + x] = this->toColor(this->getPixelUnsafe(x, y));
 		}
 	}
 
 	Uint32* px = &pix.front();
-	SDL_Surface* s = SDL_CreateRGBSurfaceWithFormatFrom(px, w, h, 32, w * 4, SDL_PIXELFORMAT_RGBA32);
+	SDL_Surface* s = SDL_CreateRGBSurfaceWithFormatFrom(px, size.w, size.h, 32, size.w * 4, SDL_PIXELFORMAT_RGBA32);
 	IMG_SavePNG(s, path.c_str());
 	SDL_FreeSurface(s);
 }
@@ -259,7 +278,7 @@ inline void PixelBuffer<T>::operator=(const PixelBuffer<T>& other)
 	this->store = other.store;
 	store.shrink_to_fit();
 
-	this->assignSizes(other.w, other.h);
+	this->assignSizes(other.size.w, other.size.h);
 }
 
 template<typename T>
@@ -275,17 +294,17 @@ inline const T& PixelBuffer<T>::at(int x, int y) const
 	assert(y >= 0);
 	assert(x < w);
 	assert(y < h);
-	return store[y * w + x];
+	return store[y * size.w + x];
 }
 
 template<typename T>
 inline void PixelBuffer<T>::assignSizes(int w, int h)
 {
-	this->w = w;
-	this->h = h;
-	
-	this->dimensionsInt = _mm_setr_epi32(w, h, 0, 0);
-	this->dimensionsFloat = Vec4(w, h, 0, 0);
+	size = PixelBufferSize(w, h);
+}
 
-	this->wVec = _mm_setr_epi32(w, 1, 0, 0);
+template<typename T>
+inline const PixelBufferSize& PixelBuffer<T>::getSize() const
+{
+	return size;
 }

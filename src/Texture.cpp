@@ -63,7 +63,7 @@ Color Texture::getPixel(const Vec4& coords) const
 	constexpr int ROUND_MODE = _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC;
 	StatCount(statsman.textures.pixelFetches++);
 
-	Vec4 dimFlt = this->dimensionsFloat; //make a local copy of dimensions to avoid going into the memory for them.
+	Vec4 dimFlt = pixels.getSize().dimensionsFloat; //make a local copy of dimensions to avoid going into the memory for them.
 	Vec4 roundCoords = _mm_round_ps(coords, ROUND_MODE);
 	Vec4 div = roundCoords / dimFlt;
 
@@ -190,7 +190,4 @@ void Texture::populateInverses(int w, int h)
 	hInverse = UINT32_MAX / h + 1;
 	bigW = pixels.getW() * 65536;
 	bigH = pixels.getH() * 65536;
-
-	const_cast<Vec4&>(this->dimensionsFloat) = Vec4(w, h, 0, 0);
-	const_cast<__m128i&>(this->dimensionsInt) = _mm_setr_epi32(w, h, 0, 0);
 }

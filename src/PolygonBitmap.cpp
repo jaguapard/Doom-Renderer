@@ -54,17 +54,17 @@ void PolygonBitmap::saveTo(std::string path)
 	palette[CARVED] = Color(200, 0, 0);
 	palette[RECTANGLEFIED] = Color(0, 0, 150);
 
-	std::vector<uint32_t> pixels(w * h);
-	for (int y = 0; y < h; ++y)
+	std::vector<uint32_t> pixels(size.w * size.h);
+	for (int y = 0; y < size.h; ++y)
 	{
-		for (int x = 0; x < w; ++x)
+		for (int x = 0; x < size.w; ++x)
 		{
-			uint8_t value = getPixelUnsafe(x, h - 1 - y); //y is inverted in our coordinate system compared to Doom (our bitmap: +y = down, Doom: +y = up)
+			uint8_t value = getPixelUnsafe(x, size.h - 1 - y); //y is inverted in our coordinate system compared to Doom (our bitmap: +y = down, Doom: +y = up)
 			Color c = palette[value];
-			pixels[y * w + x] = c;
+			pixels[y * size.w + x] = c;
 		}
 	}
-	SDL_Surface* png = SDL_CreateRGBSurfaceWithFormatFrom(&pixels.front(), w, h, 32, w * 4, SDL_PIXELFORMAT_RGBA32);
+	SDL_Surface* png = SDL_CreateRGBSurfaceWithFormatFrom(&pixels.front(), size.w, size.h, 32, size.w * 4, SDL_PIXELFORMAT_RGBA32);
 	IMG_SavePNG(png, path.c_str());
 	SDL_FreeSurface(png);
 }
@@ -75,9 +75,9 @@ void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides, Polygon
 
 	int offsetX = this->getMinX() - dst.getMinX();
 	int offsetY = this->getMinY() - dst.getMinY();
-	for (int y = 0; y < h; ++y)
+	for (int y = 0; y < size.h; ++y)
 	{
-		for (int x = 0; x < w; ++x)
+		for (int x = 0; x < size.w; ++x)
 		{
 			uint8_t val = this->getPixelUnsafe(x, y);
 			assert(val != NONE);
@@ -133,12 +133,12 @@ bool PolygonBitmap::isInBoundsOf(const PolygonBitmap& other) const
 
 int PolygonBitmap::getMaxX() const
 {
-	return polygonMinX + w;
+	return polygonMinX + size.w;
 }
 
 int PolygonBitmap::getMaxY() const
 {
-	return polygonMinY + h;
+	return polygonMinY + size.h;
 }
 
 int PolygonBitmap::getMinX() const

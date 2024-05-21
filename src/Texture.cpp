@@ -63,10 +63,10 @@ static constexpr int ROUND_MODE = _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC;
 Color Texture::getPixel(Vec4 coords) const
 {
 	StatCount(statsman.textures.pixelFetches++);
-	Vec4 roundCoords = _mm_round_ps(coords, ROUND_MODE);
+	Vec4 roundCoords = _mm_round_ps(coords.xmm, ROUND_MODE);
 	Vec4 div = roundCoords / dimensionsFloat;
 
-	Vec4 roundDiv = _mm_round_ps(div, ROUND_MODE);
+	Vec4 roundDiv = _mm_round_ps(div.xmm, ROUND_MODE);
 	Vec4 mod = roundCoords - roundDiv * dimensionsFloat;
 	
 	__m128 cmp = _mm_cmplt_ps(mod, _mm_setzero_ps());

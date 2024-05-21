@@ -20,7 +20,7 @@ bool ZBuffer::testAndSet(int x, int y, real depth, bool doWrite)
 	if (cmp && doWrite)
 	{
 		StatCount(statsman.zBuffer.writes++);
-		this->setPixelUnsafe(x, y, depth);
+		this->setPixel(x, y, depth);
 	}
 	else
 	{

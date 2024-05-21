@@ -135,7 +135,7 @@ void program(int argc, char** argv)
 					real skyX = skyTextureOffset + x * skyTextureScale;
 					real skyY = 0 + y * skyTextureScale;
 					Color skyColor = skyTexture.getPixel(skyX, skyY);
-					framebuf.setPixelUnsafe(x, y, skyColor);
+					framebuf.setPixel(x, y, skyColor);
 				}
 			}
 		}*/

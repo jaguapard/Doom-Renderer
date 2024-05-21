@@ -47,7 +47,7 @@ public:
 	T getPixel(const __m128i& pos) const; //returns a pixel from x=pos[0], y=pos[1], other values are ignored
 	T getPixel(const Vec4& pos) const; 
 
-	void setPixelUnsafe(int x, int y, const T& px); //does not perform bounds checks
+	void setPixel(int x, int y, const T& px); //does not perform bounds checks
 
 	bool isOutOfBounds(int x, int y) const;
 	bool isInBounds(int x, int y) const;
@@ -118,7 +118,7 @@ inline T PixelBuffer<T>::getPixel(const Vec4& pos) const
 }
 
 template<typename T>
-inline void PixelBuffer<T>::setPixelUnsafe(int x, int y, const T& px)
+inline void PixelBuffer<T>::setPixel(int x, int y, const T& px)
 {
 	at(x, y) = px;
 }

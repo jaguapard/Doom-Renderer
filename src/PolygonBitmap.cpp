@@ -16,7 +16,7 @@ PolygonBitmap::PolygonBitmap(int minX, int minY, int maxX, int maxY, int w, int 
 		for (int x = 0; x < w; ++x)
 		{
 			uint8_t value = polygon.isPointInside(Ved2(x + minX, y + minY)) ? INSIDE : OUTSIDE;
-			this->setPixelUnsafe(x, y, value);
+			this->setPixel(x, y, value);
 		}
 	}
 }
@@ -83,7 +83,7 @@ void PolygonBitmap::blitOver(PolygonBitmap& dst, bool doNotBlitOutsides, Polygon
 			assert(val != NONE);
 			if (doNotBlitOutsides && val == OUTSIDE) continue;
 			if (val != OUTSIDE && valueOverride != NONE) val = valueOverride;
-			dst.setPixelUnsafe(x + offsetX, y + offsetY, val);
+			dst.setPixel(x + offsetX, y + offsetY, val);
 		}
 	}
 }

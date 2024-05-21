@@ -32,7 +32,7 @@ Texture::Texture(std::string name)
 			{
 				for (int x = 0; x < w; ++x)
 				{
-					this->pixels.setPixelUnsafe(x, y, surfPixels[y * w + x]);
+					this->pixels.setPixel(x, y, surfPixels[y * w + x]);
 				}
 			}
 		}
@@ -157,23 +157,23 @@ void Texture::constructDebugTexture()
 				assert((false, "Debug texture build attempted without debug texture mode set"));
 				return;
 			case TextureDebugMode::X_GRADIENT:
-				pixels.setPixelUnsafe(x, y, Color(x, x, x, SDL_ALPHA_OPAQUE));
+				pixels.setPixel(x, y, Color(x, x, x, SDL_ALPHA_OPAQUE));
 				break;
 			case TextureDebugMode::Y_GRADIENT:
-				pixels.setPixelUnsafe(x, y, Color(y, y, y, SDL_ALPHA_OPAQUE));
+				pixels.setPixel(x, y, Color(y, y, y, SDL_ALPHA_OPAQUE));
 				break;
 			case TextureDebugMode::XY_GRADIENT:
-				pixels.setPixelUnsafe(x, y, Color(x, y, 0, SDL_ALPHA_OPAQUE));
+				pixels.setPixel(x, y, Color(x, y, 0, SDL_ALPHA_OPAQUE));
 				break;
 			case TextureDebugMode::SOLID_WHITE:
-				pixels.setPixelUnsafe(x, y, Color(255, 255, 255, SDL_ALPHA_OPAQUE));
+				pixels.setPixel(x, y, Color(255, 255, 255, SDL_ALPHA_OPAQUE));
 				break;
 			case TextureDebugMode::COLORS:
-				pixels.setPixelUnsafe(x, y, dbg_colors[textureNumber % std::size(dbg_colors)]);
+				pixels.setPixel(x, y, dbg_colors[textureNumber % std::size(dbg_colors)]);
 				break;
 			case TextureDebugMode::CHECKERBOARD:
 				Color c = (x % 16 < 8) ^ (y % 16 < 8) ? Color(0, 0, 0) : Color(255, 255, 255);
-				pixels.setPixelUnsafe(x, y, c);
+				pixels.setPixel(x, y, c);
 				break;
 			//default:
 			//	break;

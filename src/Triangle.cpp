@@ -47,6 +47,8 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	}
 
 	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
+	if (outsideVertexCount == 3) return;
+
 	if (context.backfaceCullingEnabled)
 	{
 		Vec4 normal = rotated.getNormalVector();
@@ -57,7 +59,6 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		}
 	}
 
-	if (outsideVertexCount == 3) return;
 	if (outsideVertexCount == 0) return rotated.prepareScreenSpace(context); //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
 
 	//search for one of a kind vertex (outside if outsideVertexCount==1, else inside)

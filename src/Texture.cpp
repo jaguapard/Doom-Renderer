@@ -65,7 +65,7 @@ Color Texture::getPixel(const Vec4& coords) const
 
 	Vec4 dimFlt = pixels.getSize().dimensionsFloat; //make a local copy of dimensions to avoid going into the memory for them.
 	Vec4 roundCoords = _mm_round_ps(coords, ROUND_MODE);
-	Vec4 div = roundCoords / dimFlt;
+	Vec4 div = roundCoords * pixels.getSize().dimensionsFloatReciprocal;
 
 	Vec4 roundDiv = _mm_round_ps(div, ROUND_MODE);
 	Vec4 mod = roundCoords - roundDiv * dimFlt;

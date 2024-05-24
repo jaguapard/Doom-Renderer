@@ -18,6 +18,7 @@ struct PixelBufferSize
 	__m128i dimensionsInt;
 	__m128i pitchVec;
 	Vec4 dimensionsFloat;
+	Vec4 dimensionsFloatReciprocal;
 
 	PixelBufferSize() = default;
 	PixelBufferSize(int w, int h)
@@ -27,6 +28,7 @@ struct PixelBufferSize
 
 		this->dimensionsInt = _mm_setr_epi32(w, h, 0, 0);
 		this->dimensionsFloat = Vec4(w, h, 0, 0);
+		this->dimensionsFloatReciprocal = Vec4(1.0 / w, 1.0 / h, 0, 0);
 
 		this->pitchVec = _mm_setr_epi32(h, 1, 0, 0);
 	}

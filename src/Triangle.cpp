@@ -172,8 +172,8 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
-		TexVertex leftTv = lerp(tv[0], tv[flatTop+1], yp); //flat top and flat bottom triangles require different interpolation points
-		TexVertex rightTv = lerp(tv[flatTop], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+		TexVertex leftTv  = lerp(tv[0],		  tv[flatTop+1], yp); //flat top and flat bottom triangles require different interpolation points
+		TexVertex rightTv = lerp(tv[flatTop], tv[2],		 yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 		if (leftTv.spaceCoords.x > rightTv.spaceCoords.x) std::swap(leftTv, rightTv);
 		
 		real original_xBeg = leftTv.spaceCoords.x;
@@ -196,17 +196,17 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
 
-			Vec4 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
+			Vec4  uvCorrected  = interpolatedDividedUv / interpolatedDividedUv.z;
 			Color texturePixel = texture.getPixel(uvCorrected);
 			auto lightMult = renderJob.lightMult;
 
 			if (context.wireframeEnabled)
 			{
 				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = y1, oye = y3;
-				bool leftEdge = rx == oxb;
-				bool rightEdge = rx == oxe;
-				bool topEdge = !flatTop && ry == oyb;
-				bool bottomEdge = flatTop && ry == oye;
+				bool leftEdge	= rx == oxb;
+				bool rightEdge  = rx == oxe;
+				bool topEdge	= !flatTop && ry == oyb;
+				bool bottomEdge =  flatTop && ry == oye;
 				if (leftEdge || rightEdge || topEdge || bottomEdge)
 				{
 					texturePixel = Color(255, 255, 255);

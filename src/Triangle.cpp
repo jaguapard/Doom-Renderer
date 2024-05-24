@@ -192,13 +192,12 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		int pixelIndex = int(y) * bufW + int(xBeg); //all buffers have the same size, so we can use a single index
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must happen
 		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++pixelIndex, interpolatedDividedUv += interpolatedDividedUvStep)
-		{			
-			Vec4 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
-
+		{
 			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
 			if (occluded) continue;
 
-			Color texturePixel = texture.getPixel(uvCorrected);			
+			Vec4 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
+			Color texturePixel = texture.getPixel(uvCorrected);
 			auto lightMult = renderJob.lightMult;
 
 			if (context.wireframeEnabled)

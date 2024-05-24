@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.9.34714.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Doom Rendering", "Doom Rendering.vcxproj", "{6336F006-DC74-44E4-8698-7497FB8CB2C6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2} = {4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GLUTesselator", "..\GLUTesselator\GLUTesselator.vcxproj", "{4AF74DE3-5641-4B5C-BDA5-2426A45D73A2}"
 EndProject

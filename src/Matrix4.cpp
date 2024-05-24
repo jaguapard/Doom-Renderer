@@ -32,10 +32,10 @@ Vec4 Matrix4::operator*(const Vec4 v) const
 	__m256 preSum_xy = _mm256_mul_ps(vv, ymm0); //sum elements 0-3 to get result x, 4-7 for y
 	__m256 preSum_zw = _mm256_mul_ps(vv, ymm1); //sum elements 0-3 to get result z, 4-7 for w
 
-	__m256 preSum_xyzw = _mm256_hadd_ps(preSum_xy, preSum_zw); //after this we need to sum pairs of elements to get final result
-	__m256 shuffled_xyzw = _mm256_hadd_ps(preSum_xyzw, preSum_xyzw); //after this we have result. xy are in elements 0, 4 and zw is in 1, 5. Other elements are just duplicated copies of them
-	__m256 ret = _mm256_permutevar8x32_ps(shuffled_xyzw, _mm256_set_epi32(7, 7, 7, 7, 5, 1, 4, 0)); //this permute moves the elements into proper order
-	return _mm256_castps256_ps128(ret);
+	__m256 preSum_xyzw = _mm256_hadd_ps(preSum_xy, preSum_zw); //to get final: x = 0+1, z = 2+3, y = 4+5, w = 6+7
+	//permute values so x=0+4; y=1+5; z=2+6; w=3+7. This allows us to extract the upper half and just add it to the lower to get the result
+	__m256 perm = _mm256_permutevar8x32_ps(preSum_xyzw, _mm256_setr_epi32(0, 4, 2, 6, 1, 5, 3, 7));
+	return Vec4(_mm256_extractf128_ps(perm, 0)) + Vec4(_mm256_extractf128_ps(perm, 1));
 #elif 0 //too much stuff, scalar may be faster
 	//mn = v3 * elements[n]. Ret should be: (add up everything in m1, add up everything in m2 ...)
 	__m128 zeros = _mm_setzero_ps();

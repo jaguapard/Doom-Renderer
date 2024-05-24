@@ -191,10 +191,9 @@ void MainGame::draw()
 		//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
 		//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
 		Threadpool::task_t f = [=]() {
-			int myThreadNum = tNum;
-			int myMinY = real(ctx.framebufH) / threadCount * myThreadNum;
-			int myMaxY = real(ctx.framebufH) / threadCount * (myThreadNum + 1);
-			if (myThreadNum == threadCount - 1) myMaxY = ctx.framebufH - 1; //avoid going out of bounds
+			auto lim = threadpool->getLimitsForThread(tNum, 0, ctx.framebufH);
+			int myMinY = lim.first; //truncate limits to avoid fighting
+			int myMaxY = lim.second;
 
 			for (int i = 0; i < renderJobs.size(); ++i)
 			{

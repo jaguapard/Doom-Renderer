@@ -10,6 +10,14 @@
 #include <optional>
 #include <set>
 
+class ThreadpoolTask
+{
+public:
+	taskfunc_t func;
+	std::vector<task_id> dependencies;
+	std::optional<task_id> wantedId;
+	task_id assignedId = -1;
+};
 class Threadpool
 {
 public:

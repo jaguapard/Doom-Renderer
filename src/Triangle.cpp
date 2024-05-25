@@ -197,7 +197,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			if (occluded) continue;
 
 			Vec4  uvCorrected  = interpolatedDividedUv / interpolatedDividedUv.z;
-			Color texturePixel = texture.getPixel(uvCorrected);
+			Color texturePixel = texture.getPixel(uvCorrected); 
 			auto lightMult = renderJob.lightMult;
 
 			if (context.wireframeEnabled)

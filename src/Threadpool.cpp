@@ -225,3 +225,7 @@ bool Threadpool::isTaskFinished(task_id taskId)
 		inProgressTasks.find(taskId) == inProgressTasks.end() &&
 		reservedTaskIds.find(taskId) == reservedTaskIds.end();
 }
+
+ThreadpoolTask::ThreadpoolTask(const taskfunc_t& taskFunc, std::vector<task_id> dependencies, std::optional<task_id> wantedId)
+	: func(taskFunc), dependencies(dependencies), wantedId(wantedId) 
+{};

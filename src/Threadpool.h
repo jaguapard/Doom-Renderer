@@ -16,6 +16,9 @@ typedef uint64_t task_id;
 class ThreadpoolTask
 {
 public:
+	ThreadpoolTask() = default;
+	ThreadpoolTask(const taskfunc_t& taskFunc, std::vector<task_id> dependencies = {}, std::optional<task_id> wantedId = std::nullopt);
+
 	taskfunc_t func;
 	std::vector<task_id> dependencies;
 	std::optional<task_id> wantedId;

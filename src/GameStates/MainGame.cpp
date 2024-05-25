@@ -17,12 +17,13 @@ void MainGame::beginNewFrame()
 	performanceMonitor.registerFrameBegin();
 	input.beginNewFrame();
 
-	bufferClearingTaskIds = {
-			threadpool->addTask([&]() {framebuf.clear(); }),
-			threadpool->addTask([&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}), //shouldn't overwrite the surface while window update is in progress
-			threadpool->addTask([&]() {zBuffer.clear(); }),
-			threadpool->addTask([&]() {lightBuf.clear(1); }),
+	std::vector<ThreadpoolTask> batch = {
+		{[&]() {framebuf.clear(); }},
+		{[&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}}, //shouldn't overwrite the surface while window update is in progress
+		{[&]() {zBuffer.clear(); }},
+		{[&]() {lightBuf.clear(1); }},
 	};
+	bufferClearingTaskIds = threadpool->addTaskBatch(batch);
 }
 
 void MainGame::handleInput()
@@ -184,7 +185,8 @@ void MainGame::draw()
 	real* lightStart = lightBuf.begin();
 	Color* framebufStart = framebuf.begin();
 	Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
-	std::vector<task_id> renderTaskIds;
+
+	std::vector<ThreadpoolTask> taskBatch;
 
 	for (int tNum = 0; tNum < threadCount; ++tNum)
 	{
@@ -210,10 +212,15 @@ void MainGame::draw()
 
 			Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
 			Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
-			};
-		renderTaskIds.push_back(threadpool->addTask(f, bufferClearingTaskIds));
+		};
+
+		ThreadpoolTask task;
+		task.func = f;
+		task.dependencies = bufferClearingTaskIds;
+		taskBatch.emplace_back(task);
 	}
 
+	std::vector<task_id> renderTaskIds = threadpool->addTaskBatch(taskBatch);
 	threadpool->waitForMultipleTasks(renderTaskIds);
 	renderJobs.clear();
 

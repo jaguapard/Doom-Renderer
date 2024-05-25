@@ -18,10 +18,7 @@ void MainGame::beginNewFrame()
 	input.beginNewFrame();
 
 	std::vector<ThreadpoolTask> batch = {
-		{[&]() {framebuf.clear(); }},
 		{[&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}}, //shouldn't overwrite the surface while window update is in progress
-		{[&]() {zBuffer.clear(); }},
-		{[&]() {lightBuf.clear(1); }},
 	};
 	bufferClearingTaskIds = threadpool->addTaskBatch(batch);
 }
@@ -197,14 +194,20 @@ void MainGame::draw()
 			int myMinY = lim.first; //truncate limits to avoid fighting
 			int myMaxY = lim.second;
 
+			int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
+			int myStartIndex = myMinY * ctx.framebufW;
+	
+			ctx.frameBuffer->clearRows(myMinY, myMaxY);
+			ctx.zBuffer->clearRows(myMinY, myMaxY);
+			ctx.lightBuffer->clearRows(myMinY, myMaxY, 1);
+
 			for (int i = 0; i < renderJobs.size(); ++i)
 			{
 				const RenderJob& myJob = renderJobs[i];
 				myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
 			}
 
-			int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
-			int myStartIndex = myMinY * ctx.framebufW;
+			
 
 			real* lightPtr = lightStart + myStartIndex;
 			Color* framebufPtr = framebufStart + myStartIndex;

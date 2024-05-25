@@ -178,7 +178,8 @@ inline void PixelBuffer<T>::clear(T value)
 
 #else
 	//for (auto& it : store) it = value;
-	std::fill(std::execution::par_unseq, this->begin(), this->end(), value);
+	//std::fill(std::execution::par_unseq, this->begin(), this->end(), value);
+	this->clearRows(0, size.h, value);
 #endif
 }
 
@@ -186,7 +187,7 @@ template<typename T>
 inline void PixelBuffer<T>::clearRows(int minY, int maxY, T value)
 {
 	T* start = this->getRawPixels() + size_t(minY) * size.w;
-	T* end = this->getRawPixels() +size_t(maxY) * size.w;
+	T* end = this->getRawPixels() + size_t(maxY) * size.w;
 	while (start < end) *start++ = value;
 }
 

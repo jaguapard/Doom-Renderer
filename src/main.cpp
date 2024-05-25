@@ -44,7 +44,7 @@
 #undef main
 
 Statsman statsman;
-Threadpool threadpool; //the Threadpool is eternal and omniscient - it gives birth and death to everything in this world.
+std::unique_ptr<Threadpool> threadpool;
 
 void* operator new(size_t n)
 {
@@ -66,24 +66,29 @@ void operator delete(void* block)
 	return _aligned_free(block);
 }
 
-struct CmdArg
-{
-	std::string originalValue;
-	int64_t asInt;
-	double asDouble;
 
-	enum class Type {
-		INTEGER,
-		DOUBLE,
-		STRING,
-		NONE, //single arg (no value), a switch
-	};
-};
-
-std::map<std::string, CmdArg> parseCmdArgs(int argc, char** argv)
+std::map<std::string, std::string> parseCmdArgs(int argc, char** argv)
 {
-	std::string validKeys = { "benchmark" };
-	return {};
+	std::cout << "Command line is:\n";
+	for (int i = 1; i < argc; ++i) std::cout << argv[i] << " ";
+	std::cout << "\n";
+
+	if (argc < 2) return {}; //argv[0] is out exe path, so it's meaningless to try and parse something else
+
+	std::map<std::string, std::string> ret;
+	std::unordered_set<std::string> validKeys = { "benchmark", "threads" };
+	for (int i = 1; i < argc; ++i)
+	{
+		std::string argName = argv[i];
+		if (validKeys.find(argName) == validKeys.end()) std::cout << "Unknown cmd argument at position " << i << ": " << argName << ", ignoring.\n";
+		else 
+		{
+			if (argName == "threads" && argc > i + 1) ret[argName] = argv[i++ + 1];
+			if (argName == "benchmark") ret[argName] = "true";
+		}
+		
+	}
+	return ret;
 }
 
 void program(int argc, char** argv)
@@ -99,14 +104,21 @@ void program(int argc, char** argv)
 	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
+	std::shared_ptr<GameStateBase> currGameState;
+	auto args = parseCmdArgs(argc, argv);
+	bool benchmarkMode = args.find("benchmark") != args.end() && args["benchmark"] == "true";
+
+	std::optional<size_t> threadCount = std::nullopt;
+	if (args.find("threads") != args.end()) threadCount = atol(args["threads"].c_str());
+
+	//threadpool = std::unique_ptr<Threadpool>(new Threadpool(threadCount));
+	threadpool = std::make_unique<Threadpool>(threadCount);
+
 	GameStateInitData initData;
 	initData.wnd = wnd;
 	initData.argc = argc;
 	initData.argv = argv;
-	initData.threadpool = &threadpool;
-
-	std::shared_ptr<GameStateBase> currGameState;
-	bool benchmarkMode = argc > 1 && (!strcmpi(argv[1], "benchmark"));
+	initData.threadpool = threadpool.get();
 
 	if (benchmarkMode) currGameState = std::make_shared<BenchmarkState>(initData);
 	else currGameState = std::make_shared<MainGame>(initData);

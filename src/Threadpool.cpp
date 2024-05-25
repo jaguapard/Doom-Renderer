@@ -1,6 +1,7 @@
 #include "Threadpool.h"
 #include <cassert>
 #include "helpers.h"
+#include <iostream>
 
 using task_id = Threadpool::task_id;
 using tast_t = Threadpool::task_t;
@@ -85,6 +86,7 @@ std::pair<double, double> Threadpool::getLimitsForThread(size_t threadIndex, dou
 
 Threadpool::~Threadpool() noexcept
 {
+	std::cout << "Destroying threadpool...\n";
 	this->threadpoolMarkedForTermination = true; //signal all threads that it's time to stop
 	{
 		std::unique_lock cv_lck(cv_mtx);
@@ -97,6 +99,7 @@ Threadpool::~Threadpool() noexcept
 		for (const auto& it : threadTerminated) if (!it) return false;
 		return true;
 	});
+	std::cout << "Threadpool destroyed, bye.\n";
 }
 
 void Threadpool::workerRoutine(size_t workerNumber)

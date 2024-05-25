@@ -44,10 +44,10 @@ public:
 	int getW() const;
 	int getH() const;
 	const PixelBufferSize& getSize() const;
-	
+
 	T getPixel(int x, int y) const; //does not perform bounds checks
 	T getPixel(const __m128i& pos) const; //returns a pixel from x=pos[0], y=pos[1], other values are ignored
-	T getPixel(const Vec4& pos) const; 
+	T getPixel(const Vec4& pos) const;
 
 	void setPixel(int x, int y, const T& px); //does not perform bounds checks
 
@@ -141,7 +141,7 @@ template<typename T>
 inline void PixelBuffer<T>::clear(T value)
 {
 #if 0
-//#ifdef  //__AVX2__
+	//#ifdef  //__AVX2__
 	int bytesRemaining = this->getW() * this->getH() * sizeof(T);
 	assert(bytesRemaining % 32 == 0);
 	char* curr = reinterpret_cast<char*>(&(*this)[0]);
@@ -165,11 +165,11 @@ inline void PixelBuffer<T>::clear(T value)
 		assert(false);
 		break;
 	}
-	
+
 	while (bytesRemaining >= 32)
 	{
 		_mm256_store_si256(reinterpret_cast<__m256i*>(curr), fill);
-		
+
 		bytesRemaining -= 32;
 		curr += 32;
 	}
@@ -251,8 +251,8 @@ inline Color PixelBuffer<uint8_t>::toColor(uint8_t value) const
 template<typename T>
 inline void PixelBuffer<T>::operator=(const PixelBuffer<T>& other)
 {
-	//if (w != 0 && h != 0 && (w != other.w || h != other.h)) throw std::runtime_error("Attempted to assign pixel buffer of mismatched size");
-	
+	//if (w != 0 && size.h != 0 && (w != other.w || size.h != other.h)) throw std::runtime_error("Attempted to assign pixel buffer of mismatched size");
+
 	this->store = other.store;
 	store.shrink_to_fit();
 
@@ -270,8 +270,8 @@ inline const T& PixelBuffer<T>::at(int x, int y) const
 {
 	assert(x >= 0);
 	assert(y >= 0);
-	assert(x < w);
-	assert(y < h);
+	assert(x < size.w);
+	assert(y < size.h);
 	return store[y * size.w + x];
 }
 

@@ -184,13 +184,13 @@ void MainGame::draw()
 	real* lightStart = lightBuf.begin();
 	Color* framebufStart = framebuf.begin();
 	Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
-	std::vector<Threadpool::task_id> renderTaskIds;
+	std::vector<task_id> renderTaskIds;
 
 	for (int tNum = 0; tNum < threadCount; ++tNum)
 	{
 		//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
 		//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
-		Threadpool::task_t f = [=]() {
+		taskfunc_t f = [=]() {
 			auto lim = threadpool->getLimitsForThread(tNum, 0, ctx.framebufH);
 			int myMinY = lim.first; //truncate limits to avoid fighting
 			int myMaxY = lim.second;

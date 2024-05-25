@@ -99,8 +99,8 @@ protected:
 	int currSkyTextureIndex = 2;
 	std::vector<std::string> skyTextures;
 
-	std::vector<Threadpool::task_id> bufferClearingTaskIds;
-	Threadpool::task_id windowUpdateTaskId = 0;
+	std::vector<task_id> bufferClearingTaskIds;
+	task_id windowUpdateTaskId = 0;
 
 	std::map<std::string, DoomMap> maps;
 	std::string defaultMap;

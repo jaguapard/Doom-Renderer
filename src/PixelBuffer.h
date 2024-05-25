@@ -55,6 +55,8 @@ public:
 	bool isInBounds(int x, int y) const;
 
 	void clear(T value = T());
+	void clearRows(int minY, int maxY, T value = T());
+
 	T* getRawPixels();
 
 	T* begin();
@@ -178,6 +180,14 @@ inline void PixelBuffer<T>::clear(T value)
 	//for (auto& it : store) it = value;
 	std::fill(std::execution::par_unseq, this->begin(), this->end(), value);
 #endif
+}
+
+template<typename T>
+inline void PixelBuffer<T>::clearRows(int minY, int maxY, T value)
+{
+	T* start = this->getRawPixels() + size_t(minY) * size.w;
+	T* end = this->getRawPixels() +size_t(maxY) * size.w;
+	while (start < end) *start++ = value;
 }
 
 template<typename T>

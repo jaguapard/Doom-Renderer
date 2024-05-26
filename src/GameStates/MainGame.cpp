@@ -16,11 +16,6 @@ void MainGame::beginNewFrame()
 {
 	performanceMonitor.registerFrameBegin();
 	input.beginNewFrame();
-
-	std::vector<ThreadpoolTask> batch = {
-		//{[&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}}, //shouldn't overwrite the surface while window update is in progress
-	};
-	bufferClearingTaskIds = threadpool->addTaskBatch(batch);
 }
 
 void MainGame::handleInput()
@@ -243,7 +238,7 @@ void MainGame::draw()
 			else std::cout << performanceMonitor.composeString(perfmonInfo) << "\n";
 		}
 		if (SDL_UpdateWindowSurface(initData.wnd)) throw std::runtime_error(SDL_GetError());
-	}, bufferClearingTaskIds);
+	});
 }
 
 void MainGame::endFrame()

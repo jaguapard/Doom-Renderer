@@ -106,6 +106,7 @@ protected:
 	std::string defaultMap;
 
 	std::vector<RenderJob> renderJobs;
+	std::array<uint32_t, 4> shifts;
 
 
 	void init();

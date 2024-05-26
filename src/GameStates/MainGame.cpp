@@ -18,7 +18,7 @@ void MainGame::beginNewFrame()
 	input.beginNewFrame();
 
 	std::vector<ThreadpoolTask> batch = {
-		{[&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}}, //shouldn't overwrite the surface while window update is in progress
+		//{[&]() {SDL_FillRect(wndSurf, nullptr, Color(0, 0, 0)); }, {windowUpdateTaskId}}, //shouldn't overwrite the surface while window update is in progress
 	};
 	bufferClearingTaskIds = threadpool->addTaskBatch(batch);
 }
@@ -134,6 +134,7 @@ void MainGame::init()
 	threadpool = initData.threadpool;
 	wnd = initData.wnd;
 	wndSurf = SDL_GetWindowSurface(wnd);
+	shifts = getShiftsForWindow();
 
 	camPosAndAngArchieve = {
 	   { 0,0,0 }, {0,0,0},
@@ -150,6 +151,7 @@ void MainGame::init()
 	framebuf = { framebufW, framebufH };
 	lightBuf = { framebufW, framebufH };
 	zBuffer = { framebufW, framebufH };
+
 
 	this->ctr = { framebufW, framebufH };
 	sky = { "RSKY1", textureManager };
@@ -175,7 +177,7 @@ std::string vecToStr(const Vec4& v)
 void MainGame::draw()
 {
 	int threadCount = threadpool->getThreadCount();
-	std::array<uint32_t, 4> shifts = getShiftsForWindow();
+	
 	TriangleRenderContext ctx = makeTriangleRenderContext();
 	fillRenderJobsList(ctx, renderJobs);
 
@@ -219,7 +221,7 @@ void MainGame::draw()
 
 		ThreadpoolTask task;
 		task.func = f;
-		task.dependencies = bufferClearingTaskIds;
+		task.dependencies = { windowUpdateTaskId };
 		taskBatch.emplace_back(task);
 	}
 
@@ -242,7 +244,7 @@ void MainGame::draw()
 			performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
 		}
 		if (SDL_UpdateWindowSurface(initData.wnd)) throw std::runtime_error(SDL_GetError());
-	});
+	}, bufferClearingTaskIds);
 }
 
 void MainGame::endFrame()

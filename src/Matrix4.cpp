@@ -36,33 +36,16 @@ Vec4 Matrix4::operator*(const Vec4 v) const
 	//permute values so x=0+4; y=1+5; z=2+6; w=3+7. This allows us to extract the upper half and just add it to the lower to get the result
 	__m256 perm = _mm256_permutevar8x32_ps(preSum_xyzw, _mm256_setr_epi32(0, 4, 2, 6, 1, 5, 3, 7));
 	return Vec4(_mm256_extractf128_ps(perm, 0)) + Vec4(_mm256_extractf128_ps(perm, 1));
-#elif 0 //too much stuff, scalar may be faster
-	//mn = v3 * elements[n]. Ret should be: (add up everything in m1, add up everything in m2 ...)
-	__m128 zeros = _mm_setzero_ps();
-	__m128 m1 = _mm_mul_ps(v.xmm, *reinterpret_cast<const __m128*>(&val[0]));
-	m1 = _mm_hadd_ps(m1, zeros);
-	m1 = _mm_hadd_ps(m1, zeros);
+#elif defined(__SSE2__)
+	Vec4 r1 = val[0] * v;
+	Vec4 r2 = val[1] * v;
+	Vec4 r3 = val[2] * v;
+	Vec4 r4 = val[3] * v;
 
-	__m128 m2 = _mm_mul_ps(v.xmm, *reinterpret_cast<const __m128*>(&val[1]));
-	m2 = _mm_hadd_ps(m2, zeros);
-	m2 = _mm_hadd_ps(m2, zeros);
+	__m128 res1 = _mm_hadd_ps(r1, r2); //x = 0+1, y = 2+3
+	__m128 res2 = _mm_hadd_ps(r3, r4); //z = 0+1, w = 2+3
 
-	__m128 m3 = _mm_mul_ps(v.xmm, *reinterpret_cast<const __m128*>(&val[2]));
-	m3 = _mm_hadd_ps(m3, zeros);
-	m3 = _mm_hadd_ps(m3, zeros);
-
-	__m128 m4 = _mm_mul_ps(v.xmm, *reinterpret_cast<const __m128*>(&val[3]));
-	m4 = _mm_hadd_ps(m4, zeros);
-	m4 = _mm_hadd_ps(m4, zeros);
-
-	__m128i ret2 = _mm_bslli_si128(_mm_castps_si128(m2), 4);
-	__m128i ret3 = _mm_bslli_si128(_mm_castps_si128(m3), 8);
-	__m128i ret4 = _mm_bslli_si128(_mm_castps_si128(m4), 12);
-
-	__m128i ret12 = _mm_or_si128(_mm_castps_si128(m1), ret2);
-	__m128i ret34 = _mm_or_si128(ret3, ret4);
-
-	return _mm_castsi128_ps(_mm_or_si128(ret12, ret34));
+	return _mm_hadd_ps(res1, res2); 
 #else
 	Vec4 ret(0, 0, 0, 0);
 	for (int i = 0; i < 4; ++i)

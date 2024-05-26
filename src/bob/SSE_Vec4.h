@@ -20,6 +20,7 @@ namespace bob
 		};
 	private:
 #if _M_IX86_FP >= 2 || defined(_M_AMD64) || defined(_M_X64) || defined(__AVX__) //TODO: this is not a good enough way. It only detects SSE2 or AVX, we use SSE4.1 somewhere as well. Say "thanks" to Macro$haft, all other compilers just define __SSE4_1__
+#define __SSE2__ 1
 		static constexpr bool SSE_ENABLED = true;
 #else
 		static constexpr bool SSE_ENABLED = false;

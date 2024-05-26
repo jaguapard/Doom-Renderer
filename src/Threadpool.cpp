@@ -27,6 +27,8 @@ task_id Threadpool::addTask(ThreadpoolTask task)
 
 std::vector<task_id> Threadpool::addTaskBatch(const std::vector<ThreadpoolTask>& tasks)
 {
+	if (tasks.size() == 0) return {};
+
 	std::vector<task_id> retIds;
 	retIds.reserve(tasks.size());
 
@@ -53,7 +55,8 @@ std::vector<task_id> Threadpool::addTaskBatch(const std::vector<ThreadpoolTask>&
 		retIds.push_back(id);
 	}
 
-	cv.notify_all();
+	if (tasks.size() == 1) cv.notify_one();
+	else cv.notify_all();
 
 	return retIds;
 }

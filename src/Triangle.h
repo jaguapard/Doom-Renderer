@@ -54,9 +54,9 @@ struct alignas(32) Triangle
 	union {
 		std::array<TexVertex, 3> tv;
 		struct {
-			real x1, y1, z1, w1, u1, v1, _pad01, _pad02;
-			real x2, y2, z2, w2, u2, v2, _pad11, _pad12;
-			real x3, y3, z3, w3, u3, v3, _pad21, _pad22;
+			struct alignas(32) { real x1, y1, z1, w1, u1, v1, zInv1; };
+			struct alignas(32) { real x2, y2, z2, w2, u2, v2, zInv2; };
+			struct alignas(32) { real x3, y3, z3, w3, u3, v3, zInv3; };
 		};
 		struct {
 			__m256 ymm1, ymm2, ymm3;

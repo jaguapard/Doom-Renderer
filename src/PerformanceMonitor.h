@@ -12,13 +12,13 @@
 class PerformanceMonitor
 {
 public:
-	struct OptionalInfo;
-
 	PerformanceMonitor();
 	void reset();
 	void registerFrameBegin(); //must be called before any drawing and processing is attempted
 	void registerFrameDone(bool remember = true);
-	void drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::map<std::string, std::string>& additionalInfo);
+
+	std::string composeString(const std::map<std::string, std::string>& additionalInfo = {});
+	void drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::map<std::string, std::string>& additionalInfo = {});
 
 	struct PercentileInfo
 	{
@@ -30,6 +30,7 @@ public:
 	};
 
 	PercentileInfo getPercentileInfo() const;
+	uint64_t getFrameNumber() const;
 private:
 	Smart_Font font;
 	bob::Timer timer;
@@ -37,4 +38,6 @@ private:
 	Statsman oldStats;
 	uint64_t frameNumber = 0;
 	std::deque<double> frameTimesMs;
+
+	
 };

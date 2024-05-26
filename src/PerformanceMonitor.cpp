@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <numeric>
 
+#include <iostream>
+
 #include "Statsman.h"
 PerformanceMonitor::PerformanceMonitor()
 {
@@ -34,23 +36,9 @@ void PerformanceMonitor::registerFrameDone(bool remember)
 
 void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::map<std::string, std::string>& additionalInfo)
 {
-	std::string text = PercentileInfo(frameNumber, frameTimesMs).toString();
-	std::stringstream ss;
+	std::string str = composeString(additionalInfo);
 
-	ss << timer.getTime() << " sec\n";
-	ss << text;
-
-	if (true && Statsman::enabled) //statsman stuff
-	{
-		ss << (statsman-oldStats).toString() << "\n";
-	}
-
-	for (const auto& [key, value] : additionalInfo)
-	{
-		ss << key << ": " << value << "\n";
-	}
-
-	auto s = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(font.get(), ss.str().c_str(), {255,255,255,SDL_ALPHA_OPAQUE}, 1500));
+	auto s = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(font.get(), str.c_str(), {255,255,255,SDL_ALPHA_OPAQUE}, 1500));
 	if (!s) throw std::runtime_error(std::string("Failed to draw FPS info: ") + SDL_GetError());
 	SDL_Rect rect = { pixelsFromUpperLeftCorner.x, pixelsFromUpperLeftCorner.y, s->w, s->h };
 	SDL_BlitSurface(s.get(), nullptr, dst, &rect);
@@ -59,6 +47,31 @@ void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftC
 PerformanceMonitor::PercentileInfo PerformanceMonitor::getPercentileInfo() const
 {
 	return PercentileInfo(this->frameNumber, frameTimesMs);
+}
+
+uint64_t PerformanceMonitor::getFrameNumber() const
+{
+	return frameNumber;
+}
+
+std::string PerformanceMonitor::composeString(const std::map<std::string, std::string>& additionalInfo)
+{
+	std::string text = PercentileInfo(frameNumber, frameTimesMs).toString();
+	std::stringstream ss;
+
+	ss << timer.getTime() << " sec\n";
+	ss << text;
+
+	if (true && Statsman::enabled) //statsman stuff
+	{
+		ss << (statsman - oldStats).toString() << "\n";
+	}
+
+	for (const auto& [key, value] : additionalInfo)
+	{
+		ss << key << ": " << value << "\n";
+	}
+	return ss.str();
 }
 
 

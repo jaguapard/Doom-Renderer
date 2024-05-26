@@ -194,10 +194,7 @@ void MainGame::draw()
 		taskfunc_t f = [=]() {
 			auto lim = threadpool->getLimitsForThread(tNum, 0, ctx.framebufH);
 			int myMinY = lim.first; //truncate limits to avoid fighting
-			int myMaxY = lim.second;
-
-			int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
-			int myStartIndex = myMinY * ctx.framebufW;
+			int myMaxY = lim.second;			
 	
 			ctx.frameBuffer->clearRows(myMinY, myMaxY);
 			ctx.zBuffer->clearRows(myMinY, myMaxY);
@@ -209,7 +206,8 @@ void MainGame::draw()
 				myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
 			}
 
-			
+			int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
+			int myStartIndex = myMinY * ctx.framebufW;
 
 			real* lightPtr = lightStart + myStartIndex;
 			Color* framebufPtr = framebufStart + myStartIndex;
@@ -231,7 +229,7 @@ void MainGame::draw()
 
 	windowUpdateTaskId = threadpool->addTask([&, this]() {
 		performanceMonitor.registerFrameDone();
-		if (performanceMonitorDisplayEnabled)
+		if (performanceMonitorDisplayEnabled || performanceMonitor.getFrameNumber() % 1024 == 0)
 		{
 			std::map<std::string, std::string> perfmonInfo;
 			perfmonInfo["Cam pos"] = vecToStr(camPos);
@@ -241,7 +239,8 @@ void MainGame::draw()
 			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / fovMult) * 180 / M_PI) + " degrees";
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
-			performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
+			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
+			else std::cout << performanceMonitor.composeString(perfmonInfo) << "\n";
 		}
 		if (SDL_UpdateWindowSurface(initData.wnd)) throw std::runtime_error(SDL_GetError());
 	}, bufferClearingTaskIds);

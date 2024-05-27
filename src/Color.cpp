@@ -100,15 +100,15 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const std::array<uint32_t, 4>& shifts)
 {
 #ifdef __AVX2__
-	std::array<int8_t, 16> shuffleMaskArray;
-	for (int i = 0; i < 16; ++i) shuffleMaskArray[i] = shifts[i % 4] / 8 + 4 * (i / 4);
-
-	__m256i shuffleMask = _mm256_broadcastsi128_si256(*reinterpret_cast<__m128i*>(shuffleMaskArray.data()));
+	//index of bytes to "pull" from one color in rgba order. Byte 0 of resulting SDL_Surface color will be pulled from color buffer's byte (shift[0]/8), 1 from (shift[1]/8), etc
+	int32_t intraColorReshuffleMask = shifts[0] >> 3 | shifts[1] << 5 | shifts[2] << 13 | shifts[3] << 21;
+	__m128i shuffleMask128 = _mm_add_epi32(_mm_set1_epi32(intraColorReshuffleMask), _mm_setr_epi32(0, 0x04040404, 0x08080808, 0x0c0c0c0c)); //broadcast the intraColorReshuffleMask and add 0, 4, 8 or 12 to each byte.
+	__m256i shuffleMask256 = _mm256_broadcastsi128_si256(shuffleMask128); //AVX2's shuffle is basically 2 SSE shuffles in one, so just mirror the mask128
 
 	for (; pixelCount >= 8; u += 8, colors += 8, pixelCount -= 8)
 	{
-		__m256i origColors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colors));
-		__m256i res = _mm256_shuffle_epi8(origColors, shuffleMask);
+		__m256i origColors = *reinterpret_cast<const __m256i*>(colors);
+		__m256i res = _mm256_shuffle_epi8(origColors, shuffleMask256);
 		*reinterpret_cast<__m256i*>(u) = res;
 	} 
 #endif

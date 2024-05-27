@@ -23,7 +23,7 @@ public:
 	std::vector<task_id> dependencies;
 	std::optional<task_id> wantedId;
 
-	task_id assignedId; //this will be task_id(-1) in case has not yet been assigned an id and will be overwritten by the threadpool
+	task_id assignedId = -1; //this will be task_id(-1) in case has not yet been assigned an id and will be overwritten by the threadpool
 };
 class Threadpool
 {

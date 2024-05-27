@@ -49,7 +49,7 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 	__m256i gExtractMask = _mm256_add_epi8(rExtractMask, _mm256_set1_epi32(1));
 	__m256i bExtractMask = _mm256_add_epi8(gExtractMask, _mm256_set1_epi32(1));
 
-	while (pixelCount >= 8)
+	for (; pixelCount >= 8; lightMults += 8, colors += 8, pixelCount -= 8)
 	{
 		__m256 light = _mm256_load_ps(lightMults); //load light intensities for pixels from light buffer
 		__m256i origColors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colors)); //packed colors in this order: rgba,rgba,rgba,...		
@@ -60,23 +60,19 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 		__m256 floatB = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(origColors, bExtractMask));
 		//alpha can stay broken lol
 
-		__m256i mulR = _mm256_cvtps_epi32(_mm256_mul_ps(floatR, light));
-		__m256i mulG = _mm256_cvtps_epi32(_mm256_mul_ps(floatG, light));
-		__m256i mulB = _mm256_cvtps_epi32(_mm256_mul_ps(floatB, light));
+		__m256i mulR = _mm256_cvttps_epi32(_mm256_mul_ps(floatR, light));
+		__m256i mulG = _mm256_cvttps_epi32(_mm256_mul_ps(floatG, light));
+		__m256i mulB = _mm256_cvttps_epi32(_mm256_mul_ps(floatB, light));
 
 		__m256i res = _mm256_or_si256(mulR, _mm256_or_si256(_mm256_slli_epi32(mulG, 8), _mm256_slli_epi32(mulB, 16)));
 		*reinterpret_cast<__m256i*>(colors) = res;
-
-		lightMults += 8;
-		colors += 8;
-		pixelCount -= 8;
 	}
 #elif defined(__SSE2__)
 	__m128i rExtractMask = _mm_setr_epi8(0, z, z, z, 4, z, z, z, 8, z, z, z, 12, z, z, z);
 	__m128i gExtractMask = _mm_add_epi8(rExtractMask, _mm_set1_epi32(1));
 	__m128i bExtractMask = _mm_add_epi8(gExtractMask, _mm_set1_epi32(1));
 
-	while (pixelCount >= 4)
+	for (; pixelCount >= 4; lightMults += 4, colors += 4, pixelCount -= 4)
 	{
 		__m128 light = _mm_load_ps(lightMults); //load light intensities for pixels from light buffer
 		__m128i origColors = _mm_load_si128(reinterpret_cast<const __m128i*>(colors)); //packed colors in this order: rgba,rgba,rgba,...		
@@ -87,22 +83,17 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 		__m128 floatB = _mm_cvtepi32_ps(_mm_shuffle_epi8(origColors, bExtractMask));
 		//alpha can stay broken lol
 
-		__m128i mulR = _mm_cvtps_epi32(_mm_mul_ps(floatR, light));
-		__m128i mulG = _mm_cvtps_epi32(_mm_mul_ps(floatG, light));
-		__m128i mulB = _mm_cvtps_epi32(_mm_mul_ps(floatB, light));
+		__m128i mulR = _mm_cvttps_epi32(_mm_mul_ps(floatR, light));
+		__m128i mulG = _mm_cvttps_epi32(_mm_mul_ps(floatG, light));
+		__m128i mulB = _mm_cvttps_epi32(_mm_mul_ps(floatB, light));
 
 		__m128i res = _mm_or_si128(mulR, _mm_or_si128(_mm_slli_epi32(mulG, 8), _mm_slli_epi32(mulB, 16)));
 		*reinterpret_cast<__m128i*>(colors) = res;
-
-		lightMults += 4;
-		colors += 4;
-		pixelCount -= 4;
 	}
 #endif
-	while (pixelCount--)
+	for (; pixelCount; colors += 1, lightMults += 1, pixelCount -= 1)
 	{
-		*colors = colors->multipliedByLight(*lightMults++);
-		++colors;
+		*colors = colors->multipliedByLight(*lightMults);
 	}
 }
 
@@ -114,7 +105,7 @@ void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const s
 	__m256i bShift = _mm256_set1_epi32(shifts[2]);
 	__m256i aShift = _mm256_set1_epi32(shifts[3]);
 
-	while (pixelCount >= 8)
+	for (; pixelCount >= 8; u += 8, colors += 8, pixelCount -= 8)
 	{
 		__m256i origColors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colors));
 		__m256i lastByteMask = _mm256_set1_epi32(0xFF);
@@ -131,18 +122,11 @@ void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const s
 
 		__m256i res = _mm256_or_si256(_mm256_or_si256(_mm256_or_si256(na, nb), ng), nr);
 		_mm256_store_si256(reinterpret_cast<__m256i*>(u), res);
-
-		u += 8;
-		colors += 8;
-		pixelCount -= 8;
 	}
 #endif
-	while (pixelCount)
+	for (; pixelCount; u += 1, colors += 1, pixelCount -= 1)
 	{
 		*u = colors->toSDL_Uint32(shifts);
-		++u;
-		++colors;
-		--pixelCount;
 	}
 }
 

@@ -100,16 +100,16 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const std::array<uint32_t, 4>& shifts)
 {
 #ifdef __AVX2__
-	int32_t colorReorderMask = (shifts[0] >> 3) + (shifts[1] << 5) + (shifts[2] << 13) + (shifts[3] << 21); //shifts are supplied as bits.
-	std::array<int32_t, 8> shuffleMaskParts = { colorReorderMask };
-	for (int i = 1; i < 8; ++i) shuffleMaskParts[i] = i < 4 ? shuffleMaskParts[i - 1] + 0x04040404 : shuffleMaskParts[i - 4];
-	__m256i shuffleMask = *reinterpret_cast<__m256i*>(shuffleMaskParts.data());
+	std::array<int8_t, 16> shuffleMaskArray;
+	for (int i = 0; i < 16; ++i) shuffleMaskArray[i] = shifts[i % 4] / 8 + 4 * (i / 4);
+
+	__m256i shuffleMask = _mm256_broadcastsi128_si256(*reinterpret_cast<__m128i*>(shuffleMaskArray.data()));
 
 	for (; pixelCount >= 8; u += 8, colors += 8, pixelCount -= 8)
 	{
 		__m256i origColors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colors));
 		__m256i res = _mm256_shuffle_epi8(origColors, shuffleMask);
-		_mm256_store_si256(reinterpret_cast<__m256i*>(u), res);
+		*reinterpret_cast<__m256i*>(u) = res;
 	} 
 #endif
 	for (; pixelCount; u += 1, colors += 1, pixelCount -= 1)

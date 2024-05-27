@@ -100,29 +100,17 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 void Color::toSDL_Uint32(const Color* colors, Uint32* u, int pixelCount, const std::array<uint32_t, 4>& shifts)
 {
 #ifdef __AVX2__
-	__m256i rShift = _mm256_set1_epi32(shifts[0]);
-	__m256i gShift = _mm256_set1_epi32(shifts[1]);
-	__m256i bShift = _mm256_set1_epi32(shifts[2]);
-	__m256i aShift = _mm256_set1_epi32(shifts[3]);
+	int32_t colorReorderMask = (shifts[0] >> 3) + (shifts[1] << 5) + (shifts[2] << 13) + (shifts[3] << 21); //shifts are supplied as bits.
+	std::array<int32_t, 8> shuffleMaskParts = { colorReorderMask };
+	for (int i = 1; i < 8; ++i) shuffleMaskParts[i] = i < 4 ? shuffleMaskParts[i - 1] + 0x04040404 : shuffleMaskParts[i - 4];
+	__m256i shuffleMask = *reinterpret_cast<__m256i*>(shuffleMaskParts.data());
 
 	for (; pixelCount >= 8; u += 8, colors += 8, pixelCount -= 8)
 	{
 		__m256i origColors = _mm256_load_si256(reinterpret_cast<const __m256i*>(colors));
-		__m256i lastByteMask = _mm256_set1_epi32(0xFF);
-
-		__m256i r = _mm256_and_si256(origColors, lastByteMask);
-		__m256i g = _mm256_and_si256(_mm256_srli_epi32(origColors, 8), lastByteMask);
-		__m256i b = _mm256_and_si256(_mm256_srli_epi32(origColors, 16), lastByteMask);
-		__m256i a = _mm256_and_si256(_mm256_srli_epi32(origColors, 24), lastByteMask);
-
-		__m256i nr = _mm256_sllv_epi32(r, rShift);
-		__m256i ng = _mm256_sllv_epi32(g, gShift);
-		__m256i nb = _mm256_sllv_epi32(b, bShift);
-		__m256i na = _mm256_sllv_epi32(a, aShift);
-
-		__m256i res = _mm256_or_si256(_mm256_or_si256(_mm256_or_si256(na, nb), ng), nr);
+		__m256i res = _mm256_shuffle_epi8(origColors, shuffleMask);
 		_mm256_store_si256(reinterpret_cast<__m256i*>(u), res);
-	}
+	} 
 #endif
 	for (; pixelCount; u += 1, colors += 1, pixelCount -= 1)
 	{

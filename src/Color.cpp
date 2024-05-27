@@ -45,7 +45,7 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 {
 	constexpr char z = 1 << 7; //if upper bit of the 8 bit index for shuffle is set, then the element will be filled with 0's automagically.
 #ifdef __AVX2__
-	__m256i rExtractMask = _mm256_broadcastsi128_si256(_mm_setr_epi8(0, z, z, z, 4, z, z, z, 8, z, z,  z, 12, z,  z,  z)); //don't care about last 16 elements, since only first 16 are used and shuffle is mirrored in both lanes
+	__m256i rExtractMask = _mm256_broadcastsi128_si256(_mm_setr_epi8(0, z, z, z, 4, z, z, z, 8, z, z,  z, 12, z,  z,  z));
 	__m256i gExtractMask = _mm256_add_epi8(rExtractMask, _mm256_set1_epi32(1));
 	__m256i bExtractMask = _mm256_add_epi8(gExtractMask, _mm256_set1_epi32(1));
 

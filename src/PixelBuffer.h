@@ -15,8 +15,10 @@
 struct PixelBufferSize
 {
 	int w, h;
-	__m128i dimensionsInt;
-	__m128i dimensionsIntReciprocal;
+	__m128i dimensionsInt32;
+	__m128i dimensionsInt64;
+	__m128i dimensionsIntReciprocal64;
+
 	__m128i pitchVec;
 	Vec4 dimensionsFloat;
 	Vec4 dimensionsFloatReciprocal;
@@ -27,8 +29,9 @@ struct PixelBufferSize
 		this->w = w;
 		this->h = h;
 
-		this->dimensionsInt = _mm_setr_epi32(w, h, 0, 0);
-		this->dimensionsIntReciprocal = _mm_setr_epi64x(UINT64_MAX / w + 1, UINT64_MAX / h + 1);
+		this->dimensionsInt32 = _mm_setr_epi32(w, h, 0, 0);
+		this->dimensionsInt64 = _mm_setr_epi64x(w, h);
+		this->dimensionsIntReciprocal64 = _mm_setr_epi64x(UINT32_MAX / w + 1, UINT32_MAX / h + 1);
 
 		this->dimensionsFloat = Vec4(w, h, 0, 0);
 		this->dimensionsFloatReciprocal = Vec4(1.0 / w, 1.0 / h, 0, 0);

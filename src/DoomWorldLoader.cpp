@@ -128,6 +128,7 @@ Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real to
 	std::vector<Triangle> triangles;
 	//TODO: add some kind of Z figting prevention for double-sided linedefs
 	int textureIndex = textureManager.getTextureIndexByName(textureName);
+	const Texture& texture = textureManager.getTextureByIndex(textureIndex);
 	for (int i = 0; i < 2; ++i)
 	{
 		Triangle t;
@@ -143,7 +144,7 @@ Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real to
 			uvPrefab.x = std::max(abs(worldOffset.x), abs(worldOffset.z)) == abs(worldOffset.x) ? worldOffset.x : worldOffset.z;
 			uvPrefab.y = worldOffset.y;
 			Vec2 uv = Vec2(sectorInfo.xTextureOffset, sectorInfo.yTextureOffset) - uvPrefab;
-			t.tv[j].textureCoords = { uv.x, uv.y };
+			t.tv[j].textureCoords = Vec4(uv.x, uv.y) / Vec4(texture.getW(), texture.getH());
 		}
 		triangles.push_back(t);
 	}
@@ -186,7 +187,9 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 			Vec4 uv = vert - Vec4(uvOffset.x, uvOffset.y);
 			t[j / 3].tv[j % 3].spaceCoords = vert;
 			t[j/3].tv[j%3].spaceCoords.y = isFloor ? sector.floorHeight : sector.ceilingHeight;
-			t[j / 3].tv[j % 3].textureCoords = Vec4(uv.x, uv.z);
+
+			const Texture& texture = textureManager.getTextureByIndex(isFloor ? floorTextureIndex : ceilingTextureIndex);
+			t[j / 3].tv[j % 3].textureCoords = Vec4(uv.x, uv.z) / Vec4(texture.getW(), texture.getH());
 		}
 
 		trisFloor.push_back(t[0]);

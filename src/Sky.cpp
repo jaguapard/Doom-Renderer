@@ -95,7 +95,7 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 			Vec4 preremapUv = tv.textureCoords; //to stop texture abruptly jumping back to the beginning at sphere's end, we must wrap it properly
 			if (preremapUv.x <= 0.5) preremapUv.x = 2 * preremapUv.x;
 			else if (preremapUv.x > 0.5) preremapUv.x = (1 - preremapUv.x) * 2; //this remaps range (0,1) to (0,1),(1,0) flipping direction when x == 0.5
-			tv.textureCoords = preremapUv * uvMult;
+			tv.textureCoords = preremapUv;
 		}
 	}
 	this->skyModel = Model(skyTriangles, textureIndex, textureManager);

@@ -312,5 +312,6 @@ std::array<uint32_t, 4> MainGame::getShiftsForWindow()
 		}
 	}
 	shifts[3] = missingShift;
+	for (auto& it : shifts) assert(it % 8 == 0);
 	return shifts;
 }

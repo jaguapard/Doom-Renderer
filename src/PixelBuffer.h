@@ -125,7 +125,7 @@ inline T PixelBuffer<T>::getPixel(const __m128i& pos) const
 template<typename T>
 inline T PixelBuffer<T>::getPixel(const Vec4& pos) const
 {
-	return getPixel(_mm_cvtps_epi32(pos.xmm));
+	return getPixel(_mm_cvttps_epi32(pos.xmm));
 }
 
 template<typename T>

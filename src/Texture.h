@@ -23,9 +23,9 @@ class Texture
 {
 public:
 	Texture(std::string name);
-	Color getPixel(const Vec4& coords) const; //z and w values are ignored
+	
+	Color getPixelAtUV(const Vec4& uv) const; //z and w values are ignored
 	Color getPixel(int x, int y) const;
-	Color getPixelAtUV(real u, real v) const;
 
 	int getW() const;
 	int getH() const;

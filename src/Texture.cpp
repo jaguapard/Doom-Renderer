@@ -57,17 +57,17 @@ Texture::Texture(std::string name)
 	this->checkForTransparentPixels();
 }
 
-Color Texture::getPixel(const Vec4& coords) const
+Color Texture::getPixelAtUV(const Vec4& uv) const
 {
 	StatCount(statsman.textures.pixelFetches++);
 #if SSE_VER >= 41
 	//rounding to negative infinity forces the frac calculation to always result in positive values in range (0..1),
 	//allowing us to skip the sign check and adjusting coordinates passed to pixels.getPixel. Truncating doesn't allow this
-	Vec4 floor = _mm_round_ps(coords, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
-	Vec4 frac = coords - floor;
+	Vec4 floor = _mm_round_ps(uv, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
+	Vec4 frac = uv - floor;
 	return pixels.getPixel(frac * pixels.getSize().dimensionsFloat);
 #else
-	return getPixel(coords.x * getW(), coords.y * getH());
+	return getPixel(uv.x * getW(), uv.y * getH());
 #endif
 }
 
@@ -84,10 +84,6 @@ Color Texture::getPixel(int x, int y) const
 	return pixels.getPixel(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
 }
 
-Color Texture::getPixelAtUV(real u, real v) const
-{
-	return this->getPixel(u * pixels.getW(), v * pixels.getH());
-}
 
 int Texture::getW() const
 {

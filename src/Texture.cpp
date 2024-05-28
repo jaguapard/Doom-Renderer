@@ -64,19 +64,20 @@ Color Texture::getPixel(const Vec4& coords) const
 	StatCount(statsman.textures.pixelFetches++);
 
 	__m128i intCoords = _mm_cvttps_epi32(coords);
+	__m128i intCoords64 = _mm_cvtepi32_epi64(intCoords);
 
 	//expanding intCoords basically acts like a shuffle to put dwords in places where mul expects them to be (that intrinsic is a little bit screwed up)
-	__m128i divPrefab64 = _mm_mul_epi32(_mm_cvtepi32_epi64(intCoords), pixels.getSize().dimensionsIntReciprocal64);
-	__m128i div = _mm_shuffle_epi32(divPrefab64, _MM_SHUFFLE(4, 2, 3, 1)); //take only the high dwords. Div must be: element 0 = (coords/dim).x, 1=(coords/dim).y, 2,3=garbage as epi32
+	__m128i divPrefab64 = _mm_mul_epi32(intCoords64, pixels.getSize().dimensionsIntReciprocal64);
+	__m128i div64 = _mm_srli_epi64(divPrefab64, 32);
 
-	__m128i dimInt32 = pixels.getSize().dimensionsInt32;
-	__m128i mod = _mm_sub_epi32(intCoords, _mm_mullo_epi32(div, dimInt32));
+	__m128i dimInt64 = pixels.getSize().dimensionsInt64;
+	__m128i mod = _mm_sub_epi64(intCoords64, _mm_mul_epi32(div64, dimInt64));
 
 	__m128i cmp = _mm_cmplt_epi32(mod, _mm_setzero_si128());
-	__m128i add = _mm_and_si128(cmp, dimInt32);
+	__m128i add = _mm_and_si128(cmp, dimInt64);
 	__m128i textureCoords = _mm_add_epi32(mod, add);
 
-	return pixels.getPixel(textureCoords);
+	return pixels.getPixel64(textureCoords);
 }
 
 Color Texture::getPixel(int x, int y) const

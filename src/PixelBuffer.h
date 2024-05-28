@@ -18,8 +18,8 @@ struct PixelBufferSize
 	__m128i dimensionsInt32;
 	__m128i dimensionsInt64;
 	__m128i dimensionsIntReciprocal64;
+	__m128i pitchInt64;
 
-	__m128i pitchVec;
 	Vec4 dimensionsFloat;
 	Vec4 dimensionsFloatReciprocal;
 
@@ -36,7 +36,7 @@ struct PixelBufferSize
 		this->dimensionsFloat = Vec4(w, h, 0, 0);
 		this->dimensionsFloatReciprocal = Vec4(1.0 / w, 1.0 / h, 0, 0);
 
-		this->pitchVec = _mm_setr_epi32(h, 1, 0, 0);
+		this->pitchInt64 = _mm_setr_epi64x(1, w);
 	}
 };
 
@@ -54,6 +54,7 @@ public:
 	T getPixel(int x, int y) const; //does not perform bounds checks
 	T getPixel(const __m128i& pos) const; //returns a pixel from x=pos[0], y=pos[1], other values are ignored
 	T getPixel(const Vec4& pos) const;
+	T getPixel64(const __m128i& pos) const;
 
 	void setPixel(int x, int y, const T& px); //does not perform bounds checks
 
@@ -68,8 +69,8 @@ public:
 	T* begin();
 	T* end();
 
-	T& operator[](int i);
-	const T& operator[](int i) const;
+	T& operator[](uint64_t i);
+	const T& operator[](uint64_t i) const;
 
 	void saveToFile(const std::string& path) const;
 	virtual Color toColor(T value) const;
@@ -125,6 +126,13 @@ template<typename T>
 inline T PixelBuffer<T>::getPixel(const Vec4& pos) const
 {
 	return getPixel(_mm_cvtps_epi32(pos.xmm));
+}
+
+template<typename T>
+inline T PixelBuffer<T>::getPixel64(const __m128i& pos) const
+{
+	__m128i interm = _mm_mul_epi32(pos, this->size.pitchInt64);
+	return (*this)[_mm_extract_epi64(interm, 0) + _mm_extract_epi64(interm, 1)];
 }
 
 template<typename T>
@@ -216,13 +224,13 @@ inline T* PixelBuffer<T>::end()
 }
 
 template<typename T>
-inline T& PixelBuffer<T>::operator[](int i)
+inline T& PixelBuffer<T>::operator[](uint64_t i)
 {
 	return const_cast<T&>(static_cast<const PixelBuffer<T>&>(*this)[i]);
 }
 
 template<typename T>
-inline const T& PixelBuffer<T>::operator[](int i) const
+inline const T& PixelBuffer<T>::operator[](uint64_t i) const
 {
 	return store[i];
 }

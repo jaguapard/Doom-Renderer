@@ -26,13 +26,15 @@ Texture::Texture(std::string name)
 			Uint32* surfPixels = reinterpret_cast<Uint32*>(nSurf->pixels);
 			int w = nSurf->w;
 			int h = nSurf->h;
-			this->pixels = PixelBuffer<Color>(w, h);
 
-			for (int y = 0; y < h; ++y)
+			int downSamplingMult = 4;
+			this->pixels = PixelBuffer<Color>(w/downSamplingMult, h/downSamplingMult);
+
+			for (int y = 0; y < h/downSamplingMult; ++y)
 			{
-				for (int x = 0; x < w; ++x)
+				for (int x = 0; x < w/downSamplingMult; ++x)
 				{
-					this->pixels.setPixel(x, y, surfPixels[y * w + x]);
+					this->pixels.setPixel(x, y, surfPixels[y * w*downSamplingMult + x*downSamplingMult]);
 				}
 			}
 		}

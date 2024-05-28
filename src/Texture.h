@@ -42,5 +42,4 @@ private:
 	void checkForTransparentPixels();
 	//static constexpr int FRACBITS = 16;
 	void constructDebugTexture();
-	void populateInverses(int w, int h);
 };

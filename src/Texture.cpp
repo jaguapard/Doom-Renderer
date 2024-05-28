@@ -4,7 +4,7 @@
 #include "Vec.h"
 #include "Statsman.h"
 #include "smart.h"
-#define OLD_TEXTURE_FETCH
+
 Texture::Texture(std::string name)
 {
 	this->name = name;
@@ -54,13 +54,11 @@ Texture::Texture(std::string name)
 		}
 	}
 
-	populateInverses(pixels.getW(), pixels.getH());
 	this->checkForTransparentPixels();
 }
 
 Color Texture::getPixel(const Vec4& coords) const
 {
-	constexpr int ROUND_MODE = _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC;
 	StatCount(statsman.textures.pixelFetches++);
 
 	__m128i intCoords = _mm_cvttps_epi32(coords);
@@ -82,23 +80,8 @@ Color Texture::getPixel(const Vec4& coords) const
 
 Color Texture::getPixel(int x, int y) const
 {
-	//assert(abs(x) < 32768); //the "smart" approach does have limitations, but since we chose 64 bit ints and 32 bit shifts,
-	//assert(abs(y) < 32768); //it should not break at all, since supplied values are 32 bits wide and will overflow just before the algorithm breaks
 	StatCount(statsman.textures.pixelFetches++);
 
-#ifndef OLD_TEXTURE_FETCH
-	//We can't just take abs, since -w-1 must map to w-1, not 1
-	//TODO: still crashes with some values, falling back for now
-	int64_t px = x + bigW; //assuming texture never wraps around more than 65536 times on a single map,
-	int64_t py = y + bigH; //this is equivivalent to properly shift everything into the positives.
-	int64_t xPreShift = px * wInverse;
-	int64_t yPreShift = py * hInverse;
-	int64_t divW = xPreShift >> 32;
-	int64_t divH = yPreShift >> 32;
-	int64_t tx = px - divW * pixels.getW();
-	int64_t ty = py - divH * pixels.getH();
-	return pixels.getPixel(tx, ty); //due to previous manipulations with input x and y, it should never go out of bounds
-#else
 	int w = pixels.getW();
 	int h = pixels.getH();
 	x %= w; //TODO: this is very slow. Our textures do not change size at runtime, so it can be optimized by fast integer modulo techiques
@@ -106,7 +89,6 @@ Color Texture::getPixel(int x, int y) const
 	if (x < 0) x += w; //can't just flip the sign of modulo - that will make textures reflect around 0, i.e. x=-1 will map to 1 instead of (w-1)
 	if (y < 0) y += h;
 	return pixels.getPixel(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
-#endif
 }
 
 Color Texture::getPixelAtUV(real u, real v) const
@@ -178,19 +160,10 @@ void Texture::constructDebugTexture()
 				Color c = (x % 16 < 8) ^ (y % 16 < 8) ? Color(0, 0, 0) : Color(255, 255, 255);
 				pixels.setPixel(x, y, c);
 				break;
-			//default:
-			//	break;
+				//default:
+				//	break;
 			}
 		}
 	}
 	++textureNumber;
-	populateInverses(tw, th);
-}
-
-void Texture::populateInverses(int w, int h)
-{
-	wInverse = UINT32_MAX / w + 1;
-	hInverse = UINT32_MAX / h + 1;
-	bigW = pixels.getW() * 65536;
-	bigH = pixels.getH() * 65536;
 }

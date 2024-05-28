@@ -54,7 +54,7 @@ void Color::multipliyByLightInPlace(const real* lightMults, Color* colors, int p
 		__m256i res = _mm256_or_si256(mulR, _mm256_or_si256(_mm256_slli_epi32(mulG, 8), _mm256_slli_epi32(mulB, 16)));
 		*reinterpret_cast<__m256i*>(colors) = res;
 	}
-#elif defined(__SSE2__)
+#elif SSE_VER >= 20
 	__m128i rExtractMask = _mm_setr_epi8(0, z, z, z, 4, z, z, z, 8, z, z, z, 12, z, z, z);
 	__m128i gExtractMask = _mm_add_epi8(rExtractMask, _mm_set1_epi32(1));
 	__m128i bExtractMask = _mm_add_epi8(gExtractMask, _mm_set1_epi32(1));

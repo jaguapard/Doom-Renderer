@@ -59,6 +59,7 @@ Texture::Texture(std::string name)
 
 Color Texture::getPixel(const Vec4& coords) const
 {
+#if SSE_VER >= 30
 	StatCount(statsman.textures.pixelFetches++);
 
 	__m128i intCoords = _mm_cvttps_epi32(coords);
@@ -76,6 +77,9 @@ Color Texture::getPixel(const Vec4& coords) const
 	__m128i textureCoords = _mm_add_epi32(mod, add);
 
 	return pixels.getPixel64(textureCoords);
+#else
+	return getPixel(coords.x, coords.y);
+#endif
 }
 
 Color Texture::getPixel(int x, int y) const

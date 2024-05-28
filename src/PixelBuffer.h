@@ -18,7 +18,9 @@ struct PixelBufferSize
 	__m128i dimensionsInt32;
 	__m128i dimensionsInt64;
 	__m128i dimensionsIntReciprocal64;
+
 	__m128i pitchInt64;
+	__m128i pitchInt32;
 
 	Vec4 dimensionsFloat;
 	Vec4 dimensionsFloatReciprocal;
@@ -37,6 +39,7 @@ struct PixelBufferSize
 		this->dimensionsFloatReciprocal = Vec4(1.0 / w, 1.0 / h, 0, 0);
 
 		this->pitchInt64 = _mm_setr_epi64x(1, w);
+		this->pitchInt32 = _mm_setr_epi32(1, w, 0, 0);
 	}
 };
 
@@ -119,7 +122,8 @@ inline T PixelBuffer<T>::getPixel(int x, int y) const
 template<typename T>
 inline T PixelBuffer<T>::getPixel(const __m128i& pos) const
 {
-	return getPixel(_mm_extract_epi32(pos, 0), _mm_extract_epi32(pos, 1));
+	__m128i offsets = _mm_mullo_epi32(pos, size.pitchInt32);
+	return (*this)[_mm_extract_epi32(offsets, 0) + _mm_extract_epi32(offsets, 1)];
 }
 
 template<typename T>

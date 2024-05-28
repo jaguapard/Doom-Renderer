@@ -27,14 +27,14 @@ Texture::Texture(std::string name)
 			int w = nSurf->w;
 			int h = nSurf->h;
 
-			int downSamplingMult = 4;
-			this->pixels = PixelBuffer<Color>(w/downSamplingMult, h/downSamplingMult);
+			int downSamplingMult = 1;
+			this->pixels = PixelBuffer<Color>(w, h);
 
-			for (int y = 0; y < h/downSamplingMult; ++y)
+			for (int y = 0; y < h; ++y)
 			{
-				for (int x = 0; x < w/downSamplingMult; ++x)
+				for (int x = 0; x < w; ++x)
 				{
-					this->pixels.setPixel(x, y, surfPixels[y * w*downSamplingMult + x*downSamplingMult]);
+					this->pixels.setPixel(x, y, surfPixels[y * (w / downSamplingMult) * downSamplingMult + (x / downSamplingMult) * downSamplingMult]);
 				}
 			}
 		}

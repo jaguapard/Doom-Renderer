@@ -112,7 +112,7 @@ void Texture::checkForTransparentPixels()
 		if (it.a < SDL_ALPHA_OPAQUE)
 		{
 			_hasOnlyOpaquePixels = false;
-			break;
+			return;
 		}
 	}
 	_hasOnlyOpaquePixels = true;

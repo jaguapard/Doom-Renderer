@@ -25,6 +25,8 @@ struct PixelBufferSize
 	Vec4 dimensionsFloat;
 	Vec4 dimensionsFloatReciprocal;
 
+	__m128d dimensionsDouble;
+
 	PixelBufferSize() = default;
 	PixelBufferSize(int w, int h)
 	{
@@ -36,10 +38,14 @@ struct PixelBufferSize
 		this->dimensionsIntReciprocal64 = _mm_setr_epi64x(UINT32_MAX / w + 1, UINT32_MAX / h + 1);
 
 		//avoid occasional off-by-one errors. Get closest floats that are less than w, h
-		float floatW = std::bit_cast<float, int32_t>(std::bit_cast<int32_t, float>(float(w)) - 1);
-		float floatH = std::bit_cast<float, int32_t>(std::bit_cast<int32_t, float>(float(h)) - 1);
+		//float floatW = std::bit_cast<float, int32_t>(std::bit_cast<int32_t, float>(float(w)) - 1);
+		//float floatH = std::bit_cast<float, int32_t>(std::bit_cast<int32_t, float>(float(h)) - 1);
+		float floatW = w;
+		float floatH = h;
 		this->dimensionsFloat = Vec4(floatW, floatH, 0, 0);
 		this->dimensionsFloatReciprocal = Vec4(1.0 / floatW, 1.0 / floatH, 0, 0);
+
+		this->dimensionsDouble = _mm_setr_pd(w, h);
 
 		this->pitchInt64 = _mm_setr_epi64x(1, w);
 		this->pitchInt32 = _mm_setr_epi32(1, w, 0, 0);
@@ -61,6 +67,7 @@ public:
 	T getPixel(const __m128i& pos) const; //returns a pixel from x=pos[0], y=pos[1], other values are ignored
 	T getPixel(const Vec4& pos) const;
 	T getPixel64(const __m128i& pos) const;
+	T getPixel64(const __m128d& pos) const;
 
 	void setPixel(int x, int y, const T& px); //does not perform bounds checks
 
@@ -140,6 +147,12 @@ inline T PixelBuffer<T>::getPixel64(const __m128i& pos) const
 {
 	__m128i interm = _mm_mul_epi32(pos, this->size.pitchInt64);
 	return (*this)[_mm_extract_epi64(interm, 0) + _mm_extract_epi64(interm, 1)];
+}
+
+template<typename T>
+inline T PixelBuffer<T>::getPixel64(const __m128d& pos) const
+{
+	return getPixel(_mm_cvttpd_epi32(pos));
 }
 
 template<typename T>

@@ -65,12 +65,12 @@ Color Texture::getPixelAtUV(const Vec4& uv) const
 #if SSE_VER >= 41
 	//rounding to negative infinity forces the frac calculation to always result in positive values in range [0..1],
 	//allowing us to skip the sign check and adjusting coordinates passed to pixels.getPixel. Truncating doesn't allow this.
-	//However, it only works if dimensionsFloat is slightly smaller than true dimensions, since 1.0*d == d, which will go out of bounds.
-	//PixelBuffer is aware of this and sets up farce dimensionsFloat automatically
+	//Converting to double is required to avoid certain edge cases where frac can end up being 1.0 exactly due to float imprecision
 
-	Vec4 floor = _mm_round_ps(uv, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
-	Vec4 frac = uv - floor;
-	return pixels.getPixel(frac * pixels.getSize().dimensionsFloat);
+	__m128d uv_double = _mm_cvtps_pd(uv);
+	__m128d floor = _mm_round_pd(uv_double, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
+	__m128d frac = _mm_sub_pd(uv_double, floor);
+	return pixels.getPixel64(_mm_mul_pd(frac, pixels.getSize().dimensionsDouble));
 #else
 	return getPixel(uv.x * getW(), uv.y * getH());
 #endif

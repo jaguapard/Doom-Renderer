@@ -35,8 +35,10 @@ struct PixelBufferSize
 		this->dimensionsInt64 = _mm_setr_epi64x(w, h);
 		this->dimensionsIntReciprocal64 = _mm_setr_epi64x(UINT32_MAX / w + 1, UINT32_MAX / h + 1);
 
-		this->dimensionsFloat = Vec4(w, h, 0, 0);
-		this->dimensionsFloatReciprocal = Vec4(1.0 / w, 1.0 / h, 0, 0);
+		float floatW = w - 0.5; //avoid occasional off-by-one errors
+		float floatH = h - 0.5;
+		this->dimensionsFloat = Vec4(floatW, floatH, 0, 0);
+		this->dimensionsFloatReciprocal = Vec4(1.0 / floatW, 1.0 / floatH, 0, 0);
 
 		this->pitchInt64 = _mm_setr_epi64x(1, w);
 		this->pitchInt32 = _mm_setr_epi32(1, w, 0, 0);

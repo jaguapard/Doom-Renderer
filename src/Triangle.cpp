@@ -30,7 +30,6 @@ void Triangle::sortByAscendingTextureY()
 
 void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 {
-	//std::array<TexVertex, 3> rot;
 	Triangle rotated;
 	bool vertexOutside[3] = { false };
 	int outsideVertexCount = 0;

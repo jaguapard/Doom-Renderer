@@ -37,9 +37,6 @@ struct PixelBufferSize
 		this->dimensionsInt64 = _mm_setr_epi64x(w, h);
 		this->dimensionsIntReciprocal64 = _mm_setr_epi64x(UINT32_MAX / w + 1, UINT32_MAX / h + 1);
 
-		//avoid occasional off-by-one errors. Get closest floats that are less than w, h
-		//float floatW = std::bit_cast<float, int32_t>(std::bit_cast<int32_t, float>(float(w)) - 1);
-		//float floatH = std::bit_cast<float, int32_t>(std::bit_cast<int32_t, float>(float(h)) - 1);
 		float floatW = w;
 		float floatH = h;
 		this->dimensionsFloat = Vec4(floatW, floatH, 0, 0);
@@ -50,6 +47,11 @@ struct PixelBufferSize
 		this->pitchInt64 = _mm_setr_epi64x(1, w);
 		this->pitchInt32 = _mm_setr_epi32(1, w, 0, 0);
 	}
+};
+
+struct Rect
+{
+	int xLeft, yLeft, w, h;
 };
 
 template <typename T>
@@ -86,7 +88,7 @@ public:
 	const T& operator[](uint64_t i) const;
 
 	void saveToFile(const std::string& path) const;
-	virtual Color toColor(T value) const;
+	virtual Color toColor(T value) const; //cannot make this = 0: compiler complains about abstract class. However, if not used, it doesn't matter that this is undefined. Only children of this class may have this
 
 	void operator=(const PixelBuffer<T>& other);
 protected:
@@ -139,7 +141,7 @@ inline T PixelBuffer<T>::getPixel(const __m128i& pos) const
 template<typename T>
 inline T PixelBuffer<T>::getPixel(const Vec4& pos) const
 {
-	return getPixel(_mm_cvttps_epi32(pos.xmm));
+	return getPixel(_mm_cvttps_epi32(pos));
 }
 
 template<typename T>

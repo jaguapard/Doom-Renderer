@@ -26,15 +26,15 @@ void MainGame::handleInput()
 	while (SDL_PollEvent(&ev))
 	{
 		input.handleEvent(ev);
-		if (mouseCaptured && ev.type == SDL_MOUSEMOTION)
+		if (settings.mouseCaptured && ev.type == SDL_MOUSEMOTION)
 		{
-			camAng.y += ev.motion.xrel * camAngAdjustmentSpeed_Mouse;
-			camAng.z -= ev.motion.yrel * camAngAdjustmentSpeed_Mouse;
+			camAng.y += ev.motion.xrel * settings.camAngAdjustmentSpeed_Mouse;
+			camAng.z -= ev.motion.yrel * settings.camAngAdjustmentSpeed_Mouse;
 		}
 		if (ev.type == SDL_MOUSEWHEEL)
 		{
-			if (wheelAdjMod == WheelAdjustmentMode::FLY_SPEED) flySpeed *= pow(1.05, ev.wheel.y);
-			if (wheelAdjMod == WheelAdjustmentMode::FOV) fovMult *= pow(1.05, ev.wheel.y);
+			if (settings.wheelAdjMod == WheelAdjustmentMode::FLY_SPEED) settings.flySpeed *= pow(1.05, ev.wheel.y);
+			if (settings.wheelAdjMod == WheelAdjustmentMode::FOV) settings.fovMult *= pow(1.05, ev.wheel.y);
 		}
 		if (ev.type == SDL_QUIT) throw GameStateSwitch();
 	}
@@ -58,20 +58,20 @@ void MainGame::handleInput()
 	}
 
 	//xoring with 1 == toggle true->false or false->true
-	if (input.wasCharPressedOnThisFrame('G')) fogEnabled ^= 1;
-	if (input.wasCharPressedOnThisFrame('P')) performanceMonitorDisplayEnabled ^= 1;
-	if (input.wasCharPressedOnThisFrame('J')) skyRenderingMode = static_cast<SkyRenderingMode>((skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
-	if (input.wasCharPressedOnThisFrame('O')) wireframeEnabled ^= 1;
+	if (input.wasCharPressedOnThisFrame('G')) settings.fogEnabled ^= 1;
+	if (input.wasCharPressedOnThisFrame('P')) settings.performanceMonitorDisplayEnabled ^= 1;
+	if (input.wasCharPressedOnThisFrame('J')) settings.skyRenderingMode = static_cast<SkyRenderingMode>((settings.skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
+	if (input.wasCharPressedOnThisFrame('O')) settings.wireframeEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('C')) camPos = { -96, 70, 784 };
-	if (input.wasCharPressedOnThisFrame('K')) wheelAdjMod = static_cast<WheelAdjustmentMode>((uint32_t(wheelAdjMod) + 1) % uint32_t(WheelAdjustmentMode::COUNT));
-	if (input.wasCharPressedOnThisFrame('L')) fovMult = 1;
+	if (input.wasCharPressedOnThisFrame('K')) settings.wheelAdjMod = static_cast<WheelAdjustmentMode>((uint32_t(settings.wheelAdjMod) + 1) % uint32_t(WheelAdjustmentMode::COUNT));
+	if (input.wasCharPressedOnThisFrame('L')) settings.fovMult = 1;
 	if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };
-	if (input.wasCharPressedOnThisFrame('R')) backfaceCullingEnabled ^= 1;
+	if (input.wasCharPressedOnThisFrame('R')) settings.backfaceCullingEnabled ^= 1;
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{
-		mouseCaptured ^= 1;
-		SDL_SetRelativeMouseMode(mouseCaptured ? SDL_TRUE : SDL_FALSE);
+		settings.mouseCaptured ^= 1;
+		SDL_SetRelativeMouseMode(settings.mouseCaptured ? SDL_TRUE : SDL_FALSE);
 	}
 
 	bool skyChanged = false;
@@ -95,8 +95,8 @@ void MainGame::handleInput()
 	//camAng += { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_R), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_T), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_Y)};
 	//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
 
-	gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
-	fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
+	settings.gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
+	settings.fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
 
 	//camAng.z = fmod(camAng.z, M_PI);
 	camAng.y = fmod(camAng.y, 2 * M_PI);
@@ -122,7 +122,7 @@ void MainGame::handleInput()
 	if (real len = camAdd.len() > 0)
 	{
 		camAdd /= len;
-		camPos += camAdd * flySpeed;
+		camPos += camAdd * settings.flySpeed;
 	}
 }
 
@@ -219,17 +219,17 @@ void MainGame::draw()
 
 	windowUpdateTaskId = threadpool->addTask([&, this]() {
 		performanceMonitor.registerFrameDone();
-		if (performanceMonitorDisplayEnabled || performanceMonitor.getFrameNumber() % 1024 == 0)
+		if (settings.performanceMonitorDisplayEnabled || performanceMonitor.getFrameNumber() % 1024 == 0)
 		{
 			std::map<std::string, std::string> perfmonInfo;
 			perfmonInfo["Cam pos"] = vecToStr(camPos);
 			perfmonInfo["Cam ang"] = vecToStr(camAng);
-			perfmonInfo["Fly speed"] = std::to_string(flySpeed) + "/frame";
-			perfmonInfo["Backface culling"] = backfaceCullingEnabled ? "enabled" : "disabled";
-			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / fovMult) * 180 / M_PI) + " degrees";
+			perfmonInfo["Fly speed"] = std::to_string(settings.flySpeed) + "/frame";
+			perfmonInfo["Backface culling"] = settings.backfaceCullingEnabled ? "enabled" : "disabled";
+			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / settings.fovMult) * 180 / M_PI) + " degrees";
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
-			if (performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
+			if (settings.performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
 			else std::cout << performanceMonitor.composeString(perfmonInfo) << "\n";
 		}
 		if (SDL_UpdateWindowSurface(initData.wnd)) throw std::runtime_error(SDL_GetError());
@@ -261,12 +261,12 @@ void MainGame::fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJ
 		{
 			for (const auto& model : sectorWorldModels[nSector])
 			{
-				ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, gamma);
+				ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, settings.gamma);
 				model.addToRenderQueue(ctx);
 			}
 		}
 	}
-	if (skyRenderingMode == SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
+	if (settings.skyRenderingMode == SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 
 	
 }
@@ -283,10 +283,10 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.framebufW = framebuf.getW();
 	ctx.framebufH = framebuf.getH();
 	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
-	ctx.wireframeEnabled = wireframeEnabled;
-	ctx.backfaceCullingEnabled = backfaceCullingEnabled;
-	ctx.nearPlaneClippingZ = nearPlaneZ;
-	ctx.fovMult = fovMult;
+	ctx.wireframeEnabled = settings.wireframeEnabled;
+	ctx.backfaceCullingEnabled = settings.backfaceCullingEnabled;
+	ctx.nearPlaneClippingZ = settings.nearPlaneZ;
+	ctx.fovMult = settings.fovMult;
 
 	return ctx;
 }

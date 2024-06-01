@@ -24,11 +24,11 @@ BenchmarkState::BenchmarkState(GameStateInitData data)
 	camPos = { 441, 877, -488 };
 	camAng = { 0,0,-0.43 };
 
-	performanceMonitorDisplayEnabled = false;
-	wireframeEnabled = false;
-	mouseCaptured = false;
-	fogEnabled = false;
-	skyRenderingMode = SPHERE;
+	settings.performanceMonitorDisplayEnabled = false;
+	settings.wireframeEnabled = false;
+	settings.mouseCaptured = false;
+	settings.fogEnabled = false;
+	settings.skyRenderingMode = SPHERE;
 
 	this->changeMapTo(defaultMap);
 	performanceMonitor.reset();

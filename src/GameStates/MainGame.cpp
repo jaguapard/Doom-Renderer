@@ -209,12 +209,12 @@ void MainGame::draw()
 			Uint32* wndSurfPtr = wndSurfStart + myStartIndex;
 
 			Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
+			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
 			Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
 		};
 
 		ThreadpoolTask task;
 		task.func = f;
-		task.dependencies = { windowUpdateTaskId };
 		taskBatch.emplace_back(task);
 	}
 

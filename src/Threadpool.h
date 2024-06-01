@@ -23,18 +23,15 @@ public:
 	std::vector<task_id> dependencies;
 	std::optional<task_id> wantedId;
 
-	task_id assignedId = -1; //this will be task_id(-1) in case has not yet been assigned an id and will be overwritten by the threadpool
+	std::optional<task_id> assignedId; //DO NOT SET IT. This will be overwritten by the threadpool
 };
 class Threadpool
 {
 public:
-	
-
 	Threadpool(std::optional<size_t> numThreads = std::nullopt);
 
 	//add a task to the pool. If `dependencies` is not empty, then the task will only start if all tasks with ids in `dependecies` have finished
 	//if wantedId is not nullopt, then the threadpool will attempt to give the specified ID to the added task. This will fail if the ID was not reserved beforehand
-	//task_id addTask(const taskfunc_t& taskFunc, std::vector<task_id> dependencies = {}, std::optional<task_id> wantedId = std::nullopt);
 	task_id addTask(const taskfunc_t& taskFunc, std::vector<task_id> dependencies = {}, std::optional<task_id> wantedId = std::nullopt);
 	task_id addTask(ThreadpoolTask task);
 	std::vector<task_id> addTaskBatch(const std::vector<ThreadpoolTask>& tasks);

@@ -21,7 +21,7 @@ task_id Threadpool::addTask(const taskfunc_t& taskFunc, std::vector<task_id> dep
 
 task_id Threadpool::addTask(ThreadpoolTask task)
 {
-	assert(task.assignedId == -1);
+	assert(!task.assignedId.has_value());
 	return this->addTaskBatch({ task }).front();
 }
 

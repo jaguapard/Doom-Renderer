@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "../blitting.h"
+
 MainGame::MainGame(GameStateInitData data)
 {
 	initData = data;
@@ -201,16 +203,9 @@ void MainGame::draw()
 				myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
 			}
 
-			int myPixelCount = (myMaxY - myMinY) * ctx.framebufW;
-			int myStartIndex = myMinY * ctx.framebufW;
-
-			real* lightPtr = lightStart + myStartIndex;
-			Color* framebufPtr = framebufStart + myStartIndex;
-			Uint32* wndSurfPtr = wndSurfStart + myStartIndex;
-
-			Color::multipliyByLightInPlace(lightPtr, framebufPtr, myPixelCount);
+			blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			Color::toSDL_Uint32(framebufPtr, wndSurfPtr, myPixelCount, shifts);
+			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, myMinY, myMaxY, shifts);
 		};
 
 		ThreadpoolTask task;

@@ -80,6 +80,7 @@ public:
 	void clearRows(int minY, int maxY, T value = T());
 
 	T* getRawPixels();
+	const T* getRawPixels() const;
 
 	T* begin();
 	T* end();
@@ -229,6 +230,12 @@ inline void PixelBuffer<T>::clearRows(int minY, int maxY, T value)
 
 template<typename T>
 inline T* PixelBuffer<T>::getRawPixels()
+{
+	return const_cast<T*>(static_cast<const PixelBuffer<T>*>(this)->getRawPixels());
+}
+
+template<typename T>
+inline const T* PixelBuffer<T>::getRawPixels() const
 {
 	return &store.front();
 }

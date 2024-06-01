@@ -99,6 +99,9 @@
     <ClCompile Include="src\GameStates\BenchmarkState.cpp">
       <Filter>Source Files\GameStates</Filter>
     </ClCompile>
+    <ClCompile Include="src\blitting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Texture.h">
@@ -193,6 +196,9 @@
     </ClInclude>
     <ClInclude Include="src\bob\Timer.h">
       <Filter>Header Files\bob</Filter>
+    </ClInclude>
+    <ClInclude Include="src\blitting.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

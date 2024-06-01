@@ -51,6 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\blitting.cpp" />
     <ClCompile Include="src\Color.cpp" />
     <ClCompile Include="src\CoordinateTransformer.cpp" />
     <ClCompile Include="src\C_Input.cpp" />
@@ -77,6 +78,7 @@
     <ClCompile Include="src\ZBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\blitting.h" />
     <ClInclude Include="src\bob\SSE_Vec4.h" />
     <ClInclude Include="src\bob\Timer.h" />
     <ClInclude Include="src\bob\Vec2.h" />

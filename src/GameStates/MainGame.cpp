@@ -171,6 +171,10 @@ std::string vecToStr(const Vec4& v)
 	return std::to_string(v.x) + " " + std::to_string(v.y) + " " + std::to_string(v.z);
 }
 
+std::string boolToStr(bool b)
+{
+	return b ? "enabled" : "disabled";
+}
 void MainGame::draw()
 {
 	int threadCount = threadpool->getThreadCount();
@@ -193,9 +197,12 @@ void MainGame::draw()
 			int myMinY = lim.first; //truncate limits to avoid fighting
 			int myMaxY = lim.second;			
 	
-			ctx.frameBuffer->clearRows(myMinY, myMaxY);
-			ctx.zBuffer->clearRows(myMinY, myMaxY);
-			ctx.lightBuffer->clearRows(myMinY, myMaxY, 1);
+			ctx.zBuffer->clearRows(myMinY, myMaxY); //Z buffer has to be cleared, else only pixels closer than previous frame will draw
+			if (settings.bufferCleaningEnabled)
+			{
+				ctx.frameBuffer->clearRows(myMinY, myMaxY);
+				ctx.lightBuffer->clearRows(myMinY, myMaxY, 1);
+			}
 
 			for (int i = 0; i < renderJobs.size(); ++i)
 			{
@@ -226,6 +233,7 @@ void MainGame::draw()
 			perfmonInfo["Cam ang"] = vecToStr(camAng);
 			perfmonInfo["Fly speed"] = std::to_string(settings.flySpeed) + "/frame";
 			perfmonInfo["Backface culling"] = settings.backfaceCullingEnabled ? "enabled" : "disabled";
+			perfmonInfo["Buffer cleaning"] = settings.bufferCleaningEnabled ? "enabled" : "disabled";
 			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / settings.fovMult) * 180 / M_PI) + " degrees";
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();

@@ -82,6 +82,7 @@ protected:
 		bool mouseCaptured = false;
 		bool wireframeEnabled = false;
 		bool backfaceCullingEnabled = false;
+		bool bufferCleaningEnabled = false;
 		bool performanceMonitorDisplayEnabled = true;		
 	};
 

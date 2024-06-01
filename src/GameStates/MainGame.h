@@ -64,41 +64,44 @@ protected:
 
 	CoordinateTransformer ctr;
 
-	uint64_t frames = 0;
-	real flySpeed = 6;
-	real gamma = 1.3;
-	bool fogEnabled = false;
-	real fogMaxIntensityDist = 600;
-	bool mouseCaptured = false;
-	bool wireframeEnabled = false;
-	bool backfaceCullingEnabled = false;
-	real nearPlaneZ = -1;
-	real fovMult = 1;
-	WheelAdjustmentMode wheelAdjMod = WheelAdjustmentMode::FLY_SPEED;
+	struct GameSettings
+	{
+		real flySpeed = 6;
+		real gamma = 1.3;
+		real nearPlaneZ = -1;
+		real fovMult = 1;
 
-	PerformanceMonitor performanceMonitor;
-	bool performanceMonitorDisplayEnabled = true;
+		real camAngAdjustmentSpeed_Mouse = 1e-3;
+		real camAngAdjustmentSpeed_Keyboard = 3e-2;
+		
+		real fogMaxIntensityDist = 600;
+		WheelAdjustmentMode wheelAdjMod = WheelAdjustmentMode::FLY_SPEED;
+		SkyRenderingMode skyRenderingMode = SPHERE;
 
-	std::string warpTo;
+		bool fogEnabled = false;
+		bool mouseCaptured = false;
+		bool wireframeEnabled = false;
+		bool backfaceCullingEnabled = false;
+		bool performanceMonitorDisplayEnabled = true;		
+	};
 
-	real camAngAdjustmentSpeed_Mouse = 1e-3;
-	real camAngAdjustmentSpeed_Keyboard = 3e-2;
+	GameSettings settings;
+	PerformanceMonitor performanceMonitor;	
 
 	std::vector<std::vector<Model>> sectorWorldModels;
 	TextureManager textureManager;
-	DoomMap* currentMap = nullptr;
 
-	SkyRenderingMode skyRenderingMode = SPHERE;
 	Sky sky;
 
 	int currSkyTextureIndex = 2;
 	std::vector<std::string> skyTextures;
 
-	std::vector<task_id> bufferClearingTaskIds;
 	task_id windowUpdateTaskId = 0;
 
 	std::map<std::string, DoomMap> maps;
 	std::string defaultMap;
+	DoomMap* currentMap = nullptr;
+	std::string warpTo;
 
 	std::vector<RenderJob> renderJobs;
 	std::array<uint32_t, 4> shifts;

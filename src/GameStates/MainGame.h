@@ -58,11 +58,6 @@ protected:
 	Vec4 camPos;
 	Vec4 camAng;
 
-	int framebufW = 1920;
-	int framebufH = 1080;
-	int screenW = 1920;
-	int screenH = 1080;
-
 	PixelBuffer<Color> framebuf;
 	PixelBuffer<real> lightBuf;
 	ZBuffer zBuffer;

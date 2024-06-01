@@ -11,7 +11,6 @@
 #include "Color.h"
 #include "Vec.h"
 
-//template <typename T>
 struct PixelBufferSize
 {
 	int w, h;

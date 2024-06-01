@@ -142,8 +142,8 @@ void MainGame::init()
 	camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
-	framebufW = wndSurf->w;
-	framebufH = wndSurf->h;
+	int framebufW = wndSurf->w;
+	int framebufH = wndSurf->h;
 
 	framebuf = { framebufW, framebufH };
 	lightBuf = { framebufW, framebufH };
@@ -280,8 +280,8 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.lightBuffer = &lightBuf;
 	ctx.textureManager = &textureManager;
 	ctx.zBuffer = &zBuffer;
-	ctx.framebufW = framebufW;
-	ctx.framebufH = framebufH;
+	ctx.framebufW = framebuf.getW();
+	ctx.framebufH = framebuf.getH();
 	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
 	ctx.wireframeEnabled = wireframeEnabled;
 	ctx.backfaceCullingEnabled = backfaceCullingEnabled;

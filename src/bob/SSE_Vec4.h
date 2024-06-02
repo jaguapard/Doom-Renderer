@@ -274,7 +274,12 @@ namespace bob
 		_SSE_Vec4_float q1 = _mm_shuffle_ps(other, other, _MM_SHUFFLE(3, 1, 0, 2));
 		_SSE_Vec4_float p2 = _mm_shuffle_ps(*this, *this, _MM_SHUFFLE(3, 1, 0, 2));
 		_SSE_Vec4_float q2 = _mm_shuffle_ps(other, other, _MM_SHUFFLE(3, 0, 2, 1));
+
+#ifdef __AVX2__
+		return _mm_fmsub_ps(p1, q1, p2 * q2);
+#else
 		return p1 * q1 - p2 * q2;
+#endif
 #else
 		float cx = y * other.z - z * other.y;
 		float cy = z * other.x - x * other.z;

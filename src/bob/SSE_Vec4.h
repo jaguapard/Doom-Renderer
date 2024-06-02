@@ -264,10 +264,18 @@ namespace bob
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::cross3d(const _SSE_Vec4_float other) const
 	{
+#if SSE_VER >= 10
+		_SSE_Vec4_float p1 = _mm_shuffle_ps(*this, *this, _MM_SHUFFLE(3, 0, 2, 1));
+		_SSE_Vec4_float q1 = _mm_shuffle_ps(other, other, _MM_SHUFFLE(3, 1, 0, 2));
+		_SSE_Vec4_float p2 = _mm_shuffle_ps(*this, *this, _MM_SHUFFLE(3, 1, 0, 2));
+		_SSE_Vec4_float q2 = _mm_shuffle_ps(other, other, _MM_SHUFFLE(3, 0, 2, 1));
+		return p1 * q1 - p2 * q2;
+#else
 		float cx = y * other.z - z * other.y;
 		float cy = z * other.x - x * other.z;
 		float cz = x * other.y - y * other.x;
 		return _SSE_Vec4_float(cx, cy, cz, 0);
+#endif
 	}
 
 	inline void _SSE_Vec4_float::assert_validX() const

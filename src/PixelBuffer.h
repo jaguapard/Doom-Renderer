@@ -281,7 +281,6 @@ inline void PixelBuffer<T>::saveToFile(const std::string& path) const
 	SDL_FreeSurface(s);
 }
 
-
 template<>
 inline Color PixelBuffer<Color>::toColor(Color value) const
 {

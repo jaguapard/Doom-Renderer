@@ -264,7 +264,12 @@ namespace bob
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::cross3d(const _SSE_Vec4_float other) const
 	{
-#if SSE_VER >= 10
+#if __AVX2__ && 0 //seems like SSE version is even with this one
+		__m256 p = _mm256_permutevar8x32_ps(_mm256_castps128_ps256(*this), _mm256_setr_epi32(1, 2, 0, 3, 2, 0, 1, 3));
+		__m256 q = _mm256_permutevar8x32_ps(_mm256_castps128_ps256(other), _mm256_setr_epi32(2, 0, 1, 3, 1, 2, 0, 3));
+		__m256 pq = _mm256_mul_ps(p, q);
+		return _mm_sub_ps(_mm256_extractf128_ps(pq, 0), _mm256_extractf128_ps(pq, 1));
+#elif SSE_VER >= 10
 		_SSE_Vec4_float p1 = _mm_shuffle_ps(*this, *this, _MM_SHUFFLE(3, 0, 2, 1));
 		_SSE_Vec4_float q1 = _mm_shuffle_ps(other, other, _MM_SHUFFLE(3, 1, 0, 2));
 		_SSE_Vec4_float p2 = _mm_shuffle_ps(*this, *this, _MM_SHUFFLE(3, 1, 0, 2));

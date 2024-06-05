@@ -48,12 +48,12 @@ struct alignas(32) VectorPack
 	VectorPack& operator/=(const VectorPack& other);
 
 	VectorPack operator>(const VectorPack& other) const;
-	VectorPack operator>=(const VectorPack& other) const;	
+	VectorPack operator>=(const VectorPack& other) const;
 	VectorPack operator<(const VectorPack& other) const;
 	VectorPack operator<=(const VectorPack& other) const;
 	VectorPack operator==(const VectorPack& other) const;
 	VectorPack operator!=(const VectorPack& other) const;
-	
+
 
 	VectorPack operator&(const VectorPack& other) const;
 	VectorPack operator|(const VectorPack& other) const;
@@ -63,7 +63,7 @@ struct alignas(32) VectorPack
 	VectorPack& operator^=(const VectorPack& other);
 
 	FloatPack8* begin();
-	FloatPack8* end();	
+	FloatPack8* end();
 	const FloatPack8* begin() const;
 	const FloatPack8* end() const;
 
@@ -87,7 +87,7 @@ struct alignas(32) VectorPack
 
 inline VectorPack::VectorPack(const float x)
 {
-	__m256 b = _mm256_broadcast_ss(&x);
+	__m256 b = _mm256_set1_ps(x);
 	for (auto& it : ymm) it = b;
 }
 

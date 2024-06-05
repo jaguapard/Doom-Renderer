@@ -70,7 +70,7 @@ struct alignas(32) FloatPack8
 
 inline FloatPack8::FloatPack8(const float x)
 {
-	ymm = _mm256_broadcast_ss(&x);
+	ymm = _mm256_set1_ps(x);
 }
 
 inline FloatPack8::FloatPack8(const __m256& m)
@@ -85,22 +85,22 @@ inline FloatPack8::FloatPack8(const float* p)
 
 inline FloatPack8 FloatPack8::operator+(const float other) const
 {
-	return _mm256_add_ps(ymm, _mm256_broadcast_ss(&other));
+	return _mm256_add_ps(ymm, _mm256_set1_ps(other));
 }
 
 inline FloatPack8 FloatPack8::operator-(const float other) const
 {
-	return _mm256_sub_ps(ymm, _mm256_broadcast_ss(&other));
+	return _mm256_sub_ps(ymm, _mm256_set1_ps(other));
 }
 
 inline FloatPack8 FloatPack8::operator*(const float other) const
 {
-	return _mm256_mul_ps(ymm, _mm256_broadcast_ss(&other));
+	return _mm256_mul_ps(ymm, _mm256_set1_ps(other));
 }
 
 inline FloatPack8 FloatPack8::operator/(const float other) const
 {
-	return _mm256_div_ps(ymm, _mm256_broadcast_ss(&other));
+	return _mm256_div_ps(ymm, _mm256_set1_ps(other));
 }
 
 inline FloatPack8 FloatPack8::operator+=(const float other)

@@ -187,18 +187,20 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		real xp = (xBeg.f[0] - original_xBeg) / xSpan;
 		real xpStep = 1.0 / xSpan;
 		
-		VectorPack interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
+		VectorPack interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);		
 		VectorPack interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
+		interpolatedDividedUv += interpolatedDividedUvStep * sequence_float;
+		interpolatedDividedUvStep *= 8;
 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg.f[0]); //all buffers have the same size, so we can use a single index
 	
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
-		for (FloatPack8 x = sequence_float + xBeg; x < xEnd; x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep*8)
+		for (FloatPack8 x = sequence_float + xBeg; x < xEnd; x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep)
 		{
 			FloatPack8 loopBoundsMask = x < xEnd;
 			FloatPack8 currDepthValues = &depthBuf[pixelIndex];
 
-			VectorPack zDividedUvLocal = interpolatedDividedUv + interpolatedDividedUvStep * sequence_float;
+			VectorPack zDividedUvLocal = interpolatedDividedUv;
 			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > zDividedUvLocal.z);
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 

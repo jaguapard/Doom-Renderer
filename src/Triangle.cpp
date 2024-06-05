@@ -209,7 +209,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 
 			FloatPack8 opaquePixelsMask = _mm256_castsi256_ps(_mm256_cmpgt_epi32(texturePixelAlphas, _mm256_setzero_si256()));
 			opaquePixelsMask &= visiblePointsMask;
-			if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
+			//if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
 
 			_mm256_maskstore_ps(&depthBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), zDividedUvLocal.z);
 			_mm256_maskstore_ps(&lightBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), lightMult);

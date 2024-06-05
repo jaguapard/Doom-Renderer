@@ -169,6 +169,9 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	auto& depthBuf = *context.zBuffer;
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
+	FloatPack8 sequence_float = _mm256_setr_ps(0, 1, 2, 3, 4, 5, 6, 7);
+
+
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
 		TexVertex leftTv  = lerp(tv[0],		  tv[flatTop+1], yp); //flat top and flat bottom triangles require different interpolation points
@@ -184,18 +187,36 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		real xp = (xBeg - original_xBeg) / xSpan;
 		real xpStep = 1.0 / xSpan;
 		
-		Vec4 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
-		Vec4 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
+		VectorPack interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
+		VectorPack interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
+		interpolatedDividedUvStep *= sequence_float;
+
 		int pixelIndex = int(y) * bufW + int(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
-		for (real x = xBeg; x < xEnd; ++x, xp += xpStep, ++pixelIndex, interpolatedDividedUv += interpolatedDividedUvStep)
+		for (real x = xBeg; x < xEnd; x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep)
 		{
-			bool occluded = depthBuf[pixelIndex] <= interpolatedDividedUv.z;
-			if (occluded) continue;
+			FloatPack8 loopBoundsMask = (FloatPack8(x) + sequence_float) < FloatPack8(xEnd);
+			FloatPack8 currDepthValues = _mm256_maskload_ps(&depthBuf[pixelIndex], _mm256_castps_si256(loopBoundsMask));
 
-			Vec4  uvCorrected  = interpolatedDividedUv / interpolatedDividedUv.z;
-			Color texturePixel = texture.getPixelAtUV(uvCorrected); 
+			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > interpolatedDividedUv.z);
+			if (!visiblePointsMask.moveMask()) continue; //if all points are occluded, then skip
+
+			VectorPack uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
+			__m256i texturePixels = texture.gatherPixels(uvCorrected.x, uvCorrected.y, visiblePointsMask);
+			__m256i texturePixelAlphas = _mm256_srli_epi32(texturePixels, 24);
+
+			FloatPack8 opaquePixelsMask = _mm256_castsi256_ps(_mm256_cmpgt_epi32(texturePixelAlphas, _mm256_setzero_si256()));
+			opaquePixelsMask &= visiblePointsMask;
+			if (!opaquePixelsMask.moveMask()) continue; //if all pixels are transparent, then skip
+
+			_mm256_maskstore_ps(&depthBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), interpolatedDividedUv.z);
+			_mm256_maskstore_ps(&lightBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), _mm256_broadcast_ss(&renderJob.lightMult));
+			_mm256_maskstore_epi32((int*)&frameBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), texturePixels);
+		}
+
+		/*
+
 			auto lightMult = renderJob.lightMult;
 
 			if (context.wireframeEnabled)
@@ -218,6 +239,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 				depthBuf[pixelIndex] = interpolatedDividedUv.z;
 			}
 		}
+		*/
 	}
 }
 

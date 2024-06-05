@@ -17,6 +17,7 @@ struct alignas(32) FloatPack8
 	FloatPack8() = default;
 	FloatPack8(const float x);
 	FloatPack8(const __m256& m);
+	FloatPack8(const float* p);
 
 	FloatPack8 operator+(const float other) const;
 	FloatPack8 operator-(const float other) const;
@@ -75,6 +76,11 @@ inline FloatPack8::FloatPack8(const float x)
 inline FloatPack8::FloatPack8(const __m256& m)
 {
 	ymm = m;
+}
+
+inline FloatPack8::FloatPack8(const float* p)
+{
+	ymm = *reinterpret_cast<const __m256*>(p);
 }
 
 inline FloatPack8 FloatPack8::operator+(const float other) const

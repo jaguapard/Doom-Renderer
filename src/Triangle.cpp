@@ -181,8 +181,8 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		real xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
 		real xSpan = original_xEnd - original_xBeg;
 
-		real xpStep = 1.0 / xSpan;
 		real xp = (xBeg - original_xBeg) / xSpan;
+		real xpStep = 1.0 / xSpan;
 		
 		Vec4 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
 		Vec4 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;

@@ -197,7 +197,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		for (real x = xBeg; x < xEnd; x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep*8)
 		{
 			FloatPack8 loopBoundsMask = (FloatPack8(x) + sequence_float) < FloatPack8(xEnd);
-			FloatPack8 currDepthValues = _mm256_maskload_ps(&depthBuf[pixelIndex], _mm256_castps_si256(loopBoundsMask));
+			FloatPack8 currDepthValues = _mm256_loadu_ps(&depthBuf[pixelIndex]);
 
 			VectorPack zDividedUvLocal = interpolatedDividedUv + interpolatedDividedUvStep * sequence_float;
 			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > zDividedUvLocal.z);

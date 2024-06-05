@@ -243,8 +243,12 @@ TexVertex TexVertex::operator+(const TexVertex& other) const
 	return  { .ymm = _mm256_add_ps(ymm, other.ymm) };
 }
 
-TexVertex TexVertex::operator*(float m) const
+TexVertex TexVertex::operator*(const float m) const
 {
 	return { .ymm = _mm256_mul_ps(ymm, _mm256_broadcast_ss(&m)) };
 }
 
+bool TexVertex::operator<(const TexVertex& b) const
+{
+	return spaceCoords.y < b.spaceCoords.y;
+}

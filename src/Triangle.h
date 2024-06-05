@@ -27,10 +27,11 @@ struct alignas(32) TexVertex
 		__m256 ymm;
 	};
 
-	bool operator<(const TexVertex& b) const
-	{
-		return spaceCoords.y < b.spaceCoords.y;
-	}
+	TexVertex operator-(const TexVertex& other) const;
+	TexVertex operator+(const TexVertex& other) const;
+	TexVertex operator*(const float other) const;
+
+	bool operator<(const TexVertex& b) const;
 
 	TexVertex getClipedToPlane(const TexVertex& dst, real planeZ) const;
 };

@@ -225,30 +225,3 @@ Vec4 Triangle::getNormalVector() const
 {
 	return (tv[2].spaceCoords - tv[0].spaceCoords).cross3d(tv[1].spaceCoords - tv[0].spaceCoords);
 }
-
-TexVertex TexVertex::getClipedToPlane(const TexVertex& dst, real planeZ) const
-{
-	real alpha = inverse_lerp(spaceCoords.z, dst.spaceCoords.z, planeZ);
-	assert(alpha >= 0 && alpha <= 1);
-	return lerp(*this, dst, alpha);
-}
-
-TexVertex TexVertex::operator-(const TexVertex& other) const
-{
-	return { .ymm = _mm256_sub_ps(ymm, other.ymm) };
-}
-
-TexVertex TexVertex::operator+(const TexVertex& other) const
-{
-	return  { .ymm = _mm256_add_ps(ymm, other.ymm) };
-}
-
-TexVertex TexVertex::operator*(const float m) const
-{
-	return { .ymm = _mm256_mul_ps(ymm, _mm256_broadcast_ss(&m)) };
-}
-
-bool TexVertex::operator<(const TexVertex& b) const
-{
-	return spaceCoords.y < b.spaceCoords.y;
-}

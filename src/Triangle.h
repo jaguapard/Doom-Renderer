@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <immintrin.h>
 
 #include <SDL/SDL.h>
 
@@ -9,43 +10,7 @@
 #include "ZBuffer.h"
 #include "Texture.h"
 #include "TextureManager.h"
-#include "Triangle.h"
-
-#include <immintrin.h>
-
-struct alignas(32) TexVertex
-{
-	union {
-		struct {
-			Vec4 spaceCoords; //this can mean different things inside different contexts, world or screen space
-			Vec4 textureCoords; //this too, but it's either normal uv's, or z-divided ones
-		};
-		struct {
-			real x, y, z, w;
-			real u, v, _pad1, _pad2;
-		};
-		__m256 ymm;
-	};
-
-	TexVertex operator-(const TexVertex& other) const;
-	TexVertex operator+(const TexVertex& other) const;
-	TexVertex operator*(const float other) const;
-
-	bool operator<(const TexVertex& b) const;
-
-	TexVertex getClipedToPlane(const TexVertex& dst, real planeZ) const;
-};
-
-inline TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
-{
-#ifdef __AVX__
-	__m256 t = _mm256_broadcast_ss(&amount);
-	__m256 diff = _mm256_sub_ps(t2.ymm, t1.ymm); //result = tv1 + diff*amount
-	__m256 res = _mm256_fmadd_ps(diff, t, t1.ymm); //a*b+c
-	return { .ymm = res };
-#endif
-	return { lerp(t1.spaceCoords, t2.spaceCoords, amount), lerp(t1.textureCoords, t2.textureCoords,amount) };
-}
+#include "TexVertex.h"
 
 struct TriangleRenderContext;
 struct RenderJob;

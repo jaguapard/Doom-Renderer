@@ -89,6 +89,31 @@ Color Texture::getPixel(int x, int y) const
 	return pixels.getPixel(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
 }
 
+__m256i Texture::gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoords, const FloatPack8& mask) const
+{
+	constexpr int ROUND_MODE = _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC;
+	__m256 dimW = _mm256_set1_ps(pixels.getW());
+	__m256 dimH = _mm256_set1_ps(pixels.getH());
+	__m256d yPitch = _mm256_set1_pd(pixels.getH()*pixels.getW());
+
+	FloatPack8 xFloor = _mm256_round_ps(xCoords, ROUND_MODE);
+	FloatPack8 yFloor = _mm256_round_ps(yCoords, ROUND_MODE);
+
+	FloatPack8 xFrac = FloatPack8(xCoords) - xFloor;
+	FloatPack8 yFrac = FloatPack8(yCoords) - yFloor;
+	xFrac -= (xFrac >= 1) & 1.0f;
+	yFrac -= (yFrac >= 1) & 1.0f;
+
+	FloatPack8 xPixelPos = xFrac * dimW;
+	FloatPack8 yPixelPos = yFrac * dimH;
+
+	__m256i xInd = _mm256_cvttps_epi32(xPixelPos);
+	__m256i yInd = _mm256_mullo_epi32(_mm256_cvttps_epi32(yPixelPos), _mm256_set1_epi32(pixels.getW()));
+	__m256i ind = _mm256_add_epi32(xInd, yInd);
+
+	return _mm256_mask_i32gather_epi32(_mm256_setzero_si256(), (int*)pixels.getRawPixels(), ind, _mm256_castps_si256(mask), 4);
+}
+
 
 int Texture::getW() const
 {

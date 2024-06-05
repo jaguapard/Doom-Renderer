@@ -354,7 +354,7 @@ inline VectorPack VectorPack::cross3d(const VectorPack& other) const
 	ret.x = y * other.z - z * other.y;
 	ret.y = z * other.x - x * other.z;
 	ret.z = x * other.y - y * other.x;
-	ret.w = 0;
+	ret.w = 0.0f;
 	return ret;
 }
 

@@ -104,11 +104,11 @@ __m256i Texture::gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoor
 	xFrac -= (xFrac >= 1) & 1.0f;
 	yFrac -= (yFrac >= 1) & 1.0f;
 
-	FloatPack8 xPixelPos = xFrac * dimW;
-	FloatPack8 yPixelPos = yFrac * dimH;
+	FloatPack8 xPixelPos = xFrac * pixels.getSize().w_ps_256;
+	FloatPack8 yPixelPos = yFrac * pixels.getSize().h_ps_256;
 
 	__m256i xInd = _mm256_cvttps_epi32(xPixelPos);
-	__m256i yInd = _mm256_mullo_epi32(_mm256_cvttps_epi32(yPixelPos), _mm256_set1_epi32(pixels.getW()));
+	__m256i yInd = _mm256_mullo_epi32(_mm256_cvttps_epi32(yPixelPos), pixels.getSize().w_epi32_256);
 	__m256i ind = _mm256_add_epi32(xInd, yInd);
 
 	return _mm256_mask_i32gather_epi32(_mm256_setzero_si256(), (int*)pixels.getRawPixels(), ind, _mm256_castps_si256(mask), 4);

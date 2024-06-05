@@ -170,7 +170,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
 	FloatPack8 sequence_float = _mm256_setr_ps(0, 1, 2, 3, 4, 5, 6, 7);
-
+	FloatPack8 lightMult = renderJob.lightMult;
 
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
@@ -212,7 +212,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
 
 			_mm256_maskstore_ps(&depthBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), zDividedUvLocal.z);
-			_mm256_maskstore_ps(&lightBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), _mm256_broadcast_ss(&renderJob.lightMult));
+			_mm256_maskstore_ps(&lightBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), lightMult);
 			_mm256_maskstore_epi32((int*)&frameBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), texturePixels);
 		}
 

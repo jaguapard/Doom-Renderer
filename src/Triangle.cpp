@@ -189,20 +189,21 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 		
 		VectorPack interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
 		VectorPack interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
-		interpolatedDividedUvStep *= sequence_float;
+		//interpolatedDividedUvStep *= sequence_float;
 
 		int pixelIndex = int(y) * bufW + int(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
-		for (real x = xBeg; x < xEnd; x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep)
+		for (real x = xBeg; x < xEnd; x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep*8)
 		{
 			FloatPack8 loopBoundsMask = (FloatPack8(x) + sequence_float) < FloatPack8(xEnd);
 			FloatPack8 currDepthValues = _mm256_maskload_ps(&depthBuf[pixelIndex], _mm256_castps_si256(loopBoundsMask));
 
-			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > interpolatedDividedUv.z);
+			VectorPack zDividedUvLocal = interpolatedDividedUv + interpolatedDividedUvStep * sequence_float;
+			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > zDividedUvLocal.z);
 			if (!visiblePointsMask.moveMask()) continue; //if all points are occluded, then skip
 
-			VectorPack uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
+			VectorPack uvCorrected = zDividedUvLocal / zDividedUvLocal.z;
 			__m256i texturePixels = texture.gatherPixels(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			__m256i texturePixelAlphas = _mm256_srli_epi32(texturePixels, 24);
 
@@ -210,7 +211,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			opaquePixelsMask &= visiblePointsMask;
 			if (!opaquePixelsMask.moveMask()) continue; //if all pixels are transparent, then skip
 
-			_mm256_maskstore_ps(&depthBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), interpolatedDividedUv.z);
+			_mm256_maskstore_ps(&depthBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), zDividedUvLocal.z);
 			_mm256_maskstore_ps(&lightBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), _mm256_broadcast_ss(&renderJob.lightMult));
 			_mm256_maskstore_epi32((int*)&frameBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), texturePixels);
 		}

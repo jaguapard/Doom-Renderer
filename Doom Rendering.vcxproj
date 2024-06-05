@@ -111,6 +111,7 @@
     <ClInclude Include="src\Threadpool.h" />
     <ClInclude Include="src\Triangle.h" />
     <ClInclude Include="src\Vec.h" />
+    <ClInclude Include="src\VectorPack.h" />
     <ClInclude Include="src\WadLoader.h" />
     <ClInclude Include="src\ZBuffer.h" />
   </ItemGroup>

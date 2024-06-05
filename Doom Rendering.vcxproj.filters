@@ -102,9 +102,6 @@
     <ClCompile Include="src\blitting.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VectorPack.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Texture.h">
@@ -203,10 +200,10 @@
     <ClInclude Include="src\blitting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VectorPack.h">
+    <ClInclude Include="src\FloatPack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\FloatPack.h">
+    <ClInclude Include="src\VectorPack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

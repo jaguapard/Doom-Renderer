@@ -89,6 +89,7 @@
     <ClInclude Include="src\DoomMap.h" />
     <ClInclude Include="src\DoomStructs.h" />
     <ClInclude Include="src\DoomWorldLoader.h" />
+    <ClInclude Include="src\FloatPack.h" />
     <ClInclude Include="src\GameStates\BenchmarkState.h" />
     <ClInclude Include="src\GameStates\GameStateBase.h" />
     <ClInclude Include="src\GameStates\MainGame.h" />

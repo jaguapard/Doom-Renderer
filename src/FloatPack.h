@@ -56,6 +56,11 @@ struct alignas(32) FloatPack8
 	FloatPack8 operator~() const;
 	operator __m256() const;
 
+	explicit operator bool() const
+	{
+		return !_mm256_testz_ps(*this, *this);
+	}
+
 	FloatPack8 clamp(float min, float max) const;
 	int moveMask() const;
 };

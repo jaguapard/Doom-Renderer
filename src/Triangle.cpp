@@ -200,11 +200,10 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			FloatPack8 loopBoundsMask = x < xEnd;
 			FloatPack8 currDepthValues = &depthBuf[pixelIndex];
 
-			VectorPack zDividedUvLocal = interpolatedDividedUv;
-			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > zDividedUvLocal.z);
+			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > interpolatedDividedUv.z);
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
-			VectorPack uvCorrected = zDividedUvLocal / zDividedUvLocal.z;
+			VectorPack uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			__m256i texturePixels = texture.gatherPixels(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			__m256i texturePixelAlphas = _mm256_srli_epi32(texturePixels, 24);
 
@@ -212,7 +211,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			opaquePixelsMask &= visiblePointsMask;
 			//if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
 
-			_mm256_maskstore_ps(&depthBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), zDividedUvLocal.z);
+			_mm256_maskstore_ps(&depthBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), interpolatedDividedUv.z);
 			_mm256_maskstore_ps(&lightBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), lightMult);
 			_mm256_maskstore_epi32((int*)&frameBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), texturePixels);
 		}

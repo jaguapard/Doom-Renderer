@@ -101,8 +101,8 @@ __m256i Texture::gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoor
 
 	FloatPack8 xFrac = FloatPack8(xCoords) - xFloor;
 	FloatPack8 yFrac = FloatPack8(yCoords) - yFloor;
-	xFrac -= (xFrac >= 1) & 1.0f;
-	yFrac -= (yFrac >= 1) & 1.0f;
+	//xFrac -= (xFrac >= 1) & 1.0f;
+	//yFrac -= (yFrac >= 1) & 1.0f;
 
 	FloatPack8 xPixelPos = xFrac * pixels.getSize().w_ps_256;
 	FloatPack8 yPixelPos = yFrac * pixels.getSize().h_ps_256;

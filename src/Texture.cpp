@@ -91,11 +91,8 @@ Color Texture::getPixel(int x, int y) const
 
 __m256i Texture::gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoords, const FloatPack8& mask) const
 {
+	StatCount(statsman.textures.pixelFetches += 8; statsman.textures.gathers++);
 	constexpr int ROUND_MODE = _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC;
-	__m256 dimW = _mm256_set1_ps(pixels.getW());
-	__m256 dimH = _mm256_set1_ps(pixels.getH());
-	__m256d yPitch = _mm256_set1_pd(pixels.getH()*pixels.getW());
-
 	FloatPack8 xFloor = _mm256_round_ps(xCoords, ROUND_MODE);
 	FloatPack8 yFloor = _mm256_round_ps(yCoords, ROUND_MODE);
 

@@ -30,7 +30,8 @@ public:
 	struct Textures
 	{
 		uint64_t
-			pixelFetches = 0;
+			pixelFetches = 0,
+			gathers = 0;
 	};
 
 	struct Pixels

@@ -125,93 +125,67 @@ inline FloatPack8 FloatPack8::operator/=(const float other)
 
 inline FloatPack8 FloatPack8::operator+(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_add_ps(ymm, other.ymm);
-
 }
 
 inline FloatPack8 FloatPack8::operator-(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_sub_ps(ymm, other.ymm);
-
 }
 
 inline FloatPack8 FloatPack8::operator*(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_mul_ps(ymm, other.ymm);
-
 }
 
 inline FloatPack8 FloatPack8::operator/(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_div_ps(ymm, other.ymm);
-
 }
 
 inline FloatPack8 FloatPack8::operator>(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_cmp_ps(ymm, other.ymm, _CMP_GT_OQ);
-
 }
 
 inline FloatPack8 FloatPack8::operator>=(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_cmp_ps(ymm, other.ymm, _CMP_GE_OQ);
-
 }
 
 inline FloatPack8 FloatPack8::operator<(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_cmp_ps(ymm, other.ymm, _CMP_LT_OQ);
-
 }
 
 inline FloatPack8 FloatPack8::operator<=(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_cmp_ps(ymm, other.ymm, _CMP_LE_OQ);
-
 }
 
 inline FloatPack8 FloatPack8::operator==(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_cmp_ps(ymm, other.ymm, _CMP_EQ_OQ);
-
 }
 
 inline FloatPack8 FloatPack8::operator!=(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_cmp_ps(ymm, other.ymm, _CMP_NEQ_OQ);
-
 }
 
 inline FloatPack8 FloatPack8::operator&(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_and_ps(ymm, other.ymm);
-
 }
 
 inline FloatPack8 FloatPack8::operator|(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_or_ps(ymm, other.ymm);
-
 }
 
 inline FloatPack8 FloatPack8::operator^(const FloatPack8& other) const
 {
-	FloatPack8 ret;
 	return _mm256_xor_ps(ymm, other.ymm);
-
 }
 
 inline FloatPack8& FloatPack8::operator&=(const FloatPack8& other)
@@ -251,16 +225,12 @@ inline FloatPack8& FloatPack8::operator/=(const FloatPack8& other)
 
 inline FloatPack8 FloatPack8::operator-() const
 {
-	FloatPack8 ret;
-	__m256 zeros = _mm256_setzero_ps();
-	return _mm256_sub_ps(zeros, ymm);
+	return _mm256_sub_ps(_mm256_setzero_ps(), ymm);
 }
 
 inline FloatPack8 FloatPack8::operator~() const
 {
-	FloatPack8 ret;
-	__m256 allOnes = _mm256_cmp_ps(ymm, ymm, _CMP_EQ_OQ);
-	return _mm256_xor_ps(ymm, allOnes);
+	return _mm256_xor_ps(ymm, _mm256_cmp_ps(ymm, ymm, _CMP_EQ_OQ));
 }
 
 inline FloatPack8::operator __m256() const

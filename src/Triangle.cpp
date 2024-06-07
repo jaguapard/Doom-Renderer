@@ -219,36 +219,12 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 				texturePixels = _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(texturePixels), _mm256_castsi256_ps(_mm256_set1_epi32(-1)), visibleEdgeMask));
 				//opaquePixelsMask = visibleEdgeMask;
 			}
-			_mm256_maskstore_ps(&depthBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), interpolatedDividedUv.z);
-			_mm256_maskstore_ps(&lightBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), lightMult);
-			_mm256_maskstore_epi32((int*)&frameBuf[pixelIndex], _mm256_castps_si256(opaquePixelsMask), texturePixels);
+
+			*reinterpret_cast<__m256*>(&depthBuf[pixelIndex]) = _mm256_blendv_ps(currDepthValues, interpolatedDividedUv.z, opaquePixelsMask);
+			*reinterpret_cast<__m256*>(&lightBuf[pixelIndex]) = _mm256_blendv_ps(*reinterpret_cast<__m256*>(&lightBuf[pixelIndex]), lightMult, opaquePixelsMask);
+			*reinterpret_cast<__m256*>(&frameBuf[pixelIndex]) = _mm256_blendv_ps(*reinterpret_cast<__m256*>(&frameBuf[pixelIndex]), _mm256_castsi256_ps(texturePixels), opaquePixelsMask);
+
 		}
-
-		/*
-
-			auto lightMult = renderJob.lightMult;
-
-			if (context.wireframeEnabled)
-			{
-				int rx = x, ry = y, oxb = original_xBeg, oxe = original_xEnd, oyb = y1, oye = y3;
-				bool leftEdge	= rx == oxb;
-				bool rightEdge  = rx == oxe;
-				bool topEdge	= !flatTop && ry == oyb;
-				bool bottomEdge =  flatTop && ry == oye;
-				if (leftEdge || rightEdge || topEdge || bottomEdge)
-				{
-					texturePixel = Color(255, 255, 255);
-					lightMult = 1;
-				}
-			}
-			if (texturePixel.a > 0) //fully transparent pixels do not need to be considered for drawing
-			{
-				frameBuf[pixelIndex] = texturePixel;
-				lightBuf[pixelIndex] = lightMult;
-				depthBuf[pixelIndex] = interpolatedDividedUv.z;
-			}
-		}
-		*/
 	}
 }
 

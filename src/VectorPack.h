@@ -13,10 +13,7 @@ struct alignas(32) VectorPack
 	union {
 		struct { FloatPack8 x, y, z, w; };
 		FloatPack8 packs[4];
-		__m256 ymm[4];
 	};
-
-	static constexpr size_t ymmCount = sizeof(ymm) / sizeof(ymm[0]);
 
 	VectorPack() = default;
 	VectorPack(const float x); //broadcast x to all elements of all vectors
@@ -87,8 +84,7 @@ struct alignas(32) VectorPack
 
 inline VectorPack::VectorPack(const float x)
 {
-	__m256 b = _mm256_set1_ps(x);
-	for (auto& it : ymm) it = b;
+	for (auto& it : *this) it = _mm256_set1_ps(x);
 }
 
 inline VectorPack::VectorPack(const bob::_SSE_Vec4_float& v)
@@ -101,12 +97,12 @@ inline VectorPack::VectorPack(const bob::_SSE_Vec4_float& v)
 
 inline VectorPack::VectorPack(const FloatPack8& pack)
 {
-	for (auto& it : packs) it = pack;
+	for (auto& it : *this) it = pack;
 }
 
 inline VectorPack::VectorPack(const __m256& pack)
 {
-	for (auto& it : ymm) it = pack;
+	for (auto& it : *this) it = pack;
 }
 
 inline VectorPack::VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>& list)
@@ -124,29 +120,35 @@ inline VectorPack::VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>&
 inline VectorPack VectorPack::operator+(const float other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.packs[i] = this->packs[i] + other;
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] + other;
 	return ret;
 }
 
 inline VectorPack VectorPack::operator-(const float other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.packs[i] = this->packs[i] - other;
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] - other;
 	return ret;
 }
 
 inline VectorPack VectorPack::operator*(const float other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.packs[i] = this->packs[i] * other;
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * other;
 	return ret;
 }
 
 inline VectorPack VectorPack::operator/(const float other) const
 {
-	float rcp = 1.0f / other;
+	constexpr bool useReciprocal = false;
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.packs[i] = this->packs[i] * rcp;
+
+	if (useReciprocal)
+	{
+		float rcp = 1.0f / other;
+		for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * rcp;
+	}
+	else for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] / other;
 	return ret;
 }
 
@@ -173,91 +175,91 @@ inline VectorPack VectorPack::operator/=(const float other)
 inline VectorPack VectorPack::operator+(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_add_ps(ymm[i], other.ymm[i]);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] + other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator-(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_sub_ps(ymm[i], other.ymm[i]);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] - other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator*(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_mul_ps(ymm[i], other.ymm[i]);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator/(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_div_ps(ymm[i], other.ymm[i]);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] / other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator>(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_cmp_ps(ymm[i], other.ymm[i], _CMP_GT_OQ);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] > other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator>=(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_cmp_ps(ymm[i], other.ymm[i], _CMP_GE_OQ);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] >= other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator<(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_cmp_ps(ymm[i], other.ymm[i], _CMP_LT_OQ);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] < other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator<=(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_cmp_ps(ymm[i], other.ymm[i], _CMP_LE_OQ);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] <= other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator==(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_cmp_ps(ymm[i], other.ymm[i], _CMP_EQ_OQ);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] == other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator!=(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_cmp_ps(ymm[i], other.ymm[i], _CMP_NEQ_OQ);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] != other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator&(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_and_ps(ymm[i], other.ymm[i]);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] & other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator|(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_or_ps(ymm[i], other.ymm[i]);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] | other[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator^(const VectorPack& other) const
 {
 	VectorPack ret;
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_xor_ps(ymm[i], other.ymm[i]);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] ^ other[i];
 	return ret;
 }
 
@@ -293,7 +295,7 @@ inline const FloatPack8* VectorPack::begin() const
 
 inline const FloatPack8* VectorPack::end() const
 {
-	return &this->packs[0] + ymmCount;
+	return &this->packs[0] + std::size(packs);
 }
 
 inline FloatPack8& VectorPack::operator[](size_t i)
@@ -330,16 +332,14 @@ inline VectorPack& VectorPack::operator/=(const VectorPack& other)
 inline VectorPack VectorPack::operator-() const
 {
 	VectorPack ret;
-	__m256 zeros = _mm256_setzero_ps();
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_sub_ps(zeros, ymm[i]);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = -(*this)[i];
 	return ret;
 }
 
 inline VectorPack VectorPack::operator~() const
 {
 	VectorPack ret;
-	__m256 allOnes = _mm256_cmp_ps(ymm[0], ymm[0], _CMP_EQ_OQ);
-	for (size_t i = 0; i < ymmCount; ++i) ret.ymm[i] = _mm256_xor_ps(ymm[i], allOnes);
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = ~(*this)[i];
 	return ret;
 }
 
@@ -366,7 +366,7 @@ inline bob::_SSE_Vec4_float VectorPack::extractHorizontalVector(size_t index) co
 template<typename Container>
 inline VectorPack VectorPack::fromHorizontalVectors(const Container& cont)
 {
-	assert(std::size(cont) <= ymmCount);
+	assert(std::size(cont) <= std::size(packs));
 	VectorPack ret;
 	int i = 0;
 	for (auto it = std::begin(cont); it != std::end(cont); ++it, ++i)

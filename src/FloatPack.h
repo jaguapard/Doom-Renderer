@@ -18,6 +18,7 @@ struct alignas(32) FloatPack8
 	FloatPack8(const float x);
 	FloatPack8(const __m256& m);
 	FloatPack8(const float* p);
+	FloatPack8(float f1, float f2, float f3, float f4, float f5, float f6, float f7, float f8);
 
 	FloatPack8 operator+(const float other) const;
 	FloatPack8 operator-(const float other) const;
@@ -64,6 +65,8 @@ struct alignas(32) FloatPack8
 
 	FloatPack8 clamp(float min, float max) const;
 	int moveMask() const;
+
+	static FloatPack8 sequence(float mult = 1.0);
 };
 
 
@@ -81,6 +84,11 @@ inline FloatPack8::FloatPack8(const __m256& m)
 inline FloatPack8::FloatPack8(const float* p)
 {
 	ymm = *reinterpret_cast<const __m256*>(p);
+}
+
+inline FloatPack8::FloatPack8(float f1, float f2, float f3, float f4, float f5, float f6, float f7, float f8)
+{
+	*this = _mm256_setr_ps(f1, f2, f3, f4, f5, f6, f7, f8);
 }
 
 inline FloatPack8 FloatPack8::operator+(const float other) const
@@ -248,4 +256,9 @@ inline FloatPack8 FloatPack8::clamp(float min, float max) const
 inline int FloatPack8::moveMask() const
 {
 	return _mm256_movemask_ps(*this);
+}
+
+inline FloatPack8 FloatPack8::sequence(float mult)
+{
+	return FloatPack8(0, 1, 2, 3, 4, 5, 6, 7) * mult;
 }

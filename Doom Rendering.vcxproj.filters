@@ -203,13 +203,16 @@
     <ClInclude Include="src\blitting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\FloatPack.h">
+    <ClInclude Include="src\FloatPack8.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\VectorPack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\TexVertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FloatPack16.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

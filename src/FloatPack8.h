@@ -69,8 +69,6 @@ struct alignas(32) FloatPack8
 	static FloatPack8 sequence(float mult = 1.0);
 };
 
-
-
 inline FloatPack8::FloatPack8(const float x)
 {
 	ymm = _mm256_set1_ps(x);

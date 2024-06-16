@@ -1,7 +1,7 @@
 #pragma once
 #include <immintrin.h>
 #include "bob/SSE_Vec4.h"
-#include "FloatPack.h"
+#include "FloatPack8.h"
 
 //class representing 8 packed 4-dimensional vectors.
 //Only AVX2 is supported with this one!

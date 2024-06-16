@@ -2,110 +2,118 @@
 #include <immintrin.h>
 #include "bob/SSE_Vec4.h"
 #include "FloatPack8.h"
+#include "FloatPack16.h"
 
 //class representing 8 packed 4-dimensional vectors.
 //Only AVX2 is supported with this one!
 //The pack fits into 4 ymm registers.
 //Each ymm register contains values from 8 vectors,
 //i.e. ymm0 may have x0,x1,...,x7, ymm1 - y0,y1,...,y7, etc
-struct alignas(32) VectorPack
+
+template <typename PackType>
+struct
+#ifdef __AVX512__
+	alignas(64)
+#else
+	alignas(32)
+#endif
+	VectorPack
 {
 	union {
-		struct { FloatPack8 x, y, z, w; };
-		FloatPack8 packs[4];
+		struct { PackType x, y, z, w; };
+		PackType packs[4];
 	};
 
 	VectorPack() = default;
 	VectorPack(const float x); //broadcast x to all elements of all vectors
 	VectorPack(const bob::_SSE_Vec4_float& v); //broadcast a single vector to all vectors in the pack
-	VectorPack(const FloatPack8& pack);
-	VectorPack(const __m256& pack);
+	VectorPack(const PackType& pack);
+	//VectorPack<PackType>(const __m256& pack);
 	VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>& list);
 
 	template <typename Container>
-	static VectorPack fromHorizontalVectors(const Container& cont);
+	static VectorPack<PackType> fromHorizontalVectors(const Container& cont);
 
-	VectorPack operator+(const float other) const; //Add a single value to all elements of the vector pack
-	VectorPack operator-(const float other) const; //Subtract a single value from all elements of the vector pack
-	VectorPack operator*(const float other) const; //Multiply all elements of the vector pack by a single value 
-	VectorPack operator/(const float other) const; //Divide all elements of the vector pack by a single value
+	VectorPack<PackType> operator+(const float other) const; //Add a single value to all elements of the vector pack
+	VectorPack<PackType> operator-(const float other) const; //Subtract a single value from all elements of the vector pack
+	VectorPack<PackType> operator*(const float other) const; //Multiply all elements of the vector pack by a single value 
+	VectorPack<PackType> operator/(const float other) const; //Divide all elements of the vector pack by a single value
 
-	VectorPack operator+=(const float other); //Add a single value to all elements of the vector in-place
-	VectorPack operator-=(const float other); //Subtract a single value from all elements of the vector in-place
-	VectorPack operator*=(const float other); //Multiply all elements of the vector by a single value in-place
-	VectorPack operator/=(const float other); //Divide all elements of the vector by a single value in-place
+	VectorPack<PackType> operator+=(const float other); //Add a single value to all elements of the vector in-place
+	VectorPack<PackType> operator-=(const float other); //Subtract a single value from all elements of the vector in-place
+	VectorPack<PackType> operator*=(const float other); //Multiply all elements of the vector by a single value in-place
+	VectorPack<PackType> operator/=(const float other); //Divide all elements of the vector by a single value in-place
 
-	VectorPack operator+(const VectorPack& other) const;
-	VectorPack operator-(const VectorPack& other) const;
-	VectorPack operator*(const VectorPack& other) const;
-	VectorPack operator/(const VectorPack& other) const;
-	VectorPack& operator+=(const VectorPack& other);
-	VectorPack& operator-=(const VectorPack& other);
-	VectorPack& operator*=(const VectorPack& other);
-	VectorPack& operator/=(const VectorPack& other);
+	VectorPack<PackType> operator+(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator-(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator*(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator/(const VectorPack<PackType>& other) const;
+	VectorPack<PackType>& operator+=(const VectorPack<PackType>& other);
+	VectorPack<PackType>& operator-=(const VectorPack<PackType>& other);
+	VectorPack<PackType>& operator*=(const VectorPack<PackType>& other);
+	VectorPack<PackType>& operator/=(const VectorPack<PackType>& other);
 
-	VectorPack operator>(const VectorPack& other) const;
-	VectorPack operator>=(const VectorPack& other) const;
-	VectorPack operator<(const VectorPack& other) const;
-	VectorPack operator<=(const VectorPack& other) const;
-	VectorPack operator==(const VectorPack& other) const;
-	VectorPack operator!=(const VectorPack& other) const;
+	VectorPack<PackType> operator>(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator>=(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator<(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator<=(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator==(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator!=(const VectorPack<PackType>& other) const;
 
 
-	VectorPack operator&(const VectorPack& other) const;
-	VectorPack operator|(const VectorPack& other) const;
-	VectorPack operator^(const VectorPack& other) const;
-	VectorPack& operator&=(const VectorPack& other);
-	VectorPack& operator|=(const VectorPack& other);
-	VectorPack& operator^=(const VectorPack& other);
+	VectorPack<PackType> operator&(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator|(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> operator^(const VectorPack<PackType>& other) const;
+	VectorPack<PackType>& operator&=(const VectorPack<PackType>& other);
+	VectorPack<PackType>& operator|=(const VectorPack<PackType>& other);
+	VectorPack<PackType>& operator^=(const VectorPack<PackType>& other);
 
-	FloatPack8* begin();
-	FloatPack8* end();
-	const FloatPack8* begin() const;
-	const FloatPack8* end() const;
+	PackType* begin();
+	PackType* end();
+	const PackType* begin() const;
+	const PackType* end() const;
 
-	FloatPack8& operator[](size_t i);
-	const FloatPack8& operator[](size_t i) const;
+	PackType& operator[](size_t i);
+	const PackType& operator[](size_t i) const;
 
 	float product() const;
 	float len() const;
 	float lenSq() const;
 
-	VectorPack operator-() const;
-	VectorPack operator~() const;
-	VectorPack unit() const;
+	VectorPack<PackType> operator-() const;
+	VectorPack<PackType> operator~() const;
+	VectorPack<PackType> unit() const;
 
-	float dot(const VectorPack& other) const;
-	FloatPack8 cross2d(const VectorPack& other) const;
-	VectorPack cross3d(const VectorPack& other) const;
+	float dot(const VectorPack<PackType>& other) const;
+	PackType cross2d(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> cross3d(const VectorPack<PackType>& other) const;
 
 	bob::_SSE_Vec4_float extractHorizontalVector(size_t index) const;
 };
 
-inline VectorPack::VectorPack(const float x)
+template <typename PackType>
+inline VectorPack<PackType>::VectorPack(const float x)
 {
-	for (auto& it : *this) it = _mm256_set1_ps(x);
+	for (auto& it : *this) it = x;
 }
 
-inline VectorPack::VectorPack(const bob::_SSE_Vec4_float& v)
+template <typename PackType>
+inline VectorPack<PackType>::VectorPack(const bob::_SSE_Vec4_float& v)
 {
-	x = FloatPack8(v.x);
-	y = FloatPack8(v.y);
-	z = FloatPack8(v.z);
-	w = FloatPack8(v.w);
+	x = PackType(v.x);
+	y = PackType(v.y);
+	z = PackType(v.z);
+	w = PackType(v.w);
 }
 
-inline VectorPack::VectorPack(const FloatPack8& pack)
-{
-	for (auto& it : *this) it = pack;
-}
-
-inline VectorPack::VectorPack(const __m256& pack)
+template <typename PackType>
+inline VectorPack<PackType>::VectorPack(const PackType& pack)
 {
 	for (auto& it : *this) it = pack;
 }
 
-inline VectorPack::VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>& list)
+template <typename PackType>
+inline VectorPack<PackType>::VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>& list)
 {
 	size_t sz = std::end(list) - std::begin(list);
 	for (size_t i = 0; i < sz; ++i)
@@ -117,31 +125,35 @@ inline VectorPack::VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>&
 	}
 }
 
-inline VectorPack VectorPack::operator+(const float other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator+(const float other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] + other;
 	return ret;
 }
 
-inline VectorPack VectorPack::operator-(const float other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator-(const float other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] - other;
 	return ret;
 }
 
-inline VectorPack VectorPack::operator*(const float other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator*(const float other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * other;
 	return ret;
 }
 
-inline VectorPack VectorPack::operator/(const float other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator/(const float other) const
 {
 	constexpr bool useReciprocal = false;
-	VectorPack ret;
+	VectorPack<PackType> ret;
 
 	if (useReciprocal)
 	{
@@ -152,205 +164,239 @@ inline VectorPack VectorPack::operator/(const float other) const
 	return ret;
 }
 
-inline VectorPack VectorPack::operator+=(const float other)
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator+=(const float other)
 {
 	return *this = *this + other;
 }
 
-inline VectorPack VectorPack::operator-=(const float other)
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator-=(const float other)
 {
 	return *this = *this - other;
 }
 
-inline VectorPack VectorPack::operator*=(const float other)
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator*=(const float other)
 {
 	return *this = *this * other;
 }
 
-inline VectorPack VectorPack::operator/=(const float other)
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator/=(const float other)
 {
 	return *this = *this / other;
 }
 
-inline VectorPack VectorPack::operator+(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator+(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] + other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator-(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator-(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] - other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator*(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator*(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator/(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator/(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] / other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator>(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator>(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] > other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator>=(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator>=(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] >= other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator<(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator<(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] < other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator<=(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator<=(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] <= other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator==(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator==(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] == other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator!=(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator!=(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] != other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator&(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator&(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] & other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator|(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator|(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] | other[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator^(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator^(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] ^ other[i];
 	return ret;
 }
 
-inline VectorPack& VectorPack::operator&=(const VectorPack& other)
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator&=(const VectorPack<PackType>& other)
 {
 	return *this = *this & other;
 }
 
-inline VectorPack& VectorPack::operator|=(const VectorPack& other)
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator|=(const VectorPack<PackType>& other)
 {
 	return *this = *this | other;
 }
 
-inline VectorPack& VectorPack::operator^=(const VectorPack& other)
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator^=(const VectorPack<PackType>& other)
 {
 	return *this = *this ^ other;
 }
 
-inline FloatPack8* VectorPack::begin()
+template <typename PackType>
+inline PackType* VectorPack<PackType>::begin()
 {
-	return const_cast<FloatPack8*>(static_cast<const VectorPack*>(this)->begin());
+	return const_cast<PackType*>(static_cast<const VectorPack*>(this)->begin());
 }
 
-inline FloatPack8* VectorPack::end()
+template <typename PackType>
+inline PackType* VectorPack<PackType>::end()
 {
-	return const_cast<FloatPack8*>(static_cast<const VectorPack*>(this)->end());
+	return const_cast<PackType*>(static_cast<const VectorPack*>(this)->end());
 }
 
-inline const FloatPack8* VectorPack::begin() const
+template <typename PackType>
+inline const PackType* VectorPack<PackType>::begin() const
 {
 	return &this->packs[0];
 }
 
-inline const FloatPack8* VectorPack::end() const
+template <typename PackType>
+inline const PackType* VectorPack<PackType>::end() const
 {
 	return &this->packs[0] + std::size(packs);
 }
 
-inline FloatPack8& VectorPack::operator[](size_t i)
+template <typename PackType>
+inline PackType& VectorPack<PackType>::operator[](size_t i)
 {
-	const VectorPack& p = *this;
-	return const_cast<FloatPack8&>(p[i]);
+	const VectorPack<PackType>& p = *this;
+	return const_cast<PackType&>(p[i]);
 }
 
-inline const FloatPack8& VectorPack::operator[](size_t i) const
+template <typename PackType>
+inline const PackType& VectorPack<PackType>::operator[](size_t i) const
 {
 	return packs[i];
 }
 
-inline VectorPack& VectorPack::operator+=(const VectorPack& other)
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator+=(const VectorPack<PackType>& other)
 {
 	return *this = *this + other;
 }
 
-inline VectorPack& VectorPack::operator-=(const VectorPack& other)
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator-=(const VectorPack<PackType>& other)
 {
 	return *this = *this - other;
 }
 
-inline VectorPack& VectorPack::operator*=(const VectorPack& other)
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator*=(const VectorPack<PackType>& other)
 {
 	return *this = *this * other;
 }
 
-inline VectorPack& VectorPack::operator/=(const VectorPack& other)
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator/=(const VectorPack<PackType>& other)
 {
 	return *this = *this / other;
 }
 
-inline VectorPack VectorPack::operator-() const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator-() const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = -(*this)[i];
 	return ret;
 }
 
-inline VectorPack VectorPack::operator~() const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator~() const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = ~(*this)[i];
 	return ret;
 }
 
-inline FloatPack8 VectorPack::cross2d(const VectorPack& other) const
+template <typename PackType>
+inline PackType VectorPack<PackType>::cross2d(const VectorPack<PackType>& other) const
 {
 	return x * other.y - y * other.x;
 }
 
-inline VectorPack VectorPack::cross3d(const VectorPack& other) const
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::cross3d(const VectorPack<PackType>& other) const
 {
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	ret.x = y * other.z - z * other.y;
 	ret.y = z * other.x - x * other.z;
 	ret.z = x * other.y - y * other.x;
@@ -358,16 +404,18 @@ inline VectorPack VectorPack::cross3d(const VectorPack& other) const
 	return ret;
 }
 
-inline bob::_SSE_Vec4_float VectorPack::extractHorizontalVector(size_t index) const
+template <typename PackType>
+inline bob::_SSE_Vec4_float VectorPack<PackType>::extractHorizontalVector(size_t index) const
 {
 	return bob::_SSE_Vec4_float(x.f[index], y.f[index], z.f[index], w.f[index]);
 }
 
+template <typename PackType>
 template<typename Container>
-inline VectorPack VectorPack::fromHorizontalVectors(const Container& cont)
+inline VectorPack<PackType> VectorPack<PackType>::fromHorizontalVectors(const Container& cont)
 {
 	assert(std::size(cont) <= std::size(packs));
-	VectorPack ret;
+	VectorPack<PackType> ret;
 	int i = 0;
 	for (auto it = std::begin(cont); it != std::end(cont); ++it, ++i)
 	{
@@ -378,3 +426,6 @@ inline VectorPack VectorPack::fromHorizontalVectors(const Container& cont)
 	}
 	return ret;
 }
+
+typedef VectorPack<FloatPack8> VectorPack8;
+typedef VectorPack<FloatPack16> VectorPack16;

@@ -151,19 +151,20 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool 
 	context.renderJobs->push_back(rj);
 }
 
-void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
+
+void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
 	//Scanline rasterization algorithm
 	if (y1 >= zoneMaxY || y3 < zoneMinY) return;
 	real yBeg = std::clamp<real>(y1, zoneMinY, zoneMaxY);
 	real yEnd = std::clamp<real>(y3, zoneMinY, zoneMaxY);
-	
+
 	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
 	real yp = (yBeg - y1) / ySpan;
 	real ypStep = 1.0 / ySpan;
 
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
-	bool flatTop = renderJob.flatTop;	
+	bool flatTop = renderJob.flatTop;
 	auto& frameBuf = *context.frameBuffer;
 	auto& lightBuf = *context.lightBuffer;
 	auto& depthBuf = *context.zBuffer;
@@ -174,10 +175,10 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
-		TexVertex leftTv  = lerp(tv[0],		  tv[flatTop+1], yp); //flat top and flat bottom triangles require different interpolation points
-		TexVertex rightTv = lerp(tv[flatTop], tv[2],		 yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
+		TexVertex leftTv = lerp(tv[0], tv[flatTop + 1], yp); //flat top and flat bottom triangles require different interpolation points
+		TexVertex rightTv = lerp(tv[flatTop], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 		if (leftTv.spaceCoords.x > rightTv.spaceCoords.x) std::swap(leftTv, rightTv);
-		
+
 		real original_xBeg = leftTv.spaceCoords.x;
 		real original_xEnd = rightTv.spaceCoords.x;
 		FloatPack8 xBeg = std::clamp<real>(original_xBeg, 0, context.framebufW);
@@ -186,14 +187,14 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 
 		real xp = (xBeg.f[0] - original_xBeg) / xSpan;
 		real xpStep = 1.0 / xSpan;
-		
-		VectorPack interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);		
-		VectorPack interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
+
+		VectorPack8 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
+		VectorPack8 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
 		interpolatedDividedUv += interpolatedDividedUvStep * sequence_float;
 		interpolatedDividedUvStep *= 8;
 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg.f[0]); //all buffers have the same size, so we can use a single index
-	
+
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
 		for (FloatPack8 x = sequence_float + xBeg; x < xEnd; x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep)
 		{
@@ -203,7 +204,7 @@ void Triangle::drawSlice(const TriangleRenderContext & context, const RenderJob&
 			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > interpolatedDividedUv.z);
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
-			VectorPack uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
+			VectorPack8 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			__m256i texturePixels = texture.gatherPixels(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			__m256i texturePixelAlphas = _mm256_srli_epi32(texturePixels, 24);
 

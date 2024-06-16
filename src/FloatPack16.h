@@ -34,12 +34,12 @@ struct alignas(64) FloatPack16
 	FloatPack16& operator*=(const FloatPack16& other);
 	FloatPack16& operator/=(const FloatPack16& other);
 
-	FloatPack16 operator>(const FloatPack16& other) const;
-	FloatPack16 operator>=(const FloatPack16& other) const;
-	FloatPack16 operator<(const FloatPack16& other) const;
-	FloatPack16 operator<=(const FloatPack16& other) const;
-	FloatPack16 operator==(const FloatPack16& other) const;
-	FloatPack16 operator!=(const FloatPack16& other) const;
+	uint16_t operator>(const FloatPack16& other) const;
+	uint16_t operator>=(const FloatPack16& other) const;
+	uint16_t operator<(const FloatPack16& other) const;
+	uint16_t operator<=(const FloatPack16& other) const;
+	uint16_t operator==(const FloatPack16& other) const;
+	uint16_t operator!=(const FloatPack16& other) const;
 
 
 	FloatPack16 operator&(const FloatPack16& other) const;
@@ -138,34 +138,34 @@ inline FloatPack16 FloatPack16::operator/(const FloatPack16& other) const
 	return _mm512_div_ps(zmm, other.zmm);
 }
 
-inline FloatPack16 FloatPack16::operator>(const FloatPack16& other) const
+inline uint16_t FloatPack16::operator>(const FloatPack16& other) const
 {
-	return _mm512_cmp_ps(zmm, other.zmm, _CMP_GT_OQ);
+	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_GT_OQ);
 }
 
-inline FloatPack16 FloatPack16::operator>=(const FloatPack16& other) const
+inline uint16_t FloatPack16::operator>=(const FloatPack16& other) const
 {
-	return _mm512_cmp_ps(zmm, other.zmm, _CMP_GE_OQ);
+	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_GE_OQ);
 }
 
-inline FloatPack16 FloatPack16::operator<(const FloatPack16& other) const
+inline uint16_t FloatPack16::operator<(const FloatPack16& other) const
 {
-	return _mm512_cmp_ps(zmm, other.zmm, _CMP_LT_OQ);
+	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_LT_OQ);
 }
 
-inline FloatPack16 FloatPack16::operator<=(const FloatPack16& other) const
+inline uint16_t FloatPack16::operator<=(const FloatPack16& other) const
 {
-	return _mm512_cmp_ps(zmm, other.zmm, _CMP_LE_OQ);
+	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_LE_OQ);
 }
 
-inline FloatPack16 FloatPack16::operator==(const FloatPack16& other) const
+inline uint16_t FloatPack16::operator==(const FloatPack16& other) const
 {
-	return _mm512_cmp_ps(zmm, other.zmm, _CMP_EQ_OQ);
+	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_EQ_OQ);
 }
 
-inline FloatPack16 FloatPack16::operator!=(const FloatPack16& other) const
+inline uint16_t FloatPack16::operator!=(const FloatPack16& other) const
 {
-	return _mm512_cmp_ps(zmm, other.zmm, _CMP_NEQ_OQ);
+	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_NEQ_OQ);
 }
 
 inline FloatPack16 FloatPack16::operator&(const FloatPack16& other) const
@@ -225,7 +225,7 @@ inline FloatPack16 FloatPack16::operator-() const
 
 inline FloatPack16 FloatPack16::operator~() const
 {
-	return _mm512_xor_ps(zmm, _mm512_cmp_ps(zmm, zmm, _CMP_EQ_OQ));
+	return _mm512_xor_ps(zmm, _mm512_castsi512_ps(_mm512_set1_epi32(-1)));
 }
 
 inline FloatPack16::operator __m512() const

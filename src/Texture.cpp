@@ -111,6 +111,28 @@ __m256i Texture::gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoor
 	return _mm256_mmask_i32gather_epi32(_mm256_setzero_si256(), mask, ind, (int*)pixels.getRawPixels(), sizeof(pixels[0]));
 }
 
+__m512i Texture::gatherPixels512(const FloatPack16& xCoords, const FloatPack16& yCoords, const uint16_t& mask) const
+{
+	StatCount(statsman.textures.pixelFetches += 8; statsman.textures.gathers++);
+	constexpr int ROUND_MODE = _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC;
+	FloatPack16 xFloor = _mm512_floor_ps(xCoords);
+	FloatPack16 yFloor = _mm512_floor_ps(yCoords);
+
+	FloatPack16 xFrac = FloatPack16(xCoords) - xFloor;
+	FloatPack16 yFrac = FloatPack16(yCoords) - yFloor;
+	//xFrac -= (xFrac >= 1) & 1.0f;
+	//yFrac -= (yFrac >= 1) & 1.0f;
+
+	FloatPack16 xPixelPos = xFrac * pixels.getSize().w_ps_512;
+	FloatPack16 yPixelPos = yFrac * pixels.getSize().h_ps_512;
+
+	__m512i xInd = _mm512_cvttps_epi32(xPixelPos);
+	__m512i yInd = _mm512_mullo_epi32(_mm512_cvttps_epi32(yPixelPos), pixels.getSize().w_epi32_512);
+	__m512i ind = _mm512_add_epi32(xInd, yInd);
+
+	return _mm512_mask_i32gather_epi32(_mm512_setzero_si512(), mask, ind, (int*)pixels.getRawPixels(), sizeof(pixels[0]));
+}
+
 
 int Texture::getW() const
 {

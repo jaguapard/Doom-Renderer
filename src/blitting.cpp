@@ -11,7 +11,31 @@ void blitting::lightIntoFrameBuffer(PixelBuffer<Color>& frameBuf, const PixelBuf
 	size_t pixelCount = (maxY - minY) * frameBuf.getW();
 
 	constexpr char z = 1 << 7; //if upper bit of the 8 bit index for shuffle is set, then the element will be filled with 0's automagically.
-#ifdef __AVX2__
+
+#if __AVX512F__
+	__m512i rExtractMask = _mm512_broadcast_i32x4(_mm_setr_epi8(0, z, z, z, 4, z, z, z, 8, z, z, z, 12, z, z, z));
+	__m512i gExtractMask = _mm512_add_epi8(rExtractMask, _mm512_set1_epi32(1));
+	__m512i bExtractMask = _mm512_add_epi8(gExtractMask, _mm512_set1_epi32(1));
+
+	for (; pixelCount >= 16; currFrameBufPtr += 16, currLightBufPtr += 16, pixelCount -= 16)
+	{
+		__m512 light = _mm512_load_ps(currLightBufPtr); //load light intensities for pixels from light buffer
+		__m512i origColors = _mm512_load_epi32(currFrameBufPtr); //packed colors in this order: rgba,rgba,rgba,...		
+
+		//shuffle the bytes such that lowest bytes of each epi32 component in __m256i's are the values of corresponding colors and convert them to floats
+		__m512 floatR = _mm512_cvtepi32_ps(_mm512_shuffle_epi8(origColors, rExtractMask));
+		__m512 floatG = _mm512_cvtepi32_ps(_mm512_shuffle_epi8(origColors, gExtractMask));
+		__m512 floatB = _mm512_cvtepi32_ps(_mm512_shuffle_epi8(origColors, bExtractMask));
+		//alpha can stay broken lol
+
+		__m512i mulR = _mm512_cvttps_epi32(_mm512_mul_ps(floatR, light));
+		__m512i mulG = _mm512_cvttps_epi32(_mm512_mul_ps(floatG, light));
+		__m512i mulB = _mm512_cvttps_epi32(_mm512_mul_ps(floatB, light));
+
+		__m512i res = _mm512_or_si512(mulR, _mm512_or_si512(_mm512_slli_epi32(mulG, 8), _mm512_slli_epi32(mulB, 16)));
+		*reinterpret_cast<__m512i*>(currFrameBufPtr) = res;
+	}
+#elif __AVX2__
 	__m256i rExtractMask = _mm256_broadcastsi128_si256(_mm_setr_epi8(0, z, z, z, 4, z, z, z, 8, z, z, z, 12, z, z, z));
 	__m256i gExtractMask = _mm256_add_epi8(rExtractMask, _mm256_set1_epi32(1));
 	__m256i bExtractMask = _mm256_add_epi8(gExtractMask, _mm256_set1_epi32(1));

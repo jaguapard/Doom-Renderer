@@ -12,7 +12,7 @@
 
 template <typename PackType>
 struct
-#ifdef __AVX512__
+#ifdef __AVX512F__
 	alignas(64)
 #else
 	alignas(32)

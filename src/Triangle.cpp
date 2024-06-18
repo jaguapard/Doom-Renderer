@@ -216,15 +216,18 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			uint8_t opaquePixelsMask = _kand_mask8(visiblePointsMask,_mm256_cmpgt_epu32_mask(texturePixels, zeroAlphaComparison));
 			//if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
 
-			/*
+			
 			if (context.wireframeEnabled)
 			{
-				FloatPack8 edgeMask = (x <= original_xBeg + 1) | (x >= original_xEnd - 1);
-				FloatPack8 visibleEdgeMask = visiblePointsMask & edgeMask;
+				__mmask8 edgeMask = _kor_mask8(_mm256_cmp_ps_mask(x, FloatPack8(original_xBeg + 1), _CMP_LE_OQ), _mm256_cmp_ps_mask(x, FloatPack8(original_xEnd - 1), _CMP_GE_OQ));
+				__mmask8 visibleEdgesMask = _kand_mask8(edgeMask, visiblePointsMask);
+
+				texturePixels = _mm256_mask_blend_epi32(visibleEdgesMask, texturePixels, _mm256_set1_epi32(-1));
+				//lightMult = _mm256_mask_blend_ps(visibleEdgesMask, lightMult, _mm256_set1_ps(1));
+
 				//lightMult = _mm256_blendv_ps(lightMult, FloatPack8(1), visibleEdgeMask); this was supposed to force lightmult to 1 on triangle borders. For some reason, it just makes everything whacky.
-				texturePixels = _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(texturePixels), _mm256_castsi256_ps(_mm256_set1_epi32(-1)), visibleEdgeMask));
 				//opaquePixelsMask = visibleEdgeMask;
-			}*/
+			}
 
 			_mm256_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			_mm256_mask_store_ps(&lightBuf[pixelIndex], opaquePixelsMask, lightMult);

@@ -173,6 +173,9 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	FloatPack8 sequence_float = _mm256_setr_ps(0, 1, 2, 3, 4, 5, 6, 7);
 	FloatPack8 lightMult = renderJob.lightMult;
 
+	static_assert(offsetof(Color, a) == 3);
+	__m256i zeroAlphaComparison = _mm256_set1_epi32(0xFF000000 - 1); //assuming alpha is the uppermost bit, we can use unsigned comparison to tell transparent pixels from opaque ones
+
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
 		TexVertex leftTv = lerp(tv[0], tv[flatTop + 1], yp); //flat top and flat bottom triangles require different interpolation points
@@ -196,22 +199,24 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg.f[0]); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
-		for (FloatPack8 x = sequence_float + xBeg; x < xEnd; x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep)
+		for (FloatPack8 x = sequence_float + xBeg; 
+			uint8_t loopBoundsMask = _mm256_cmp_ps_mask(x, xEnd, _CMP_LT_OQ); 
+			x += 8, pixelIndex += 8, interpolatedDividedUv += interpolatedDividedUvStep)
 		{
-			FloatPack8 loopBoundsMask = x < xEnd;
+			//FloatPack8 loopBoundsMask = x < xEnd;
 			FloatPack8 currDepthValues = &depthBuf[pixelIndex];
 
-			FloatPack8 visiblePointsMask = loopBoundsMask & (currDepthValues > interpolatedDividedUv.z);
+			uint8_t visiblePointsMask = _kand_mask8(loopBoundsMask, _mm256_cmp_ps_mask(currDepthValues, interpolatedDividedUv.z, _CMP_GT_OQ));
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
 			VectorPack8 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			__m256i texturePixels = texture.gatherPixels(uvCorrected.x, uvCorrected.y, visiblePointsMask);
-			__m256i texturePixelAlphas = _mm256_srli_epi32(texturePixels, 24);
+			//__m256i texturePixelAlphas = _mm256_srli_epi32(texturePixels, 24);
 
-			FloatPack8 opaquePixelsMask = _mm256_castsi256_ps(_mm256_cmpgt_epi32(texturePixelAlphas, _mm256_setzero_si256()));
-			opaquePixelsMask &= visiblePointsMask;
+			uint8_t opaquePixelsMask = _kand_mask8(visiblePointsMask,_mm256_cmpgt_epu32_mask(texturePixels, zeroAlphaComparison));
 			//if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
 
+			/*
 			if (context.wireframeEnabled)
 			{
 				FloatPack8 edgeMask = (x <= original_xBeg + 1) | (x >= original_xEnd - 1);
@@ -219,12 +224,11 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				//lightMult = _mm256_blendv_ps(lightMult, FloatPack8(1), visibleEdgeMask); this was supposed to force lightmult to 1 on triangle borders. For some reason, it just makes everything whacky.
 				texturePixels = _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(texturePixels), _mm256_castsi256_ps(_mm256_set1_epi32(-1)), visibleEdgeMask));
 				//opaquePixelsMask = visibleEdgeMask;
-			}
+			}*/
 
-			*reinterpret_cast<__m256*>(&depthBuf[pixelIndex]) = _mm256_blendv_ps(currDepthValues, interpolatedDividedUv.z, opaquePixelsMask);
-			*reinterpret_cast<__m256*>(&lightBuf[pixelIndex]) = _mm256_blendv_ps(*reinterpret_cast<__m256*>(&lightBuf[pixelIndex]), lightMult, opaquePixelsMask);
-			*reinterpret_cast<__m256*>(&frameBuf[pixelIndex]) = _mm256_blendv_ps(*reinterpret_cast<__m256*>(&frameBuf[pixelIndex]), _mm256_castsi256_ps(texturePixels), opaquePixelsMask);
-
+			_mm256_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
+			_mm256_mask_store_ps(&lightBuf[pixelIndex], opaquePixelsMask, lightMult);
+			_mm256_mask_store_epi32(&frameBuf[pixelIndex], opaquePixelsMask, texturePixels);
 		}
 	}
 }

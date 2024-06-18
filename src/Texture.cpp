@@ -89,7 +89,7 @@ Color Texture::getPixel(int x, int y) const
 	return pixels.getPixel(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
 }
 
-__m256i Texture::gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoords, const FloatPack8& mask) const
+__m256i Texture::gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoords, const uint8_t& mask) const
 {
 	StatCount(statsman.textures.pixelFetches += 8; statsman.textures.gathers++);
 	constexpr int ROUND_MODE = _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC;
@@ -108,7 +108,7 @@ __m256i Texture::gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoor
 	__m256i yInd = _mm256_mullo_epi32(_mm256_cvttps_epi32(yPixelPos), pixels.getSize().w_epi32_256);
 	__m256i ind = _mm256_add_epi32(xInd, yInd);
 
-	return _mm256_mask_i32gather_epi32(_mm256_setzero_si256(), (int*)pixels.getRawPixels(), ind, _mm256_castps_si256(mask), 4);
+	return _mm256_mmask_i32gather_epi32(_mm256_setzero_si256(), mask, ind, (int*)pixels.getRawPixels(), sizeof(pixels[0]));
 }
 
 

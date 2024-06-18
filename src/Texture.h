@@ -29,7 +29,7 @@ public:
 	
 	Color getPixelAtUV(const Vec4& uv) const; //z and w values are ignored
 	Color getPixel(int x, int y) const;
-	__m256i gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoords, const FloatPack8& mask) const;
+	__m256i gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoords, const uint8_t& mask) const;
 
 	int getW() const;
 	int getH() const;

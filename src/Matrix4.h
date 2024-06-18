@@ -10,6 +10,7 @@ public:
 		float elements[4][4];
 		struct { __m128 xmm0, xmm1, xmm2, xmm3; };
 		struct { __m256 ymm0, ymm1; };
+		__m512 zmm;
 	};
 
 	Matrix4() = default;

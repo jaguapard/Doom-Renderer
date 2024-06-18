@@ -27,7 +27,13 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const
 
 Vec4 Matrix4::operator*(const Vec4 v) const
 {
-#ifdef __AVX2__
+#if __AVX512F__
+	__m512 broadcasted_v = _mm512_broadcast_f32x4(v);
+	__m512 preSum = _mm512_mul_ps(broadcasted_v, zmm); //sum elements 0-3 to get result x, 4-7 for y, 8-11 for z, 12-15 for w
+	__m512 parts = _mm512_permutexvar_ps(_mm512_setr_epi32(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15), preSum); //add up each __m128 part to get final answer
+
+	return Vec4(_mm512_extractf32x4_ps(parts, 0)) + Vec4(_mm512_extractf32x4_ps(parts, 1)) + Vec4(_mm512_extractf32x4_ps(parts, 2)) + Vec4(_mm512_extractf32x4_ps(parts, 3));
+#elif __AVX2__
 	__m256 vv = _mm256_broadcast_ps(&v.xmm);
 	__m256 preSum_xy = _mm256_mul_ps(vv, ymm0); //sum elements 0-3 to get result x, 4-7 for y
 	__m256 preSum_zw = _mm256_mul_ps(vv, ymm1); //sum elements 0-3 to get result z, 4-7 for w

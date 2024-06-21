@@ -188,7 +188,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		FloatPack16 xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
 		real xSpan = original_xEnd - original_xBeg;
 
-		real xp = (xBeg.f[0] - original_xBeg) / xSpan;
+		real xp = (xBeg[0] - original_xBeg) / xSpan;
 		real xpStep = 1.0 / xSpan;
 
 		VectorPack16 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
@@ -196,7 +196,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		interpolatedDividedUv += interpolatedDividedUvStep * sequence_float;
 		interpolatedDividedUvStep *= 16;
 
-		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg.f[0]); //all buffers have the same size, so we can use a single index
+		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg[0]); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
 		for (FloatPack16 x = sequence_float + xBeg; 

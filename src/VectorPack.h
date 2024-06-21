@@ -137,7 +137,7 @@ inline VectorPack<PackType>::VectorPack(const VectorPack<PackType>& other)
 template<typename PackType>
 inline VectorPack<PackType>& VectorPack<PackType>::operator=(const VectorPack<PackType>& other)
 {
-	for (size_t i = 0; i < std::size(packs); ++i) (*this).packs[i] = other.packs[i];
+	for (size_t i = 0; i < std::size(packs); ++i) (*this)[i] = other[i];
 	return *this;
 }
 

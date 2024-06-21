@@ -2,6 +2,68 @@
 #include <immintrin.h>
 #include "bob/SSE_Vec4.h"
 
+struct Mask16
+{
+	__mmask16 mask;
+	Mask16(const __mmask16& m);
+
+	Mask16 operator&(const Mask16& other) const;
+	Mask16 operator|(const Mask16& other) const;
+	Mask16 operator^(const Mask16& other) const;
+	Mask16& operator&=(const Mask16& other);
+	Mask16& operator|=(const Mask16& other);
+	Mask16& operator^=(const Mask16& other);
+
+	operator __mmask16() const;
+	operator bool() const;
+};
+
+inline Mask16::Mask16(const __mmask16& m)
+{
+	mask = m;
+}
+
+inline Mask16 Mask16::operator&(const Mask16& other) const
+{
+	return _kand_mask16(mask, other.mask);
+}
+
+inline Mask16 Mask16::operator|(const Mask16& other) const
+{
+	return _kor_mask16(mask, other.mask);
+}
+
+inline Mask16 Mask16::operator^(const Mask16& other) const
+{
+	return _kxor_mask16(mask, other.mask);
+}
+
+inline Mask16& Mask16::operator&=(const Mask16& other)
+{
+	*this = *this & other;
+}
+
+inline Mask16& Mask16::operator|=(const Mask16& other)
+{
+	*this = *this | other;
+}
+
+inline Mask16& Mask16::operator^=(const Mask16& other)
+{
+	*this = *this ^ other;
+}
+
+inline Mask16::operator __mmask16() const
+{
+	return mask;
+}
+
+inline Mask16::operator bool() const
+{
+	return !_ktestz_mask16_u8(mask, mask);
+}
+
+
 struct alignas(64) FloatPack16
 {
 	union {
@@ -34,12 +96,12 @@ struct alignas(64) FloatPack16
 	FloatPack16& operator*=(const FloatPack16& other);
 	FloatPack16& operator/=(const FloatPack16& other);
 
-	uint16_t operator>(const FloatPack16& other) const;
-	uint16_t operator>=(const FloatPack16& other) const;
-	uint16_t operator<(const FloatPack16& other) const;
-	uint16_t operator<=(const FloatPack16& other) const;
-	uint16_t operator==(const FloatPack16& other) const;
-	uint16_t operator!=(const FloatPack16& other) const;
+	Mask16 operator>(const FloatPack16& other) const;
+	Mask16 operator>=(const FloatPack16& other) const;
+	Mask16 operator<(const FloatPack16& other) const;
+	Mask16 operator<=(const FloatPack16& other) const;
+	Mask16 operator==(const FloatPack16& other) const;
+	Mask16 operator!=(const FloatPack16& other) const;
 
 
 	FloatPack16 operator&(const FloatPack16& other) const;
@@ -138,32 +200,32 @@ inline FloatPack16 FloatPack16::operator/(const FloatPack16& other) const
 	return _mm512_div_ps(zmm, other.zmm);
 }
 
-inline uint16_t FloatPack16::operator>(const FloatPack16& other) const
+inline Mask16 FloatPack16::operator>(const FloatPack16& other) const
 {
 	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_GT_OQ);
 }
 
-inline uint16_t FloatPack16::operator>=(const FloatPack16& other) const
+inline Mask16 FloatPack16::operator>=(const FloatPack16& other) const
 {
 	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_GE_OQ);
 }
 
-inline uint16_t FloatPack16::operator<(const FloatPack16& other) const
+inline Mask16 FloatPack16::operator<(const FloatPack16& other) const
 {
 	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_LT_OQ);
 }
 
-inline uint16_t FloatPack16::operator<=(const FloatPack16& other) const
+inline Mask16 FloatPack16::operator<=(const FloatPack16& other) const
 {
 	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_LE_OQ);
 }
 
-inline uint16_t FloatPack16::operator==(const FloatPack16& other) const
+inline Mask16 FloatPack16::operator==(const FloatPack16& other) const
 {
 	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_EQ_OQ);
 }
 
-inline uint16_t FloatPack16::operator!=(const FloatPack16& other) const
+inline Mask16 FloatPack16::operator!=(const FloatPack16& other) const
 {
 	return _mm512_cmp_ps_mask(zmm, other.zmm, _CMP_NEQ_OQ);
 }

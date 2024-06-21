@@ -212,9 +212,9 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
-			__m512i texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
+			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 
-			Mask16 opaquePixelsMask = visiblePointsMask & Mask16(_mm512_cmpgt_epu32_mask(texturePixels, zeroAlphaComparison));
+			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.z > 0.0f;
 			//if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
 
 			/*
@@ -232,7 +232,11 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			_mm512_mask_store_ps(&lightBuf[pixelIndex], opaquePixelsMask, lightMult);
-			_mm512_mask_store_epi32(&frameBuf[pixelIndex], opaquePixelsMask, texturePixels);
+
+			_mm512_mask_store_ps(frameBuf.getp_R() + pixelIndex, opaquePixelsMask, texturePixels.x);
+			_mm512_mask_store_ps(frameBuf.getp_G() + pixelIndex, opaquePixelsMask, texturePixels.y);
+			_mm512_mask_store_ps(frameBuf.getp_B() + pixelIndex, opaquePixelsMask, texturePixels.z);
+			_mm512_mask_store_ps(frameBuf.getp_A() + pixelIndex, opaquePixelsMask, texturePixels.w);
 		}
 	}
 }

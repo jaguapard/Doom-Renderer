@@ -4,9 +4,10 @@
 #include <SDL/SDL.h>
 
 #include "PixelBuffer.h"
+#include "FloatColorBuffer.h"
 
 namespace blitting
 {
-	void lightIntoFrameBuffer(PixelBuffer<Color>& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY);
-	void frameBufferIntoSurface(const PixelBuffer<Color>& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4>& shifts);
+	void lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY);
+	void frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4>& shifts);
 }

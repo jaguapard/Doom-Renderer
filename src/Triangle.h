@@ -55,7 +55,7 @@ struct RenderJob
 
 struct TriangleRenderContext
 {
-	PixelBuffer<Color>* frameBuffer;
+	FloatColorBuffer* frameBuffer;
 	PixelBuffer<real>* lightBuffer;
 	ZBuffer* zBuffer;
 	const CoordinateTransformer* ctr;	

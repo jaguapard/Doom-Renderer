@@ -200,8 +200,8 @@ void MainGame::draw()
 			ctx.zBuffer->clearRows(myMinY, myMaxY); //Z buffer has to be cleared, else only pixels closer than previous frame will draw
 			if (settings.bufferCleaningEnabled)
 			{
-				ctx.frameBuffer->clearRows(myMinY, myMaxY);
-				ctx.lightBuffer->clearRows(myMinY, myMaxY, 1);
+				//ctx.frameBuffer->clearRows(myMinY, myMaxY);
+				//ctx.lightBuffer->clearRows(myMinY, myMaxY, 1);
 			}
 
 			for (int i = 0; i < renderJobs.size(); ++i)

@@ -1,6 +1,6 @@
 #include "blitting.h"
 
-void blitting::lightIntoFrameBuffer(PixelBuffer<Color>& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY)
+void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY)
 {
 	assert(frameBuf.getW() == lightBuf.getW());
 	assert(frameBuf.getH() == lightBuf.getH());
@@ -88,7 +88,7 @@ void blitting::lightIntoFrameBuffer(PixelBuffer<Color>& frameBuf, const PixelBuf
 	}
 }
 
-void blitting::frameBufferIntoSurface(const PixelBuffer<Color>& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4>& shifts)
+void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4>& shifts)
 {
 	assert(frameBuf.getW() == surf->w);
 	assert(frameBuf.getH() == surf->h);

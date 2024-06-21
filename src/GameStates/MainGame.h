@@ -58,7 +58,7 @@ protected:
 	Vec4 camPos;
 	Vec4 camAng;
 
-	PixelBuffer<Color> framebuf;
+	FloatColorBuffer framebuf;
 	PixelBuffer<real> lightBuf;
 	ZBuffer zBuffer;
 

@@ -49,7 +49,7 @@ std::unique_ptr<Threadpool> threadpool;
 void* operator new(size_t n)
 {
 	StatCount(statsman.memory.allocsByNew++);
-#ifdef __AVX512__
+#ifdef __AVX512F__
 	constexpr size_t alignmentRequirement = 64;
 #elif __AVX__
 	constexpr size_t alignmentRequirement = 32;

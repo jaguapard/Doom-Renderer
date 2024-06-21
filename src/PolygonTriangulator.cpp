@@ -11,9 +11,11 @@
 #include "Polygon.h"
 #include "PolygonBitmap.h"
 
+//#include "../GLUTesselator/tessellate.h"
 #pragma comment(lib, "GLUTesselator.lib")
 
-extern "C" void gluTesselate(double** verts, int* nverts, int** tris, int* ntris, const double** contoursbegin, const double** contoursend);
+//extern "C" void gluTesselate(double** verts, int* nverts, int** tris, int* ntris, const double** contoursbegin, const double** contoursend);
+extern "C" void tessellate(double** verts, int* nverts, int** tris, int* ntris, const double** contoursbegin, const double** contoursend);
 
 std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 {
@@ -45,7 +47,7 @@ std::vector<Ved2> PolygonTriangulator::triangulate(Polygon polygon)
 	int* outTris;
 
 	int out_nVerts, out_nTris;
-	gluTesselate(&outVerts, &out_nVerts, &outTris, &out_nTris, contoursBegin, contoursEnd);
+	tessellate(&outVerts, &out_nVerts, &outTris, &out_nTris, contoursBegin, contoursEnd);
 
 	for (int i = 0; i < out_nTris; ++i)
 	{

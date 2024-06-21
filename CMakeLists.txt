@@ -7,9 +7,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -fpermissive")
 include_directories(src)
 include_directories(src/bob)
 include_directories(src/GameStates)
+include_directories(src/GLUTesselator)
+
+#ADD_LIBRARY( GLUTesselator STATIC src/GLUTesselator/tessellate.c )
+ADD_LIBRARY( GLUTesselator STATIC src/GLUTesselator/dict.c src/GLUTesselator/mesh.c src/GLUTesselator/render.c src/GLUTesselator/tess.c src/GLUTesselator/geom.c src/GLUTesselator/memalloc.c src/GLUTesselator/normal.c src/GLUTesselator/priorityq.c src/GLUTesselator/sweep.c src/GLUTesselator/tessmono.c src/GLUTesselator/tessellate.c )
+#ADD_LIBRARY( GLUTesselator STATIC src/GLUTesselator/tessellate.c )
 
 include_directories($ENV{INCLUDE})
-link_libraries(SDL2 SDL2main SDL2_image SDL2_ttf)
+link_libraries(SDL2 SDL2main SDL2_image SDL2_ttf GLUTesselator)
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES GNU)
     include_directories($ENV{LIB}/SDL2-devel-2.30.1-mingw/SDL2-2.30.1/x86_64-w64-mingw32/include)

@@ -182,10 +182,6 @@ void MainGame::draw()
 	TriangleRenderContext ctx = makeTriangleRenderContext();
 	fillRenderJobsList(ctx, renderJobs);
 
-	real* lightStart = lightBuf.begin();
-	Color* framebufStart = framebuf.begin();
-	Uint32* wndSurfStart = reinterpret_cast<Uint32*>(wndSurf->pixels);
-
 	std::vector<ThreadpoolTask> taskBatch;
 
 	for (int tNum = 0; tNum < threadCount; ++tNum)

@@ -2,7 +2,7 @@
 #include <initializer_list>
 #include <cassert>
 #include <iterator>
-
+#include <bit>
 
 #include <immintrin.h>
 #include <smmintrin.h>
@@ -12,13 +12,7 @@ namespace bob
 {
 	struct _SSE_Vec4_float
 	{
-		union
-		{
-			__m128 xmm;
-			struct { float x, y, z, w; };
-			//struct { float r, g, b, a; };
-			float val[4];
-		};
+        float x,y,z,w;
 	private:
 #if _M_IX86_FP >= 2 || defined(_M_AMD64) || defined(_M_X64) || defined(__AVX__) //TODO: this is not a good enough way. It only detects SSE2 or AVX, we use SSE4.1 somewhere as well. Say "thanks" to Macro$haft, all other compilers just define __SSE4_1__
 #define SSE_VER 42
@@ -80,7 +74,10 @@ namespace bob
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y, const float z) : x(x), y(y), z(z), w(0) {}
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y, const float z, const float w) : x(x), y(y), z(z), w(w) {}
 
-	inline _SSE_Vec4_float::_SSE_Vec4_float(const __m128 v) : xmm(v){}
+	inline _SSE_Vec4_float::_SSE_Vec4_float(const __m128 v)
+    {
+        *this = std::bit_cast<_SSE_Vec4_float>(v);
+    }
 
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const std::initializer_list<float> list)
 	{
@@ -92,28 +89,28 @@ namespace bob
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator+(const float other) const
 	{
-		if (SSE_ENABLED) return _mm_add_ps(this->xmm, _mm_set1_ps(other));
+		if (SSE_ENABLED) return _mm_add_ps(*this, _mm_set1_ps(other));
 		return _SSE_Vec4_float(x + other, y + other, z + other, w + other);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator-(const float other) const
 	{
-		if (SSE_ENABLED) return _mm_sub_ps(this->xmm, _mm_set1_ps(other));
+		if (SSE_ENABLED) return _mm_sub_ps(*this, _mm_set1_ps(other));
 		return _SSE_Vec4_float(x - other, y - other, z - other, w - other);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator*(const float other) const
 	{
-		if (SSE_ENABLED) return _mm_mul_ps(this->xmm, _mm_set1_ps(other));
+		if (SSE_ENABLED) return _mm_mul_ps(*this, _mm_set1_ps(other));
 		return _SSE_Vec4_float(x * other, y * other, z * other, w * other);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator/(const float other) const
 	{
-		if (SSE_ENABLED) return _mm_div_ps(this->xmm, _mm_set1_ps(other));
+		if (SSE_ENABLED) return _mm_div_ps(*this, _mm_set1_ps(other));
 		float reciprocal = 1.0 / other;
 		return *this * reciprocal;
 	}
@@ -149,43 +146,44 @@ namespace bob
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator+(const _SSE_Vec4_float other) const
 	{
-		if (SSE_ENABLED) return _mm_add_ps(this->xmm, other.xmm);
+		if (SSE_ENABLED) return _mm_add_ps(*this, other);
 		return _SSE_Vec4_float(x + other.x, y + other.y, z + other.z, w + other.w);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator-(const _SSE_Vec4_float other) const
 	{
-		if (SSE_ENABLED) return _mm_sub_ps(this->xmm, other.xmm);
+		if (SSE_ENABLED) return _mm_sub_ps(*this, other);
 		return _SSE_Vec4_float(x - other.x, y - other.y, z - other.z, w - other.w);
 	}
 
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator*(const _SSE_Vec4_float other) const
 	{
-		if (SSE_ENABLED) return _mm_mul_ps(this->xmm, other.xmm);
+		if (SSE_ENABLED) return _mm_mul_ps(*this, other);
 		return _SSE_Vec4_float(x * other.x, y * other.y, z * other.z, w * other.w);
 	}
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator/(const _SSE_Vec4_float other) const
 	{
-		if (SSE_ENABLED) return _mm_div_ps(this->xmm, other.xmm);
+		if (SSE_ENABLED) return _mm_div_ps(*this, other);
 		return _SSE_Vec4_float(x / other.x, y / other.y, z / other.z, w / other.w);
 	}
 
 	inline const float& _SSE_Vec4_float::operator[](int i) const
 	{
-		return this->val[i];
+        assert(i >= 0 && i <= 4);
+		return reinterpret_cast<const float*>(this)[i];
 	}
 
 	inline _SSE_Vec4_float::operator __m128() const
-	{
-		return xmm;
+    {
+		return std::bit_cast<__m128>(*this);
 	}
 
 	inline float& _SSE_Vec4_float::operator[](int i)
 	{
-		return const_cast<float&>(static_cast<const _SSE_Vec4_float&>(*this).val[i]);
+		return const_cast<float&>(static_cast<const _SSE_Vec4_float&>(*this)[i]);
 	}
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator+=(const _SSE_Vec4_float other)
@@ -235,7 +233,7 @@ namespace bob
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator-() const
 	{
-		if (SSE_ENABLED) return _mm_sub_ps(_mm_setzero_ps(), xmm);
+		if (SSE_ENABLED) return _mm_sub_ps(_mm_setzero_ps(), *this);
 		return _SSE_Vec4_float(-x, -y, -z, -w);
 	}
 
@@ -251,7 +249,7 @@ namespace bob
 	{
 		if (SSE_ENABLED)
 		{
-			__m128 r1 = _mm_mul_ps(xmm, other.xmm);
+			__m128 r1 = _mm_mul_ps(*this, other);
 			__m128 shuf = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
 			__m128 sums = _mm_add_ps(r1, shuf);
 

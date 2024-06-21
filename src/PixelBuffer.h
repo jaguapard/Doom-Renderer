@@ -15,6 +15,7 @@
 struct PixelBufferSize
 {
 	int w, h;
+	float fw, fh;
 	__m128i dimensionsInt32;
 	__m128i dimensionsInt64;
 	__m128i dimensionsIntReciprocal64;
@@ -40,6 +41,8 @@ struct PixelBufferSize
 	{
 		this->w = w;
 		this->h = h;
+		this->fw = w;
+		this->fh = h;
 
 		this->dimensionsInt32 = _mm_setr_epi32(w, h, 0, 0);
 		this->dimensionsInt64 = _mm_setr_epi64x(w, h);

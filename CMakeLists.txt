@@ -9,7 +9,17 @@ include_directories(src/bob)
 include_directories(src/GameStates)
 
 include_directories($ENV{INCLUDE})
-link_libraries(SDL2 SDL2main SDL2_image)
+link_libraries(SDL2 SDL2main SDL2_image SDL2_ttf)
+
+if(${CMAKE_CXX_COMPILER_ID} MATCHES GNU)
+    include_directories($ENV{LIB}/SDL2-devel-2.30.1-mingw/SDL2-2.30.1/x86_64-w64-mingw32/include)
+    include_directories($ENV{LIB}/SDL2_image-2.8.2/x86_64-w64-mingw32/include)
+    include_directories($ENV{LIB}/SDL2_ttf-2.22.0/x86_64-w64-mingw32/include)
+
+    link_directories($ENV{LIB}/SDL2-devel-2.30.1-mingw/SDL2-2.30.1/x86_64-w64-mingw32/lib)
+    link_directories($ENV{LIB}/SDL2-devel-2.30.1-mingw/SDL2_image-2.8.2x86_64-w64-mingw32/lib)
+    link_directories($ENV{LIB}/SDL2_ttf-2.22.0/x86_64-w64-mingw32/lib)
+endif()
 
 add_executable(Doom_Rendering
         src/bob/SSE_Vec4.h

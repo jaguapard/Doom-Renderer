@@ -31,12 +31,13 @@ bool TexVertex::operator<(const TexVertex& b) const
 
 TexVertex::operator __m256() const
 {
-    return std::bit_cast<__m256>(*this);
+    return _mm256_loadu_ps((float*)this);
 }
 
 TexVertex::TexVertex(__m256 v)
 {
-    *this = std::bit_cast<TexVertex>(v);
+    _mm256_storeu_ps((float*)this, v);
+    //*reinterpret_cast<__m256*>(this) = v;
 }
 
 TexVertex::TexVertex(const Vec4 space, const Vec4 texture)

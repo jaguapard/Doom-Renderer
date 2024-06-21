@@ -99,18 +99,28 @@ void blitting::frameBufferIntoSurface(const PixelBuffer<Color>& frameBuf, SDL_Su
 	Uint32* currSurfacePixelsPtr = (Uint32*)(surf->pixels) + minY * frameBuf.getW();
 	size_t pixelCount = (maxY - minY) * frameBuf.getW();
 
-#ifdef __AVX2__
+#if __AVX2__
 	//index of bytes to "pull" from one color in rgba order. Byte 0 of resulting SDL_Surface color will be pulled from color buffer's byte (shift[0]/8), 1 from (shift[1]/8), etc
 	int32_t intraColorReshuffleMask = shifts[0] >> 3 | shifts[1] << 5 | shifts[2] << 13 | shifts[3] << 21;
 	__m128i shuffleMask128 = _mm_add_epi32(_mm_set1_epi32(intraColorReshuffleMask), _mm_setr_epi32(0, 0x04040404, 0x08080808, 0x0c0c0c0c)); //broadcast the intraColorReshuffleMask and add 0, 4, 8 or 12 to each byte.
 	__m256i shuffleMask256 = _mm256_broadcastsi128_si256(shuffleMask128); //AVX2's shuffle is basically 2 SSE shuffles in one, so just mirror the mask128
 
+#if __AVX512BW__
+	__m512i shuffleMask512 = _mm512_broadcast_i32x4(shuffleMask128);
+	for (; pixelCount >= 16; currSurfacePixelsPtr += 16, currFrameBufPtr += 16, pixelCount -= 16)
+	{
+		__m512i origColors = *reinterpret_cast<const __m512i*>(currFrameBufPtr);
+		__m512i res = _mm512_shuffle_epi8(origColors, shuffleMask512);
+		*reinterpret_cast<__m512i*>(currSurfacePixelsPtr) = res;
+	}
+#else
 	for (; pixelCount >= 8; currSurfacePixelsPtr += 8, currFrameBufPtr += 8, pixelCount -= 8)
 	{
 		__m256i origColors = *reinterpret_cast<const __m256i*>(currFrameBufPtr);
 		__m256i res = _mm256_shuffle_epi8(origColors, shuffleMask256);
 		*reinterpret_cast<__m256i*>(currSurfacePixelsPtr) = res;
 	}
+#endif
 #endif
 	for (; pixelCount; currSurfacePixelsPtr += 1, currFrameBufPtr += 1, pixelCount -= 1)
 	{

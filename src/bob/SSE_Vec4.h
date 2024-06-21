@@ -10,7 +10,7 @@
 
 namespace bob
 {
-	struct _SSE_Vec4_float
+	struct alignas(16) _SSE_Vec4_float
 	{
         float x,y,z,w;
 	private:
@@ -77,7 +77,7 @@ namespace bob
 
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const __m128 v)
     {
-        *this = std::bit_cast<_SSE_Vec4_float>(v);
+        *reinterpret_cast<__m128*>(this) = v;
     }
 
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const std::initializer_list<float> list)

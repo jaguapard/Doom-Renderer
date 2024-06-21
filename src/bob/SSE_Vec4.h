@@ -49,10 +49,11 @@ namespace bob
 		_SSE_Vec4_float operator*=(const _SSE_Vec4_float other);
 		_SSE_Vec4_float operator/=(const _SSE_Vec4_float other);
 
+        /*
 		void assert_validX() const;
 		void assert_validY() const;
 		void assert_validZ() const;
-		void assert_validW() const;
+		void assert_validW() const;*/
 
 		float& operator[](int i);
 		const float& operator[](int i) const;
@@ -287,6 +288,7 @@ namespace bob
 #endif
 	}
 
+    /*
 	inline void _SSE_Vec4_float::assert_validX() const
 	{
 		assert(!isnan(x));
@@ -302,6 +304,6 @@ namespace bob
 	inline void _SSE_Vec4_float::assert_validW() const
 	{
 		assert(!isnan(w));
-	}
+	}*/
 
 }

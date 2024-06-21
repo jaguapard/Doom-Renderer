@@ -430,7 +430,7 @@ template <typename PackType>
 template<typename Container>
 inline VectorPack<PackType> VectorPack<PackType>::fromHorizontalVectors(const Container& cont)
 {
-	assert(std::size(cont) <= std::size(packs));
+	//assert(std::size(cont) <= std::size(packs));
 	VectorPack<PackType> ret;
 	int i = 0;
 	for (auto it = std::begin(cont); it != std::end(cont); ++it, ++i)

@@ -70,7 +70,7 @@ void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* s
 		__m512i b = _mm512_sllv_epi32(cvtB, _mm512_set1_epi32(shifts[2]));
 		__m512i a = _mm512_sllv_epi32(cvtA, _mm512_set1_epi32(shifts[3]));
 
-		__m512i rg = _mm512_or_epi32(r, b);
+		__m512i rg = _mm512_or_epi32(r, g);
 		__m512i ba = _mm512_or_epi32(b, a);
 
 		_mm512_mask_store_epi32(surfPixelsStart + i, bounds, _mm512_or_epi32(rg, ba));

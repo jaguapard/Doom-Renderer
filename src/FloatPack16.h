@@ -5,6 +5,7 @@
 struct Mask16
 {
 	__mmask16 mask;
+	Mask16() = default;
 	Mask16(const __mmask16& m);
 
 	Mask16 operator&(const Mask16& other) const;

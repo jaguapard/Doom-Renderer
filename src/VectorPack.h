@@ -56,12 +56,29 @@ struct
 	VectorPack<PackType>& operator*=(const VectorPack<PackType>& other);
 	VectorPack<PackType>& operator/=(const VectorPack<PackType>& other);
 
-	VectorPack<PackType> operator>(const VectorPack<PackType>& other) const;
-	VectorPack<PackType> operator>=(const VectorPack<PackType>& other) const;
-	VectorPack<PackType> operator<(const VectorPack<PackType>& other) const;
-	VectorPack<PackType> operator<=(const VectorPack<PackType>& other) const;
-	VectorPack<PackType> operator==(const VectorPack<PackType>& other) const;
-	VectorPack<PackType> operator!=(const VectorPack<PackType>& other) const;
+	std::array<Mask16, 4> operator>(const VectorPack<PackType>& other) const;
+	std::array<Mask16, 4> operator>=(const VectorPack<PackType>& other) const;
+	std::array<Mask16, 4> operator<(const VectorPack<PackType>& other) const;
+	std::array<Mask16, 4> operator<=(const VectorPack<PackType>& other) const;
+	std::array<Mask16, 4> operator==(const VectorPack<PackType>& other) const;
+	std::array<Mask16, 4> operator!=(const VectorPack<PackType>& other) const;
+	
+
+	VectorPack<PackType> operator+(const PackType& other) const;
+	VectorPack<PackType> operator-(const PackType& other) const;
+	VectorPack<PackType> operator*(const PackType& other) const;
+	VectorPack<PackType> operator/(const PackType& other) const;
+	VectorPack<PackType>& operator+=(const PackType& other);
+	VectorPack<PackType>& operator-=(const PackType& other);
+	VectorPack<PackType>& operator*=(const PackType& other);
+	VectorPack<PackType>& operator/=(const PackType& other);
+
+	std::array<__mmask16, 4> operator>(const PackType& other) const;
+	std::array<__mmask16, 4> operator>=(const PackType& other) const;
+	std::array<__mmask16, 4> operator<(const PackType& other) const;
+	std::array<__mmask16, 4> operator<=(const PackType& other) const;
+	std::array<__mmask16, 4> operator==(const PackType& other) const;
+	std::array<__mmask16, 4> operator!=(const PackType& other) const;
 
 
 	VectorPack<PackType> operator&(const VectorPack<PackType>& other) const;
@@ -237,52 +254,87 @@ inline VectorPack<PackType> VectorPack<PackType>::operator/(const VectorPack<Pac
 }
 
 template <typename PackType>
-inline VectorPack<PackType> VectorPack<PackType>::operator>(const VectorPack<PackType>& other) const
+inline std::array<Mask16, 4> VectorPack<PackType>::operator>(const VectorPack<PackType>& other) const
 {
-	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] > other[i];
-	return ret;
+    std::array<Mask16, 4> ret;
+    for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] > other[i];
+    return ret;
 }
 
 template <typename PackType>
-inline VectorPack<PackType> VectorPack<PackType>::operator>=(const VectorPack<PackType>& other) const
+inline std::array<Mask16, 4> VectorPack<PackType>::operator>=(const VectorPack<PackType>& other) const
 {
-	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] >= other[i];
-	return ret;
+    std::array<Mask16, 4> ret;
+    for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] >= other[i];
+    return ret;
 }
 
 template <typename PackType>
-inline VectorPack<PackType> VectorPack<PackType>::operator<(const VectorPack<PackType>& other) const
+inline std::array<Mask16, 4> VectorPack<PackType>::operator<(const VectorPack<PackType>& other) const
 {
-	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] < other[i];
-	return ret;
+    std::array<Mask16, 4> ret;
+    for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] < other[i];
+    return ret;
 }
 
 template <typename PackType>
-inline VectorPack<PackType> VectorPack<PackType>::operator<=(const VectorPack<PackType>& other) const
+inline std::array<Mask16, 4> VectorPack<PackType>::operator<=(const VectorPack<PackType>& other) const
 {
-	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] <= other[i];
-	return ret;
+    std::array<Mask16, 4> ret;
+    for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] <= other[i];
+    return ret;
 }
 
 template <typename PackType>
-inline VectorPack<PackType> VectorPack<PackType>::operator==(const VectorPack<PackType>& other) const
+inline std::array<Mask16, 4> VectorPack<PackType>::operator==(const VectorPack<PackType>& other) const
 {
-	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] == other[i];
-	return ret;
+    std::array<Mask16, 4> ret;
+    for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] == other[i];
+    return ret;
 }
 
 template <typename PackType>
-inline VectorPack<PackType> VectorPack<PackType>::operator!=(const VectorPack<PackType>& other) const
+inline std::array<Mask16, 4> VectorPack<PackType>::operator!=(const VectorPack<PackType>& other) const
+{
+    std::array<Mask16, 4> ret;
+    for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] != other[i];
+    return ret;
+}
+
+template<typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator+(const PackType& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] != other[i];
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] + other;
 	return ret;
 }
+
+template<typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator-(const PackType& other) const
+{
+	VectorPack<PackType> ret;
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] - other;
+	return ret;
+}
+
+template<typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator*(const PackType& other) const
+{
+	VectorPack<PackType> ret;
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * other;
+	return ret;
+}
+
+
+template<typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::operator/(const PackType& other) const
+{
+	VectorPack<PackType> ret;
+	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] / other;
+	return ret;
+}
+
+
 
 template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator&(const VectorPack<PackType>& other) const
@@ -383,6 +435,30 @@ inline VectorPack<PackType>& VectorPack<PackType>::operator*=(const VectorPack<P
 
 template <typename PackType>
 inline VectorPack<PackType>& VectorPack<PackType>::operator/=(const VectorPack<PackType>& other)
+{
+	return *this = *this / other;
+}
+
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator+=(const PackType& other)
+{
+	return *this = *this + other;
+}
+
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator-=(const PackType& other)
+{
+	return *this = *this - other;
+}
+
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator*=(const PackType& other)
+{
+	return *this = *this * other;
+}
+
+template <typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator/=(const PackType& other)
 {
 	return *this = *this / other;
 }

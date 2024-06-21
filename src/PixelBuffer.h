@@ -16,24 +16,6 @@ struct PixelBufferSize
 {
 	int w, h;
 	float fw, fh;
-	__m128i dimensionsInt32;
-	__m128i dimensionsInt64;
-	__m128i dimensionsIntReciprocal64;
-
-	__m128i pitchInt64;
-	__m128i pitchInt32;
-
-	Vec4 dimensionsFloat;
-	Vec4 dimensionsFloatReciprocal;
-
-	__m128d dimensionsDouble;
-	__m256 w_ps_256;
-	__m256 h_ps_256;	
-	__m256i w_epi32_256;
-
-	__m512 w_ps_512;
-	__m512 h_ps_512;	
-	__m512i w_epi32_512;
 
 
 	PixelBufferSize() = default;
@@ -43,28 +25,6 @@ struct PixelBufferSize
 		this->h = h;
 		this->fw = w;
 		this->fh = h;
-
-		this->dimensionsInt32 = _mm_setr_epi32(w, h, 0, 0);
-		this->dimensionsInt64 = _mm_setr_epi64x(w, h);
-		this->dimensionsIntReciprocal64 = _mm_setr_epi64x(UINT32_MAX / w + 1, UINT32_MAX / h + 1);
-
-		float floatW = w;
-		float floatH = h;
-		this->dimensionsFloat = Vec4(floatW, floatH, 0, 0);
-		this->dimensionsFloatReciprocal = Vec4(1.0 / floatW, 1.0 / floatH, 0, 0);
-
-		this->dimensionsDouble = _mm_setr_pd(w, h);
-
-		this->pitchInt64 = _mm_setr_epi64x(1, w);
-		this->pitchInt32 = _mm_setr_epi32(1, w, 0, 0);
-
-		this->w_ps_256 = _mm256_set1_ps(w);
-		this->h_ps_256 = _mm256_set1_ps(h);
-		this->w_epi32_256 = _mm256_set1_epi32(w);
-
-		this->w_ps_512 = _mm512_set1_ps(w);
-		this->h_ps_512 = _mm512_set1_ps(h);
-		this->w_epi32_512 = _mm512_set1_epi32(w);
 	}
 };
 

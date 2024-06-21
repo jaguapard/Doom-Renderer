@@ -31,6 +31,9 @@ struct
 	//VectorPack<PackType>(const __m256& pack);
 	VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>& list);
 
+	VectorPack(const VectorPack<PackType>& other);
+	VectorPack<PackType>& operator=(const VectorPack<PackType>& other);
+
 	template <typename Container>
 	static VectorPack<PackType> fromHorizontalVectors(const Container& cont);
 
@@ -123,6 +126,19 @@ inline VectorPack<PackType>::VectorPack(const std::initializer_list<bob::_SSE_Ve
 		z.f[i] = (std::begin(list) + i)->z;
 		w.f[i] = (std::begin(list) + i)->w;
 	}
+}
+
+template<typename PackType>
+inline VectorPack<PackType>::VectorPack(const VectorPack<PackType>& other)
+{
+	for (size_t i = 0; i < std::size(packs); ++i) (*this)[i] = other[i];
+}
+
+template<typename PackType>
+inline VectorPack<PackType>& VectorPack<PackType>::operator=(const VectorPack<PackType>& other)
+{
+	for (size_t i = 0; i < std::size(packs); ++i) (*this).packs[i] = other.packs[i];
+	return *this;
 }
 
 template <typename PackType>

@@ -373,3 +373,6 @@ FodyWeavers.xsd
 /benchmarks.txt
 /screenshots
 /Doom Rendering/RelLegacy/microsoft/STL
+
+cmake-build-*
+.idea

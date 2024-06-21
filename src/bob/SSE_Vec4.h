@@ -6,6 +6,7 @@
 
 #include <immintrin.h>
 #include <smmintrin.h>
+#include <cmath>
 
 namespace bob
 {

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <sstream>
 #include <iomanip>
+#include <cstring>
 
 Matrix4::Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst)
 {

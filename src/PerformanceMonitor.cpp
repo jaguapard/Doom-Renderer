@@ -1,10 +1,11 @@
 #include "PerformanceMonitor.h"
-#include <algorithm>
 #include <numeric>
 
 #include <iostream>
 
 #include "Statsman.h"
+#include <sstream>
+
 PerformanceMonitor::PerformanceMonitor()
 {
 	std::string path = "C:/Windows/Fonts/lucon.ttf";

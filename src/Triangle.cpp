@@ -201,7 +201,10 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
 		for (FloatPack16 x = sequence_float + xBeg; 
 			Mask16 loopBoundsMask = x < xEnd; 
-			x += 16, pixelIndex += 16, interpolatedDividedUv += interpolatedDividedUvStep)
+			x += 16, pixelIndex += 16, 
+			interpolatedDividedUv.x += interpolatedDividedUvStep.x,
+			interpolatedDividedUv.y += interpolatedDividedUvStep.y,
+			interpolatedDividedUv.z += interpolatedDividedUvStep.z)
 		{
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
 

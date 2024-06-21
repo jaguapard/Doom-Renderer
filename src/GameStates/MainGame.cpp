@@ -254,8 +254,16 @@ void MainGame::update()
 
 void MainGame::changeMapTo(std::string mapName)
 {
-	currentMap = &maps.at(mapName);
-	sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+	if (mapName != "MAP00")
+	{
+		currentMap = &maps.at(mapName);
+		sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+	}
+	else
+	{
+		currentMap = nullptr;
+		sectorWorldModels = {};
+	}
 	performanceMonitor.reset();
 }
 

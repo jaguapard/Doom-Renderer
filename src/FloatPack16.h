@@ -41,16 +41,19 @@ inline Mask16 Mask16::operator^(const Mask16& other) const
 inline Mask16& Mask16::operator&=(const Mask16& other)
 {
 	*this = *this & other;
+    return *this;
 }
 
 inline Mask16& Mask16::operator|=(const Mask16& other)
 {
 	*this = *this | other;
+    return *this;
 }
 
 inline Mask16& Mask16::operator^=(const Mask16& other)
 {
 	*this = *this ^ other;
+    return *this;
 }
 
 inline Mask16::operator __mmask16() const

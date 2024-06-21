@@ -52,3 +52,23 @@ int FloatColorBuffer::getH() const
 {
 	return h;
 }
+
+float* FloatColorBuffer::getp_R()
+{
+	return r.data();
+}
+
+float* FloatColorBuffer::getp_G()
+{
+	return g.data();
+}
+
+float* FloatColorBuffer::getp_B()
+{
+	return b.data();
+}
+
+float* FloatColorBuffer::getp_A()
+{
+	return a.data();
+}

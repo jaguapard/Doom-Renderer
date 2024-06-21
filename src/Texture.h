@@ -9,6 +9,7 @@
 #include "Vec.h"
 
 #include "VectorPack.h"
+#include "FloatColorBuffer.h"
 
 
 enum class TextureDebugMode
@@ -30,7 +31,7 @@ public:
 	Color getPixelAtUV(const Vec4& uv) const; //z and w values are ignored
 	Color getPixel(int x, int y) const;
 	__m256i gatherPixels(const FloatPack8& xCoords, const FloatPack8& yCoords, const uint8_t& mask) const;
-	__m512i gatherPixels512(const FloatPack16& xCoords, const FloatPack16& yCoords, const uint16_t& mask) const;
+	VectorPack16 gatherPixels512(const FloatPack16& u, const FloatPack16& v, const uint16_t& mask) const;
 
 	int getW() const;
 	int getH() const;
@@ -38,12 +39,10 @@ public:
 
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
 private:
-	PixelBuffer<Color> pixels;
+	FloatColorBuffer pixels;
 	std::string name;
 	bool _hasOnlyOpaquePixels = true;
-	int64_t wInverse, hInverse; //inverse values for removing idiv
-	int bigW, bigH;
-
+	
 	void checkForTransparentPixels();
 	//static constexpr int FRACBITS = 16;
 	void constructDebugTexture();

@@ -16,6 +16,11 @@ public:
 
 	int getW() const;
 	int getH() const;
+
+	float* getp_R();
+	float* getp_G();
+	float* getp_B();
+	float* getp_A();
 private:
 	std::vector<float> r, g, b, a;
 	int w, h;

@@ -28,7 +28,7 @@ Texture::Texture(std::string name)
 			int h = nSurf->h;
 
 			int downSamplingMult = 1;
-			this->pixels = PixelBuffer<Color>(w, h);
+			this->pixels = FloatColorBuffer(w, h);
 
 			for (int y = 0; y < h; ++y)
 			{
@@ -44,7 +44,7 @@ Texture::Texture(std::string name)
 				"Falling back to purple-black checkerboard.\n\n";
 			int w = 64, h = 64;
 
-			this->pixels = PixelBuffer<Color>(w, h);
+			this->pixels = FloatColorBuffer(w, h);
 			for (int y = 0; y < h; ++y)
 			{
 				for (int x = 0; x < w; ++x)
@@ -59,39 +59,20 @@ Texture::Texture(std::string name)
 	this->checkForTransparentPixels();
 }
 
-Color Texture::getPixel(int x, int y) const
-{
-	StatCount(statsman.textures.pixelFetches++);
-
-	int w = pixels.getW();
-	int h = pixels.getH();
-	x %= w; //TODO: this is very slow. Our textures do not change size at runtime, so it can be optimized by fast integer modulo techiques
-	y %= h;
-	if (x < 0) x += w; //can't just flip the sign of modulo - that will make textures reflect around 0, i.e. x=-1 will map to 1 instead of (w-1)
-	if (y < 0) y += h;
-	return pixels.getPixel(x, y); //due to previous manipulations with input x and y, it should never go out of bounds
-}
-
-__m512i Texture::gatherPixels512(const FloatPack16& xCoords, const FloatPack16& yCoords, const uint16_t& mask) const
+VectorPack16 Texture::gatherPixels512(const FloatPack16& u, const FloatPack16& v, const uint16_t& mask) const
 {
 	StatCount(statsman.textures.pixelFetches += 8; statsman.textures.gathers++);
 	constexpr int ROUND_MODE = _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC;
-	FloatPack16 xFloor = _mm512_floor_ps(xCoords);
-	FloatPack16 yFloor = _mm512_floor_ps(yCoords);
+	FloatPack16 uFloor = _mm512_floor_ps(u);
+	FloatPack16 vFloor = _mm512_floor_ps(v);
 
-	FloatPack16 xFrac = FloatPack16(xCoords) - xFloor;
-	FloatPack16 yFrac = FloatPack16(yCoords) - yFloor;
-	//xFrac -= (xFrac >= 1) & 1.0f;
-	//yFrac -= (yFrac >= 1) & 1.0f;
+	FloatPack16 uFrac = u - uFloor;
+	FloatPack16 vFrac = v - vFloor;
 
-	FloatPack16 xPixelPos = xFrac * _mm512_set1_ps(pixels.getSize().fw);
-	FloatPack16 yPixelPos = yFrac * _mm512_set1_ps(pixels.getSize().fh);
+	FloatPack16 xPixelPos = uFrac * _mm512_set1_ps(pixels.getW());
+	FloatPack16 yPixelPos = vFrac * _mm512_set1_ps(pixels.getH());
 
-	__m512i xInd = _mm512_cvttps_epi32(xPixelPos);
-	__m512i yInd = _mm512_mullo_epi32(_mm512_cvttps_epi32(yPixelPos), _mm512_set1_epi32(pixels.getSize().w));
-	__m512i ind = _mm512_add_epi32(xInd, yInd);
-
-	return _mm512_mask_i32gather_epi32(_mm512_setzero_si512(), mask, ind, (int*)pixels.getRawPixels(), sizeof(pixels[0]));
+	return pixels.gatherPixels16(_mm512_cvttps_epi32(xPixelPos), _mm512_cvttps_epi32(yPixelPos), mask);
 }
 
 
@@ -112,9 +93,9 @@ bool Texture::hasOnlyOpaquePixels() const
 
 void Texture::checkForTransparentPixels()
 {
-	for (const auto it : pixels)
+	for (float* currA = pixels.getp_A(); currA < currA+pixels.getW()*pixels.getH(); ++currA)
 	{
-		if (it.a < SDL_ALPHA_OPAQUE)
+		if (*currA < SDL_ALPHA_OPAQUE)
 		{
 			_hasOnlyOpaquePixels = false;
 			return;
@@ -126,7 +107,7 @@ void Texture::checkForTransparentPixels()
 void Texture::constructDebugTexture()
 {
 	int tw = 1024, th = 1024;
-	this->pixels = PixelBuffer<Color>(tw, th);
+	this->pixels = FloatColorBuffer(tw, th);
 
 	//WHITE, GREY, RED, GREEN, BLUE, YELLOW
 	Color dbg_colors[] = { {255,255,255}, {127,127,127}, {255,0,0}, {0,255,0}, {0,0,255}, {255,255,0} };

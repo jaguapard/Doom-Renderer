@@ -1,6 +1,7 @@
 #include "BenchmarkState.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 BenchmarkState::BenchmarkState(GameStateInitData data)
 {

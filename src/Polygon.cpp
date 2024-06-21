@@ -2,6 +2,7 @@
 #include "PolygonBitmap.h"
 #include <cassert>
 #include "helpers.h"
+#include <optional>
 
 double scalarCross2d(Ved2 a, Ved2 b)
 {

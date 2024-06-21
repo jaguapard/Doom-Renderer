@@ -4,6 +4,7 @@
 
 #include "WadLoader.h"
 #include "helpers.h"
+#include <cstring>
 
 template <typename T>
 void readRaw(T& ret, const void* bytes)

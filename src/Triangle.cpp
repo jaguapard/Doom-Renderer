@@ -38,7 +38,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		rotated.tv[i].spaceCoords = context.ctr->rotateAndTranslate(tv[i].spaceCoords);
 		rotated.tv[i].textureCoords = tv[i].textureCoords;
 
-		if (rotated.tv[i].z > context.nearPlaneClippingZ)
+		if (rotated.tv[i].spaceCoords.z > context.nearPlaneClippingZ)
 		{
 			outsideVertexCount++;
 			vertexOutside[i] = true;
@@ -115,7 +115,7 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	{
 		real zInv = context.fovMult / tv[i].spaceCoords.z;
 #ifdef __AVX__
-		screenSpaceTriangle.tv[i].ymm = _mm256_mul_ps(tv[i].ymm, _mm256_broadcast_ss(&zInv));
+		screenSpaceTriangle.tv[i] = _mm256_mul_ps(tv[i], _mm256_set1_ps(zInv));
 #else
 		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
 		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;

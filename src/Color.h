@@ -3,6 +3,7 @@
 #include <array>
 
 #include "real.h"
+#include <SDL/SDL.h>
 
 struct Color : SDL_Color
 {

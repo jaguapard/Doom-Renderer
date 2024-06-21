@@ -57,6 +57,7 @@
     <ClCompile Include="src\C_Input.cpp" />
     <ClCompile Include="src\DoomMap.cpp" />
     <ClCompile Include="src\DoomWorldLoader.cpp" />
+    <ClCompile Include="src\FloatColorBuffer.cpp" />
     <ClCompile Include="src\GameStates\BenchmarkState.cpp" />
     <ClCompile Include="src\GameStates\GameStateBase.cpp" />
     <ClCompile Include="src\GameStates\MainGame.cpp" />
@@ -90,6 +91,7 @@
     <ClInclude Include="src\DoomMap.h" />
     <ClInclude Include="src\DoomStructs.h" />
     <ClInclude Include="src\DoomWorldLoader.h" />
+    <ClInclude Include="src\FloatColorBuffer.h" />
     <ClInclude Include="src\FloatPack16.h" />
     <ClInclude Include="src\FloatPack8.h" />
     <ClInclude Include="src\GameStates\BenchmarkState.h" />

@@ -10,11 +10,8 @@
 
 #include "Color.h"
 #include "Vec.h"
+#include "helpers.h"
 
-__m128i _mm_setr_epi64x(int64_t a, int64_t b)
-{
-    return _mm_setr_epi32(a, a >> 32, b, b >> 32);
-}
 struct PixelBufferSize
 {
 	int w, h;

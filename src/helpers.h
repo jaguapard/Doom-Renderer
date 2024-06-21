@@ -54,7 +54,7 @@ inline std::string toThousandsSeparatedString(int64_t value, std::string sep = "
 		int mod = positive % 1000;
 		std::string modStr = std::to_string(mod);
 
-		if (positive > 1000) //prepend the resulting string part with zeros if it's not the leftmost part
+		if (positive > 999) //prepend the resulting string part with zeros if it's not the leftmost part
 		{
 			if (mod < 10) modStr = "00" + modStr;
 			else if (mod < 100) modStr = "0" + modStr;
@@ -69,3 +69,10 @@ inline std::string toThousandsSeparatedString(int64_t value, std::string sep = "
 	if (value < 0) ret = "-" + ret;
 	return ret;
 }
+
+#if !(_MSC_VER && !__INTEL_COMPILER)
+inline __m128i _mm_setr_epi64x(int64_t a, int64_t b)
+{
+    return _mm_setr_epi32(a, a >> 32, b, b >> 32);
+}
+#endif

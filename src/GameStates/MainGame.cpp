@@ -206,7 +206,7 @@ void MainGame::draw()
 				myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
 			}
 
-			blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
+			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
 			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, myMinY, myMaxY, shifts);
 		};

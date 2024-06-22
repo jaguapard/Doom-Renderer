@@ -216,6 +216,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.w > 0.0f;
 			//if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
+			texturePixels *= lightMult;
 
 			/*
 			if (context.wireframeEnabled)
@@ -231,7 +232,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			}*/
 
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
-			_mm512_mask_store_ps(&lightBuf[pixelIndex], opaquePixelsMask, lightMult);
+			//_mm512_mask_store_ps(&lightBuf[pixelIndex], opaquePixelsMask, lightMult);
 
 			_mm512_mask_store_ps(frameBuf.getp_R() + pixelIndex, opaquePixelsMask, texturePixels.x);
 			_mm512_mask_store_ps(frameBuf.getp_G() + pixelIndex, opaquePixelsMask, texturePixels.y);

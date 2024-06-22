@@ -21,6 +21,7 @@ struct
 {
 	union {
 		struct { PackType x, y, z, w; };
+		struct { PackType r, g, b, a; };
 		PackType packs[4];
 	};
 

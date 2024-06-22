@@ -37,10 +37,10 @@ VectorPack16 FloatColorBuffer::gatherPixels16(const __m512i& xCoords, const __m5
 
 void FloatColorBuffer::storePixels16(int pixelIndex, const VectorPack16& pixels, __mmask16 mask)
 {
-	_mm512_mask_store_ps(&r[pixelIndex], mask, pixels.x);
-	_mm512_mask_store_ps(&g[pixelIndex], mask, pixels.y);
-	_mm512_mask_store_ps(&b[pixelIndex], mask, pixels.z);
-	_mm512_mask_store_ps(&a[pixelIndex], mask, pixels.w);
+	_mm512_mask_store_ps(&r[pixelIndex], mask, pixels.r);
+	_mm512_mask_store_ps(&g[pixelIndex], mask, pixels.g);
+	_mm512_mask_store_ps(&b[pixelIndex], mask, pixels.b);
+	_mm512_mask_store_ps(&a[pixelIndex], mask, pixels.a);
 }
 
 void FloatColorBuffer::setPixel(int x, int y, Color color)

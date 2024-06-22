@@ -214,10 +214,10 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			if (context.wireframeEnabled)
 			{
 				__mmask16 visibleEdgeMask = visiblePointsMask & (x <= original_xBeg + 1 | x >= original_xEnd - 1);
-				texturePixels.x = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.x, _mm512_set1_ps(1));
-				texturePixels.y = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.y, _mm512_set1_ps(1));
-				texturePixels.z = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.z, _mm512_set1_ps(1));
-				texturePixels.w = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.w, _mm512_set1_ps(1));
+				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.r, _mm512_set1_ps(1));
+				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.g, _mm512_set1_ps(1));
+				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.b, _mm512_set1_ps(1));
+				texturePixels.a = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.a, _mm512_set1_ps(1));
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 

@@ -29,6 +29,12 @@ void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffe
 	}
 }
 
+__m512i avx512_clamp_u32(__m512i val, uint32_t low, uint32_t high)
+{
+	__m512i clampLo = _mm512_max_epu32(val, _mm512_set1_epi32(low));
+	return _mm512_min_epu32(clampLo, _mm512_set1_epi32(high));
+}
+
 void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4>& shifts)
 {
 	assert(frameBuf.getW() == surf->w);
@@ -65,10 +71,15 @@ void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* s
 		__m512i cvtB = _mm512_cvttps_epu32(FloatPack16(frameBuf.getp_B() + i));
 		__m512i cvtA = _mm512_cvttps_epu32(FloatPack16(frameBuf.getp_A() + i)); //now lower bits of each epu32 contain values of 16 colors' channels
 
-		__m512i r = _mm512_sllv_epi32(cvtR, _mm512_set1_epi32(shifts[0]));
-		__m512i g = _mm512_sllv_epi32(cvtG, _mm512_set1_epi32(shifts[1]));
-		__m512i b = _mm512_sllv_epi32(cvtB, _mm512_set1_epi32(shifts[2]));
-		__m512i a = _mm512_sllv_epi32(cvtA, _mm512_set1_epi32(shifts[3]));
+		__m512i clampR = avx512_clamp_u32(cvtR, 0, 255);
+		__m512i clampG = avx512_clamp_u32(cvtG, 0, 255);
+		__m512i clampB = avx512_clamp_u32(cvtB, 0, 255);
+		__m512i clampA = avx512_clamp_u32(cvtA, 0, 255);
+
+		__m512i r = _mm512_sllv_epi32(clampR, _mm512_set1_epi32(shifts[0]));
+		__m512i g = _mm512_sllv_epi32(clampG, _mm512_set1_epi32(shifts[1]));
+		__m512i b = _mm512_sllv_epi32(clampB, _mm512_set1_epi32(shifts[2]));
+		__m512i a = _mm512_sllv_epi32(clampA, _mm512_set1_epi32(shifts[3]));
 
 		__m512i rg = _mm512_or_epi32(r, g);
 		__m512i ba = _mm512_or_epi32(b, a);

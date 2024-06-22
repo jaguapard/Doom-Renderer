@@ -29,10 +29,10 @@ void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffe
 	}
 }
 
-__m512i avx512_clamp_u32(__m512i val, uint32_t low, uint32_t high)
+__m512i avx512_clamp_i32(__m512i val, int32_t low, int32_t high)
 {
-	__m512i clampLo = _mm512_max_epu32(val, _mm512_set1_epi32(low));
-	return _mm512_min_epu32(clampLo, _mm512_set1_epi32(high));
+	__m512i clampLo = _mm512_max_epi32(val, _mm512_set1_epi32(low));
+	return _mm512_min_epi32(clampLo, _mm512_set1_epi32(high));
 }
 
 void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4>& shifts)
@@ -66,15 +66,15 @@ void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* s
 	{
 		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence), _mm512_set1_epi32(endIndex));
 		
-		__m512i cvtR = _mm512_cvttps_epu32(FloatPack16(frameBuf.getp_R() + i));
-		__m512i cvtG = _mm512_cvttps_epu32(FloatPack16(frameBuf.getp_G() + i));
-		__m512i cvtB = _mm512_cvttps_epu32(FloatPack16(frameBuf.getp_B() + i));
-		__m512i cvtA = _mm512_cvttps_epu32(FloatPack16(frameBuf.getp_A() + i)); //now lower bits of each epu32 contain values of 16 colors' channels
+		__m512i cvtR = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_R() + i));
+		__m512i cvtG = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_G() + i));
+		__m512i cvtB = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_B() + i));
+		__m512i cvtA = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_A() + i)); //now lower bits of each epu32 contain values of 16 colors' channels
 
-		__m512i clampR = avx512_clamp_u32(cvtR, 0, 255);
-		__m512i clampG = avx512_clamp_u32(cvtG, 0, 255);
-		__m512i clampB = avx512_clamp_u32(cvtB, 0, 255);
-		__m512i clampA = avx512_clamp_u32(cvtA, 0, 255);
+		__m512i clampR = avx512_clamp_i32(cvtR, 0, 255);
+		__m512i clampG = avx512_clamp_i32(cvtG, 0, 255);
+		__m512i clampB = avx512_clamp_i32(cvtB, 0, 255);
+		__m512i clampA = avx512_clamp_i32(cvtA, 0, 255);
 
 		__m512i r = _mm512_sllv_epi32(clampR, _mm512_set1_epi32(shifts[0]));
 		__m512i g = _mm512_sllv_epi32(clampG, _mm512_set1_epi32(shifts[1]));

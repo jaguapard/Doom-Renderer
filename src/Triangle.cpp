@@ -223,11 +223,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 			texturePixels *= lightMult;
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
-
-			_mm512_mask_store_ps(frameBuf.getp_R() + pixelIndex, opaquePixelsMask, texturePixels.x);
-			_mm512_mask_store_ps(frameBuf.getp_G() + pixelIndex, opaquePixelsMask, texturePixels.y);
-			_mm512_mask_store_ps(frameBuf.getp_B() + pixelIndex, opaquePixelsMask, texturePixels.z);
-			_mm512_mask_store_ps(frameBuf.getp_A() + pixelIndex, opaquePixelsMask, texturePixels.w);
+			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);
 		}
 	}
 }

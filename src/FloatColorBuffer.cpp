@@ -37,10 +37,10 @@ VectorPack16 FloatColorBuffer::gatherPixels16(const __m512i& xCoords, const __m5
 
 void FloatColorBuffer::setPixel(int x, int y, Color color)
 {
-	r[y * w + x] = color.r;
-	g[y * w + x] = color.g;
-	b[y * w + x] = color.b;
-	a[y * w + x] = color.a;
+	r[y * w + x] = color.r / 255.0f;
+	g[y * w + x] = color.g / 255.0f;
+	b[y * w + x] = color.b / 255.0f;
+	a[y * w + x] = color.a / 255.0f;
 }
 
 int FloatColorBuffer::getW() const

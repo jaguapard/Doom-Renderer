@@ -173,9 +173,6 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	FloatPack16 sequence_float = FloatPack16::sequence();
 	FloatPack16 lightMult = renderJob.lightMult;
 
-	static_assert(offsetof(Color, a) == 3);
-	__m512i zeroAlphaComparison = _mm512_set1_epi32(0xFF000000 - 1); //assuming alpha is the uppermost bit, we can use unsigned comparison to tell transparent pixels from opaque ones
-
 	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
 	{
 		TexVertex leftTv = lerp(tv[0], tv[flatTop + 1], yp); //flat top and flat bottom triangles require different interpolation points
@@ -207,32 +204,25 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			interpolatedDividedUv.z += interpolatedDividedUvStep.z)
 		{
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
-
 			Mask16 visiblePointsMask = loopBoundsMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
-
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.w > 0.0f;
-			//if (!opaquePixelsMask) continue; //if all pixels are transparent, then skip
-			texturePixels *= lightMult;
 
-			/*
 			if (context.wireframeEnabled)
 			{
-				__mmask8 edgeMask = _kor_mask8(_mm256_cmp_ps_mask(x, FloatPack8(original_xBeg + 1), _CMP_LE_OQ), _mm256_cmp_ps_mask(x, FloatPack8(original_xEnd - 1), _CMP_GE_OQ));
-				__mmask8 visibleEdgesMask = _kand_mask8(edgeMask, visiblePointsMask);
+				__mmask16 visibleEdgeMask = visiblePointsMask & (x <= original_xBeg + 1 | x >= original_xEnd - 1);
+				texturePixels.x = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.x, _mm512_set1_ps(1));
+				texturePixels.y = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.y, _mm512_set1_ps(1));
+				texturePixels.z = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.z, _mm512_set1_ps(1));
+				texturePixels.w = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.w, _mm512_set1_ps(1));
+				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
+			}
 
-				texturePixels = _mm256_mask_blend_epi32(visibleEdgesMask, texturePixels, _mm256_set1_epi32(-1));
-				//lightMult = _mm256_mask_blend_ps(visibleEdgesMask, lightMult, _mm256_set1_ps(1));
-
-				//lightMult = _mm256_blendv_ps(lightMult, FloatPack8(1), visibleEdgeMask); this was supposed to force lightmult to 1 on triangle borders. For some reason, it just makes everything whacky.
-				//opaquePixelsMask = visibleEdgeMask;
-			}*/
-
+			texturePixels *= lightMult;
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
-			//_mm512_mask_store_ps(&lightBuf[pixelIndex], opaquePixelsMask, lightMult);
 
 			_mm512_mask_store_ps(frameBuf.getp_R() + pixelIndex, opaquePixelsMask, texturePixels.x);
 			_mm512_mask_store_ps(frameBuf.getp_G() + pixelIndex, opaquePixelsMask, texturePixels.y);

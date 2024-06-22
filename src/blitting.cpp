@@ -65,11 +65,11 @@ void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* s
 	for (int i = startIndex; i < endIndex; i += 16)
 	{
 		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence), _mm512_set1_epi32(endIndex));
-		
-		__m512i cvtR = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_R() + i));
-		__m512i cvtG = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_G() + i));
-		__m512i cvtB = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_B() + i));
-		__m512i cvtA = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_A() + i)); //now lower bits of each epu32 contain values of 16 colors' channels
+
+		__m512i cvtR = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_R() + i) * 255);
+		__m512i cvtG = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_G() + i) * 255);
+		__m512i cvtB = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_B() + i) * 255);
+		__m512i cvtA = _mm512_cvttps_epi32(FloatPack16(frameBuf.getp_A() + i) * 255); //now lower bits of each epu32 contain values of 16 colors' channels
 
 		__m512i clampR = avx512_clamp_i32(cvtR, 0, 255);
 		__m512i clampG = avx512_clamp_i32(cvtG, 0, 255);

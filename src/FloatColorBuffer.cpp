@@ -1,18 +1,19 @@
 #include "FloatColorBuffer.h"
 
-FloatColorBuffer::FloatColorBuffer(int w, int h) :w(w), h(h)
+FloatColorBuffer::FloatColorBuffer(int w, int h)
 {
 	int pixelCount = w * h;
 	r.resize(w * h);
 	b.resize(w * h);
 	g.resize(w * h);
 	a.resize(w * h);
+	size = FloatColorBufferSize(w, h);
 }
 
 VectorPack8 FloatColorBuffer::gatherPixels8(const __m256i& xCoords, const __m256i& yCoords, const __mmask8& mask) const
 {
 	VectorPack8 ret;
-	__m256i rowStart = _mm256_mullo_epi32(yCoords, _mm256_set1_epi32(w));
+	__m256i rowStart = _mm256_mullo_epi32(yCoords, _mm256_set1_epi32(size.w));
 	__m256i pixelIndices = _mm256_add_epi32(rowStart, xCoords);
 
 	ret.x = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, r.data(), sizeof(float));
@@ -25,7 +26,7 @@ VectorPack8 FloatColorBuffer::gatherPixels8(const __m256i& xCoords, const __m256
 VectorPack16 FloatColorBuffer::gatherPixels16(const __m512i& xCoords, const __m512i& yCoords, const __mmask16& mask) const
 {
 	VectorPack16 ret;
-	__m512i rowStart = _mm512_mullo_epi32(yCoords, _mm512_set1_epi32(w));
+	__m512i rowStart = _mm512_mullo_epi32(yCoords, _mm512_set1_epi32(size.w));
 	__m512i pixelIndices = _mm512_add_epi32(rowStart, xCoords);
 
 	ret.x = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, r.data(), sizeof(float));
@@ -45,20 +46,20 @@ void FloatColorBuffer::storePixels16(int pixelIndex, const VectorPack16& pixels,
 
 void FloatColorBuffer::setPixel(int x, int y, Color color)
 {
-	r[y * w + x] = color.r / 255.0f;
-	g[y * w + x] = color.g / 255.0f;
-	b[y * w + x] = color.b / 255.0f;
-	a[y * w + x] = color.a / 255.0f;
+	r[y * size.w + x] = color.r / 255.0f;
+	g[y * size.w + x] = color.g / 255.0f;
+	b[y * size.w + x] = color.b / 255.0f;
+	a[y * size.w + x] = color.a / 255.0f;
 }
 
 int FloatColorBuffer::getW() const
 {
-	return w;
+	return size.w;
 }
 
 int FloatColorBuffer::getH() const
 {
-	return h;
+	return size.h;
 }
 
 float* FloatColorBuffer::getp_R()
@@ -79,4 +80,9 @@ float* FloatColorBuffer::getp_B()
 float* FloatColorBuffer::getp_A()
 {
 	return a.data();
+}
+
+const FloatColorBufferSize& FloatColorBuffer::getSize() const
+{
+	return size;
 }

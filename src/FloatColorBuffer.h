@@ -3,6 +3,20 @@
 #include "VectorPack.h"
 #include "Color.h"
 
+struct FloatColorBufferSize
+{
+	float fw, fh;
+	int w, h;
+
+	FloatColorBufferSize() = default;
+	FloatColorBufferSize(int w, int h)
+	{
+		this->w = w;
+		this->h = h;
+		this->fw = w;
+		this->fh = h;
+	}
+};
 class FloatColorBuffer
 {
 public:
@@ -23,7 +37,9 @@ public:
 	float* getp_G();
 	float* getp_B();
 	float* getp_A();
+
+	const FloatColorBufferSize& getSize() const;
 private:
+	FloatColorBufferSize size;
 	std::vector<float> r, g, b, a;
-	int w, h;
 };

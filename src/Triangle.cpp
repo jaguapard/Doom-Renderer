@@ -209,7 +209,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
-			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.w > 0.0f;
+			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
 			if (context.wireframeEnabled)
 			{

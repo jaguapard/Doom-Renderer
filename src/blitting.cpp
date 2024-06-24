@@ -14,17 +14,8 @@ void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffe
 	for (size_t i = startIndex; i < endIndex; i += 16)
 	{
 		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence512), _mm512_set1_epi32(endIndex));
-		FloatPack16 lightMult = lightBuf.getRawPixels() + i;
-
-		FloatPack16 newR = FloatPack16(frameBuf.getp_R() + i) * lightMult;
-		FloatPack16 newG = FloatPack16(frameBuf.getp_G() + i) * lightMult;
-		FloatPack16 newB = FloatPack16(frameBuf.getp_B() + i) * lightMult;
-		FloatPack16 newA = FloatPack16(frameBuf.getp_A() + i) * lightMult;
-
-		_mm512_mask_store_ps(frameBuf.getp_R() + i, bounds, newR);
-		_mm512_mask_store_ps(frameBuf.getp_G() + i, bounds, newG);
-		_mm512_mask_store_ps(frameBuf.getp_B() + i, bounds, newB);
-		_mm512_mask_store_ps(frameBuf.getp_A() + i, bounds, newA);
+		VectorPack16 multipied = frameBuf.getPixelsStartingFrom16(i) * (lightBuf.getRawPixels() + i);
+		frameBuf.storePixels16(i, multipied, bounds);
 	}
 }
 

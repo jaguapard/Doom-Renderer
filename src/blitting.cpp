@@ -1,5 +1,5 @@
 #include "blitting.h"
-
+const __m512i sequence512 = _mm512_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY)
 {
 	assert(frameBuf.getW() == lightBuf.getW());
@@ -8,13 +8,12 @@ void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffe
 
 	size_t pixelCount = (maxY - minY) * frameBuf.getW();
 
-	int startIndex = minY * frameBuf.getW();
-	int endIndex = maxY * frameBuf.getW();
-	__m512i sequence = _mm512_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+	size_t startIndex = minY * frameBuf.getW();
+	size_t endIndex = maxY * frameBuf.getW();
 
-	for (int i = startIndex; i < endIndex; i += 16)
+	for (size_t i = startIndex; i < endIndex; i += 16)
 	{
-		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence), _mm512_set1_epi32(endIndex));
+		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence512), _mm512_set1_epi32(endIndex));
 		FloatPack16 lightMult = lightBuf.getRawPixels() + i;
 
 		FloatPack16 newR = FloatPack16(frameBuf.getp_R() + i) * lightMult;
@@ -42,8 +41,8 @@ void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* s
 	assert(minY < maxY);
 	assert(surf->pitch == surf->w * sizeof(Color));
 
-	int startIndex = minY * frameBuf.getW();
-	int endIndex = maxY * frameBuf.getW();
+	size_t startIndex = minY * frameBuf.getW();
+	size_t endIndex = maxY * frameBuf.getW();
 	__m512i sequence = _mm512_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 
 	Uint32* surfPixelsStart = reinterpret_cast<Uint32*>(surf->pixels);
@@ -62,7 +61,7 @@ void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* s
 		permuteMask_rg[i*4+byteIndexR] =  
 	}*/
 
-	for (int i = startIndex; i < endIndex; i += 16)
+	for (size_t i = startIndex; i < endIndex; i += 16)
 	{
 		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence), _mm512_set1_epi32(endIndex));
 
@@ -85,5 +84,31 @@ void blitting::frameBufferIntoSurface(FloatColorBuffer& frameBuf, SDL_Surface* s
 		__m512i ba = _mm512_or_epi32(b, a);
 
 		_mm512_mask_store_epi32(surfPixelsStart + i, bounds, _mm512_or_epi32(rg, ba));
+	}
+}
+
+void blitting::applyFog(FloatColorBuffer& frameBuf, const ZBuffer& zBuffer, float fogMaxIntensityDistance, Vec4 fogColor, size_t minY, size_t maxY)
+{
+	size_t startIndex = minY * frameBuf.getW();
+	size_t endIndex = maxY * frameBuf.getW();
+
+	const float* zBuffPixels = zBuffer.getRawPixels();
+	VectorPack16 fogColorPack = fogColor;
+
+	for (size_t i = startIndex; i < endIndex; i += 16)
+	{
+		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence512), _mm512_set1_epi32(endIndex));
+		VectorPack16 origColors = frameBuf.getPixelsStartingFrom16(i);
+
+		FloatPack16 depthValues = zBuffPixels + i;
+		Mask16 emptyMask = depthValues == 0.0;
+
+		//FloatPack16 lerpT = (FloatPack16(-1) / depthValues) / fogMaxIntensityDistance;
+		FloatPack16 lerpT = FloatPack16(-1) / (depthValues * fogMaxIntensityDistance);
+		lerpT = _mm512_mask_blend_ps(emptyMask, lerpT, FloatPack16(1));
+		lerpT = lerpT.clamp(0, 1);
+
+		VectorPack16 lerpedColor = origColors + (fogColorPack - origColors) * lerpT;
+		frameBuf.storePixels16(i, lerpedColor, bounds);
 	}
 }

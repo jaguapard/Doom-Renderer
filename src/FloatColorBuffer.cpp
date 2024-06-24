@@ -36,6 +36,27 @@ VectorPack16 FloatColorBuffer::gatherPixels16(const __m512i& xCoords, const __m5
 	return ret;
 }
 
+VectorPack16 FloatColorBuffer::getPixelLine16(int xStart, int y) const
+{
+	VectorPack16 ret;
+	size_t index = y * size.w + xStart;
+	ret.r = &r[index];
+	ret.g = &g[index];
+	ret.b = &b[index];
+	ret.a = &a[index];
+	return ret;
+}
+
+VectorPack16 FloatColorBuffer::getPixelsStartingFrom16(size_t index) const
+{
+	VectorPack16 ret;
+	ret.r = &r[index];
+	ret.g = &g[index];
+	ret.b = &b[index];
+	ret.a = &a[index];
+	return ret;
+}
+
 void FloatColorBuffer::storePixels16(int pixelIndex, const VectorPack16& pixels, __mmask16 mask)
 {
 	_mm512_mask_store_ps(&r[pixelIndex], mask, pixels.r);

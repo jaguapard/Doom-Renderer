@@ -155,25 +155,7 @@ void program(int argc, char** argv)
 		
 		//assert(screenW * screenH == framebufW * framebufH);
 		/*
-		if (fogEnabled)
-		{
-			real* zBuffPixels = zBuffer.getRawPixels();
-			Color* framebufPixels = framebuf.getRawPixels();
-			//Color fogColor = { 150, 42, 36 255 };
-			Color fogColor = { 255, 255, 255, 255 };
-			int pxCount = framebufW * framebufH;
-			
-			for (int i = 0; i < pxCount; ++i)
-			{
-				real depth = -zBuffPixels[i];
-				Color c = framebufPixels[i];
-				real lerpT = depth == 0.0 ? 1 : std::clamp((1.0/depth) / fogMaxIntensityDist, 0.0, 1.0); //z buffer stores 1/z, so need to get the real z
-				c.r = lerp(c.r, fogColor.r, lerpT);
-				c.g = lerp(c.g, fogColor.g, lerpT);
-				c.b = lerp(c.b, fogColor.b, lerpT);
-				framebufPixels[i] = c;
-			}
-		}
+	
 
 		if (!benchmarkMode && input.wasCharPressedOnThisFrame('U'))
 		{

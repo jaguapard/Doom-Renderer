@@ -159,9 +159,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	real yEnd = std::clamp<real>(tv[2].spaceCoords.y, zoneMinY, zoneMaxY);
 
 	real ySpan = tv[2].spaceCoords.y - tv[0].spaceCoords.y; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
-	real yp = (yBeg - tv[0].spaceCoords.y) / ySpan;
-	real ypStep = 1.0 / ySpan;
-
+	
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
 	bool flatTop = renderJob.flatTop;
 	auto& frameBuf = *context.frameBuffer;
@@ -172,8 +170,10 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	FloatPack16 sequence_float = FloatPack16::sequence();
 	FloatPack16 lightMult = renderJob.lightMult;
 
-	for (real y = yBeg; y < yEnd; ++y, yp += ypStep) //draw flat bottom part
+	for (real y = yBeg; y < yEnd; ++y) //draw flat bottom part
 	{
+		real yp = (y - tv[0].spaceCoords.y) / ySpan;
+
 		TexVertex leftTv = lerp(tv[0], tv[flatTop + 1], yp); //flat top and flat bottom triangles require different interpolation points
 		TexVertex rightTv = lerp(tv[flatTop], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
 		if (leftTv.spaceCoords.x > rightTv.spaceCoords.x) std::swap(leftTv, rightTv);

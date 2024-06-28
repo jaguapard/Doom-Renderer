@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../blitting.h"
+#include "../EnumclassHelper.h"
 
 MainGame::MainGame(GameStateInitData data)
 {
@@ -60,13 +61,14 @@ void MainGame::handleInput()
 	//xoring with 1 == toggle true->false or false->true
 	if (input.wasCharPressedOnThisFrame('G')) settings.fogEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('P')) settings.performanceMonitorDisplayEnabled ^= 1;
-	if (input.wasCharPressedOnThisFrame('J')) settings.skyRenderingMode = static_cast<SkyRenderingMode>((settings.skyRenderingMode + 1) % (SkyRenderingMode::COUNT));
+	if (input.wasCharPressedOnThisFrame('J')) settings.skyRenderingMode = EnumclassHelper::next(settings.skyRenderingMode);
 	if (input.wasCharPressedOnThisFrame('O')) settings.wireframeEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('C')) camPos = { -96, 70, 784 };
-	if (input.wasCharPressedOnThisFrame('K')) settings.wheelAdjMod = static_cast<WheelAdjustmentMode>((uint32_t(settings.wheelAdjMod) + 1) % uint32_t(WheelAdjustmentMode::COUNT));
+	if (input.wasCharPressedOnThisFrame('K')) settings.wheelAdjMod = EnumclassHelper::next(settings.wheelAdjMod);
 	if (input.wasCharPressedOnThisFrame('L')) settings.fovMult = 1;
 	if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };
 	if (input.wasCharPressedOnThisFrame('R')) settings.backfaceCullingEnabled ^= 1;
+	//if (input.wasCharPressedOnThisFrame('U')) settings.
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{

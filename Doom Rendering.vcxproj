@@ -87,6 +87,7 @@
     <ClInclude Include="src\bob\Vec3.h" />
     <ClInclude Include="src\Color.h" />
     <ClInclude Include="src\CoordinateTransformer.h" />
+    <ClInclude Include="src\EnumclassHelper.h" />
     <ClInclude Include="src\C_Input.h" />
     <ClInclude Include="src\DoomMap.h" />
     <ClInclude Include="src\DoomStructs.h" />

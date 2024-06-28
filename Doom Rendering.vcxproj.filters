@@ -221,6 +221,9 @@
     <ClInclude Include="src\FloatColorBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\EnumclassHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\Backface culling.md" />

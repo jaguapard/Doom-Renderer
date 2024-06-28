@@ -114,21 +114,18 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	for (int i = 0; i < 3; ++i)
 	{
 		real zInv = context.fovMult / tv[i].spaceCoords.z;
-#ifdef __AVX__
-		screenSpaceTriangle.tv[i] = _mm256_mul_ps(tv[i], _mm256_set1_ps(zInv));
-#else
 		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
 		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
-#endif
+
 		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
 		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
 	}
 
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 	screenSpaceTriangle.sortByAscendingSpaceY();
-	if (screenSpaceTriangle.y3 - screenSpaceTriangle.y1 == 0) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
+	if (screenSpaceTriangle.tv[2].spaceCoords.y - screenSpaceTriangle.tv[0].spaceCoords.y == 0) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
 
-	real splitAlpha = (screenSpaceTriangle.y2 - screenSpaceTriangle.y1) / (screenSpaceTriangle.y3 - screenSpaceTriangle.y1);
+	real splitAlpha = (screenSpaceTriangle.tv[1].spaceCoords.y - screenSpaceTriangle.tv[0].spaceCoords.y) / (screenSpaceTriangle.tv[2].spaceCoords.y - screenSpaceTriangle.tv[0].spaceCoords.y);
 	TexVertex splitVertex = lerp(screenSpaceTriangle.tv[0], screenSpaceTriangle.tv[2], splitAlpha);
 
 	TexVertex v2_copy = screenSpaceTriangle.tv[2];
@@ -155,12 +152,12 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool 
 void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
 	//Scanline rasterization algorithm
-	if (y1 >= zoneMaxY || y3 < zoneMinY) return;
-	real yBeg = std::clamp<real>(y1, zoneMinY, zoneMaxY);
-	real yEnd = std::clamp<real>(y3, zoneMinY, zoneMaxY);
+	if (tv[0].spaceCoords.y >= zoneMaxY || tv[2].spaceCoords.y < zoneMinY) return;
+	real yBeg = std::clamp<real>(tv[0].spaceCoords.y, zoneMinY, zoneMaxY);
+	real yEnd = std::clamp<real>(tv[2].spaceCoords.y, zoneMinY, zoneMaxY);
 
-	real ySpan = y3 - y1; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
-	real yp = (yBeg - y1) / ySpan;
+	real ySpan = tv[2].spaceCoords.y - tv[0].spaceCoords.y; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
+	real yp = (yBeg - tv[0].spaceCoords.y) / ySpan;
 	real ypStep = 1.0 / ySpan;
 
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
@@ -223,7 +220,8 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 
-			VectorPack16 dynaLight = VectorPack16(Vec4(1, 1, 0, 1)) * rcpDistSquared * 1e5;
+			VectorPack16 dynaLight = VectorPack16(Vec4(1, 0.8235, 0, 1)) * rcpDistSquared * 1e5;
+			//VectorPack16 dynaLight = 1;
 			texturePixels = texturePixels * (dynaLight + lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);

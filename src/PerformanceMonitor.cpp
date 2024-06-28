@@ -10,6 +10,8 @@ PerformanceMonitor::PerformanceMonitor()
 {
 	std::string path = "C:/Windows/Fonts/lucon.ttf";
 	font = Smart_Font(TTF_OpenFont(path.c_str(), 16));
+	fontOutline = Smart_Font(TTF_OpenFont(path.c_str(), 16));
+	TTF_SetFontOutline(fontOutline.get(), 1);
 	if (!font) throw std::runtime_error("Failed to open font: " + path + ": " + TTF_GetError());
 }
 
@@ -39,10 +41,16 @@ void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftC
 {
 	std::string str = composeString(additionalInfo);
 
-	auto s = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(font.get(), str.c_str(), {255,255,255,SDL_ALPHA_OPAQUE}, 1500));
-	if (!s) throw std::runtime_error(std::string("Failed to draw FPS info: ") + SDL_GetError());
-	SDL_Rect rect = { pixelsFromUpperLeftCorner.x, pixelsFromUpperLeftCorner.y, s->w, s->h };
-	SDL_BlitSurface(s.get(), nullptr, dst, &rect);
+	auto bg = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(fontOutline.get(), str.c_str(), { 0,0,0,SDL_ALPHA_OPAQUE }, 1500));
+	auto fg = Smart_Surface(TTF_RenderUTF8_Solid_Wrapped(font.get(), str.c_str(), {255,255,255,SDL_ALPHA_OPAQUE}, 1500));
+
+	if (!bg || !fg) throw std::runtime_error(std::string("Failed to draw FPS info: ") + SDL_GetError());
+	SDL_Rect rect1 = { pixelsFromUpperLeftCorner.x, pixelsFromUpperLeftCorner.y, fg->w, fg->h };
+	SDL_Rect rect2 = { pixelsFromUpperLeftCorner.x, pixelsFromUpperLeftCorner.y, bg->w, bg->h };
+
+	//SDL_SetSurfaceBlendMode(bg.get(), SDL_BLENDMODE_BLEND);
+	SDL_BlitSurface(bg.get(), nullptr, dst, &rect1);
+	SDL_BlitSurface(fg.get(), nullptr, dst, &rect2);
 }
 
 PerformanceMonitor::PercentileInfo PerformanceMonitor::getPercentileInfo() const

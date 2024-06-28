@@ -33,6 +33,7 @@ public:
 	uint64_t getFrameNumber() const;
 private:
 	Smart_Font font;
+	Smart_Font fontOutline;
 	bob::Timer timer;
 
 	Statsman oldStats;

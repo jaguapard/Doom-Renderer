@@ -29,7 +29,7 @@ BenchmarkState::BenchmarkState(GameStateInitData data)
 	settings.wireframeEnabled = false;
 	settings.mouseCaptured = false;
 	settings.fogEnabled = false;
-	settings.skyRenderingMode = SPHERE;
+	settings.skyRenderingMode = SkyRenderingMode::SPHERE;
 
 	this->changeMapTo(defaultMap);
 	performanceMonitor.reset();

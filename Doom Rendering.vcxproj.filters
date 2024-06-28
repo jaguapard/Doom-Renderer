@@ -22,6 +22,9 @@
     <Filter Include="Source Files\GameStates">
       <UniqueIdentifier>{c3b6caf3-e421-475a-8d9b-ad636fc103d6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\misc">
+      <UniqueIdentifier>{79ac45a4-3703-4ef3-8559-0705c11330ba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ZBuffer.cpp">
@@ -223,6 +226,9 @@
     </ClInclude>
     <ClInclude Include="src\EnumclassHelper.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\misc\Enums.h">
+      <Filter>Header Files\misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

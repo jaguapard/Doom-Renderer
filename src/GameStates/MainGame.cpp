@@ -68,7 +68,7 @@ void MainGame::handleInput()
 	if (input.wasCharPressedOnThisFrame('L')) settings.fovMult = 1;
 	if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };
 	if (input.wasCharPressedOnThisFrame('R')) settings.backfaceCullingEnabled ^= 1;
-	//if (input.wasCharPressedOnThisFrame('U')) settings.
+	if (input.wasCharPressedOnThisFrame('U')) settings.fogEffectVersion = EnumclassHelper::next(settings.fogEffectVersion);
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{
@@ -234,7 +234,7 @@ void MainGame::draw()
 			perfmonInfo["Backface culling"] = settings.backfaceCullingEnabled ? "enabled" : "disabled";
 			perfmonInfo["Buffer cleaning"] = settings.bufferCleaningEnabled ? "enabled" : "disabled";
 			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / settings.fovMult) * 180 / M_PI) + " degrees";
-			perfmonInfo["Fog"] = !settings.fogEnabled ? "disabled" : ("version " + std::to_string(settings.fogEffectVersion) + ", intensity " + std::to_string(settings.fogIntensity));
+			perfmonInfo["Fog"] = !settings.fogEnabled ? "disabled" : ("version " + std::to_string(int(settings.fogEffectVersion)) + ", intensity " + std::to_string(settings.fogIntensity));
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
 			if (settings.performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
@@ -282,7 +282,7 @@ void MainGame::fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJ
 			}
 		}
 	}
-	if (settings.skyRenderingMode == SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
+	if (settings.skyRenderingMode == SkyRenderingMode::SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
 
 	
 }

@@ -19,6 +19,8 @@
 #include "../WadLoader.h"
 #include "../Triangle.h"
 
+#include "../misc/Enums.h"
+
 #include <SDL/SDL.h>
 
 class MainGame : public GameStateBase
@@ -33,21 +35,6 @@ public:
 	virtual void draw();
 	virtual void endFrame();
 protected:
-	enum class WheelAdjustmentMode : uint32_t
-	{
-		FLY_SPEED,
-		FOV,
-		COUNT,
-	};
-
-	enum SkyRenderingMode : uint32_t
-	{
-		NONE,
-		ROTATING,
-		SPHERE,
-		COUNT
-	};
-
 	GameStateInitData initData;
 	SDL_Window* wnd;
 	SDL_Surface* wndSurf;
@@ -75,10 +62,10 @@ protected:
 		real camAngAdjustmentSpeed_Keyboard = 3e-2;
 		
 		real fogIntensity = 600;
-		int fogEffectVersion = 1;
+		FogEffectVersion fogEffectVersion = FogEffectVersion::LINEAR_WITH_CLAMP;
 
 		WheelAdjustmentMode wheelAdjMod = WheelAdjustmentMode::FLY_SPEED;
-		SkyRenderingMode skyRenderingMode = SPHERE;
+		SkyRenderingMode skyRenderingMode = SkyRenderingMode::SPHERE;
 
 		bool fogEnabled = false;
 		bool mouseCaptured = false;

@@ -188,9 +188,15 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		FloatPack16 xp = (xBeg - original_xBeg) / xSpan;
 
 		VectorPack16 interpolatedDividedUv = VectorPack16(leftTv.textureCoords).lerp(rightTv.textureCoords, xp);
+		VectorPack16 worldCoords = VectorPack16(leftTv.worldCoords).lerp(rightTv.worldCoords, xp);
+
 		VectorPack16 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
+		VectorPack16 worldCoordsStep = (rightTv.worldCoords - leftTv.worldCoords) * xpStep;
+
 		interpolatedDividedUv += interpolatedDividedUvStep * sequence_float;
+		worldCoords += worldCoordsStep * sequence_float;
 		interpolatedDividedUvStep *= 16;
+		worldCoordsStep *= 16;
 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg[0]); //all buffers have the same size, so we can use a single index
 
@@ -200,13 +206,13 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			x += 16, pixelIndex += 16, xp += xpStep,
 			interpolatedDividedUv.x += interpolatedDividedUvStep.x,
 			interpolatedDividedUv.y += interpolatedDividedUvStep.y,
-			interpolatedDividedUv.z += interpolatedDividedUvStep.z)
+			interpolatedDividedUv.z += interpolatedDividedUvStep.z,
+			worldCoords += worldCoordsStep
+			)
 		{
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
 			Mask16 visiblePointsMask = loopBoundsMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
-
-			VectorPack16 worldCoords = VectorPack16(leftTv.worldCoords).lerp(rightTv.worldCoords, xp);
 
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
@@ -224,7 +230,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 
-			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.8235, 0, 1)) * 1e5) / distSquared;
+			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.8235, 0, 1)) * 1e6) / distSquared;
 			//VectorPack16 dynaLight = 1;
 			texturePixels = texturePixels * (dynaLight + lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);

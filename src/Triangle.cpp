@@ -180,36 +180,21 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 		real original_xBeg = leftTv.spaceCoords.x;
 		real original_xEnd = rightTv.spaceCoords.x;
-		FloatPack16 xBeg = std::clamp<real>(original_xBeg, 0, context.framebufW);
-		FloatPack16 xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
+		real xBeg = std::clamp<real>(original_xBeg, 0, context.framebufW);
+		real xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
 		real xSpan = original_xEnd - original_xBeg;
 
-		real xpStep = 1.0 / xSpan;
-		FloatPack16 xp = (xBeg - original_xBeg) / xSpan;
-
-		VectorPack16 interpolatedDividedUv = VectorPack16(leftTv.textureCoords).lerp(rightTv.textureCoords, xp);
-		VectorPack16 worldCoords = VectorPack16(leftTv.worldCoords).lerp(rightTv.worldCoords, xp);
-
-		VectorPack16 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
-		VectorPack16 worldCoordsStep = (rightTv.worldCoords - leftTv.worldCoords) * xpStep;
-
-		interpolatedDividedUv += interpolatedDividedUvStep * sequence_float;
-		worldCoords += worldCoordsStep * sequence_float;
-		interpolatedDividedUvStep *= 16;
-		worldCoordsStep *= 16;
-
-		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg[0]); //all buffers have the same size, so we can use a single index
+		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
 		for (FloatPack16 x = sequence_float + xBeg; 
 			Mask16 loopBoundsMask = x < xEnd; 
-			x += 16, pixelIndex += 16, xp += xpStep,
-			interpolatedDividedUv.x += interpolatedDividedUvStep.x,
-			interpolatedDividedUv.y += interpolatedDividedUvStep.y,
-			interpolatedDividedUv.z += interpolatedDividedUvStep.z,
-			worldCoords += worldCoordsStep
-			)
+			x += 16, pixelIndex += 16)
 		{
+			FloatPack16 xp = (x - original_xBeg) / xSpan;
+			VectorPack16 interpolatedDividedUv = VectorPack16(leftTv.textureCoords).lerp(rightTv.textureCoords, xp);
+			VectorPack16 worldCoords = VectorPack16(leftTv.worldCoords).lerp(rightTv.worldCoords, xp);
+
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
 			Mask16 visiblePointsMask = loopBoundsMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
@@ -231,7 +216,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			}
 
 			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.8235, 0, 1)) * 1e6) / distSquared;
-			//VectorPack16 dynaLight = 1;
+			//VectorPack16 dynaLight = 0;
 			texturePixels = texturePixels * (dynaLight + lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);

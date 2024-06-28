@@ -183,6 +183,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		real xBeg = std::clamp<real>(original_xBeg, 0, context.framebufW);
 		real xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
 		real xSpan = original_xEnd - original_xBeg;
+		if (xSpan == 0.0f) continue; //0 width scanline, skip
 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 

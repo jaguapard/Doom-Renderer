@@ -188,8 +188,8 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
-		for (FloatPack16 x = sequence_float + xBeg; 
-			Mask16 loopBoundsMask = x < xEnd; 
+		for (FloatPack16 x = sequence_float + floor(xBeg); 
+			Mask16 loopBoundsMask = x < ceil(xEnd); 
 			x += 16, pixelIndex += 16)
 		{
 			FloatPack16 xp = (x - original_xBeg) / xSpan;
@@ -216,7 +216,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 
-			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.8235, 0, 1)) * 1e6) / distSquared;
+			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.8235, 0, 1)) * 1e5) / distSquared;
 			//VectorPack16 dynaLight = 0;
 			texturePixels = texturePixels * (dynaLight + lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);

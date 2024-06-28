@@ -67,10 +67,11 @@ void FloatColorBuffer::storePixels16(int pixelIndex, const VectorPack16& pixels,
 
 void FloatColorBuffer::setPixel(int x, int y, Color color)
 {
-	r[y * size.w + x] = color.r / 255.0f;
-	g[y * size.w + x] = color.g / 255.0f;
-	b[y * size.w + x] = color.b / 255.0f;
-	a[y * size.w + x] = color.a / 255.0f;
+	size_t ind = y * size.w + x;
+	r[ind] = (float(color.r) + 1) / 256.0f; //avoid 0.0 in color channels
+	g[ind] = (float(color.g) + 1) / 256.0f;
+	b[ind] = (float(color.b) + 1) / 256.0f;
+	a[ind] = color.a / 255.0f;
 }
 
 int FloatColorBuffer::getW() const

@@ -74,7 +74,9 @@ protected:
 		real camAngAdjustmentSpeed_Mouse = 1e-3;
 		real camAngAdjustmentSpeed_Keyboard = 3e-2;
 		
-		real fogMaxIntensityDist = 600;
+		real fogIntensity = 600;
+		int fogEffectVersion = 1;
+
 		WheelAdjustmentMode wheelAdjMod = WheelAdjustmentMode::FLY_SPEED;
 		SkyRenderingMode skyRenderingMode = SPHERE;
 

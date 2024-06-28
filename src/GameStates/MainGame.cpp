@@ -96,7 +96,7 @@ void MainGame::handleInput()
 	//camAng -= { camAngAdjustmentSpeed_Keyboard * input.isButtonHeld(SDL_SCANCODE_F), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_G), camAngAdjustmentSpeed_Keyboard* input.isButtonHeld(SDL_SCANCODE_H)};
 
 	settings.gamma += 0.1 * (input.isButtonHeld(SDL_SCANCODE_EQUALS) - input.isButtonHeld(SDL_SCANCODE_MINUS));
-	settings.fogMaxIntensityDist += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
+	settings.fogIntensity += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
 
 	//camAng.z = fmod(camAng.z, M_PI);
 	camAng.y = fmod(camAng.y, 2 * M_PI);
@@ -207,7 +207,7 @@ void MainGame::draw()
 			}
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
-			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.zBuffer, settings.fogMaxIntensityDist / settings.fovMult, Vec4(1, 1, 1, 1), myMinY, myMaxY); //divide by fovMult to prevent FOV setting from messing with fog intensity
+			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.zBuffer, settings.fogIntensity / settings.fovMult, Vec4(1, 1, 1, 1), myMinY, myMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
 			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
 			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, myMinY, myMaxY, shifts);
 		};
@@ -232,6 +232,7 @@ void MainGame::draw()
 			perfmonInfo["Backface culling"] = settings.backfaceCullingEnabled ? "enabled" : "disabled";
 			perfmonInfo["Buffer cleaning"] = settings.bufferCleaningEnabled ? "enabled" : "disabled";
 			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / settings.fovMult) * 180 / M_PI) + " degrees";
+			perfmonInfo["Fog"] = !settings.fogEnabled ? "disabled" : ("version " + std::to_string(settings.fogEffectVersion) + ", intensity " + std::to_string(settings.fogIntensity));
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
 			if (settings.performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);

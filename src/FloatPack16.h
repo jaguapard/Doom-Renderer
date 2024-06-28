@@ -126,6 +126,7 @@ struct alignas(64) FloatPack16
 	static FloatPack16 sequence(float mult = 1.0);
 
 	const float& operator[](size_t i) const;
+	float& operator[](size_t i);
 };
 
 inline FloatPack16::FloatPack16(const float x)
@@ -324,6 +325,11 @@ inline FloatPack16 FloatPack16::sequence(float mult)
 }
 
 inline const float& FloatPack16::operator[](size_t i) const
+{
+	return f[i];
+}
+
+inline float& FloatPack16::operator[](size_t i)
 {
 	return f[i];
 }

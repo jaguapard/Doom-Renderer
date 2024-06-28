@@ -77,7 +77,7 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 	}
 }
 
-void blitting::applyFog(FloatColorBuffer& frameBuf, const ZBuffer& zBuffer, float fogMaxIntensityDistance, Vec4 fogColor, size_t minY, size_t maxY)
+void blitting::applyFog(FloatColorBuffer& frameBuf, const ZBuffer& zBuffer, float fogIntensity, Vec4 fogColor, size_t minY, size_t maxY, int fogEffectVersion)
 {
 	size_t startIndex = minY * frameBuf.getW();
 	size_t endIndex = maxY * frameBuf.getW();
@@ -91,11 +91,22 @@ void blitting::applyFog(FloatColorBuffer& frameBuf, const ZBuffer& zBuffer, floa
 		VectorPack16 origColors = frameBuf.getPixelsStartingFrom16(i);
 
 		FloatPack16 depthValues = zBuffPixels + i;
-		Mask16 emptyMask = depthValues == 0.0;
+		Mask16 emptyMask = depthValues == 0.0; //depth buffer stores -1/z values
 
-		FloatPack16 lerpT = FloatPack16(-1) / (depthValues * fogMaxIntensityDistance);
-		lerpT = _mm512_mask_blend_ps(emptyMask, lerpT, FloatPack16(1));
-		lerpT = lerpT.clamp(0, 1);
+		FloatPack16 lerpT;
+		if (fogEffectVersion == 1)
+		{
+			lerpT = FloatPack16(-1) / (depthValues * fogIntensity);
+			lerpT = _mm512_mask_blend_ps(emptyMask, lerpT, FloatPack16(1));
+			lerpT = lerpT.clamp(0, 1);
+		}
+		else if (fogEffectVersion == 2)
+		{
+			lerpT = depthValues * fogIntensity;
+			lerpT = _mm512_mask_blend_ps(emptyMask, lerpT, FloatPack16(1));
+			for (int j = 0; j < 16; ++j) lerpT[j] = pow(2, lerpT[j]);
+			lerpT = lerpT.clamp(0, 1);
+		}
 
 		VectorPack16 lerpedColor = origColors + (fogColorPack - origColors) * lerpT;
 		frameBuf.storePixels16(i, lerpedColor, bounds);

@@ -98,16 +98,19 @@ struct
 	const PackType& operator[](size_t i) const;
 
 	float product() const;
-	float len() const;
-	float lenSq() const;
+	PackType len() const;
+	PackType lenSq() const;
+	PackType lenSq3d() const;
 
 	VectorPack<PackType> operator-() const;
 	VectorPack<PackType> operator~() const;
 	VectorPack<PackType> unit() const;
 
-	float dot(const VectorPack<PackType>& other) const;
+	PackType dot(const VectorPack<PackType>& other) const;
+	PackType dot3d(const VectorPack<PackType>& other) const; //ignore w coordinate
 	PackType cross2d(const VectorPack<PackType>& other) const;
 	VectorPack<PackType> cross3d(const VectorPack<PackType>& other) const;
+	VectorPack<PackType> lerp(const VectorPack<PackType>& dst, const PackType& amount) const;
 
 	bob::_SSE_Vec4_float extractHorizontalVector(size_t index) const;
 };
@@ -481,6 +484,18 @@ inline VectorPack<PackType> VectorPack<PackType>::operator~() const
 }
 
 template <typename PackType>
+inline PackType VectorPack<PackType>::dot(const VectorPack<PackType>& other) const
+{
+	return x * other.x + y * other.y + z * other.z + w * other.w;
+}
+
+template <typename PackType>
+inline PackType VectorPack<PackType>::dot3d(const VectorPack<PackType>& other) const
+{
+	return x * other.x + y * other.y + z * other.z;
+}
+
+template <typename PackType>
 inline PackType VectorPack<PackType>::cross2d(const VectorPack<PackType>& other) const
 {
 	return x * other.y - y * other.x;
@@ -495,6 +510,12 @@ inline VectorPack<PackType> VectorPack<PackType>::cross3d(const VectorPack<PackT
 	ret.z = x * other.y - y * other.x;
 	ret.w = 0.0f;
 	return ret;
+}
+
+template <typename PackType>
+inline VectorPack<PackType> VectorPack<PackType>::lerp(const VectorPack<PackType>& dst, const PackType& amount) const
+{
+	return *this + (dst - *this) * amount;
 }
 
 template <typename PackType>
@@ -518,6 +539,18 @@ inline VectorPack<PackType> VectorPack<PackType>::fromHorizontalVectors(const Co
 		ret.w[i] = (*it)[i][4];
 	}
 	return ret;
+}
+
+template <typename PackType>
+inline PackType VectorPack<PackType>::lenSq() const
+{
+	return this->dot(*this);
+}
+
+template <typename PackType>
+inline PackType VectorPack<PackType>::lenSq3d() const
+{
+	return this->dot3d(*this);
 }
 
 typedef VectorPack<FloatPack8> VectorPack8;

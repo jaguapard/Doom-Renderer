@@ -304,6 +304,8 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.nearPlaneClippingZ = settings.nearPlaneZ;
 	ctx.fovMult = settings.fovMult;
 
+	ctx.camPos = camPos;
+
 	return ctx;
 }
 

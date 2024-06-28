@@ -54,6 +54,7 @@ struct TriangleRenderContext
 	int textureIndex;
 	real lightMult;
 	real framebufW, framebufH;
+	Vec4 camPos;
 
 	int doomSkyTextureMarkerIndex;
 	bool wireframeEnabled;

@@ -195,7 +195,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
 		for (FloatPack16 x = sequence_float + xBeg; 
 			Mask16 loopBoundsMask = x < xEnd; 
-			x += 16, pixelIndex += 16, 
+			x += 16, pixelIndex += 16, xp += xpStep,
 			interpolatedDividedUv.x += interpolatedDividedUvStep.x,
 			interpolatedDividedUv.y += interpolatedDividedUvStep.y,
 			interpolatedDividedUv.z += interpolatedDividedUvStep.z)
@@ -204,11 +204,13 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			Mask16 visiblePointsMask = loopBoundsMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
+			VectorPack16 worldCoords = lerp(leftTv.worldCoords, rightTv.worldCoords, xp);
+
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			FloatPack16 rcpDistSquared = interpolatedDividedUv.z * interpolatedDividedUv.z; //this is not correct, but for now, it'll pass
+			FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
 
 			if (context.wireframeEnabled)
 			{
@@ -220,7 +222,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 
-			VectorPack16 dynaLight = VectorPack16(Vec4(1, 0.8235, 0, 1)) * rcpDistSquared * 1e5;
+			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.8235, 0, 1)) * 1e5) / distSquared;
 			//VectorPack16 dynaLight = 1;
 			texturePixels = texturePixels * (dynaLight + lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);

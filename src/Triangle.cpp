@@ -211,6 +211,8 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
+			FloatPack16 rcpDistSquared = interpolatedDividedUv.z * interpolatedDividedUv.z; //this is not correct, but for now, it'll pass
+
 			if (context.wireframeEnabled)
 			{
 				__mmask16 visibleEdgeMask = visiblePointsMask & (x <= original_xBeg + 1 | x >= original_xEnd - 1);
@@ -221,7 +223,8 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 
-			texturePixels *= lightMult;
+			VectorPack16 dynaLight = VectorPack16(Vec4(1, 1, 0, 1)) * rcpDistSquared * 1e5;
+			texturePixels = texturePixels * (dynaLight + lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);
 		}

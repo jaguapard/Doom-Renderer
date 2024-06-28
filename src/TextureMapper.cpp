@@ -9,9 +9,9 @@ TexVertex TextureMapper::mapRelativeToReferencePoint(const Vec4& pointToMap, con
 
 Triangle TextureMapper::mapTriangleRelativeToMinPoint(Triangle t)
 {
-    real minX = std::min_element(t.tv.begin(), t.tv.end(), [](const TexVertex& tv1, const TexVertex& tv2) {return tv1.spaceCoords.x < tv2.spaceCoords.x; })->spaceCoords.x;
-    real minY = std::min_element(t.tv.begin(), t.tv.end(), [](const TexVertex& tv1, const TexVertex& tv2) {return tv1.spaceCoords.y < tv2.spaceCoords.y; })->spaceCoords.y;
-    real minZ = std::min_element(t.tv.begin(), t.tv.end(), [](const TexVertex& tv1, const TexVertex& tv2) {return tv1.spaceCoords.z < tv2.spaceCoords.z; })->spaceCoords.z;
+    real minX = std::min_element(std::begin(t.tv), std::end(t.tv), [](const TexVertex& tv1, const TexVertex& tv2) {return tv1.spaceCoords.x < tv2.spaceCoords.x; })->spaceCoords.x;
+    real minY = std::min_element(std::begin(t.tv), std::end(t.tv), [](const TexVertex& tv1, const TexVertex& tv2) {return tv1.spaceCoords.y < tv2.spaceCoords.y; })->spaceCoords.y;
+    real minZ = std::min_element(std::begin(t.tv), std::end(t.tv), [](const TexVertex& tv1, const TexVertex& tv2) {return tv1.spaceCoords.z < tv2.spaceCoords.z; })->spaceCoords.z;
     Vec4 ref = { minX,minY, minZ };
     for (auto& tv : t.tv)
         tv = mapRelativeToReferencePoint(tv.spaceCoords, ref);

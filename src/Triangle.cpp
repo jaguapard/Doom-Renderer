@@ -5,27 +5,27 @@
 
 void Triangle::sortByAscendingSpaceX()
 {
-	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.x < tv2.spaceCoords.x; });
+	std::sort(std::begin(tv), std::end(tv), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.x < tv2.spaceCoords.x; });
 }
 
 void Triangle::sortByAscendingSpaceY()
 {
-	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.y < tv2.spaceCoords.y; });
+	std::sort(std::begin(tv), std::end(tv), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.y < tv2.spaceCoords.y; });
 }
 
 void Triangle::sortByAscendingSpaceZ()
 {
-	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.z < tv2.spaceCoords.z; });
+	std::sort(std::begin(tv), std::end(tv), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.spaceCoords.z < tv2.spaceCoords.z; });
 }
 
 void Triangle::sortByAscendingTextureX()
 {
-	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.x < tv2.textureCoords.x; });
+	std::sort(std::begin(tv), std::end(tv), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.x < tv2.textureCoords.x; });
 }
 
 void Triangle::sortByAscendingTextureY()
 {
-	std::sort(tv.begin(), tv.end(), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
+	std::sort(std::begin(tv), std::end(tv), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
 }
 
 void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
@@ -37,6 +37,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	{
 		rotated.tv[i].spaceCoords = context.ctr->rotateAndTranslate(tv[i].spaceCoords);
 		rotated.tv[i].textureCoords = tv[i].textureCoords;
+		rotated.tv[i].worldCoords = tv[i].spaceCoords;
 
 		if (rotated.tv[i].spaceCoords.z > context.nearPlaneClippingZ)
 		{
@@ -116,6 +117,7 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		real zInv = context.fovMult / tv[i].spaceCoords.z;
 		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
 		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
+		screenSpaceTriangle.tv[i].worldCoords = tv[i].worldCoords;
 
 		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
 		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
@@ -182,10 +184,10 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		FloatPack16 xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
 		real xSpan = original_xEnd - original_xBeg;
 
-		real xp = (xBeg[0] - original_xBeg) / xSpan;
 		real xpStep = 1.0 / xSpan;
+		FloatPack16 xp = (xBeg - original_xBeg) / xSpan;
 
-		VectorPack16 interpolatedDividedUv = lerp(leftTv.textureCoords, rightTv.textureCoords, xp);
+		VectorPack16 interpolatedDividedUv = VectorPack16(leftTv.textureCoords).lerp(rightTv.textureCoords, xp);
 		VectorPack16 interpolatedDividedUvStep = (rightTv.textureCoords - leftTv.textureCoords) * xpStep;
 		interpolatedDividedUv += interpolatedDividedUvStep * sequence_float;
 		interpolatedDividedUvStep *= 16;
@@ -204,7 +206,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			Mask16 visiblePointsMask = loopBoundsMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
-			VectorPack16 worldCoords = lerp(leftTv.worldCoords, rightTv.worldCoords, xp);
+			VectorPack16 worldCoords = VectorPack16(leftTv.worldCoords).lerp(rightTv.worldCoords, xp);
 
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);

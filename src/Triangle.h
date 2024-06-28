@@ -17,7 +17,8 @@ struct RenderJob;
 
 struct Triangle
 {
-	std::array<TexVertex, 3> tv;
+	//std::array<TexVertex, 3> tv;
+	TexVertex tv[3];
 
 	void sortByAscendingSpaceX();
 	void sortByAscendingSpaceY();

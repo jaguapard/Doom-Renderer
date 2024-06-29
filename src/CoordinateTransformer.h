@@ -19,6 +19,7 @@ public:
 	Matrix4 getCurrentTransformationMatrix() const;
 private:
 	Matrix4 rotationTranslation;
+	Matrix4 inverseRotationTranslation;
 	Vec4 _shift;
 	Vec4 hVec;
 };

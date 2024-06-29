@@ -117,10 +117,14 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		real zInv = context.fovMult / tv[i].spaceCoords.z;
 		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
 		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
-		screenSpaceTriangle.tv[i].worldCoords = tv[i].worldCoords;
+
+		real world_zInv = context.fovMult / tv[i].worldCoords.z;
+		screenSpaceTriangle.tv[i].worldCoords = tv[i].worldCoords * world_zInv;
+		screenSpaceTriangle.tv[i].worldCoords.z = world_zInv;
 
 		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
 		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
+		
 	}
 
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
@@ -185,10 +189,11 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		real xSpan = original_xEnd - original_xBeg;
 		if (xSpan == 0.0f) continue; //0 width scanline, skip
 
+		/*
 		VectorPack16 leftWorld_zDivided = leftTv.worldCoords / leftTv.worldCoords.z;
 		leftWorld_zDivided.z = 1.0 / leftTv.worldCoords.z;
 		VectorPack16 rightWorld_zDivided = rightTv.worldCoords / rightTv.worldCoords.z;
-		rightWorld_zDivided.z = 1.0 / rightTv.worldCoords.z;
+		rightWorld_zDivided.z = 1.0 / rightTv.worldCoords.z;*/
 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
@@ -199,7 +204,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		{
 			FloatPack16 xp = (x - original_xBeg) / xSpan;
 			VectorPack16 interpolatedDividedUv = VectorPack16(leftTv.textureCoords).lerp(rightTv.textureCoords, xp);
-			VectorPack16 worldCoords_zDivided = VectorPack16(leftWorld_zDivided).lerp(rightWorld_zDivided, xp);
+			VectorPack16 worldCoords_zDivided = VectorPack16(leftTv.worldCoords).lerp(rightTv.worldCoords, xp);
 			VectorPack16 worldCoords = worldCoords_zDivided / worldCoords_zDivided.z;
 			worldCoords.z = FloatPack16(1.0) / worldCoords_zDivided.z;
 

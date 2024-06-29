@@ -171,26 +171,28 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
 	FloatPack16 sequence_float = FloatPack16::sequence();
-	VectorPack16 points = Vec4(xBeg, yBeg) - renderJob.tStart.spaceCoords;
+	const Vec4 r1 = tv[0].spaceCoords;
+	const Vec4 r2 = tv[1].spaceCoords;
+	const Vec4 r3 = tv[2].spaceCoords;
 
-	for (real y = yBeg; y < yEnd; ++y, points.y += 1)
+	real signedArea = (r1 - r3).cross2d(r2 - r3);
+	for (real y = yBeg; y < yEnd; ++y)
 	{
-		points.x = sequence_float + xBeg - renderJob.tStart.spaceCoords.x;
-
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
 		for (FloatPack16 x = sequence_float + floor(xBeg); 
 			Mask16 loopBoundsMask = x < ceil(xEnd); 
-			x += 16, pixelIndex += 16, points.x += 16)
+			x += 16, pixelIndex += 16)
 		{
-			FloatPack16 alpha = points.cross2d(renderJob.span2.spaceCoords) / renderJob.signedArea;
-			FloatPack16 beta = VectorPack16(renderJob.span1.spaceCoords).cross2d(points) / renderJob.signedArea;
+			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
+			FloatPack16 alpha = (r - r3).cross2d(r2 - r3) / signedArea;
+			FloatPack16 beta = (r - r3).cross2d(r3 - r1) / signedArea;
 			FloatPack16 gamma = FloatPack16(1) - alpha - beta;
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;
 
-			VectorPack16 interpolatedDividedUv = VectorPack16(renderJob.originalTriangle.tv[1].textureCoords) * alpha + VectorPack16(renderJob.originalTriangle.tv[2].textureCoords) * beta + VectorPack16(renderJob.originalTriangle.tv[0].textureCoords) * gamma;
+			VectorPack16 interpolatedDividedUv = VectorPack16(renderJob.originalTriangle.tv[0].textureCoords) * alpha + VectorPack16(renderJob.originalTriangle.tv[1].textureCoords) * beta + VectorPack16(renderJob.originalTriangle.tv[2].textureCoords) * gamma;
 
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
 			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
@@ -200,7 +202,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			VectorPack16 worldCoords = VectorPack16(renderJob.originalTriangle.tv[1].worldCoords) * alpha + VectorPack16(renderJob.originalTriangle.tv[2].worldCoords) * beta + VectorPack16(renderJob.originalTriangle.tv[0].worldCoords) * gamma;
+			VectorPack16 worldCoords = VectorPack16(renderJob.originalTriangle.tv[0].worldCoords) * alpha + VectorPack16(renderJob.originalTriangle.tv[1].worldCoords) * beta + VectorPack16(renderJob.originalTriangle.tv[2].worldCoords) * gamma;
 			FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
 
 			/*

@@ -207,7 +207,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			r.z = interpolatedDividedUv.z;
 			VectorPack16 worldCoords = context.ctr->pixelsToWorld16(r);
 			//FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
-			FloatPack16 distSquared = (worldCoords).lenSq3d();
+			FloatPack16 distSquared = (worldCoords - Vec4(580, 250, -1015)).lenSq3d(); //expected result: light hanging in the air at this pos
 
 			
 			if (context.wireframeEnabled)

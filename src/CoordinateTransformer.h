@@ -17,6 +17,7 @@ public:
 	VectorPack16 pixelsToWorld16(const VectorPack16& px) const;
 
 	Matrix4 getCurrentTransformationMatrix() const;
+	Matrix4 getCurrentInverseTransformationMatrix() const;
 private:
 	Matrix4 rotationTranslation;
 	Matrix4 inverseRotationTranslation;

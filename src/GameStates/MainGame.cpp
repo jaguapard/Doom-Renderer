@@ -237,6 +237,7 @@ void MainGame::draw()
 			perfmonInfo["Fog"] = !settings.fogEnabled ? "disabled" : ("version " + std::to_string(int(settings.fogEffectVersion)) + ", intensity " + std::to_string(settings.fogIntensity));
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
+			perfmonInfo["Inverse transformation matrix"] = "\n" + ctr.getCurrentInverseTransformationMatrix().toString();
 			if (settings.performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
 			else std::cout << performanceMonitor.composeString(perfmonInfo) << "\n";
 		}

@@ -1,5 +1,7 @@
 #pragma once
 #include <immintrin.h>
+#include <array>
+
 #include "bob/SSE_Vec4.h"
 #include "FloatPack8.h"
 #include "FloatPack16.h"

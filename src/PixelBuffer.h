@@ -110,7 +110,7 @@ inline T PixelBuffer<T>::getPixel(int x, int y) const
 {
 	return at(x, y);
 }
-
+/*
 template<typename T>
 inline T PixelBuffer<T>::getPixel(const __m128i& pos) const
 {
@@ -136,7 +136,7 @@ inline T PixelBuffer<T>::getPixel64(const __m128d& pos) const
 {
 	return getPixel(_mm_cvttpd_epi32(pos));
 }
-
+*/
 template<typename T>
 inline void PixelBuffer<T>::setPixel(int x, int y, const T& px)
 {

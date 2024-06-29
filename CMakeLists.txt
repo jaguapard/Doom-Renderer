@@ -90,4 +90,6 @@ add_executable(Doom_Rendering
         src/WadLoader.cpp
         src/WadLoader.h
         src/ZBuffer.cpp
-        src/ZBuffer.h)
+        src/ZBuffer.h
+        src/FloatColorBuffer.h
+        src/FloatColorBuffer.cpp)

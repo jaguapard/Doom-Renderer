@@ -173,7 +173,7 @@ float Matrix4::det() const
 	float sign = 1;
 	for (int i = 0; i < 4; ++i)
 	{
-		ret += sign * det3(0, i);
+		ret += sign * (*this)[0][i] * det3(0, i);
 		sign = -sign;
 	}
 	return ret;
@@ -188,11 +188,12 @@ Matrix4 Matrix4::inverse() const
 	{
 		for (int j = 0; j < 4; ++j)
 		{
-			ret[i][j] = det3(i, j);
+			float sign = (i + j) % 2 ? -1 : 1;
+			ret[i][j] = det3(i, j) * sign;
 		}
 	}
 
-	return ret * rcpDet;
+	return (ret * rcpDet).transposed(); //TODO: why the hell is this transposed? The result is correct though. It is not correct without transposition. Det3 exclusion working bad?
 }
 
 Matrix4 Matrix4::rotationX(float theta)
@@ -263,8 +264,8 @@ float Matrix4::det3(int excludeRow, int excludeCol) const
 		{
 			if (i != excludeRow && j != excludeCol)
 			{
-				int ni = i - i > excludeRow;
-				int nj = j - j > excludeCol;
+				int ni = i - (i > excludeRow);
+				int nj = j - (j > excludeCol);
 				matr3x3[ni][nj] = elements[i][j];
 			}
 		}

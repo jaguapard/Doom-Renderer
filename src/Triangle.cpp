@@ -207,7 +207,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			r.z = interpolatedDividedUv.z;
 			VectorPack16 worldCoords = context.ctr->pixelsToWorld16(r);
 			//FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
-			FloatPack16 distSquared = worldCoords.lenSq3d();
+			FloatPack16 distSquared = (worldCoords).lenSq3d();
 
 			
 			if (context.wireframeEnabled)
@@ -224,7 +224,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 
-			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e5) / distSquared;
+			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e6) / distSquared;
 			//VectorPack16 dynaLight = 0;
 			texturePixels = texturePixels * (dynaLight + renderJob.lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);

@@ -93,6 +93,15 @@ std::map<std::string, std::string> parseCmdArgs(int argc, char** argv)
 
 void program(int argc, char** argv)
 {
+	Matrix4 m = {
+		Vec4(6,3,5,1),
+		Vec4(-5,-2,9,-6),
+		Vec4(11,2,1,34),
+		Vec4(4,3,0,2)
+	};
+
+	Matrix4 z = m.inverse();
+
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
 	//if (IMG_Init()) throw std::runtime_error(std::string("Failed to initialize SDL image: ") + IMG_GetError());

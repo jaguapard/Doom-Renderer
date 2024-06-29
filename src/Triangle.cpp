@@ -171,20 +171,21 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
 	FloatPack16 sequence_float = FloatPack16::sequence();
+	VectorPack16 points = VectorPack16(sequence_float, 0.0, 0.0, 0.0) - VectorPack16(renderJob.tStart.spaceCoords - Vec4(xBeg, yBeg));
 
-	for (real y = yBeg; y < yEnd; ++y)
+	for (real y = yBeg; y < yEnd; ++y, points.y += 1)
 	{
-		VectorPack16 points = -VectorPack16(renderJob.tStart.spaceCoords - Vec4(xBeg, yBeg)) + sequence_float;
+		points.x = sequence_float + xBeg - renderJob.tStart.spaceCoords.x;
 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
 		for (FloatPack16 x = sequence_float + floor(xBeg); 
 			Mask16 loopBoundsMask = x < ceil(xEnd); 
-			x += 16, pixelIndex += 16)
+			x += 16, pixelIndex += 16, points.x += 16)
 		{
 			FloatPack16 alpha = points.cross2d(renderJob.span2.spaceCoords) / renderJob.signedArea;
-			FloatPack16 beta = VectorPack16(renderJob.span1.spaceCoords).cross2d(renderJob.span2.spaceCoords) / renderJob.signedArea;
+			FloatPack16 beta = VectorPack16(renderJob.span1.spaceCoords).cross2d(points) / renderJob.signedArea;
 			FloatPack16 gamma = FloatPack16(1) - alpha - beta;
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;

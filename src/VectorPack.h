@@ -28,7 +28,8 @@ struct
 	VectorPack() = default;
 	VectorPack(const float x); //broadcast x to all elements of all vectors
 	VectorPack(const bob::_SSE_Vec4_float& v); //broadcast a single vector to all vectors in the pack
-	VectorPack(const PackType& pack);
+	VectorPack(const PackType& pack); //broadcast a single pack to all values
+	VectorPack(const PackType& x, const PackType& y, const PackType& z, const PackType& w);
 	//VectorPack<PackType>(const __m256& pack);
 	VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>& list);
 
@@ -135,6 +136,11 @@ inline VectorPack<PackType>::VectorPack(const PackType& pack)
 {
 	for (auto& it : *this) it = pack;
 }
+
+template<typename PackType>
+inline VectorPack<PackType>::VectorPack(const PackType& x, const PackType& y, const PackType& z, const PackType& w)
+	:x(x), y(y), z(z), w(w)
+{}
 
 template <typename PackType>
 inline VectorPack<PackType>::VectorPack(const std::initializer_list<bob::_SSE_Vec4_float>& list)

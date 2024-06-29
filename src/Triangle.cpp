@@ -203,8 +203,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			r.z = interpolatedDividedUv.z;
-			r.w = 1;
+			r = VectorPack16(r1) * alpha + VectorPack16(r2) * beta + VectorPack16(r3) * gamma;
 			VectorPack16 worldCoords = context.ctr->pixelsToWorld16(r);
 			//FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
 			FloatPack16 distSquared = (worldCoords - Vec4(580, 250, -1015)).lenSq3d(); //expected result: light hanging in the air at this pos

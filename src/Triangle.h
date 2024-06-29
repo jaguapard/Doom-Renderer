@@ -33,15 +33,19 @@ struct Triangle
 	Vec4 getNormalVector() const;
 private:
 	void prepareScreenSpace(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	void addToRenderQueueFinal(const TriangleRenderContext& context, bool flatTop) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
+	void addToRenderQueueFinal(const TriangleRenderContext& context) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };
 
 struct RenderJob
 {
-	Triangle t;
-	bool flatTop;
+	Triangle originalTriangle;
+	TexVertex tStart, span1, span2;
+
 	int textureIndex;
 	real lightMult;
+
+	real minX, minY, maxX, maxY;
+	real signedArea;
 };
 
 struct TriangleRenderContext

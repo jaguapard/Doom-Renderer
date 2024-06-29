@@ -67,7 +67,8 @@ namespace bob
 		_SSE_Vec4_float unit() const;
 
 		float dot(const _SSE_Vec4_float other) const;
-		_SSE_Vec4_float cross3d(const _SSE_Vec4_float other) const;
+		float cross2d(const _SSE_Vec4_float other) const;
+		_SSE_Vec4_float cross3d(const _SSE_Vec4_float other) const;		
 	};
 
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x) : x(x), y(0), z(0), w(0) {}
@@ -261,6 +262,15 @@ namespace bob
 		return x * other.x + y * other.y + z * other.z + w * other.w;
 	}
 
+	inline float _SSE_Vec4_float::cross2d(const _SSE_Vec4_float other) const
+	{
+#if SSE_VER >= 10
+		_SSE_Vec4_float os = _mm_shuffle_ps(other, other, _MM_SHUFFLE(3, 2, 0, 1));
+		_SSE_Vec4_float prefab = *this * os;
+		return prefab.x - prefab.y;
+#endif
+		return x * other.y - y * other.x;
+	}
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::cross3d(const _SSE_Vec4_float other) const
 	{

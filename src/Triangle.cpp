@@ -130,25 +130,28 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
 	screenSpaceTriangle.sortByAscendingSpaceY();
 	if (screenSpaceTriangle.tv[2].spaceCoords.y - screenSpaceTriangle.tv[0].spaceCoords.y == 0) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
-
-	real splitAlpha = (screenSpaceTriangle.tv[1].spaceCoords.y - screenSpaceTriangle.tv[0].spaceCoords.y) / (screenSpaceTriangle.tv[2].spaceCoords.y - screenSpaceTriangle.tv[0].spaceCoords.y);
-	TexVertex splitVertex = lerp(screenSpaceTriangle.tv[0], screenSpaceTriangle.tv[2], splitAlpha);
-
-	TexVertex v2_copy = screenSpaceTriangle.tv[2];
-	screenSpaceTriangle.tv[2] = splitVertex;
-	screenSpaceTriangle.addToRenderQueueFinal(context, false); //flat bottom part
-
-	//screenSpaceTriangle.tv = { screenSpaceTriangle.tv[1], splitVertex, v2_copy };
-	screenSpaceTriangle.tv[0] = splitVertex;
-	screenSpaceTriangle.tv[2] = v2_copy;
-	screenSpaceTriangle.addToRenderQueueFinal(context, true); //flat top part
+	
+	screenSpaceTriangle.addToRenderQueueFinal(context);
 }
 
-void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, bool flatTop) const
+void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 {
 	RenderJob rj;
-	rj.flatTop = flatTop;
-	rj.t = *this;
+	rj.tStart = tv[0];
+	rj.span1 = tv[1] - tv[0];
+	rj.span2 = tv[2] - tv[0];
+	rj.signedArea = rj.span1.spaceCoords.cross2d(rj.span2.spaceCoords);
+	rj.originalTriangle = *this;
+
+	Triangle copy = *this;
+	copy.sortByAscendingSpaceX();
+	rj.minX = copy.tv[0].spaceCoords.x;
+	rj.maxX = copy.tv[2].spaceCoords.x;
+
+	copy.sortByAscendingSpaceY();
+	rj.minY = copy.tv[0].spaceCoords.y;
+	rj.maxY = copy.tv[2].spaceCoords.y;
+
 	rj.lightMult = context.lightMult;
 	rj.textureIndex = context.textureIndex;
 	context.renderJobs->push_back(rj);

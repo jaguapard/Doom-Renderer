@@ -208,11 +208,15 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			
 			if (context.wireframeEnabled)
 			{
-				__mmask16 visibleEdgeMask = visiblePointsMask & (alpha <= 0.01 | beta <= 0.01 | gamma <= 0.01);
-				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.r, _mm512_set1_ps(1));
-				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.g, _mm512_set1_ps(1));
-				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.b, _mm512_set1_ps(1));
-				texturePixels.a = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.a, _mm512_set1_ps(1));
+				__mmask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
+				__mmask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
+				__mmask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
+				__mmask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
+
+				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
+				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
+				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
+				texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 

@@ -203,8 +203,11 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
-			FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
+			Vec4 shift = Vec4((context.framebufW / context.framebufH) / 2, 0.5, 0);
+			r.z = interpolatedDividedUv.z;
+			VectorPack16 worldCoords = context.ctr->pixelsToWorld16(r);
+			//FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
+			FloatPack16 distSquared = worldCoords.lenSq3d();
 
 			
 			if (context.wireframeEnabled)

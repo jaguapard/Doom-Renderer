@@ -1,6 +1,8 @@
 #pragma once
 #include "Vec.h"
 #include "Matrix4.h"
+#include "VectorPack.h"
+
 class CoordinateTransformer
 {
 public:
@@ -11,6 +13,8 @@ public:
 
 	Vec4 rotateAndTranslate(Vec4 v) const;
 	Vec4 shift(const Vec4 v) const;
+
+	VectorPack16 pixelsToWorld16(const VectorPack16& px) const;
 
 	Matrix4 getCurrentTransformationMatrix() const;
 private:

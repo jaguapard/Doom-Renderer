@@ -52,6 +52,15 @@ Vec4 CoordinateTransformer::shift(const Vec4 v) const
 	return v + this->_shift;
 }
 
+VectorPack16 CoordinateTransformer::pixelsToWorld16(const VectorPack16& px) const
+{
+	FloatPack16 z = FloatPack16(-1) / px.z;
+
+	VectorPack16 screenSpace = px / hVec - _shift;
+	VectorPack16 rotatedTranslated = screenSpace * z;
+	return rotatedTranslated; //TODO: reverse rotation-translation
+}
+
 Matrix4 CoordinateTransformer::getCurrentTransformationMatrix() const
 {
 	return rotationTranslation;

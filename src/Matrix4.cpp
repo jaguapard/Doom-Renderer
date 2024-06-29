@@ -168,24 +168,18 @@ float Matrix4::det() const
 
 Matrix4 Matrix4::inverse() const
 {
-	//Cayley–Hamilton method, graciouslly ripped straight out of https://en.wikipedia.org/wiki/Invertible_matrix
 	float rcpDet = 1.0 / this->det();
-	const Matrix4& A = *this;
-	Matrix4 trA = this->transposed();
 
-	//Do NOT confuse tr(A)^n = trA_n and tr(A^n) = tr_An!!!
-	Matrix4 A3 = A * A * A;
-	Matrix4 tr_A2 = (A * A).transposed();
-	Matrix4 tr_A3 = A3.transposed();
-	Matrix4 trA_2 = trA * trA;
-	Matrix4 trA_3 = trA * trA * trA;
+	Matrix4 ret;
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			ret[i][j] = det3(i, j);
+		}
+	}
 
-	Matrix4 monster1 = (trA_3 - trA * 3 * tr_A2 + tr_A3 * 2) * Matrix4::identity(1.0 / 6);
-	Matrix4 monster2 = A * 0.5 * (trA_2 - tr_A2);
-	Matrix4 monster3 = (A * A) * trA - A3;
-
-	Matrix4 ans = (monster1 + monster2 + monster3) * rcpDet;
-	return ans;
+	return ret * rcpDet;
 }
 
 Matrix4 Matrix4::rotationX(float theta)

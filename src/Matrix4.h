@@ -1,6 +1,7 @@
 #pragma once
 #include "Vec.h"
 #include <string>
+#include "VectorPack.h"
 
 class alignas(64) Matrix4
 {

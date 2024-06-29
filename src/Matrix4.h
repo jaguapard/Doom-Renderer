@@ -16,6 +16,9 @@ public:
 	Matrix4() = default;
 	Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst);
 
+	Matrix4 operator*(const float other) const;
+	Matrix4 operator-(const Matrix4& other) const;
+	Matrix4 operator+(const Matrix4& other) const;
 	Matrix4 operator*(const Matrix4& other) const; //result = this * other
 	Vec4 operator*(const Vec4 v) const;
 
@@ -26,6 +29,9 @@ public:
 	bob::_SSE_Vec4_float& operator[](int i);
 
 	std::string toString(int precision = 5) const;
+	
+	float det() const;
+	Matrix4 inverse() const;
 
 	static Matrix4 rotationX(float theta);
 	static Matrix4 rotationY(float theta);
@@ -33,5 +39,8 @@ public:
 	static Matrix4 rotationXYZ(const Vec4& angle);
 	static Matrix4 identity(float value = 1.0, int dim = 4);
 	static Matrix4 zeros();
+
+private:
+	float det3(int excludeRow, int excludeCol) const;
 };
 

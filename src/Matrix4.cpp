@@ -10,6 +10,27 @@ Matrix4::Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst)
 	for (int i = 0; i < 4; ++i) this->val[i] = *(lst.begin() + i);
 }
 
+Matrix4 Matrix4::operator*(const float other) const
+{
+	Matrix4 ret;
+	ret.zmm = _mm512_mul_ps(zmm, _mm512_set1_ps(other));
+	return ret;
+}
+
+Matrix4 Matrix4::operator-(const Matrix4& other) const
+{
+	Matrix4 ret;
+	ret.zmm = _mm512_sub_ps(zmm, other.zmm);
+	return ret;
+}
+
+Matrix4 Matrix4::operator+(const Matrix4& other) const
+{
+	Matrix4 ret;
+	ret.zmm = _mm512_add_ps(zmm, other.zmm);
+	return ret;
+}
+
 Matrix4 Matrix4::operator*(const Matrix4& other) const
 {
 	Matrix4 ret = Matrix4::zeros();
@@ -133,6 +154,40 @@ std::string Matrix4::toString(int precision) const
 	return ret;
 }
 
+float Matrix4::det() const
+{
+	float ret = 0.0;
+	float sign = 1;
+	for (int i = 0; i < 4; ++i)
+	{
+		ret += sign * det3(0, i);
+		sign = -sign;
+	}
+	return ret;
+}
+
+Matrix4 Matrix4::inverse() const
+{
+	//Cayley–Hamilton method, graciouslly ripped straight out of https://en.wikipedia.org/wiki/Invertible_matrix
+	float rcpDet = 1.0 / this->det();
+	const Matrix4& A = *this;
+	Matrix4 trA = this->transposed();
+
+	//Do NOT confuse tr(A)^n = trA_n and tr(A^n) = tr_An!!!
+	Matrix4 A3 = A * A * A;
+	Matrix4 tr_A2 = (A * A).transposed();
+	Matrix4 tr_A3 = A3.transposed();
+	Matrix4 trA_2 = trA * trA;
+	Matrix4 trA_3 = trA * trA * trA;
+
+	Matrix4 monster1 = (trA_3 - trA * 3 * tr_A2 + tr_A3 * 2) * Matrix4::identity(1.0 / 6);
+	Matrix4 monster2 = A * 0.5 * (trA_2 - tr_A2);
+	Matrix4 monster3 = (A * A) * trA - A3;
+
+	Matrix4 ans = (monster1 + monster2 + monster3) * rcpDet;
+	return ans;
+}
+
 Matrix4 Matrix4::rotationX(float theta)
 {
 	const real sinTheta = sin(theta);
@@ -189,4 +244,28 @@ Matrix4 Matrix4::zeros()
 	Matrix4 ret;
 	memset(&ret, 0, sizeof(ret));
 	return ret;
+}
+
+float Matrix4::det3(int excludeRow, int excludeCol) const
+{
+	float matr3x3[3][3];
+
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			if (i != excludeRow && j != excludeCol)
+			{
+				int ni = i - i > excludeRow;
+				int nj = j - j > excludeCol;
+				matr3x3[ni][nj] = elements[i][j];
+			}
+		}
+	}
+
+	float a = matr3x3[0][0], b = matr3x3[0][1], c = matr3x3[0][2],
+		d = matr3x3[1][0], e = matr3x3[1][1], f = matr3x3[1][2],
+		g = matr3x3[2][0], h = matr3x3[2][1], i = matr3x3[2][2]; //TODO: maybe union?
+
+	return a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h;
 }

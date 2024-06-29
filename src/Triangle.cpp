@@ -185,6 +185,11 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		real xSpan = original_xEnd - original_xBeg;
 		if (xSpan == 0.0f) continue; //0 width scanline, skip
 
+		VectorPack16 leftWorld_zDivided = leftTv.worldCoords / leftTv.worldCoords.z;
+		leftWorld_zDivided.z = 1.0 / leftTv.worldCoords.z;
+		VectorPack16 rightWorld_zDivided = rightTv.worldCoords / rightTv.worldCoords.z;
+		rightWorld_zDivided.z = 1.0 / rightTv.worldCoords.z;
+
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
@@ -194,7 +199,9 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		{
 			FloatPack16 xp = (x - original_xBeg) / xSpan;
 			VectorPack16 interpolatedDividedUv = VectorPack16(leftTv.textureCoords).lerp(rightTv.textureCoords, xp);
-			VectorPack16 worldCoords = VectorPack16(leftTv.worldCoords).lerp(rightTv.worldCoords, xp);
+			VectorPack16 worldCoords_zDivided = VectorPack16(leftWorld_zDivided).lerp(rightWorld_zDivided, xp);
+			VectorPack16 worldCoords = worldCoords_zDivided / worldCoords_zDivided.z;
+			worldCoords.z = FloatPack16(1.0) / worldCoords_zDivided.z;
 
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
 			Mask16 visiblePointsMask = loopBoundsMask & currDepthValues > interpolatedDividedUv.z;
@@ -216,7 +223,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
 			}
 
-			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.8235, 0, 1)) * 1e5) / distSquared;
+			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e5) / distSquared;
 			//VectorPack16 dynaLight = 0;
 			texturePixels = texturePixels * (dynaLight + lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);

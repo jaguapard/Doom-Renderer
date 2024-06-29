@@ -160,43 +160,23 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 
 void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
-	//Scanline rasterization algorithm
-	if (tv[0].spaceCoords.y >= zoneMaxY || tv[2].spaceCoords.y < zoneMinY) return;
-	real yBeg = std::clamp<real>(tv[0].spaceCoords.y, zoneMinY, zoneMaxY);
-	real yEnd = std::clamp<real>(tv[2].spaceCoords.y, zoneMinY, zoneMaxY);
+	if (renderJob.minY >= zoneMaxY || renderJob.maxY < zoneMinY) return;
+	real yBeg = std::clamp<real>(renderJob.minY, zoneMinY, zoneMaxY);
+	real yEnd = std::clamp<real>(renderJob.maxY, zoneMinY, zoneMaxY);
+	real xBeg = std::clamp<real>(renderJob.minX, 0, context.framebufW);
+	real xEnd = std::clamp<real>(renderJob.maxX, 0, context.framebufW);
 
-	real ySpan = tv[2].spaceCoords.y - tv[0].spaceCoords.y; //since this function draws only flat top or flat bottom triangles, either y1 == y2 or y2 == y3. y3-y1 ensures we don't get 0. 0 height triangles are culled in previous stage 
-	
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
-	bool flatTop = renderJob.flatTop;
 	auto& frameBuf = *context.frameBuffer;
 	auto& lightBuf = *context.lightBuffer;
 	auto& depthBuf = *context.zBuffer;
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
 	FloatPack16 sequence_float = FloatPack16::sequence();
-	FloatPack16 lightMult = renderJob.lightMult;
 
-	for (real y = yBeg; y < yEnd; ++y) //draw flat bottom part
+	for (real y = yBeg; y < yEnd; ++y)
 	{
-		real yp = (y - tv[0].spaceCoords.y) / ySpan;
-
-		TexVertex leftTv = lerp(tv[0], tv[flatTop + 1], yp); //flat top and flat bottom triangles require different interpolation points
-		TexVertex rightTv = lerp(tv[flatTop], tv[2], yp); //using a flag passed from the "cooking" step seems to be the best option for maintainability and performance
-		if (leftTv.spaceCoords.x > rightTv.spaceCoords.x) std::swap(leftTv, rightTv);
-
-		real original_xBeg = leftTv.spaceCoords.x;
-		real original_xEnd = rightTv.spaceCoords.x;
-		real xBeg = std::clamp<real>(original_xBeg, 0, context.framebufW);
-		real xEnd = std::clamp<real>(original_xEnd, 0, context.framebufW);
-		real xSpan = original_xEnd - original_xBeg;
-		if (xSpan == 0.0f) continue; //0 width scanline, skip
-
-		/*
-		VectorPack16 leftWorld_zDivided = leftTv.worldCoords / leftTv.worldCoords.z;
-		leftWorld_zDivided.z = 1.0 / leftTv.worldCoords.z;
-		VectorPack16 rightWorld_zDivided = rightTv.worldCoords / rightTv.worldCoords.z;
-		rightWorld_zDivided.z = 1.0 / rightTv.worldCoords.z;*/
+		VectorPack16 points = -VectorPack16(renderJob.tStart.spaceCoords - Vec4(xBeg, yBeg)) + sequence_float;
 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
@@ -205,22 +185,25 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			Mask16 loopBoundsMask = x < ceil(xEnd); 
 			x += 16, pixelIndex += 16)
 		{
-			FloatPack16 xp = (x - original_xBeg) / xSpan;
-			VectorPack16 interpolatedDividedUv = VectorPack16(leftTv.textureCoords).lerp(rightTv.textureCoords, xp);
-			VectorPack16 worldCoords_zDivided = VectorPack16(leftTv.worldCoords).lerp(rightTv.worldCoords, xp);
-			VectorPack16 worldCoords = worldCoords_zDivided / worldCoords_zDivided.z;
-			worldCoords.z = FloatPack16(1.0) / worldCoords_zDivided.z;
+			FloatPack16 alpha = points.cross2d(renderJob.span2.spaceCoords) / renderJob.signedArea;
+			FloatPack16 beta = VectorPack16(renderJob.span1.spaceCoords).cross2d(renderJob.span2.spaceCoords) / renderJob.signedArea;
+			FloatPack16 gamma = FloatPack16(1) - alpha - beta;
+			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
+			if (!pointsInsideTriangleMask) continue;
+
+			VectorPack16 interpolatedDividedUv = VectorPack16(renderJob.originalTriangle.tv[1].textureCoords) * alpha + VectorPack16(renderJob.originalTriangle.tv[2].textureCoords) * beta + VectorPack16(renderJob.originalTriangle.tv[0].textureCoords) * gamma;
 
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
-			Mask16 visiblePointsMask = loopBoundsMask & currDepthValues > interpolatedDividedUv.z;
+			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
+			//FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
 
+			/*
 			if (context.wireframeEnabled)
 			{
 				__mmask16 visibleEdgeMask = visiblePointsMask & (x <= original_xBeg + 1 | x >= original_xEnd - 1);
@@ -229,11 +212,11 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.b, _mm512_set1_ps(1));
 				texturePixels.a = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.a, _mm512_set1_ps(1));
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
-			}
+			}*/
 
-			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e5) / distSquared;
-			//VectorPack16 dynaLight = 0;
-			texturePixels = texturePixels * (dynaLight + lightMult);
+			//VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e5) / distSquared;
+			VectorPack16 dynaLight = 0;
+			texturePixels = texturePixels * (dynaLight + renderJob.lightMult);
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);
 		}

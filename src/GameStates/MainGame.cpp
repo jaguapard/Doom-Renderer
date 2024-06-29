@@ -205,7 +205,7 @@ void MainGame::draw()
 			for (int i = 0; i < renderJobs.size(); ++i)
 			{
 				const RenderJob& myJob = renderJobs[i];
-				myJob.t.drawSlice(ctx, myJob, myMinY, myMaxY);
+				Triangle().drawSlice(ctx, myJob, myMinY, myMaxY);
 			}
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);

@@ -193,7 +193,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;
 
-			VectorPack16 interpolatedDividedUv = VectorPack16(renderJob.originalTriangle.tv[0].textureCoords) * alpha + VectorPack16(renderJob.originalTriangle.tv[1].textureCoords) * beta + VectorPack16(renderJob.originalTriangle.tv[2].textureCoords) * gamma;
+			VectorPack16 interpolatedDividedUv = VectorPack16(tv[0].textureCoords) * alpha + VectorPack16(tv[1].textureCoords) * beta + VectorPack16(tv[2].textureCoords) * gamma;
 
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
 			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
@@ -203,7 +203,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			VectorPack16 worldCoords = VectorPack16(renderJob.originalTriangle.tv[0].worldCoords) * alpha + VectorPack16(renderJob.originalTriangle.tv[1].worldCoords) * beta + VectorPack16(renderJob.originalTriangle.tv[2].worldCoords) * gamma;
+			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
 			FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
 
 			

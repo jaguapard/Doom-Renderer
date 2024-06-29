@@ -188,7 +188,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
 			FloatPack16 alpha = (r - r3).cross2d(r2 - r3) / signedArea;
 			FloatPack16 beta = (r - r3).cross2d(r3 - r1) / signedArea;
-			FloatPack16 gamma = FloatPack16(1) - alpha - beta;
+			FloatPack16 gamma = (r - r1).cross2d(r1 - r2) / signedArea;
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;
 

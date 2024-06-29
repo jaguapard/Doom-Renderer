@@ -205,16 +205,16 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 worldCoords = VectorPack16(renderJob.originalTriangle.tv[0].worldCoords) * alpha + VectorPack16(renderJob.originalTriangle.tv[1].worldCoords) * beta + VectorPack16(renderJob.originalTriangle.tv[2].worldCoords) * gamma;
 			FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
 
-			/*
+			
 			if (context.wireframeEnabled)
 			{
-				__mmask16 visibleEdgeMask = visiblePointsMask & (x <= original_xBeg + 1 | x >= original_xEnd - 1);
+				__mmask16 visibleEdgeMask = visiblePointsMask & (alpha <= 0.01 | beta <= 0.01 | gamma <= 0.01);
 				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.r, _mm512_set1_ps(1));
 				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.g, _mm512_set1_ps(1));
 				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.b, _mm512_set1_ps(1));
 				texturePixels.a = _mm512_mask_blend_ps(visibleEdgeMask, texturePixels.a, _mm512_set1_ps(1));
 				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
-			}*/
+			}
 
 			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e5) / distSquared;
 			//VectorPack16 dynaLight = 0;

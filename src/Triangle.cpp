@@ -171,7 +171,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
 	FloatPack16 sequence_float = FloatPack16::sequence();
-	VectorPack16 points = VectorPack16(sequence_float, 0.0, 0.0, 0.0) - VectorPack16(renderJob.tStart.spaceCoords - Vec4(xBeg, yBeg));
+	VectorPack16 points = Vec4(xBeg, yBeg) - renderJob.tStart.spaceCoords;
 
 	for (real y = yBeg; y < yEnd; ++y, points.y += 1)
 	{

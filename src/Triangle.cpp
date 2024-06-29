@@ -170,7 +170,6 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	auto& depthBuf = *context.zBuffer;
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
-	FloatPack16 sequence_float = FloatPack16::sequence();
 	const Vec4 r1 = tv[0].spaceCoords;
 	const Vec4 r2 = tv[1].spaceCoords;
 	const Vec4 r3 = tv[2].spaceCoords;
@@ -183,7 +182,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
-		for (FloatPack16 x = sequence_float + floor(xBeg); 
+		for (FloatPack16 x = FloatPack16::sequence() + floor(xBeg);
 			Mask16 loopBoundsMask = x < ceil(xEnd); 
 			x += 16, pixelIndex += 16)
 		{

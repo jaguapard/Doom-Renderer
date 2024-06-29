@@ -61,7 +61,7 @@ VectorPack16 CoordinateTransformer::pixelsToWorld16(const VectorPack16& px) cons
 
 	VectorPack16 screenSpace = px / hVec - _shift;
 	VectorPack16 rotatedTranslated = screenSpace * z;
-	return rotatedTranslated; //TODO: reverse rotation-translation
+	return inverseRotationTranslation * rotatedTranslated; //TODO: reverse rotation-translation
 }
 
 Matrix4 CoordinateTransformer::getCurrentTransformationMatrix() const

@@ -87,6 +87,19 @@ Vec4 Matrix4::operator*(const Vec4 v) const
 #endif
 }
 
+VectorPack16 Matrix4::operator*(const VectorPack16& v) const
+{
+	VectorPack16 ret = 0.0f;
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			ret[i] += v[j] * (*this)[i][j];
+		}
+	}
+	return ret;
+}
+
 Matrix4 Matrix4::transposed() const
 {
 	Matrix4 ret;

@@ -21,7 +21,9 @@ public:
 	Matrix4 operator-(const Matrix4& other) const;
 	Matrix4 operator+(const Matrix4& other) const;
 	Matrix4 operator*(const Matrix4& other) const; //result = this * other
+
 	Vec4 operator*(const Vec4 v) const;
+	VectorPack16 operator*(const VectorPack16& v) const;
 
 	Matrix4 transposed() const;
 	Vec4 multiplyByTransposed(const Vec4 v) const; //result = A^T * x (multiply transposed matrix by column vector v)

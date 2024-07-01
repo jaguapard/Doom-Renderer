@@ -80,7 +80,7 @@ Vec4 Matrix4::operator*(const Vec4 v) const
 	{
 		for (int j = 0; j < 4; ++j)
 		{
-			ret.val[i] += (*this)[i][j] * v[j];
+			ret[i] += (*this)[i][j] * v[j];
 		}
 	}
 	return ret;

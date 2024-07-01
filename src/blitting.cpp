@@ -1,5 +1,9 @@
 #include "blitting.h"
+#include "Lehmer.h"
+
 const __m512i sequence512 = _mm512_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+thread_local LehmerRNG rng;
+
 void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY)
 {
 	assert(frameBuf.getW() == lightBuf.getW());

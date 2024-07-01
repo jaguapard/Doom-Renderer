@@ -61,6 +61,7 @@
     <ClCompile Include="src\GameStates\BenchmarkState.cpp" />
     <ClCompile Include="src\GameStates\GameStateBase.cpp" />
     <ClCompile Include="src\GameStates\MainGame.cpp" />
+    <ClCompile Include="src\Lehmer.cpp" />
     <ClCompile Include="src\Matrix4.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\PerformanceMonitor.cpp" />
@@ -98,6 +99,7 @@
     <ClInclude Include="src\GameStates\BenchmarkState.h" />
     <ClInclude Include="src\GameStates\GameStateBase.h" />
     <ClInclude Include="src\GameStates\MainGame.h" />
+    <ClInclude Include="src\Lehmer.h" />
     <ClInclude Include="src\Matrix4.h" />
     <ClInclude Include="src\misc\Enums.h" />
     <ClInclude Include="src\Polygon.h" />

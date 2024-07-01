@@ -72,7 +72,8 @@ protected:
 		bool wireframeEnabled = false;
 		bool backfaceCullingEnabled = false;
 		bool bufferCleaningEnabled = false;
-		bool performanceMonitorDisplayEnabled = true;		
+		bool performanceMonitorDisplayEnabled = true;
+		bool ditheringEnabled = true;
 	};
 
 	GameSettings settings;

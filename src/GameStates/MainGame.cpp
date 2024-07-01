@@ -69,6 +69,7 @@ void MainGame::handleInput()
 	if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };
 	if (input.wasCharPressedOnThisFrame('R')) settings.backfaceCullingEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('U')) settings.fogEffectVersion = EnumclassHelper::next(settings.fogEffectVersion);
+	if (input.wasCharPressedOnThisFrame('Y')) settings.ditheringEnabled ^= 1;
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{
@@ -211,7 +212,7 @@ void MainGame::draw()
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.zBuffer, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), myMinY, myMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
 			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, myMinY, myMaxY, shifts);
+			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, myMinY, myMaxY, shifts, ctx.ditheringEnabled);
 		};
 
 		ThreadpoolTask task;
@@ -235,6 +236,7 @@ void MainGame::draw()
 			perfmonInfo["Buffer cleaning"] = settings.bufferCleaningEnabled ? "enabled" : "disabled";
 			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / settings.fovMult) * 180 / M_PI) + " degrees";
 			perfmonInfo["Fog"] = !settings.fogEnabled ? "disabled" : ("version " + std::to_string(int(settings.fogEffectVersion)) + ", intensity " + std::to_string(settings.fogIntensity));
+			perfmonInfo["Dithering"] = settings.ditheringEnabled ? "enabled" : "disabled";
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
 			perfmonInfo["Inverse transformation matrix"] = "\n" + ctr.getCurrentInverseTransformationMatrix().toString();
@@ -304,6 +306,8 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.backfaceCullingEnabled = settings.backfaceCullingEnabled;
 	ctx.nearPlaneClippingZ = settings.nearPlaneZ;
 	ctx.fovMult = settings.fovMult;
+	ctx.backfaceCullingEnabled = settings.ditheringEnabled;
+	ctx.ditheringEnabled = settings.ditheringEnabled;
 
 	ctx.camPos = camPos;
 

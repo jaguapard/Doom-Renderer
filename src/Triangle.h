@@ -64,6 +64,7 @@ struct TriangleRenderContext
 	int doomSkyTextureMarkerIndex;
 	bool wireframeEnabled;
 	bool backfaceCullingEnabled;
+	bool ditheringEnabled;
 
 	std::vector<RenderJob>* renderJobs;
 

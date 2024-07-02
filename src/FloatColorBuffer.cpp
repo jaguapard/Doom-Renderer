@@ -108,3 +108,13 @@ const FloatColorBufferSize& FloatColorBuffer::getSize() const
 {
 	return size;
 }
+
+VectorPack16 FloatColorBuffer::gatherPixels16(const __m512i &indices, const __mmask16 &mask) const
+{
+    VectorPack16 ret;
+    ret.x = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, r.data(), sizeof(float));
+    ret.y = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, g.data(), sizeof(float));
+    ret.z = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, b.data(), sizeof(float));
+    ret.w = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, a.data(), sizeof(float));
+    return ret;
+}

@@ -68,7 +68,7 @@ struct TriangleRenderContext
 	bool ditheringEnabled;
 
 	std::vector<RenderJob>* renderJobs;
-    std::vector<PointLight>* pointLights;
+    const std::vector<PointLight>* pointLights;
 
 	real nearPlaneClippingZ = -1;
 	real fovMult = 1;

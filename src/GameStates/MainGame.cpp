@@ -170,16 +170,9 @@ void MainGame::init()
 
 	maps = WadLoader::loadWad("doom2.wad"); //can't redistribute commercial wads!
 
-    PointLight p;
-    p.pos = camPos;
-    p.color = Vec4(1,0.7,0.4,1);
-    p.intensity = 1e5;
-    pointLights.push_back(p);
-
-    p.pos = camPos + Vec4(-20, 20, 10);
-    p.color = Vec4(1, 0.1, 0.2, 1);
-    p.intensity = 0.9e5;
-    pointLights.push_back(p);
+    pointLights.push_back({camPos, Vec4(1,0.7,0.4,1), 1e5});
+    pointLights.push_back({camPos+Vec4(-200, 100, 200), Vec4(1,0,0.4,1), 1e5});
+    pointLights.push_back({camPos+Vec4(200, 100, 200), Vec4(0,0,1,1), 1e5});
 }
 
 std::string vecToStr(const Vec4& v)

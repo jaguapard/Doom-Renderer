@@ -153,6 +153,7 @@ void MainGame::init()
 	framebuf = { framebufW, framebufH };
 	lightBuf = { framebufW, framebufH };
 	zBuffer = { framebufW, framebufH };
+	pixelWorldPos = { framebufW, framebufH };
 
 
 	this->ctr = { framebufW, framebufH };
@@ -318,6 +319,7 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 
 	ctx.camPos = camPos;
     ctx.pointLights = &pointLights;
+    ctx.pixelWorldPos = &pixelWorldPos;
 
 	return ctx;
 }

@@ -89,12 +89,11 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 	}
 }
 
-void blitting::applyFog(FloatColorBuffer& frameBuf, const ZBuffer& zBuffer, float fogIntensity, Vec4 fogColor, size_t minY, size_t maxY, FogEffectVersion fogEffectVersion)
+void blitting::applyFog(FloatColorBuffer& frameBuf, const FloatColorBuffer& worldPos, Vec4 camPos, float fogIntensity, Vec4 fogColor, size_t minY, size_t maxY, FogEffectVersion fogEffectVersion)
 {
 	size_t startIndex = minY * frameBuf.getW();
 	size_t endIndex = maxY * frameBuf.getW();
 
-	const float* zBuffPixels = zBuffer.getRawPixels();
 	VectorPack16 fogColorPack = fogColor;
 
 	for (size_t i = startIndex; i < endIndex; i += 16)
@@ -102,21 +101,21 @@ void blitting::applyFog(FloatColorBuffer& frameBuf, const ZBuffer& zBuffer, floa
 		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence512), _mm512_set1_epi32(endIndex));
 		VectorPack16 origColors = frameBuf.getPixelsStartingFrom16(i);
 
-		FloatPack16 depthValues = zBuffPixels + i;
-		Mask16 emptyMask = depthValues == 0.0; //depth buffer stores -1/z values
+        FloatPack16 dist = _mm512_sqrt_ps((worldPos.getPixelsStartingFrom16(i) - camPos).lenSq3d());
+		Mask16 emptyMask = dist == 0.0;
 
 		FloatPack16 lerpT;
 		if (fogEffectVersion == FogEffectVersion::LINEAR_WITH_CLAMP)
 		{
-			lerpT = FloatPack16(-1) / (depthValues * fogIntensity);
+			lerpT = dist / fogIntensity;
 			lerpT = _mm512_mask_blend_ps(emptyMask, lerpT, FloatPack16(1));
 			lerpT = lerpT.clamp(0, 1);
 		}
 		else if (fogEffectVersion == FogEffectVersion::EXPONENTIAL)
 		{
-			lerpT = depthValues * fogIntensity;
+			lerpT = FloatPack16(fogIntensity) / dist;
 			lerpT = _mm512_mask_blend_ps(emptyMask, lerpT, FloatPack16(1));
-			for (int j = 0; j < 16; ++j) lerpT[j] = exp(lerpT[j]); //no need to bicycle this exp - it is getting properly optimized by MSVC
+			for (int j = 0; j < 16; ++j) lerpT[j] = exp(-lerpT[j]); //no need to bicycle this exp - it is getting properly optimized by MSVC
 			lerpT = lerpT.clamp(0, 1);
 		}
 

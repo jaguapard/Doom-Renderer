@@ -217,7 +217,7 @@ void MainGame::draw()
 			}
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
-			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.zBuffer, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), myMinY, myMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
+			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), myMinY, myMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
 			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
 			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, myMinY, myMaxY, shifts, ctx.ditheringEnabled);
 		};

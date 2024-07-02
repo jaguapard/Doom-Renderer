@@ -189,7 +189,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
 			FloatPack16 alpha = (r - r3).cross2d(r2 - r3) / signedArea;
 			FloatPack16 beta = (r - r3).cross2d(r3 - r1) / signedArea;
-			FloatPack16 gamma = (r - r1).cross2d(r1 - r2) / signedArea;
+			FloatPack16 gamma = (r - r1).cross2d(r1 - r2) / signedArea; //do NOT change this to 1-alpha-beta or 1-(alpha+beta). That causes wonkiness in textures
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;
 
@@ -205,13 +205,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			
 			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
             worldCoords /= interpolatedDividedUv.z;
-			//FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
-			//FloatPack16 distSquared = (worldCoords - Vec4(580, 250, -1015)).lenSq3d(); //expected result: light hanging in the air at this pos
 
-			
-
-
-			//VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e6) / distSquared;
 			VectorPack16 dynaLight = 0;
             for (const auto& it : *context.pointLights)
             {

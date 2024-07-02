@@ -324,6 +324,7 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.ditheringEnabled = settings.ditheringEnabled;
 
 	ctx.camPos = camPos;
+    ctx.pointLights = &pointLights;
 
 	return ctx;
 }

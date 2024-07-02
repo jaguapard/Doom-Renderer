@@ -11,6 +11,7 @@
 #include "Texture.h"
 #include "TextureManager.h"
 #include "TexVertex.h"
+#include "PointLight.h"
 
 struct TriangleRenderContext;
 struct RenderJob;
@@ -67,6 +68,7 @@ struct TriangleRenderContext
 	bool ditheringEnabled;
 
 	std::vector<RenderJob>* renderJobs;
+    std::vector<PointLight>* pointLights;
 
 	real nearPlaneClippingZ = -1;
 	real fovMult = 1;

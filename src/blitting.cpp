@@ -134,19 +134,26 @@ void blitting::integerDownscale(FloatColorBuffer &src, FloatColorBuffer &dst, ui
     size_t dstEndIndex = dstMaxY * dst.getW();
 
     __m512i step = _mm512_mullo_epi32(sequence512, _mm512_set1_epi32(downsampleMult));
-    __m512i srcCurrInd = _mm512_add_epi32(_mm512_set1_epi32(dstStartIndex*downsampleMult), step);
+	
+	for (int dstY = dstMinY; dstY < dstMaxY; ++dstY)
+	{
+		int srcY = dstY * downsampleMult;
+		for (int dstX = 0; dstX < dst.getW(); dstX += 16)
+		{
+			VectorPack16 sum = 0;
+			int srcX = dstX * downsampleMult;
+			for (int y = 0; y < downsampleMult; ++y)
+			{
+				for (int x = 0; x < downsampleMult; ++x)
+				{
+					__m512i srcInd = _mm512_set1_epi32((srcY+y) * src.getW() + srcX);
+					srcInd = _mm512_add_epi32(srcInd, step);
+					sum += src.gatherPixels16(srcInd, 0xFFFF);
+				}
+			}
+			dst.storePixels16(dstY * dst.getW() + dstX, sum / (downsampleMult*downsampleMult), 0xFFFF);
+			//Mask16 bounds = _mm512_cmplt_epi32_mask(_mm512_set1_epi32(dstX))
 
-    for (size_t i = dstStartIndex; i < dstEndIndex; i += 16)
-    {
-        VectorPack16 sum = 0;
-
-        for (int j = 0; j < downsampleMult; ++j)
-        {
-            sum += src.gatherPixels16(srcCurrInd, 0xFFFF);
-            srcCurrInd = _mm512_add_epi32(srcCurrInd, _mm512_set1_epi32(1));
-        }
-        sum /= downsampleMult;
-
-        dst.storePixels16(i, sum, 0xFFFF);
-    }
+		}
+	}
 }

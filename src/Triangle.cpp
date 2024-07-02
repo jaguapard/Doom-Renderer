@@ -206,26 +206,35 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
             worldCoords /= interpolatedDividedUv.z;
 			//FloatPack16 distSquared = (worldCoords - context.camPos).lenSq3d();
-			FloatPack16 distSquared = (worldCoords - Vec4(580, 250, -1015)).lenSq3d(); //expected result: light hanging in the air at this pos
+			//FloatPack16 distSquared = (worldCoords - Vec4(580, 250, -1015)).lenSq3d(); //expected result: light hanging in the air at this pos
 
 			
-			if (context.wireframeEnabled)
-			{
-				__mmask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
-				__mmask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
-				__mmask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
-				__mmask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
 
-				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
-				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
-				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
-				texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
-				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
-			}
 
-			VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e6) / distSquared;
-			//VectorPack16 dynaLight = 0;
+			//VectorPack16 dynaLight = (VectorPack16(Vec4(1, 0.7, 0.4, 1)) * 1e6) / distSquared;
+			VectorPack16 dynaLight = 0;
+            for (const auto& it : *context.pointLights)
+            {
+                FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
+                Vec4 power = it.color * it.intensity;
+                dynaLight += VectorPack16(power) / distSquared;
+            }
+
 			texturePixels = texturePixels * (dynaLight + renderJob.lightMult);
+            if (context.wireframeEnabled)
+            {
+                __mmask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
+                __mmask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
+                __mmask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
+                __mmask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
+
+                texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
+                texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
+                texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
+                texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
+                //lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
+            }
+
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);
 		}

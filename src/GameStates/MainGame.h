@@ -52,6 +52,7 @@ protected:
 	FloatColorBuffer framebuf;
 	PixelBuffer<real> lightBuf;
 	ZBuffer zBuffer;
+    FloatColorBuffer screenBuf;
 
 	CoordinateTransformer ctr;
 
@@ -78,6 +79,8 @@ protected:
 		bool bufferCleaningEnabled = false;
 		bool performanceMonitorDisplayEnabled = true;
 		bool ditheringEnabled = true;
+
+        int ssaaMult = 2;
 	};
 
 	GameSettings settings;

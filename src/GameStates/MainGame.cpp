@@ -147,12 +147,13 @@ void MainGame::init()
 	camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
-	int framebufW = wndSurf->w;
-	int framebufH = wndSurf->h;
+	int framebufW = wndSurf->w*settings.ssaaMult;
+	int framebufH = wndSurf->h*settings.ssaaMult;
 
 	framebuf = { framebufW, framebufH };
 	lightBuf = { framebufW, framebufH };
 	zBuffer = { framebufW, framebufH };
+    screenBuf = {wndSurf->w, wndSurf->h};
 
 
 	this->ctr = { framebufW, framebufH };
@@ -217,8 +218,9 @@ void MainGame::draw()
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.zBuffer, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), myMinY, myMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
-			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, myMinY, myMaxY, shifts, ctx.ditheringEnabled);
+			blitting::integerDownscale(framebuf, screenBuf, 2, myMinY, myMaxY);
+            threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
+			blitting::frameBufferIntoSurface(screenBuf, wndSurf, myMinY, myMaxY, shifts, ctx.ditheringEnabled);
 		};
 
 		ThreadpoolTask task;

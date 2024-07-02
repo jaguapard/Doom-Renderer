@@ -237,6 +237,7 @@ void MainGame::draw()
 			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / settings.fovMult) * 180 / M_PI) + " degrees";
 			perfmonInfo["Fog"] = !settings.fogEnabled ? "disabled" : ("version " + std::to_string(int(settings.fogEffectVersion)) + ", intensity " + std::to_string(settings.fogIntensity));
 			perfmonInfo["Dithering"] = settings.ditheringEnabled ? "enabled" : "disabled";
+            perfmonInfo["Gamma"] = std::to_string(settings.gamma);
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
 			perfmonInfo["Inverse transformation matrix"] = "\n" + ctr.getCurrentInverseTransformationMatrix().toString();

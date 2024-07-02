@@ -124,3 +124,29 @@ void blitting::applyFog(FloatColorBuffer& frameBuf, const ZBuffer& zBuffer, floa
 		frameBuf.storePixels16(i, lerpedColor, bounds);
 	}
 }
+
+void blitting::integerDownscale(FloatColorBuffer &src, FloatColorBuffer &dst, uint32_t downsampleMult, size_t dstMinY, size_t dstMaxY)
+{
+    assert(src.getW() == dst.getW()*downsampleMult);
+    assert(src.getH() == dst.getH()*downsampleMult);
+
+    size_t dstStartIndex = dstMinY * dst.getW();
+    size_t dstEndIndex = dstMaxY * dst.getW();
+
+    __m512i step = _mm512_mullo_epi32(sequence512, _mm512_set1_epi32(downsampleMult));
+    __m512i srcCurrInd = _mm512_add_epi32(_mm512_set1_epi32(dstStartIndex*downsampleMult), step);
+
+    for (size_t i = dstStartIndex; i < dstEndIndex; i += 16)
+    {
+        VectorPack16 sum = 0;
+
+        for (int j = 0; j < downsampleMult; ++j)
+        {
+            sum += src.gatherPixels16(srcCurrInd, 0xFFFF);
+            srcCurrInd = _mm512_add_epi32(srcCurrInd, _mm512_set1_epi32(1));
+        }
+        sum /= downsampleMult;
+
+        dst.storePixels16(i, sum, 0xFFFF);
+    }
+}

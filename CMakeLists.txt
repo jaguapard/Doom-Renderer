@@ -102,4 +102,4 @@ add_executable(Doom_Rendering
         src/FloatColorBuffer.cpp
         src/Lehmer.h
         src/Lehmer.cpp
-        )
+        src/PointLight.cpp src/PointLight.h)

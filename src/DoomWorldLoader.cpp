@@ -111,7 +111,7 @@ std::vector<std::vector<Model>> DoomWorldLoader::loadMapSectorsAsModels(
 
 		size_t sum = 0;
 		for (auto& it : triangulation) sum += it.getTriangleCount();
-		std::cout << "Sector " << nSector << " got split into " << sum << " triangles.\n";
+		//std::cout << "Sector " << nSector << " got split into " << sum << " triangles.\n";
 	}
 
 	return sectorModels;

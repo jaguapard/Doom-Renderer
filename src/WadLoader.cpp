@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
 #include <stdexcept>
 #include <iostream>

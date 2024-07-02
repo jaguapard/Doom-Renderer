@@ -5,6 +5,8 @@
 #include <string>
 #include <array>
 
+#include <SDL/SDL.h>
+
 #include "GameStateBase.h"
 #include "../Vec.h"
 #include "../PixelBuffer.h"
@@ -20,8 +22,8 @@
 #include "../Triangle.h"
 
 #include "../misc/Enums.h"
+#include "../PointLight.h"
 
-#include <SDL/SDL.h>
 
 class MainGame : public GameStateBase
 {
@@ -39,6 +41,8 @@ protected:
 	SDL_Window* wnd;
 	SDL_Surface* wndSurf;
 	Threadpool* threadpool;
+
+    std::vector<PointLight> pointLights;
 
 	std::vector<Vec4> camPosAndAngArchieve;
 	int activeCamPosAndAngle = 2;

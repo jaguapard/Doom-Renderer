@@ -218,9 +218,9 @@ void MainGame::draw()
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.zBuffer, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), myMinY, myMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
-			blitting::integerDownscale(framebuf, screenBuf, settings.ssaaMult, myMinY / settings.ssaaMult, myMaxY / settings.ssaaMult);
-            threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			blitting::frameBufferIntoSurface(screenBuf, wndSurf, myMinY / settings.ssaaMult, myMaxY / settings.ssaaMult, shifts, ctx.ditheringEnabled);
+			blitting::integerDownscale(*ctx.frameBuffer, *ctx.screenBuffer, settings.ssaaMult, myMinY / settings.ssaaMult, myMaxY / settings.ssaaMult);
+			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
+			blitting::frameBufferIntoSurface(*ctx.screenBuffer, wndSurf, myMinY / settings.ssaaMult, myMaxY / settings.ssaaMult, shifts, ctx.ditheringEnabled);
 		};
 
 		ThreadpoolTask task;
@@ -306,8 +306,10 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.ctr = &ctr;
 	ctx.frameBuffer = &framebuf;
 	ctx.lightBuffer = &lightBuf;
-	ctx.textureManager = &textureManager;
+	ctx.screenBuffer = &screenBuf;
 	ctx.zBuffer = &zBuffer;
+
+	ctx.textureManager = &textureManager;	
 	ctx.framebufW = framebuf.getW();
 	ctx.framebufH = framebuf.getH();
 	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately

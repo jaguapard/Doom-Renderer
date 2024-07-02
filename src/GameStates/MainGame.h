@@ -80,7 +80,7 @@ protected:
 		bool performanceMonitorDisplayEnabled = true;
 		bool ditheringEnabled = true;
 
-        int ssaaMult = 2;
+        int ssaaMult = 4;
 	};
 
 	GameSettings settings;

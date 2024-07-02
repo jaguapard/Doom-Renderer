@@ -146,7 +146,7 @@ void blitting::integerDownscale(FloatColorBuffer &src, FloatColorBuffer &dst, ui
 			{
 				for (int x = 0; x < downsampleMult; ++x)
 				{
-					__m512i srcInd = _mm512_set1_epi32((srcY+y) * src.getW() + srcX);
+					__m512i srcInd = _mm512_set1_epi32((srcY+y) * src.getW() + srcX + x);
 					srcInd = _mm512_add_epi32(srcInd, step);
 					sum += src.gatherPixels16(srcInd, 0xFFFF);
 				}

@@ -163,10 +163,10 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
 	if (renderJob.minY >= zoneMaxY || renderJob.maxY < zoneMinY) return;
-	real yBeg = std::clamp<real>(renderJob.minY, zoneMinY, zoneMaxY);
-	real yEnd = std::clamp<real>(renderJob.maxY, zoneMinY, zoneMaxY);
-	real xBeg = std::clamp<real>(renderJob.minX, 0, context.framebufW);
-	real xEnd = std::clamp<real>(renderJob.maxX, 0, context.framebufW);
+	real yBeg = std::clamp<real>(renderJob.minY, zoneMinY, zoneMaxY - 1);
+	real yEnd = std::clamp<real>(renderJob.maxY, zoneMinY, zoneMaxY - 1);
+	real xBeg = std::clamp<real>(renderJob.minX, 0, context.framebufW - 1);
+	real xEnd = std::clamp<real>(renderJob.maxX, 0, context.framebufW - 1);
 
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
 	auto& frameBuf = *context.frameBuffer;
@@ -178,13 +178,13 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	const Vec4 r2 = tv[1].spaceCoords;
 	const Vec4 r3 = tv[2].spaceCoords;
 
-	for (real y = yBeg; y < yEnd; ++y)
+	for (real y = yBeg; y <= yEnd; ++y)
 	{
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
 		for (FloatPack16 x = FloatPack16::sequence() + xBeg;
-			Mask16 loopBoundsMask = x < xEnd;
+			Mask16 loopBoundsMask = x <= xEnd;
 			x += 16, pixelIndex += 16)
 		{
 			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
@@ -203,36 +203,36 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
-			
+
 			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
-            worldCoords /= interpolatedDividedUv.z;
+			worldCoords /= interpolatedDividedUv.z;
 
 			VectorPack16 dynaLight = 0;
-            for (const auto& it : *context.pointLights)
-            {
-                FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
-                Vec4 power = it.color * it.intensity;
-                dynaLight += VectorPack16(power) / distSquared;
-            }
+			for (const auto& it : *context.pointLights)
+			{
+				FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
+				Vec4 power = it.color * it.intensity;
+				dynaLight += VectorPack16(power) / distSquared;
+			}
 
 			texturePixels = texturePixels * (dynaLight + renderJob.lightMult);
-            if (context.wireframeEnabled)
-            {
-                __mmask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
-                __mmask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
-                __mmask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
-                __mmask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
+			if (context.wireframeEnabled)
+			{
+				__mmask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
+				__mmask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
+				__mmask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
+				__mmask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
 
-                texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
-                texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
-                texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
-                texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
-                //lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
-            }
+				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
+				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
+				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
+				texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
+				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
+			}
 
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);
-            context.pixelWorldPos->storePixels16(pixelIndex, worldCoords, opaquePixelsMask);
+			context.pixelWorldPos->storePixels16(pixelIndex, worldCoords, opaquePixelsMask);
 		}
 	}
 }

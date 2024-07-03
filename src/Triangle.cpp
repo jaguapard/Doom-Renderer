@@ -135,20 +135,24 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 {
 	RenderJob rj;
-	rj.tStart = tv[0];
-	rj.span1 = tv[1] - tv[0];
-	rj.span2 = tv[2] - tv[0];
-	rj.signedArea = rj.span1.spaceCoords.cross2d(rj.span2.spaceCoords);
+    const Vec4 r1 = tv[0].spaceCoords;
+    const Vec4 r2 = tv[1].spaceCoords;
+    const Vec4 r3 = tv[2].spaceCoords;
+
+    real signedArea = (r1 - r3).cross2d(r2 - r3);
+    if (signedArea == 0.0) return;
+
+    rj.rcpSignedArea = 1.0/signedArea;
 	rj.originalTriangle = *this;
 
 	Triangle copy = *this;
 	copy.sortByAscendingSpaceX();
-	rj.minX = copy.tv[0].spaceCoords.x;
-	rj.maxX = copy.tv[2].spaceCoords.x;
+	rj.minX = floor(copy.tv[0].spaceCoords.x);
+	rj.maxX = ceil(copy.tv[2].spaceCoords.x);
 
 	copy.sortByAscendingSpaceY();
-	rj.minY = copy.tv[0].spaceCoords.y;
-	rj.maxY = copy.tv[2].spaceCoords.y;
+	rj.minY = floor(copy.tv[0].spaceCoords.y);
+	rj.maxY = ceil(copy.tv[2].spaceCoords.y);
 
 	rj.lightMult = context.lightMult;
 	rj.textureIndex = context.textureIndex;
@@ -159,10 +163,10 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
 	if (renderJob.minY >= zoneMaxY || renderJob.maxY < zoneMinY) return;
-	real yBeg = std::clamp<real>(floor(renderJob.minY), zoneMinY, zoneMaxY);
-	real yEnd = std::clamp<real>(ceil(renderJob.maxY), zoneMinY, zoneMaxY);
-	real xBeg = std::clamp<real>(floor(renderJob.minX), 0, context.framebufW);
-	real xEnd = std::clamp<real>(ceil(renderJob.maxX), 0, context.framebufW);
+	real yBeg = std::clamp<real>(renderJob.minY, zoneMinY, zoneMaxY);
+	real yEnd = std::clamp<real>(renderJob.maxY, zoneMinY, zoneMaxY);
+	real xBeg = std::clamp<real>(renderJob.minX, 0, context.framebufW);
+	real xEnd = std::clamp<real>(renderJob.maxX, 0, context.framebufW);
 
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
 	auto& frameBuf = *context.frameBuffer;
@@ -174,9 +178,6 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	const Vec4 r2 = tv[1].spaceCoords;
 	const Vec4 r3 = tv[2].spaceCoords;
 
-	real signedArea = (r1 - r3).cross2d(r2 - r3);
-	if (signedArea == 0.0) return;
-
 	for (real y = yBeg; y < yEnd; ++y)
 	{
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
@@ -187,9 +188,9 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			x += 16, pixelIndex += 16)
 		{
 			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
-			FloatPack16 alpha = (r - r3).cross2d(r2 - r3) / signedArea;
-			FloatPack16 beta = (r - r3).cross2d(r3 - r1) / signedArea;
-			FloatPack16 gamma = (r - r1).cross2d(r1 - r2) / signedArea; //do NOT change this to 1-alpha-beta or 1-(alpha+beta). That causes wonkiness in textures
+			FloatPack16 alpha = (r - r3).cross2d(r2 - r3) * renderJob.rcpSignedArea;
+			FloatPack16 beta = (r - r3).cross2d(r3 - r1) * renderJob.rcpSignedArea;
+			FloatPack16 gamma = (r - r1).cross2d(r1 - r2) * renderJob.rcpSignedArea; //do NOT change this to 1-alpha-beta or 1-(alpha+beta). That causes wonkiness in textures
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;
 

@@ -40,13 +40,12 @@ private:
 struct RenderJob
 {
 	Triangle originalTriangle;
-	TexVertex tStart, span1, span2;
 
 	int textureIndex;
 	real lightMult;
 
 	real minX, minY, maxX, maxY;
-	real signedArea;
+	real rcpSignedArea;
 };
 
 struct TriangleRenderContext

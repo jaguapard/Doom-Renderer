@@ -27,6 +27,8 @@ public:
 	VectorPack16 gatherPixels16(const __m512i& xCoords, const __m512i& yCoords, const __mmask16& mask) const;
 	VectorPack16 gatherPixels16(const __m512i& indices, const __mmask16& mask) const;
 
+    void scatterPixels16(const __m512i &xCoords, const __m512i &yCoords, const __mmask16 &mask, const VectorPack16 &pixels);
+
 	VectorPack16 getPixelLine16(int xStart, int y) const;
 	VectorPack16 getPixelsStartingFrom16(size_t index) const;
 

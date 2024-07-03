@@ -137,21 +137,23 @@ void blitting::integerDownscale(FloatColorBuffer &src, FloatColorBuffer &dst, ui
 	
 	for (int dstY = dstMinY; dstY < dstMaxY; ++dstY)
 	{
-		int srcY = dstY * downsampleMult;
 		for (int dstX = 0; dstX < dst.getW(); dstX += 16)
 		{
+            __m512i dstX_vec = _mm512_add_epi32(_mm512_set1_epi32(dstX), sequence512);
+            Mask16 loopBounds = _mm512_cmplt_epi32_mask(dstX_vec, _mm512_set1_epi32(dst.getW()));
+
 			VectorPack16 sum = 0;
-			int srcX = dstX * downsampleMult;
 			for (int y = 0; y < downsampleMult; ++y)
 			{
 				for (int x = 0; x < downsampleMult; ++x)
 				{
-					__m512i srcInd = _mm512_set1_epi32((srcY+y) * src.getW() + srcX + x);
-					srcInd = _mm512_add_epi32(srcInd, step);
-					sum += src.gatherPixels16(srcInd, 0xFFFF);
+					__m512i xCoords = _mm512_add_epi32(_mm512_set1_epi32(dstX*downsampleMult + x), step);
+                    __m512i yCoords = _mm512_set1_epi32(dstY*downsampleMult+y);
+					sum += src.gatherPixels16(xCoords, yCoords, loopBounds);
 				}
 			}
-			dst.storePixels16(dstY * dst.getW() + dstX, sum / (downsampleMult*downsampleMult), 0xFFFF);
+
+			dst.storePixels16(dstY * dst.getW() + dstX, sum / (downsampleMult*downsampleMult), loopBounds);
 			//Mask16 bounds = _mm512_cmplt_epi32_mask(_mm512_set1_epi32(dstX))
 
 		}

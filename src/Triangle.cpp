@@ -159,10 +159,10 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
 	if (renderJob.minY >= zoneMaxY || renderJob.maxY < zoneMinY) return;
-	real yBeg = std::clamp<real>(renderJob.minY, zoneMinY, zoneMaxY);
-	real yEnd = std::clamp<real>(renderJob.maxY, zoneMinY, zoneMaxY);
-	real xBeg = std::clamp<real>(renderJob.minX, 0, context.framebufW);
-	real xEnd = std::clamp<real>(renderJob.maxX, 0, context.framebufW);
+	real yBeg = std::clamp<real>(floor(renderJob.minY), zoneMinY, zoneMaxY);
+	real yEnd = std::clamp<real>(ceil(renderJob.maxY), zoneMinY, zoneMaxY);
+	real xBeg = std::clamp<real>(floor(renderJob.minX), 0, context.framebufW);
+	real xEnd = std::clamp<real>(ceil(renderJob.maxX), 0, context.framebufW);
 
 	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
 	auto& frameBuf = *context.frameBuffer;
@@ -177,13 +177,13 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	real signedArea = (r1 - r3).cross2d(r2 - r3);
 	if (signedArea == 0.0) return;
 
-	for (real y = floor(yBeg); y < ceil(yEnd); ++y)
+	for (real y = yBeg; y < yEnd; ++y)
 	{
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
-		for (FloatPack16 x = FloatPack16::sequence() + floor(xBeg);
-			Mask16 loopBoundsMask = x < ceil(xEnd); 
+		for (FloatPack16 x = FloatPack16::sequence() + xBeg;
+			Mask16 loopBoundsMask = x < xEnd;
 			x += 16, pixelIndex += 16)
 		{
 			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);

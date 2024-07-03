@@ -10,16 +10,14 @@ void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffe
 	assert(frameBuf.getH() == lightBuf.getH());
 	assert(minY < maxY);
 
-	size_t pixelCount = (maxY - minY) * frameBuf.getW();
-
 	size_t startIndex = minY * frameBuf.getW();
 	size_t endIndex = maxY * frameBuf.getW();
 
 	for (size_t i = startIndex; i < endIndex; i += 16)
 	{
 		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence512), _mm512_set1_epi32(endIndex));
-		VectorPack16 multipied = frameBuf.getPixelsStartingFrom16(i) * (lightBuf.getRawPixels() + i);
-		frameBuf.storePixels16(i, multipied, bounds);
+		VectorPack16 multiplied = frameBuf.getPixelsStartingFrom16(i) * (lightBuf.getRawPixels() + i);
+		frameBuf.storePixels16(i, multiplied, bounds);
 	}
 }
 

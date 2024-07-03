@@ -177,7 +177,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	real signedArea = (r1 - r3).cross2d(r2 - r3);
 	if (signedArea == 0.0) return;
 
-	for (real y = yBeg; y < yEnd; ++y)
+	for (real y = floor(yBeg); y < ceil(yEnd); ++y)
 	{
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
 

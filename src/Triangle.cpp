@@ -135,24 +135,24 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 {
 	RenderJob rj;
-    const Vec4 r1 = tv[0].spaceCoords;
-    const Vec4 r2 = tv[1].spaceCoords;
-    const Vec4 r3 = tv[2].spaceCoords;
+	const Vec4 r1 = tv[0].spaceCoords;
+	const Vec4 r2 = tv[1].spaceCoords;
+	const Vec4 r3 = tv[2].spaceCoords;
 
-    real signedArea = (r1 - r3).cross2d(r2 - r3);
-    if (signedArea == 0.0) return;
+	real signedArea = (r1 - r3).cross2d(r2 - r3);
+	if (signedArea == 0.0) return;
 
-    rj.rcpSignedArea = 1.0/signedArea;
+	rj.rcpSignedArea = 1.0 / signedArea;
 	rj.originalTriangle = *this;
 
 	Triangle copy = *this;
 	copy.sortByAscendingSpaceX();
-	rj.minX = floor(copy.tv[0].spaceCoords.x);
-	rj.maxX = ceil(copy.tv[2].spaceCoords.x);
+	rj.minX = floor(copy.tv[0].spaceCoords.x + 0.5);
+	rj.maxX = ceil(copy.tv[2].spaceCoords.x + 0.5);
 
 	copy.sortByAscendingSpaceY();
-	rj.minY = floor(copy.tv[0].spaceCoords.y);
-	rj.maxY = ceil(copy.tv[2].spaceCoords.y);
+	rj.minY = floor(copy.tv[0].spaceCoords.y + 0.5);
+	rj.maxY = ceil(copy.tv[2].spaceCoords.y + 0.5);
 
 	rj.lightMult = context.lightMult;
 	rj.textureIndex = context.textureIndex;

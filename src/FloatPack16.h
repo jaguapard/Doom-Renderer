@@ -122,6 +122,9 @@ struct alignas(64) FloatPack16
 	operator __m512() const;
 
 	FloatPack16 clamp(float min, float max) const;
+	FloatPack16 sqrt() const;
+	FloatPack16 rsqrt14() const;
+	FloatPack16 rsqrt28() const;
 
 	static FloatPack16 sequence(float mult = 1.0);
 
@@ -317,6 +320,21 @@ inline FloatPack16 FloatPack16::clamp(float min, float max) const
 	FloatPack16 ret;
 	__m512 c = _mm512_min_ps(zmm, _mm512_set1_ps(max));
 	return _mm512_max_ps(c, _mm512_set1_ps(min));
+}
+
+inline FloatPack16 FloatPack16::sqrt() const
+{
+	return _mm512_sqrt_ps(*this);
+}
+
+inline FloatPack16 FloatPack16::rsqrt14() const
+{
+	return _mm512_rsqrt14_ps(*this);
+}
+
+inline FloatPack16 FloatPack16::rsqrt28() const
+{
+	return _mm512_rsqrt28_ps(*this);
 }
 
 inline FloatPack16 FloatPack16::sequence(float mult)

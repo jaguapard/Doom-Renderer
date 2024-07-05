@@ -314,7 +314,6 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.backfaceCullingEnabled = settings.backfaceCullingEnabled;
 	ctx.nearPlaneClippingZ = settings.nearPlaneZ;
 	ctx.fovMult = settings.fovMult;
-	ctx.backfaceCullingEnabled = settings.ditheringEnabled;
 	ctx.ditheringEnabled = settings.ditheringEnabled;
 
 	ctx.camPos = camPos;

@@ -59,10 +59,9 @@ Texture::Texture(std::string name)
 	this->checkForTransparentPixels();
 }
 
-VectorPack16 Texture::gatherPixels512(const FloatPack16& u, const FloatPack16& v, const uint16_t& mask) const
+VectorPack16 Texture::gatherPixels512(const FloatPack16& u, const FloatPack16& v, const Mask16& mask) const
 {
 	StatCount(statsman.textures.pixelFetches += 8; statsman.textures.gathers++);
-	constexpr int ROUND_MODE = _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC;
 	FloatPack16 uFloor = _mm512_floor_ps(u);
 	FloatPack16 vFloor = _mm512_floor_ps(v);
 
@@ -72,7 +71,12 @@ VectorPack16 Texture::gatherPixels512(const FloatPack16& u, const FloatPack16& v
 	FloatPack16 xPixelPos = uFrac * _mm512_set1_ps(pixels.getSize().fw);
 	FloatPack16 yPixelPos = vFrac * _mm512_set1_ps(pixels.getSize().fh);
 
-	return pixels.gatherPixels16(_mm512_cvttps_epi32(xPixelPos), _mm512_cvttps_epi32(yPixelPos), mask);
+	__m512i xCoords = _mm512_cvttps_epi32(xPixelPos);
+	__m512i yCoords = _mm512_cvttps_epi32(yPixelPos);
+	Mask16 xBounds = _mm512_cmplt_epi32_mask(xCoords, _mm512_set1_epi32(pixels.getW()));
+	Mask16 yBounds = _mm512_cmplt_epi32_mask(yCoords, _mm512_set1_epi32(pixels.getH()));
+
+	return pixels.gatherPixels16(xCoords, _mm512_cvttps_epi32(yPixelPos), mask & xBounds & yBounds);
 }
 
 

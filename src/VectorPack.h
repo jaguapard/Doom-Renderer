@@ -101,7 +101,7 @@ struct
 	const PackType& operator[](size_t i) const;
 
 	float product() const;
-	PackType len() const;
+	PackType len3d() const;
 	PackType lenSq() const;
 	PackType lenSq3d() const;
 
@@ -547,6 +547,12 @@ inline VectorPack<PackType> VectorPack<PackType>::fromHorizontalVectors(const Co
 		ret.w[i] = (*it)[i][4];
 	}
 	return ret;
+}
+
+template<typename PackType>
+inline PackType VectorPack<PackType>::len3d() const
+{
+	return this->lenSq3d().sqrt();
 }
 
 template <typename PackType>

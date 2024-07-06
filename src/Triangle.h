@@ -54,6 +54,7 @@ struct TriangleRenderContext
 	PixelBuffer<real>* lightBuffer;
 	ZBuffer* zBuffer;
     FloatColorBuffer* pixelWorldPos;
+	FloatColorBuffer* screenBuffer;
 
 	const CoordinateTransformer* ctr;	
 	const TextureManager* textureManager;

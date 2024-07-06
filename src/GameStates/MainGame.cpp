@@ -147,13 +147,14 @@ void MainGame::init()
 	camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
-	int framebufW = wndSurf->w;
-	int framebufH = wndSurf->h;
+	int framebufW = wndSurf->w*settings.ssaaMult;
+	int framebufH = wndSurf->h*settings.ssaaMult;
 
 	framebuf = { framebufW, framebufH };
 	lightBuf = { framebufW, framebufH };
 	zBuffer = { framebufW, framebufH };
 	pixelWorldPos = { framebufW, framebufH };
+    screenBuf = {wndSurf->w, wndSurf->h};
 
 
 	this->ctr = { framebufW, framebufH };
@@ -194,32 +195,45 @@ void MainGame::draw()
 
 	std::vector<ThreadpoolTask> taskBatch;
 
+	/*
+	std::vector<std::pair<int, int>> limits;
+	for (int i = 0; i < threadCount; ++i)
+	{
+		auto x = threadpool->getLimitsForThread(i, 0, ctx.framebufH);
+		limits.push_back(std::make_pair(int(x.first), int(x.second)));
+		if (i > 0) assert(limits[i].first >= limits[i - 1].second);
+	}*/
+
 	for (int tNum = 0; tNum < threadCount; ++tNum)
 	{
 		//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
 		//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
 		taskfunc_t f = [=]() {
-			auto lim = threadpool->getLimitsForThread(tNum, 0, ctx.framebufH);
-			int myMinY = lim.first; //truncate limits to avoid fighting
-			int myMaxY = lim.second;			
+			int ssaaMult = settings.ssaaMult;
+			auto lim = threadpool->getLimitsForThread(tNum, 0, ctx.screenBuffer->getH());
+			int outputMinY = lim.first; //truncate limits to avoid fighting
+			int outputMaxY = lim.second;
+			int renderMinY = outputMinY * ssaaMult; //it is essential to caclulate rendering zone limits like this, to ensure there are no intersections in different threads
+			int renderMaxY = outputMaxY * ssaaMult;
 	
-			ctx.zBuffer->clearRows(myMinY, myMaxY); //Z buffer has to be cleared, else only pixels closer than previous frame will draw
+			ctx.zBuffer->clearRows(renderMinY, renderMaxY); //Z buffer has to be cleared, else only pixels closer than previous frame will draw
 			if (settings.bufferCleaningEnabled)
 			{
-				//ctx.frameBuffer->clearRows(myMinY, myMaxY);
-				//ctx.lightBuffer->clearRows(myMinY, myMaxY, 1);
+				//ctx.frameBuffer->clearRows(renderMinY, renderMaxY);
+				//ctx.lightBuffer->clearRows(renderMinY, renderMaxY, 1);
 			}
 
 			for (int i = 0; i < renderJobs.size(); ++i)
 			{
 				const RenderJob& myJob = renderJobs[i];
-				myJob.originalTriangle.drawSlice(ctx, myJob, myMinY, myMaxY);
+				myJob.originalTriangle.drawSlice(ctx, myJob, renderMinY, renderMaxY);
 			}
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
-			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), myMinY, myMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
+			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
+			blitting::integerDownscale(*ctx.frameBuffer, *ctx.screenBuffer, settings.ssaaMult, outputMinY, outputMaxY);
 			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, myMinY, myMaxY, shifts, ctx.ditheringEnabled);
+			blitting::frameBufferIntoSurface(*ctx.screenBuffer, wndSurf, outputMinY, outputMaxY, shifts, ctx.ditheringEnabled);
 		};
 
 		ThreadpoolTask task;
@@ -305,8 +319,10 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.ctr = &ctr;
 	ctx.frameBuffer = &framebuf;
 	ctx.lightBuffer = &lightBuf;
-	ctx.textureManager = &textureManager;
+	ctx.screenBuffer = &screenBuf;
 	ctx.zBuffer = &zBuffer;
+
+	ctx.textureManager = &textureManager;	
 	ctx.framebufW = framebuf.getW();
 	ctx.framebufH = framebuf.getH();
 	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately

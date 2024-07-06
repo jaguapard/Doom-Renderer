@@ -27,7 +27,7 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES GNU)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /arch:AVX512 /Zi /Gm- /O2 /sdl /Zc:inline /fp:fast")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} /permissive- /arch:AVX512 /Zi /Gm- /O2 /sdl /Zc:inline /fp:fast")
     include_directories($ENV{INCLUDE})
     link_directories($ENV{LIB}/x64)
 endif()

@@ -27,15 +27,14 @@ __m512i avx512_clamp_i32(__m512i val, int32_t low, int32_t high)
 	return _mm512_min_epi32(clampLo, _mm512_set1_epi32(high));
 }
 
-void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4> shifts, const bool ditheringEnabled)
+void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4> shifts, const bool ditheringEnabled, const uint32_t ssaaMult)
 {
 	assert(frameBuf.getW() == surf->w);
 	assert(frameBuf.getH() == surf->h);
 	assert(minY < maxY);
 	assert(surf->pitch == surf->w * sizeof(Color));
 
-	size_t startIndex = minY * frameBuf.getW();
-	size_t endIndex = maxY * frameBuf.getW();
+	const int w = surf->w;
 
 	Uint32* surfPixelsStart = reinterpret_cast<Uint32*>(surf->pixels);
 
@@ -53,37 +52,46 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 		permuteMask_rg[i*4+byteIndexR] =  
 	}*/
 
-	for (size_t i = startIndex; i < endIndex; i += 16)
+	__m512i step = _mm512_mullo_epi32(sequence512, _mm512_set1_epi32(ssaaMult));
+	for (int dstY = minY; dstY < maxY; ++dstY)
 	{
-		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence512), _mm512_set1_epi32(endIndex));
-
-		VectorPack16 floatColors = frameBuf.getPixelsStartingFrom16(i) * 255;
-		__m512i cvtChannels[4];
-		for (int j = 0; j < 4; ++j) cvtChannels[j] = _mm512_cvttps_epi32(floatColors[j]); //now lower bits of each epi32 contain values of channels
-
-		if (ditheringEnabled)
+		for (int dstX = 0; dstX < w; dstX += 16)
 		{
-			for (int j = 0; j < 4; ++j)
+			__m512i dstX_vec = _mm512_add_epi32(_mm512_set1_epi32(dstX), sequence512);
+			Mask16 loopBounds = _mm512_cmplt_epi32_mask(dstX_vec, _mm512_set1_epi32(w));
+
+			VectorPack16 screenPixels = 0;
+			for (int y = 0; y < ssaaMult; ++y)
 			{
-				__m512i rngOut = rng.next();
-				FloatPack16 channelIncreaseChance = floatColors[j] - _mm512_floor_ps(floatColors[j]);
-				FloatPack16 threshold = channelIncreaseChance * float(UINT32_MAX);
-				Mask16 increaseMask = _mm512_cmplt_epu32_mask(rngOut, _mm512_cvttps_epu32(threshold));
-				cvtChannels[j] = _mm512_mask_add_epi32(cvtChannels[j], increaseMask, cvtChannels[j], _mm512_set1_epi32(1));
+				for (int x = 0; x < ssaaMult; ++x)
+				{
+					__m512i xCoords = _mm512_add_epi32(_mm512_set1_epi32(dstX * ssaaMult + x), step);
+					__m512i yCoords = _mm512_set1_epi32(dstY * ssaaMult + y);
+					screenPixels += frameBuf.gatherPixels16(xCoords, yCoords, loopBounds); //gather horizontal pixels in steps of ssaaMult from ssaaMult consecutive rows
+				}
 			}
+			screenPixels *= 255.0 / (ssaaMult * ssaaMult); //now screenPixels have averaged pixels ready to be converted to ints for further manipulations
+
+			__m512i surfacePixels = _mm512_setzero_si512();
+			for (int i = 0; i < 4; ++i)
+			{
+				__m512i channelValue = _mm512_cvttps_epi32(screenPixels[i]); //now lower bits of each epi32 contain values of channels
+				if (ditheringEnabled)
+				{
+					__m512i rngOut = rng.next();
+					FloatPack16 increaseThreshold = (screenPixels[i] - _mm512_floor_ps(screenPixels[i])) * float(UINT32_MAX);
+
+					Mask16 increaseMask = _mm512_cmplt_epu32_mask(rngOut, _mm512_cvttps_epu32(increaseThreshold));
+					channelValue = _mm512_mask_add_epi32(channelValue, increaseMask, channelValue, _mm512_set1_epi32(1));
+				}
+
+				__m512i clamped = avx512_clamp_i32(channelValue, 0, 255);
+				__m512i shifted = _mm512_sllv_epi32(clamped, _mm512_set1_epi32(shifts[i]));
+				surfacePixels = _mm512_or_epi32(surfacePixels, shifted);
+			}
+
+			_mm512_mask_store_epi32(surfPixelsStart + dstY * w + dstX, loopBounds, surfacePixels);
 		}
-
-		__m512i shifted[4];
-		for (int j = 0; j < 4; ++j)
-		{
-			__m512i clamped = avx512_clamp_i32(cvtChannels[j], 0, 255);
-			shifted[j] = _mm512_sllv_epi32(clamped, _mm512_set1_epi32(shifts[j]));
-		}
-
-		__m512i rg = _mm512_or_epi32(shifted[0], shifted[1]);
-		__m512i ba = _mm512_or_epi32(shifted[2], shifted[3]);
-
-		_mm512_mask_store_epi32(surfPixelsStart + i, bounds, _mm512_or_epi32(rg, ba));
 	}
 }
 

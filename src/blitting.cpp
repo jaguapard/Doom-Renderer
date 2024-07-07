@@ -129,38 +129,3 @@ void blitting::applyFog(FloatColorBuffer& frameBuf, const FloatColorBuffer& worl
 		frameBuf.storePixels16(i, lerpedColor, bounds);
 	}
 }
-
-void blitting::integerDownscale(FloatColorBuffer &src, FloatColorBuffer &dst, uint32_t downsampleMult, size_t dstMinY, size_t dstMaxY)
-{
-    assert(src.getW() == dst.getW()*downsampleMult);
-    assert(src.getH() == dst.getH()*downsampleMult);
-
-    size_t dstStartIndex = dstMinY * dst.getW();
-    size_t dstEndIndex = dstMaxY * dst.getW();
-
-    __m512i step = _mm512_mullo_epi32(sequence512, _mm512_set1_epi32(downsampleMult));
-	
-	for (int dstY = dstMinY; dstY < dstMaxY; ++dstY)
-	{
-		for (int dstX = 0; dstX < dst.getW(); dstX += 16)
-		{
-            __m512i dstX_vec = _mm512_add_epi32(_mm512_set1_epi32(dstX), sequence512);
-            Mask16 loopBounds = _mm512_cmplt_epi32_mask(dstX_vec, _mm512_set1_epi32(dst.getW()));
-
-			VectorPack16 sum = 0;
-			for (int y = 0; y < downsampleMult; ++y)
-			{
-				for (int x = 0; x < downsampleMult; ++x)
-				{
-					__m512i xCoords = _mm512_add_epi32(_mm512_set1_epi32(dstX*downsampleMult + x), step);
-                    __m512i yCoords = _mm512_set1_epi32(dstY*downsampleMult+y);
-					sum += src.gatherPixels16(xCoords, yCoords, loopBounds);
-				}
-			}
-
-			dst.storePixels16(dstY * dst.getW() + dstX, sum / (downsampleMult*downsampleMult), loopBounds);
-			//Mask16 bounds = _mm512_cmplt_epi32_mask(_mm512_set1_epi32(dstX))
-
-		}
-	}
-}

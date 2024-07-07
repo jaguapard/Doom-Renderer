@@ -35,7 +35,6 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 	assert(surf->pitch == surf->w * sizeof(Color));
 
 	const int w = surf->w;
-
 	Uint32* surfPixelsStart = reinterpret_cast<Uint32*>(surf->pixels);
 
 	int32_t intraColorReshuffleMask = shifts[0] >> 3 | shifts[1] << 5 | shifts[2] << 13 | shifts[3] << 21;

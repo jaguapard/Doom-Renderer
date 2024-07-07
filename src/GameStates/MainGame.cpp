@@ -154,7 +154,6 @@ void MainGame::init()
 	lightBuf = { framebufW, framebufH };
 	zBuffer = { framebufW, framebufH };
 	pixelWorldPos = { framebufW, framebufH };
-    screenBuf = {wndSurf->w, wndSurf->h};
 
 
 	this->ctr = { framebufW, framebufH };
@@ -210,7 +209,7 @@ void MainGame::draw()
 		//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
 		taskfunc_t f = [=]() {
 			int ssaaMult = settings.ssaaMult;
-			auto lim = threadpool->getLimitsForThread(tNum, 0, ctx.screenBuffer->getH());
+			auto lim = threadpool->getLimitsForThread(tNum, 0, wndSurf->h);
 			int outputMinY = lim.first; //truncate limits to avoid fighting
 			int outputMaxY = lim.second;
 			int renderMinY = outputMinY * ssaaMult; //it is essential to caclulate rendering zone limits like this, to ensure there are no intersections in different threads
@@ -231,7 +230,6 @@ void MainGame::draw()
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
-			//blitting::integerDownscale(*ctx.frameBuffer, *ctx.screenBuffer, settings.ssaaMult, outputMinY, outputMaxY);
 			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
 			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, outputMinY, outputMaxY, shifts, ctx.ditheringEnabled, ssaaMult);
 		};
@@ -319,7 +317,6 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.ctr = &ctr;
 	ctx.frameBuffer = &framebuf;
 	ctx.lightBuffer = &lightBuf;
-	ctx.screenBuffer = &screenBuf;
 	ctx.zBuffer = &zBuffer;
 
 	ctx.textureManager = &textureManager;	

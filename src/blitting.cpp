@@ -60,16 +60,20 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 			Mask16 loopBounds = _mm512_cmplt_epi32_mask(dstX_vec, _mm512_set1_epi32(w));
 
 			VectorPack16 screenPixels = 0;
-			for (int y = 0; y < ssaaMult; ++y)
+			if (ssaaMult > 1)
 			{
-				for (int x = 0; x < ssaaMult; ++x)
+				for (int y = 0; y < ssaaMult; ++y)
 				{
-					__m512i xCoords = _mm512_add_epi32(_mm512_set1_epi32(dstX * ssaaMult + x), step);
-					__m512i yCoords = _mm512_set1_epi32(dstY * ssaaMult + y);
-					screenPixels += frameBuf.gatherPixels16(xCoords, yCoords, loopBounds); //gather horizontal pixels in steps of ssaaMult from ssaaMult consecutive rows
+					for (int x = 0; x < ssaaMult; ++x)
+					{
+						__m512i xCoords = _mm512_add_epi32(_mm512_set1_epi32(dstX * ssaaMult + x), step);
+						__m512i yCoords = _mm512_set1_epi32(dstY * ssaaMult + y);
+						screenPixels += frameBuf.gatherPixels16(xCoords, yCoords, loopBounds); //gather horizontal pixels in steps of ssaaMult from ssaaMult consecutive rows
+					}
 				}
+				screenPixels *= 255.0 / (ssaaMult * ssaaMult); //now screenPixels have averaged pixels ready to be converted to ints for further manipulations
 			}
-			screenPixels *= 255.0 / (ssaaMult * ssaaMult); //now screenPixels have averaged pixels ready to be converted to ints for further manipulations
+			else screenPixels = frameBuf.getPixelLine16(dstX, dstY) * 255;
 
 			__m512i surfacePixels = _mm512_setzero_si512();
 			for (int i = 0; i < 4; ++i)

@@ -111,4 +111,6 @@ protected:
 	TriangleRenderContext makeTriangleRenderContext();
 	void fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJob>& renderJobs);
 	std::array<uint32_t, 4> getShiftsForWindow();
+
+	void adjustSsaaMult(int add);
 };

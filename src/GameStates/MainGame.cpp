@@ -70,6 +70,8 @@ void MainGame::handleInput()
 	if (input.wasCharPressedOnThisFrame('R')) settings.backfaceCullingEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('U')) settings.fogEffectVersion = EnumclassHelper::next(settings.fogEffectVersion);
 	if (input.wasCharPressedOnThisFrame('Y')) settings.ditheringEnabled ^= 1;
+	if (input.wasCharPressedOnThisFrame('E') && settings.ssaaMult > 1) this->adjustSsaaMult(settings.ssaaMult - 1);
+	if (input.wasCharPressedOnThisFrame('R')) this->adjustSsaaMult(settings.ssaaMult + 1);
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{
@@ -152,7 +154,7 @@ void MainGame::init()
 	int framebufH = wndSurf->h*settings.ssaaMult;
 
 	framebuf = { framebufW, framebufH };
-	lightBuf = { framebufW, framebufH };
+	//lightBuf = { framebufW, framebufH };
 	zBuffer = { framebufW, framebufH };
 	pixelWorldPos = { framebufW, framebufH };
 
@@ -259,6 +261,8 @@ void MainGame::draw()
 			perfmonInfo["Fog"] = !settings.fogEnabled ? "disabled" : ("version " + std::to_string(int(settings.fogEffectVersion)) + ", intensity " + std::to_string(settings.fogIntensity));
 			perfmonInfo["Dithering"] = settings.ditheringEnabled ? "enabled" : "disabled";
             perfmonInfo["Gamma"] = std::to_string(settings.gamma);
+			perfmonInfo["Render resolution"] = std::to_string(framebuf.getW()) + "x" + std::to_string(framebuf.getH()) + " (" + std::to_string(settings.ssaaMult) + "x)";
+			perfmonInfo["Output resolution"] = std::to_string(wndSurf->w) + "x" + std::to_string(wndSurf->h);
 
 			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
 			perfmonInfo["Inverse transformation matrix"] = "\n" + ctr.getCurrentInverseTransformationMatrix().toString();
@@ -356,4 +360,15 @@ std::array<uint32_t, 4> MainGame::getShiftsForWindow()
 	shifts[3] = missingShift;
 	for (auto& it : shifts) assert(it % 8 == 0);
 	return shifts;
+}
+
+void MainGame::adjustSsaaMult(int newMult)
+{
+	int w = wndSurf->w * newMult;
+	int h = wndSurf->h * newMult;
+	framebuf = { w,h };
+	zBuffer = { w,h };
+	pixelWorldPos = { w,h };
+	ctr = { w,h };
+	settings.ssaaMult = newMult;
 }

@@ -29,8 +29,8 @@ __m512i avx512_clamp_i32(__m512i val, int32_t low, int32_t high)
 
 void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4> shifts, const bool ditheringEnabled, const uint32_t ssaaMult)
 {
-	assert(frameBuf.getW() == surf->w);
-	assert(frameBuf.getH() == surf->h);
+	assert(frameBuf.getW() == surf->w * ssaaMult);
+	assert(frameBuf.getH() == surf->h * ssaaMult);
 	assert(minY < maxY);
 	assert(surf->pitch == surf->w * sizeof(Color));
 

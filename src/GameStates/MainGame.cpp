@@ -147,6 +147,7 @@ void MainGame::init()
 	camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
 	camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
+	settings.ssaaMult = 1;
 	int framebufW = wndSurf->w*settings.ssaaMult;
 	int framebufH = wndSurf->h*settings.ssaaMult;
 

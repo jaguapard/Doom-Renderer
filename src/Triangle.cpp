@@ -147,15 +147,22 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 
 	Triangle copy = *this;
 	copy.sortByAscendingSpaceX();
-	rj.minX = floor(copy.tv[0].spaceCoords.x + 0.5);
-	rj.maxX = ceil(copy.tv[2].spaceCoords.x + 0.5);
-
+	real screenMinX = copy.tv[0].spaceCoords.x;
+	real screenMaxX = copy.tv[2].spaceCoords.x;
 	copy.sortByAscendingSpaceY();
-	rj.minY = floor(copy.tv[0].spaceCoords.y + 0.5);
-	rj.maxY = ceil(copy.tv[2].spaceCoords.y + 0.5);
-
+	real screenMinY = copy.tv[0].spaceCoords.y;
+	real screenMaxY = copy.tv[2].spaceCoords.y;
+	
+	rj.minX = floor(screenMinX);
+	rj.maxX = ceil(screenMaxX + 0.5);
+	rj.minY = floor(screenMinY);
+	rj.maxY = ceil(screenMaxY + 0.5);
 	rj.lightMult = context.lightMult;
 	rj.textureIndex = context.textureIndex;
+
+	real xSpan = screenMaxX - screenMinX;
+	real ySpan = screenMaxY - screenMinY;
+
 	context.renderJobs->push_back(rj);
 }
 

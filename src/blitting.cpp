@@ -1,5 +1,6 @@
 #include "blitting.h"
 #include "Lehmer.h"
+#include "avx_helpers.h"
 
 const __m512i sequence512 = _mm512_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 static thread_local LehmerRNG rng;
@@ -19,12 +20,6 @@ void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffe
 		VectorPack16 multiplied = frameBuf.getPixelsStartingFrom16(i) * (lightBuf.getRawPixels() + i);
 		frameBuf.storePixels16(i, multiplied, bounds);
 	}
-}
-
-__m512i avx512_clamp_i32(__m512i val, int32_t low, int32_t high)
-{
-	__m512i clampLo = _mm512_max_epi32(val, _mm512_set1_epi32(low));
-	return _mm512_min_epi32(clampLo, _mm512_set1_epi32(high));
 }
 
 void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4> shifts, const bool ditheringEnabled, const uint32_t ssaaMult)
@@ -88,7 +83,7 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 					channelValue = _mm512_mask_add_epi32(channelValue, increaseMask, channelValue, _mm512_set1_epi32(1));
 				}
 
-				__m512i clamped = avx512_clamp_i32(channelValue, 0, 255);
+				__m512i clamped = avx_helpers::_mm512_clamp_epi32(channelValue, _mm512_set1_epi32(0), _mm512_set1_epi32(255));
 				__m512i shifted = _mm512_sllv_epi32(clamped, _mm512_set1_epi32(shifts[i]));
 				surfacePixels = _mm512_or_epi32(surfacePixels, shifted);
 			}

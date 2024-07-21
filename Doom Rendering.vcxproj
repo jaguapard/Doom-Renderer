@@ -81,6 +81,7 @@
     <ClCompile Include="src\ZBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\avx_helpers.h" />
     <ClInclude Include="src\blitting.h" />
     <ClInclude Include="src\bob\SSE_Vec4.h" />
     <ClInclude Include="src\bob\Timer.h" />

@@ -166,6 +166,14 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	context.renderJobs->push_back(rj);
 }
 
+inline std::tuple<FloatPack16, FloatPack16, FloatPack16> calculateBarycentricCoordinates(const VectorPack16& r, const VectorPack16& r1, const VectorPack16& r2, const VectorPack16& r3, const real& rcpSignedArea)
+{
+	return {
+		(r - r3).cross2d(r2 - r3) * rcpSignedArea,
+		(r - r3).cross2d(r3 - r1) * rcpSignedArea,
+		(r - r1).cross2d(r1 - r2) * rcpSignedArea //do NOT change this to 1-alpha-beta or 1-(alpha+beta). That causes wonkiness in textures
+	};
+}
 
 void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
@@ -195,9 +203,8 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			x += 16, pixelIndex += 16)
 		{
 			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
-			FloatPack16 alpha = (r - r3).cross2d(r2 - r3) * renderJob.rcpSignedArea;
-			FloatPack16 beta = (r - r3).cross2d(r3 - r1) * renderJob.rcpSignedArea;
-			FloatPack16 gamma = (r - r1).cross2d(r1 - r2) * renderJob.rcpSignedArea; //do NOT change this to 1-alpha-beta or 1-(alpha+beta). That causes wonkiness in textures
+			auto [alpha, beta, gamma] = calculateBarycentricCoordinates(r, r1, r2, r3, renderJob.rcpSignedArea);
+
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;
 

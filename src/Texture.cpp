@@ -68,15 +68,12 @@ VectorPack16 Texture::gatherPixels512(const FloatPack16& u, const FloatPack16& v
 	FloatPack16 uFrac = u - uFloor;
 	FloatPack16 vFrac = v - vFloor;
 
-	FloatPack16 xPixelPos = uFrac * _mm512_set1_ps(pixels.getSize().fw);
-	FloatPack16 yPixelPos = vFrac * _mm512_set1_ps(pixels.getSize().fh);
+	FloatPack16 xPixelPos = uFrac * pixels.getSize().fw;
+	FloatPack16 yPixelPos = vFrac * pixels.getSize().fh;
 
 	__m512i xCoords = _mm512_cvttps_epi32(xPixelPos);
 	__m512i yCoords = _mm512_cvttps_epi32(yPixelPos);
-	Mask16 xBounds = _mm512_cmplt_epi32_mask(xCoords, _mm512_set1_epi32(pixels.getW()));
-	Mask16 yBounds = _mm512_cmplt_epi32_mask(yCoords, _mm512_set1_epi32(pixels.getH()));
-
-	return pixels.gatherPixels16(xCoords, _mm512_cvttps_epi32(yPixelPos), mask & xBounds & yBounds);
+	return pixels.gatherPixels16(xCoords, yCoords, mask & (uFrac < 1) & (vFrac < 1));
 }
 
 

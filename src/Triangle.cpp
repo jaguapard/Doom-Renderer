@@ -187,6 +187,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	auto& frameBuf = *context.frameBuffer;
 	auto& lightBuf = *context.lightBuffer;
 	auto& depthBuf = *context.zBuffer;
+	auto& pixelWorldPosBuf = *context.pixelWorldPos;
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
 	const Vec4 r1 = tv[0].spaceCoords;
@@ -246,7 +247,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);
-			context.pixelWorldPos->storePixels16(pixelIndex, worldCoords, opaquePixelsMask);
+			pixelWorldPosBuf.storePixels16(pixelIndex, worldCoords, opaquePixelsMask);
 		}
 	}
 }

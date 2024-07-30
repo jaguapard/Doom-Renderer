@@ -190,10 +190,6 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	auto& pixelWorldPosBuf = *context.pixelWorldPos;
 	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
-	const Vec4 r1 = tv[0].spaceCoords;
-	const Vec4 r2 = tv[1].spaceCoords;
-	const Vec4 r3 = tv[2].spaceCoords;
-
 	for (real y = yBeg; y <= yEnd; ++y)
 	{
 		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
@@ -204,7 +200,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			x += 16, pixelIndex += 16)
 		{
 			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
-			auto [alpha, beta, gamma] = calculateBarycentricCoordinates(r, r1, r2, r3, renderJob.rcpSignedArea);
+			auto [alpha, beta, gamma] = calculateBarycentricCoordinates(r, tv[0].spaceCoords, tv[1].spaceCoords, tv[2].spaceCoords, renderJob.rcpSignedArea);
 
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;

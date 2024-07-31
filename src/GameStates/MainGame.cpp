@@ -70,8 +70,8 @@ void MainGame::handleInput()
 	if (input.wasCharPressedOnThisFrame('R')) settings.backfaceCullingEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('U')) settings.fogEffectVersion = EnumclassHelper::next(settings.fogEffectVersion);
 	if (input.wasCharPressedOnThisFrame('Y')) settings.ditheringEnabled ^= 1;
-	if (input.wasCharPressedOnThisFrame('E') && settings.ssaaMult > 1) this->adjustSsaaMult(settings.ssaaMult - 1);
-	if (input.wasCharPressedOnThisFrame('R')) this->adjustSsaaMult(settings.ssaaMult + 1);
+	if (input.wasCharPressedOnThisFrame('Q') && settings.ssaaMult > 1) this->adjustSsaaMult(settings.ssaaMult - 1);
+	if (input.wasCharPressedOnThisFrame('E')) this->adjustSsaaMult(settings.ssaaMult + 1);
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{

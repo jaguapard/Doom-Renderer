@@ -117,6 +117,7 @@ Threadpool::~Threadpool() noexcept
 	this->threadpoolMarkedForTermination = true; //signal all threads that it's time to stop
 	{
 		std::unique_lock cv_lck(cv_mtx);
+		unassignedTasks.clear();
 		cv.notify_all();
 	}
 

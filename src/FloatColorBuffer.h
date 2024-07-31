@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include <memory>
+
 #include "VectorPack.h"
 #include "Color.h"
 
@@ -21,8 +23,10 @@ class FloatColorBuffer
 {
 public:
 	FloatColorBuffer() = default;
+	FloatColorBuffer(const FloatColorBuffer& other);
 	FloatColorBuffer(int w, int h);
 
+	void operator=(const FloatColorBuffer& other);
 	VectorPack8 gatherPixels8(const __m256i& xCoords, const __m256i& yCoords, const __mmask8& mask) const;
 	VectorPack16 gatherPixels16(const __m512i& xCoords, const __m512i& yCoords, const __mmask16& mask) const;
 	VectorPack16 gatherPixels16(const __m512i& indices, const __mmask16& mask) const;
@@ -47,5 +51,5 @@ public:
 	const FloatColorBufferSize& getSize() const;
 private:
 	FloatColorBufferSize size;
-	std::vector<float> r, g, b, a;
+	std::unique_ptr<float[]> r, g, b, a;
 };

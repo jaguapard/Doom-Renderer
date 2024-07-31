@@ -1,13 +1,36 @@
 #include "FloatColorBuffer.h"
 
+FloatColorBuffer::FloatColorBuffer(const FloatColorBuffer& other)
+{
+	*this = other;
+}
+
 FloatColorBuffer::FloatColorBuffer(int w, int h)
 {
 	int pixelCount = w * h;
-	r.resize(w * h);
-	b.resize(w * h);
-	g.resize(w * h);
-	a.resize(w * h);
+	r = std::make_unique<float[]>(pixelCount);
+	g = std::make_unique<float[]>(pixelCount);
+	b = std::make_unique<float[]>(pixelCount);
+	a = std::make_unique<float[]>(pixelCount);
 	size = FloatColorBufferSize(w, h);
+}
+
+void FloatColorBuffer::operator=(const FloatColorBuffer& other)
+{
+	int w = other.getW();
+	int h = other.getH();
+	int pixelCount = w * h;
+
+	r = std::make_unique<float[]>(pixelCount);
+	g = std::make_unique<float[]>(pixelCount);
+	b = std::make_unique<float[]>(pixelCount);
+	a = std::make_unique<float[]>(pixelCount);
+	size = FloatColorBufferSize(w, h);
+
+	memcpy(r.get(), other.r.get(), pixelCount * sizeof(float));
+	memcpy(g.get(), other.g.get(), pixelCount * sizeof(float));
+	memcpy(b.get(), other.b.get(), pixelCount * sizeof(float));
+	memcpy(a.get(), other.a.get(), pixelCount * sizeof(float));
 }
 
 VectorPack8 FloatColorBuffer::gatherPixels8(const __m256i& xCoords, const __m256i& yCoords, const __mmask8& mask) const
@@ -16,10 +39,10 @@ VectorPack8 FloatColorBuffer::gatherPixels8(const __m256i& xCoords, const __m256
 	__m256i rowStart = _mm256_mullo_epi32(yCoords, _mm256_set1_epi32(size.w));
 	__m256i pixelIndices = _mm256_add_epi32(rowStart, xCoords);
 
-	ret.x = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, r.data(), sizeof(float));
-	ret.y = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, g.data(), sizeof(float));
-	ret.z = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, b.data(), sizeof(float));
-	ret.w = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, a.data(), sizeof(float));
+	ret.x = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, r.get(), sizeof(float));
+	ret.y = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, g.get(), sizeof(float));
+	ret.z = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, b.get(), sizeof(float));
+	ret.w = _mm256_mmask_i32gather_ps(_mm256_setzero_ps(), mask, pixelIndices, a.get(), sizeof(float));
 	return ret;
 }
 
@@ -29,10 +52,10 @@ VectorPack16 FloatColorBuffer::gatherPixels16(const __m512i& xCoords, const __m5
 	__m512i rowStart = _mm512_mullo_epi32(yCoords, _mm512_set1_epi32(size.w));
 	__m512i pixelIndices = _mm512_add_epi32(rowStart, xCoords);
 
-	ret.x = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, r.data(), sizeof(float));
-	ret.y = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, g.data(), sizeof(float));
-	ret.z = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, b.data(), sizeof(float));
-	ret.w = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, a.data(), sizeof(float));
+	ret.x = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, r.get(), sizeof(float));
+	ret.y = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, g.get(), sizeof(float));
+	ret.z = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, b.get(), sizeof(float));
+	ret.w = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, pixelIndices, a.get(), sizeof(float));
 	return ret;
 }
 
@@ -41,10 +64,10 @@ void FloatColorBuffer::scatterPixels16(const __m512i& xCoords, const __m512i& yC
 	__m512i rowStart = _mm512_mullo_epi32(yCoords, _mm512_set1_epi32(size.w));
 	__m512i pixelIndices = _mm512_add_epi32(rowStart, xCoords);
 
-	_mm512_mask_i32scatter_ps(r.data(), mask, pixelIndices, pixels.r, sizeof(float));
-	_mm512_mask_i32scatter_ps(g.data(), mask, pixelIndices, pixels.g, sizeof(float));
-	_mm512_mask_i32scatter_ps(b.data(), mask, pixelIndices, pixels.b, sizeof(float));
-	_mm512_mask_i32scatter_ps(a.data(), mask, pixelIndices, pixels.a, sizeof(float));
+	_mm512_mask_i32scatter_ps(r.get(), mask, pixelIndices, pixels.r, sizeof(float));
+	_mm512_mask_i32scatter_ps(g.get(), mask, pixelIndices, pixels.g, sizeof(float));
+	_mm512_mask_i32scatter_ps(b.get(), mask, pixelIndices, pixels.b, sizeof(float));
+	_mm512_mask_i32scatter_ps(a.get(), mask, pixelIndices, pixels.a, sizeof(float));
 }
 
 VectorPack16 FloatColorBuffer::getPixelLine16(int xStart, int y) const
@@ -97,22 +120,22 @@ int FloatColorBuffer::getH() const
 
 float* FloatColorBuffer::getp_R()
 {
-	return r.data();
+	return r.get();
 }
 
 float* FloatColorBuffer::getp_G()
 {
-	return g.data();
+	return g.get();
 }
 
 float* FloatColorBuffer::getp_B()
 {
-	return b.data();
+	return b.get();
 }
 
 float* FloatColorBuffer::getp_A()
 {
-	return a.data();
+	return a.get();
 }
 
 const FloatColorBufferSize& FloatColorBuffer::getSize() const
@@ -123,9 +146,9 @@ const FloatColorBufferSize& FloatColorBuffer::getSize() const
 VectorPack16 FloatColorBuffer::gatherPixels16(const __m512i &indices, const __mmask16 &mask) const
 {
     VectorPack16 ret;
-    ret.x = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, r.data(), sizeof(float));
-    ret.y = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, g.data(), sizeof(float));
-    ret.z = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, b.data(), sizeof(float));
-    ret.w = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, a.data(), sizeof(float));
+    ret.x = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, r.get(), sizeof(float));
+    ret.y = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, g.get(), sizeof(float));
+    ret.z = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, b.get(), sizeof(float));
+    ret.w = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, a.get(), sizeof(float));
     return ret;
 }

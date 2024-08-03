@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include "helpers.h"
+#include "Threadpool.h"
 
 #define VAR_PRINT(x) (std::string(#x) + ": " + toThousandsSeparatedString(x))
 
@@ -10,7 +11,7 @@
 class Statsman
 {
 public:
-	static constexpr bool enabled = false;
+	static constexpr bool enabled = true;
 
 	struct ZBuffer
 	{
@@ -68,5 +69,5 @@ private:
 
 extern Statsman statsman;
 
-#define StatCount(expression) if (Statsman::enabled) {expression;}
+#define StatCount(expression) if (Statsman::enabled && Threadpool::SINGLE_THREAD_MODE) {expression;}
 //#define StatCount(expression, ) if (Statsman::enabled) {expression;}

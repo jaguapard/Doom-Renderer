@@ -61,7 +61,7 @@ Texture::Texture(std::string name)
 
 VectorPack16 Texture::gatherPixels512(const FloatPack16& u, const FloatPack16& v, const Mask16& mask) const
 {
-	StatCount(statsman.textures.pixelFetches += 8; statsman.textures.gathers++);
+	StatCount(statsman.textures.pixelFetches += 16; statsman.textures.gathers++);
 	FloatPack16 uFloor = _mm512_floor_ps(u);
 	FloatPack16 vFloor = _mm512_floor_ps(v);
 

@@ -165,7 +165,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator+(const float other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] + other;
+	ret.x = x + other;
+	ret.y = y + other;
+	ret.z = z + other;
+	ret.w = w + other;
 	return ret;
 }
 
@@ -173,7 +176,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator-(const float other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] - other;
+	ret.x = x - other;
+	ret.y = y - other;
+	ret.z = z - other;
+	ret.w = w - other;
 	return ret;
 }
 
@@ -181,7 +187,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator*(const float other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * other;
+	ret.x = x * other;
+	ret.y = y * other;
+	ret.z = z * other;
+	ret.w = w * other;
 	return ret;
 }
 
@@ -228,7 +237,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator+(const VectorPack<PackType>& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] + other[i];
+	ret.x = x + other.x;
+	ret.y = y + other.y;
+	ret.z = z + other.z;
+	ret.w = w + other.w;
 	return ret;
 }
 
@@ -236,7 +248,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator-(const VectorPack<PackType>& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] - other[i];
+	ret.x = x - other.x;
+	ret.y = y - other.y;
+	ret.z = z - other.z;
+	ret.w = w - other.w;
 	return ret;
 }
 
@@ -244,7 +259,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator*(const VectorPack<PackType>& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * other[i];
+	ret.x = x * other.x;
+	ret.y = y * other.y;
+	ret.z = z * other.z;
+	ret.w = w * other.w;
 	return ret;
 }
 
@@ -252,7 +270,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator/(const VectorPack<PackType>& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] / other[i];
+	ret.x = x / other.x;
+	ret.y = y / other.y;
+	ret.z = z / other.z;
+	ret.w = w / other.w;
 	return ret;
 }
 
@@ -308,7 +329,10 @@ template<typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator+(const PackType& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] + other;
+	ret.x = x + other;
+	ret.y = y + other;
+	ret.z = z + other;
+	ret.w = w + other;
 	return ret;
 }
 
@@ -316,7 +340,10 @@ template<typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator-(const PackType& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] - other;
+	ret.x = x - other;
+	ret.y = y - other;
+	ret.z = z - other;
+	ret.w = w - other;
 	return ret;
 }
 
@@ -324,7 +351,10 @@ template<typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator*(const PackType& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] * other;
+	ret.x = x * other;
+	ret.y = y * other;
+	ret.z = z * other;
+	ret.w = w * other;
 	return ret;
 }
 
@@ -333,7 +363,10 @@ template<typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator/(const PackType& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] / other;
+	ret.x = x / other;
+	ret.y = y / other;
+	ret.z = z / other;
+	ret.w = w / other;
 	return ret;
 }
 
@@ -343,7 +376,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator&(const VectorPack<PackType>& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] & other[i];
+	ret.x = x & other.x;
+	ret.y = y & other.y;
+	ret.z = z & other.z;
+	ret.w = w & other.w;
 	return ret;
 }
 
@@ -351,7 +387,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator|(const VectorPack<PackType>& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] | other[i];
+	ret.x = x | other.x;
+	ret.y = y | other.y;
+	ret.z = z | other.z;
+	ret.w = w | other.w;
 	return ret;
 }
 
@@ -359,7 +398,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator^(const VectorPack<PackType>& other) const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = (*this)[i] ^ other[i];
+	ret.x = x ^ other.x;
+	ret.y = y ^ other.y;
+	ret.z = z ^ other.z;
+	ret.w = w ^ other.w;
 	return ret;
 }
 
@@ -470,7 +512,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator-() const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = -(*this)[i];
+	ret.x = -x;
+	ret.y = -y;
+	ret.z = -z;
+	ret.w = -w;
 	return ret;
 }
 
@@ -478,7 +523,10 @@ template <typename PackType>
 inline VectorPack<PackType> VectorPack<PackType>::operator~() const
 {
 	VectorPack<PackType> ret;
-	for (size_t i = 0; i < std::size(packs); ++i) ret[i] = ~(*this)[i];
+	ret.x = ~x;
+	ret.y = ~y;
+	ret.z = ~z;
+	ret.w = ~w;
 	return ret;
 }
 

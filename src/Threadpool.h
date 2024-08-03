@@ -45,6 +45,8 @@ public:
 	std::pair<double, double> getLimitsForThread(size_t threadIndex, double min, double max, std::optional<size_t> threadCount = std::nullopt) const;
 
 	~Threadpool() noexcept;
+
+	static constexpr bool SINGLE_THREAD_MODE = false;
 private:
 	std::recursive_mutex taskListMutex; //this mutex is used to protect accesses to all of these maps and sets
 	std::unordered_map<task_id, ThreadpoolTask> taskStore;

@@ -127,10 +127,10 @@ inline VectorPack<PackType>::VectorPack(const float x)
 template <typename PackType>
 inline VectorPack<PackType>::VectorPack(const bob::_SSE_Vec4_float& v)
 {
-	x = PackType(v.x);
-	y = PackType(v.y);
-	z = PackType(v.z);
-	w = PackType(v.w);
+	x = v.x;
+	y = v.y;
+	z = v.z;
+	w = v.w;
 }
 
 template <typename PackType>

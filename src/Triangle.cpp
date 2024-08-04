@@ -206,7 +206,6 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			if (!pointsInsideTriangleMask) continue;
 
 			VectorPack16 interpolatedDividedUv = VectorPack16(tv[0].textureCoords) * alpha + VectorPack16(tv[1].textureCoords) * beta + VectorPack16(tv[2].textureCoords) * gamma;
-
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
 			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
@@ -218,7 +217,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
 			worldCoords /= interpolatedDividedUv.z;
 
-			VectorPack16 dynaLight = 0;
+			VectorPack16 dynaLight = renderJob.lightMult;
 			for (const auto& it : *context.pointLights)
 			{
 				FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
@@ -226,7 +225,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				dynaLight += VectorPack16(power) / distSquared;
 			}
 
-			texturePixels = texturePixels * (dynaLight + renderJob.lightMult);
+			texturePixels *= dynaLight;
 			if (context.wireframeEnabled)
 			{
 				Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;

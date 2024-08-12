@@ -132,6 +132,14 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	screenSpaceTriangle.addToRenderQueueFinal(context);
 }
 
+real _3min(real a, real b, real c)
+{
+	return std::min(a, std::min(b, c));
+}
+real _3max(real a, real b, real c)
+{
+	return std::max(a, std::max(b, c));
+}
 void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 {
 	RenderJob rj;
@@ -145,14 +153,11 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	rj.rcpSignedArea = 1.0 / signedArea;
 	rj.originalTriangle = *this;
 
-	Triangle copy = *this;
-	copy.sortByAscendingSpaceX();
-	real screenMinX = copy.tv[0].spaceCoords.x;
-	real screenMaxX = copy.tv[2].spaceCoords.x;
-	copy.sortByAscendingSpaceY();
-	real screenMinY = copy.tv[0].spaceCoords.y;
-	real screenMaxY = copy.tv[2].spaceCoords.y;
-	
+	real screenMinX = _3min(r1.x, r2.x, r3.x);
+	real screenMaxX = _3max(r1.x, r2.x, r3.x);
+	real screenMinY = _3min(r1.y, r2.y, r3.y);
+	real screenMaxY = _3max(r1.y, r2.y, r3.y);
+
 	rj.minX = floor(screenMinX);
 	rj.maxX = ceil(screenMaxX + 0.5);
 	rj.minY = floor(screenMinY);

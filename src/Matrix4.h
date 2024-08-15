@@ -16,6 +16,7 @@ public:
 
 	Matrix4() = default;
 	Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst);
+	Matrix4(__m512 m);
 
 	Matrix4 operator*(const float other) const;
 	Matrix4 operator-(const Matrix4& other) const;

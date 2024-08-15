@@ -10,6 +10,11 @@ Matrix4::Matrix4(const std::initializer_list<bob::_SSE_Vec4_float> lst)
 	for (int i = 0; i < 4; ++i) this->val[i] = *(lst.begin() + i);
 }
 
+Matrix4::Matrix4(__m512 m)
+{
+	zmm = m;
+}
+
 Matrix4 Matrix4::operator*(const float other) const
 {
 	Matrix4 ret;
@@ -241,23 +246,18 @@ Matrix4 Matrix4::rotationXYZ(const Vec4& angle)
 
 Matrix4 Matrix4::identity(float value, int dim)
 {
-	Matrix4 ret;
 #if __AVX512F__
 	__m512 bcst = _mm512_set1_ps(value); 
 	switch (dim)
 	{
 		case 1:
-			ret.zmm = _mm512_maskz_mov_ps(0x1, bcst);
-			return ret;
+			return _mm512_maskz_mov_ps(0x1, bcst);
 		case 2:
-			ret.zmm = _mm512_maskz_mov_ps(0x21, bcst);
-			return ret;
+			return _mm512_maskz_mov_ps(0x21, bcst);
 		case 3:
-			ret.zmm = _mm512_maskz_mov_ps(0x421, bcst);
-			return ret;		
+			return _mm512_maskz_mov_ps(0x421, bcst);
 		case 4:
-			ret.zmm = _mm512_maskz_mov_ps(0x8421, bcst);
-			return ret;
+			return _mm512_maskz_mov_ps(0x8421, bcst);
 	default:
 		break;
 	}

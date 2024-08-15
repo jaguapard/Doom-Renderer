@@ -171,7 +171,7 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	context.renderJobs->push_back(rj);
 }
 
-inline std::tuple<FloatPack16, FloatPack16, FloatPack16> calculateBarycentricCoordinates(const VectorPack16& r, const VectorPack16& r1, const VectorPack16& r2, const VectorPack16& r3, const real& rcpSignedArea)
+inline std::tuple<FloatPack16, FloatPack16, FloatPack16> calculateBarycentricCoordinates(const VectorPack16& r, const Vec4& r1, const Vec4& r2, const Vec4& r3, const real& rcpSignedArea)
 {
 	return {
 		(r - r3).cross2d(r2 - r3) * rcpSignedArea,

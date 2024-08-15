@@ -241,10 +241,32 @@ Matrix4 Matrix4::rotationXYZ(const Vec4& angle)
 
 Matrix4 Matrix4::identity(float value, int dim)
 {
+	Matrix4 ret;
+#if __AVX512F__
+	__m512 bcst = _mm512_set1_ps(value); 
+	switch (dim)
+	{
+		case 1:
+			ret.zmm = _mm512_maskz_mov_ps(0x1, bcst);
+			return ret;
+		case 2:
+			ret.zmm = _mm512_maskz_mov_ps(0x21, bcst);
+			return ret;
+		case 3:
+			ret.zmm = _mm512_maskz_mov_ps(0x421, bcst);
+			return ret;		
+		case 4:
+			ret.zmm = _mm512_maskz_mov_ps(0x8421, bcst);
+			return ret;
+	default:
+		break;
+	}
+#else
 	assert(dim > 0 && dim <= 4);
 	Matrix4 ret = Matrix4::zeros();
 	for (int i = 0; i < dim; ++i) ret.elements[i][i] = value;
 	return ret;
+#endif
 }
 
 Matrix4 Matrix4::zeros()

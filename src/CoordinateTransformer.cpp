@@ -18,8 +18,7 @@ void CoordinateTransformer::prepare(const Vec4 camPos, const Vec4 camAng)
 	translation[3][3] = 1;
 
 	this->rotationTranslation = rotation * translation;
-	this->inverseRotationTranslation = rotationTranslation.inverse();
-	int a = 1;
+	//this->inverseRotationTranslation = rotationTranslation.inverse();
 	//this->translationRotation = translation * rotation;
 }
 

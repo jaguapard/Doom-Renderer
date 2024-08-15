@@ -251,13 +251,13 @@ Matrix4 Matrix4::identity(float value, int dim)
 	switch (dim)
 	{
 		case 1:
-			return _mm512_maskz_mov_ps(0x1, bcst);
+			return _mm512_setr_ps(value, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		case 2:
-			return _mm512_maskz_mov_ps(0x21, bcst);
+			return _mm512_setr_ps(value, 0, 0, 0, 0, value, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		case 3:
-			return _mm512_maskz_mov_ps(0x421, bcst);
+			return _mm512_setr_ps(value, 0, 0, 0, 0, value, 0, 0, 0, 0, value, 0, 0, 0, 0, 0);
 		case 4:
-			return _mm512_maskz_mov_ps(0x8421, bcst);
+			return _mm512_setr_ps(value, 0, 0, 0, 0, value, 0, 0, 0, 0, value, 0, 0, 0, 0, value);
 	default:
 		break;
 	}

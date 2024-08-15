@@ -17,23 +17,17 @@ Matrix4::Matrix4(__m512 m)
 
 Matrix4 Matrix4::operator*(const float other) const
 {
-	Matrix4 ret;
-	ret.zmm = _mm512_mul_ps(zmm, _mm512_set1_ps(other));
-	return ret;
+	return _mm512_mul_ps(zmm, _mm512_set1_ps(other));
 }
 
 Matrix4 Matrix4::operator-(const Matrix4& other) const
 {
-	Matrix4 ret;
-	ret.zmm = _mm512_sub_ps(zmm, other.zmm);
-	return ret;
+	return _mm512_sub_ps(zmm, other.zmm);
 }
 
 Matrix4 Matrix4::operator+(const Matrix4& other) const
 {
-	Matrix4 ret;
-	ret.zmm = _mm512_add_ps(zmm, other.zmm);
-	return ret;
+	return _mm512_add_ps(zmm, other.zmm);
 }
 
 Matrix4 Matrix4::operator*(const Matrix4& other) const
@@ -271,9 +265,7 @@ Matrix4 Matrix4::identity(float value, int dim)
 
 Matrix4 Matrix4::zeros()
 {
-	Matrix4 ret;
-	memset(&ret, 0, sizeof(ret));
-	return ret;
+	return _mm512_setzero_ps();
 }
 
 float Matrix4::det3(int excludeRow, int excludeCol) const

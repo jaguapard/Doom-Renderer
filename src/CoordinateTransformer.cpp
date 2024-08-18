@@ -17,7 +17,7 @@ void CoordinateTransformer::prepare(const Vec4 camPos, const Vec4 camAng)
 	translation[2][3] = -camPos.z;
 	translation[3][3] = 1;
 
-	this->rotationTranslation = rotation * translation;
+	this->rotationTranslation = (rotation * translation).transposed();
 	//this->inverseRotationTranslation = rotationTranslation.inverse();
 	//this->translationRotation = translation * rotation;
 }
@@ -44,7 +44,7 @@ static const __m128 wOne = _mm_set1_ps(1);
 Vec4 CoordinateTransformer::rotateAndTranslate(Vec4 v) const
 {
 	v = _mm_blend_ps(v, wOne, 0b1000); //same as v.w = 1, but it's slightly faster
-	Vec4 interm = rotationTranslation * v;
+	Vec4 interm = rotationTranslation.multiplyByTransposed(v);
 	return interm;
 }
 
@@ -67,7 +67,7 @@ VectorPack16 CoordinateTransformer::pixelsToWorld16(const VectorPack16& px) cons
 
 Matrix4 CoordinateTransformer::getCurrentTransformationMatrix() const
 {
-	return rotationTranslation;
+	return rotationTranslation.transposed();
 }
 
 Matrix4 CoordinateTransformer::getCurrentInverseTransformationMatrix() const

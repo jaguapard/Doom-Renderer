@@ -40,10 +40,9 @@ Vec4 CoordinateTransformer::screenSpaceToPixels(const Vec4 v) const
 	return (v + this->_shift) * hVec;
 }
 
-static const __m128 wOne = _mm_set1_ps(1);
 Vec4 CoordinateTransformer::rotateAndTranslate(Vec4 v) const
 {
-	v = _mm_blend_ps(v, wOne, 0b1000); //same as v.w = 1, but it's slightly faster
+	v.w = 1;
 	Vec4 interm = rotationTranslation.multiplyByTransposed(v);
 	return interm;
 }

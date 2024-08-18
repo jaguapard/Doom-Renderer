@@ -56,7 +56,7 @@ Vec4 Matrix4::operator*(const Vec4 v) const
 
 	return Vec4(_mm512_extractf32x4_ps(parts, 0)) + Vec4(_mm512_extractf32x4_ps(parts, 1)) + Vec4(_mm512_extractf32x4_ps(parts, 2)) + Vec4(_mm512_extractf32x4_ps(parts, 3));
 #elif __AVX2__
-	__m256 vv = _mm256_broadcast_ps(&v.xmm);
+	__m256 vv = _mm256_setr_ps(v.x, v.y, v.z, v.w, v.x, v.y, v.z, v.w);
 	__m256 preSum_xy = _mm256_mul_ps(vv, ymm0); //sum elements 0-3 to get result x, 4-7 for y
 	__m256 preSum_zw = _mm256_mul_ps(vv, ymm1); //sum elements 0-3 to get result z, 4-7 for w
 

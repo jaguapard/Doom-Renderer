@@ -102,6 +102,9 @@ VectorPack16 Matrix4::operator*(const VectorPack16& v) const
 
 Matrix4 Matrix4::transposed() const
 {
+#if __AVX512F__
+	return _mm512_permutexvar_ps(_mm512_setr_epi32(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15), zmm);
+#else
 	Matrix4 ret;
 	for (int i = 0; i < 4; ++i)
 	{
@@ -111,6 +114,7 @@ Matrix4 Matrix4::transposed() const
 		}
 	}
 	return ret;
+#endif
 }
 
 Vec4 Matrix4::multiplyByTransposed(const Vec4 v) const

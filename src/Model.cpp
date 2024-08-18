@@ -59,7 +59,7 @@ void Model::addToRenderQueue(TriangleRenderContext ctx) const
 	render:
 	ctx.texture = &ctx.textureManager->getTextureByIndex(textureIndex);
 	ctx.textureIndex = textureIndex;
-	ctx.backfaceCullingEnabled &= ctx.texture->hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
+	ctx.gameSettings.backfaceCullingEnabled &= ctx.texture->hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
 	for (const auto& it : triangles) it.addToRenderQueue(ctx);
 }
 

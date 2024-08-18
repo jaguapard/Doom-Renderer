@@ -108,6 +108,12 @@ void FloatColorBuffer::setPixel(int x, int y, Color color)
 	a[ind] = color.a / 255.0f;
 }
 
+Vec4 FloatColorBuffer::getPixelAsVec4(int x, int y) const
+{
+	size_t ind = y * getW() + x;
+	return Vec4(r[ind], g[ind], b[ind], a[ind]);
+}
+
 int FloatColorBuffer::getW() const
 {
 	return size.w;

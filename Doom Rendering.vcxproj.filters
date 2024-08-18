@@ -239,6 +239,9 @@
     <ClInclude Include="src\avx_helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\misc\GameSettings.h">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\Backface culling.md" />

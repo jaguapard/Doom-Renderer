@@ -4,6 +4,7 @@
 
 #include "VectorPack.h"
 #include "Color.h"
+#include "Vec.h"
 
 struct FloatColorBufferSize
 {
@@ -39,6 +40,8 @@ public:
 	void storePixels16(int pixelIndex, const VectorPack16& pixels, __mmask16 mask);
 
 	void setPixel(int x, int y, Color color);
+
+	Vec4 getPixelAsVec4(int x, int y) const;
 
 	int getW() const;
 	int getH() const;

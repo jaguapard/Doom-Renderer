@@ -103,6 +103,7 @@
     <ClInclude Include="src\Lehmer.h" />
     <ClInclude Include="src\Matrix4.h" />
     <ClInclude Include="src\misc\Enums.h" />
+    <ClInclude Include="src\misc\GameSettings.h" />
     <ClInclude Include="src\Polygon.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\PerformanceMonitor.h" />

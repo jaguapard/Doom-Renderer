@@ -94,14 +94,21 @@ bool Texture::hasOnlyOpaquePixels() const
 
 void Texture::checkForTransparentPixels()
 {
-	for (float* currA = pixels.getp_A(); currA < currA+pixels.getW()*pixels.getH(); ++currA)
+	int w = pixels.getW();
+	int h = pixels.getH();
+	for (int y = 0; y < h; ++y)
 	{
-		if (*currA < SDL_ALPHA_OPAQUE)
+		for (int x = 0; x < w; ++x)
 		{
-			_hasOnlyOpaquePixels = false;
-			return;
+			Vec4 color = pixels.getPixelAsVec4(x, y);
+			if (color.w < 1)
+			{
+				_hasOnlyOpaquePixels = false;
+				return;
+			}
 		}
 	}
+
 	_hasOnlyOpaquePixels = true;
 }
 

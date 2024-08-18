@@ -39,7 +39,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		rotated.tv[i].textureCoords = tv[i].textureCoords;
 		rotated.tv[i].worldCoords = tv[i].spaceCoords;
 
-		if (rotated.tv[i].spaceCoords.z > context.nearPlaneClippingZ)
+		if (rotated.tv[i].spaceCoords.z > context.gameSettings.nearPlaneZ)
 		{
 			outsideVertexCount++;
 			vertexOutside[i] = true;
@@ -49,7 +49,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
 	if (outsideVertexCount == 3) return;
 
-	if (context.backfaceCullingEnabled)
+	if (context.gameSettings.backfaceCullingEnabled)
 	{
 		Vec4 normal = rotated.getNormalVector();
 		if (rotated.tv[0].spaceCoords.dot(normal) >= 0)
@@ -70,8 +70,8 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 
 	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
 	{
-		TexVertex clipped1 = rotated.tv[i].getClipedToPlane(v1, context.nearPlaneClippingZ);
-		TexVertex clipped2 = rotated.tv[i].getClipedToPlane(v2, context.nearPlaneClippingZ);
+		TexVertex clipped1 = rotated.tv[i].getClipedToPlane(v1, context.gameSettings.nearPlaneZ);
+		TexVertex clipped2 = rotated.tv[i].getClipedToPlane(v2, context.gameSettings.nearPlaneZ);
 
 		Triangle t1 = { v1,       clipped1, v2 };
 		Triangle t2 = { clipped1, clipped2, v2 };
@@ -83,8 +83,8 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
 	{
 		Triangle clipped;
-		clipped.tv[v1_ind] = v1.getClipedToPlane(rotated.tv[i], context.nearPlaneClippingZ);
-		clipped.tv[v2_ind] = v2.getClipedToPlane(rotated.tv[i], context.nearPlaneClippingZ);
+		clipped.tv[v1_ind] = v1.getClipedToPlane(rotated.tv[i], context.gameSettings.nearPlaneZ);
+		clipped.tv[v2_ind] = v2.getClipedToPlane(rotated.tv[i], context.gameSettings.nearPlaneZ);
 		clipped.tv[i] = rotated.tv[i];
 		clipped.prepareScreenSpace(context);
 	}
@@ -114,7 +114,7 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	Triangle screenSpaceTriangle;
 	for (int i = 0; i < 3; ++i)
 	{
-		real zInv = context.fovMult / tv[i].spaceCoords.z;
+		real zInv = context.gameSettings.fovMult / tv[i].spaceCoords.z;
 		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
 		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
 
@@ -231,7 +231,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			}
 
 			texturePixels *= dynaLight;
-			if (context.wireframeEnabled)
+			if (context.gameSettings.wireframeEnabled)
 			{
 				Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
 				Mask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;

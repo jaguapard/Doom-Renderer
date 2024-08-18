@@ -241,7 +241,7 @@ void MainGame::draw()
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
 			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, outputMinY, outputMaxY, shifts, ctx.ditheringEnabled, ssaaMult);
+			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, outputMinY, outputMaxY, shifts, ctx.gameSettings.ditheringEnabled, ssaaMult);
 		};
 
 		ThreadpoolTask task;
@@ -335,11 +335,7 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.framebufW = framebuf.getW();
 	ctx.framebufH = framebuf.getH();
 	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
-	ctx.wireframeEnabled = settings.wireframeEnabled;
-	ctx.backfaceCullingEnabled = settings.backfaceCullingEnabled;
-	ctx.nearPlaneClippingZ = settings.nearPlaneZ;
-	ctx.fovMult = settings.fovMult;
-	ctx.ditheringEnabled = settings.ditheringEnabled;
+	ctx.gameSettings = settings;
 
 	ctx.camPos = camPos;
     ctx.pointLights = &pointLights;

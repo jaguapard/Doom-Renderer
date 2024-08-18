@@ -12,6 +12,7 @@
 #include "TextureManager.h"
 #include "TexVertex.h"
 #include "PointLight.h"
+#include "misc/GameSettings.h"
 
 struct TriangleRenderContext;
 struct RenderJob;
@@ -63,14 +64,9 @@ struct TriangleRenderContext
 	real framebufW, framebufH;
 	Vec4 camPos;
 
+	GameSettings gameSettings;
 	int doomSkyTextureMarkerIndex;
-	bool wireframeEnabled;
-	bool backfaceCullingEnabled;
-	bool ditheringEnabled;
 
 	std::vector<RenderJob>* renderJobs;
     const std::vector<PointLight>* pointLights;
-
-	real nearPlaneClippingZ = -1;
-	real fovMult = 1;
 };

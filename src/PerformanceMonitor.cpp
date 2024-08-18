@@ -71,7 +71,7 @@ std::string PerformanceMonitor::composeString(const std::map<std::string, std::s
 	ss << timer.getTime() << " sec\n";
 	ss << text;
 
-	if (true && Statsman::enabled) //statsman stuff
+	if (true && Statsman::display_enabled) //statsman stuff
 	{
 		ss << (statsman - oldStats).toString() << "\n";
 	}

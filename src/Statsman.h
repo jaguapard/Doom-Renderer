@@ -12,6 +12,7 @@ class Statsman
 {
 public:
 	static constexpr bool enabled = true;
+	static constexpr bool display_enabled = enabled && Threadpool::SINGLE_THREAD_MODE;
 
 	struct ZBuffer
 	{

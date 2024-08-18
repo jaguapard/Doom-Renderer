@@ -17,8 +17,8 @@ public:
 	void registerFrameBegin(); //must be called before any drawing and processing is attempted
 	void registerFrameDone(bool remember = true);
 
-	std::string composeString(const std::map<std::string, std::string>& additionalInfo = {});
-	void drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::map<std::string, std::string>& additionalInfo = {});
+	std::string composeString(const std::vector<std::pair<std::string, std::string>>& additionalInfo = {});
+	void drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::vector<std::pair<std::string, std::string>>& additionalInfo = {});
 
 	struct PercentileInfo
 	{

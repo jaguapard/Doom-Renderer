@@ -37,7 +37,7 @@ void PerformanceMonitor::registerFrameDone(bool remember)
 	}
 }
 
-void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::map<std::string, std::string>& additionalInfo)
+void PerformanceMonitor::drawOn(SDL_Surface* dst, SDL_Point pixelsFromUpperLeftCorner, const std::vector<std::pair<std::string, std::string>>& additionalInfo)
 {
 	std::string str = composeString(additionalInfo);
 
@@ -63,7 +63,7 @@ uint64_t PerformanceMonitor::getFrameNumber() const
 	return frameNumber;
 }
 
-std::string PerformanceMonitor::composeString(const std::map<std::string, std::string>& additionalInfo)
+std::string PerformanceMonitor::composeString(const std::vector<std::pair<std::string, std::string>>& additionalInfo)
 {
 	std::string text = PercentileInfo(frameNumber, frameTimesMs).toString();
 	std::stringstream ss;
@@ -76,9 +76,9 @@ std::string PerformanceMonitor::composeString(const std::map<std::string, std::s
 		ss << (statsman - oldStats).toString() << "\n";
 	}
 
-	for (const auto& [key, value] : additionalInfo)
+	for (const auto& kv : additionalInfo)
 	{
-		ss << key << ": " << value << "\n";
+		ss << kv.first << ": " << kv.second << "\n";
 	}
 	return ss.str();
 }

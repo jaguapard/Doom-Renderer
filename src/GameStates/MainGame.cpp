@@ -257,21 +257,22 @@ void MainGame::draw()
 		performanceMonitor.registerFrameDone();
 		if (settings.performanceMonitorDisplayEnabled || performanceMonitor.getFrameNumber() % 1024 == 0)
 		{
-			std::map<std::string, std::string> perfmonInfo;
-			perfmonInfo["Cam pos"] = vecToStr(camPos);
-			perfmonInfo["Cam ang"] = vecToStr(camAng);
-			perfmonInfo["Fly speed"] = std::to_string(settings.flySpeed) + "/frame";
-			perfmonInfo["Backface culling"] = settings.backfaceCullingEnabled ? "enabled" : "disabled";
-			perfmonInfo["Buffer cleaning"] = settings.bufferCleaningEnabled ? "enabled" : "disabled";
-			perfmonInfo["FOV"] = std::to_string(2 * atan(1 / settings.fovMult) * 180 / M_PI) + " degrees";
-			perfmonInfo["Fog"] = !settings.fogEnabled ? "disabled" : ("version " + std::to_string(int(settings.fogEffectVersion)) + ", intensity " + std::to_string(settings.fogIntensity));
-			perfmonInfo["Dithering"] = settings.ditheringEnabled ? "enabled" : "disabled";
-            perfmonInfo["Gamma"] = std::to_string(settings.gamma);
-			perfmonInfo["Render resolution"] = std::to_string(framebuf.getW()) + "x" + std::to_string(framebuf.getH()) + " (" + std::to_string(settings.ssaaMult) + "x)";
-			perfmonInfo["Output resolution"] = std::to_string(wndSurf->w) + "x" + std::to_string(wndSurf->h);
+			std::vector<std::pair<std::string, std::string>> perfmonInfo = {
+				{"Cam pos", vecToStr(camPos)},
+				{"Fly speed", vecToStr(camAng)},
+				{"Fly speed", std::to_string(settings.flySpeed) + "/frame"},
+				{"Backface culling", settings.backfaceCullingEnabled ? "enabled" : "disabled"},
+				{"Buffer cleaning", settings.bufferCleaningEnabled ? "enabled" : "disabled"},
+				{"FOV", std::to_string(2 * atan(1 / settings.fovMult) * 180 / M_PI) + " degrees"},
+				{"Fog", !settings.fogEnabled ? "disabled" : ("version " + std::to_string(int(settings.fogEffectVersion)) + ", intensity " + std::to_string(settings.fogIntensity))},
+				{"Dithering", settings.ditheringEnabled ? "enabled" : "disabled"},
+				{"Gamma", std::to_string(settings.gamma)},
+				{"Render resolution", std::to_string(framebuf.getW()) + "x" + std::to_string(framebuf.getH()) + " (" + std::to_string(settings.ssaaMult) + "x)"},
+				{"Output resolution", std::to_string(wndSurf->w) + "x" + std::to_string(wndSurf->h)},
 
-			perfmonInfo["Transformation matrix"] = "\n" + ctr.getCurrentTransformationMatrix().toString();
-			perfmonInfo["Inverse transformation matrix"] = "\n" + ctr.getCurrentInverseTransformationMatrix().toString();
+				{"Transformation matrix", "\n" + ctr.getCurrentTransformationMatrix().toString()},
+				{"Inverse transformation matrix", "\n" + ctr.getCurrentInverseTransformationMatrix().toString()},
+			};
 			if (settings.performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
 			else std::cout << performanceMonitor.composeString(perfmonInfo) << "\n";
 		}

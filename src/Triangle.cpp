@@ -247,7 +247,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
 			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);
-			pixelWorldPosBuf.storePixels16(pixelIndex, worldCoords, opaquePixelsMask);
+			if (context.gameSettings.fogEnabled) pixelWorldPosBuf.storePixels16(pixelIndex, worldCoords, opaquePixelsMask);
 		}
 	}
 }

@@ -57,9 +57,9 @@ void Model::addToRenderQueue(TriangleRenderContext ctx) const
 	return; //if we got here, it means that all points are outside the screen, so no need to draw this model
 	*/
 	render:
-	ctx.texture = &ctx.textureManager->getTextureByIndex(textureIndex);
+	const auto& texture = ctx.textureManager->getTextureByIndex(textureIndex);
 	ctx.textureIndex = textureIndex;
-	ctx.gameSettings.backfaceCullingEnabled &= ctx.texture->hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
+	ctx.gameSettings.backfaceCullingEnabled &= texture.hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
 	for (const auto& it : triangles) it.addToRenderQueue(ctx);
 }
 

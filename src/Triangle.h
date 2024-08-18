@@ -56,9 +56,12 @@ struct TriangleRenderContext
 	ZBuffer* zBuffer;
     FloatColorBuffer* pixelWorldPos;
 
+	std::vector<RenderJob>* renderJobs;
+	const std::vector<PointLight>* pointLights;
+
 	const CoordinateTransformer* ctr;	
 	const TextureManager* textureManager;
-	const Texture* texture;
+
 	int textureIndex;
 	real lightMult;
 	real framebufW, framebufH;
@@ -66,7 +69,4 @@ struct TriangleRenderContext
 
 	GameSettings gameSettings;
 	int doomSkyTextureMarkerIndex;
-
-	std::vector<RenderJob>* renderJobs;
-    const std::vector<PointLight>* pointLights;
 };

@@ -51,10 +51,10 @@ struct RenderJob
 
 struct TriangleRenderContext
 {
-	FloatColorBuffer* frameBuffer;
-	PixelBuffer<real>* lightBuffer;
-	ZBuffer* zBuffer;
-    FloatColorBuffer* pixelWorldPos;
+	FloatColorBuffer* frameBuffer = nullptr;
+	PixelBuffer<real>* lightBuffer = nullptr;
+	ZBuffer* zBuffer = nullptr;
+	FloatColorBuffer* pixelWorldPos = nullptr;
 
 	std::vector<RenderJob>* renderJobs;
 	const std::vector<PointLight>* pointLights;

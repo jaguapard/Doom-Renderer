@@ -119,6 +119,12 @@ Matrix4 Matrix4::transposed() const
 
 Vec4 Matrix4::multiplyByTransposed(const Vec4 v) const
 {
+#if __AVX512F__
+	__m512 bcst = _mm512_permutexvar_ps(_mm512_setr_epi32(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3), _mm512_castps128_ps512(v));
+	__m512 mul = _mm512_mul_ps(zmm, bcst);
+	__m256 red1 = _mm256_add_ps(_mm512_extractf32x8_ps(mul, 0), _mm512_extractf32x8_ps(mul, 1));
+	return _mm_add_ps(_mm256_extractf32x4_ps(red1, 0), _mm256_extractf32x4_ps(red1, 1));
+#else
 	__m128 x = _mm_set1_ps(v.x);
 	__m128 y = _mm_set1_ps(v.y);
 	__m128 z = _mm_set1_ps(v.z);
@@ -130,6 +136,7 @@ Vec4 Matrix4::multiplyByTransposed(const Vec4 v) const
 	__m128 p4 = _mm_mul_ps(w, xmm3);
 
 	return _mm_add_ps(_mm_add_ps(p1, p2), _mm_add_ps(p3, p4));
+#endif
 }
 
 const bob::_SSE_Vec4_float& Matrix4::operator[](int i) const

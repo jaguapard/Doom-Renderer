@@ -5,6 +5,7 @@
 #include <assimp/postprocess.h>
 #include "Vec.h"
 #include <sstream>
+#include <iostream>
 
 #pragma comment(lib, "assimp-vc143-mt.lib")
 
@@ -18,7 +19,7 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 	Assimp::Importer imp;
 	const auto pScene = imp.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_MakeLeftHanded | aiProcess_GenUVCoords);
 	std::stringstream ss;
-	ss << "Error while loading model " << path << ": ";
+	ss << "Error while loading scene " << path << ": ";
 	if (!pScene)
 	{
 		ss << imp.GetErrorString();
@@ -44,7 +45,6 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 				throw std::runtime_error(ss.str());
 			}
 
-
 			Triangle& t = tris.emplace_back();
 			for (int k = 0; k < 3; ++k)
 			{
@@ -57,27 +57,11 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 				t.tv[k].textureCoords = aiToBob(aiUVs);
 			}
 		}
-
 		models.push_back(Model(tris, textureIndex));
 	}
+	
+	size_t triangleCount = 0;
+	for (auto& it : models) triangleCount += it.getTriangleCount();
+	std::cout << "Scene " << path << ": loaded " << triangleCount << " triangles\n";
 	return models;
-
-	/*
-	// parse materials
-	std::vector<Material> materials;
-	materials.reserve( pScene->mNumMaterials );
-	for( size_t i = 0; i < pScene->mNumMaterials; i++ )
-	{
-		materials.emplace_back( gfx,*pScene->mMaterials[i],pathString );
-	}
-
-	for( size_t i = 0; i < pScene->mNumMeshes; i++ )
-	{
-		const auto& mesh = *pScene->mMeshes[i];
-		meshPtrs.push_back( std::make_unique<Mesh>( gfx,materials[mesh.mMaterialIndex],mesh,scale ) );
-	}
-
-	int nextId = 0;
-	pRoot = ParseNode( nextId,*pScene->mRootNode,scale );
-	*/
 }

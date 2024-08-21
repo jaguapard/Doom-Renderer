@@ -28,10 +28,40 @@ void Triangle::sortByAscendingTextureY()
 	std::sort(std::begin(tv), std::end(tv), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
 }
 
+int doTriangleClipping(std::array<bool, 3> vertexOutside, int outsideVertexCount, const Triangle& triangleToClip, real clippingZ, Triangle* ret)
+{
+	//search for one of a kind vertex (outside if outsideVertexCount==1, else inside)
+	int i = std::find(std::begin(vertexOutside), std::end(vertexOutside), outsideVertexCount == 1) - std::begin(vertexOutside);
+	int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds lookups
+	int v2_ind = i < 2 ? i + 1 : 0;
+	const TexVertex& v1 = triangleToClip.tv[v1_ind];
+	const TexVertex& v2 = triangleToClip.tv[v2_ind];
+
+	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
+	{
+		TexVertex clipped1 = triangleToClip.tv[i].getClipedToPlane(v1, clippingZ);
+		TexVertex clipped2 = triangleToClip.tv[i].getClipedToPlane(v2, clippingZ);
+
+		ret[0] = { v1,       clipped1, v2 };
+		ret[1] = { clipped1, clipped2, v2 };
+		return 2;
+	}
+
+	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
+	{
+		Triangle clipped;
+		clipped.tv[v1_ind] = v1.getClipedToPlane(triangleToClip.tv[i], clippingZ);
+		clipped.tv[v2_ind] = v2.getClipedToPlane(triangleToClip.tv[i], clippingZ);
+		clipped.tv[i] = triangleToClip.tv[i];
+		ret[0] = clipped;
+		return 1;
+	}
+}
+
 void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 {
 	Triangle rotated;
-	bool vertexOutside[3] = { false };
+	std::array<bool, 3> vertexOutside = { false };
 	int outsideVertexCount = 0;
 	for (int i = 0; i < 3; ++i)
 	{
@@ -64,33 +94,9 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 
 	if (outsideVertexCount == 0) return rotated.prepareScreenSpace(context); //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
 
-	//search for one of a kind vertex (outside if outsideVertexCount==1, else inside)
-	int i = std::find(std::begin(vertexOutside), std::end(vertexOutside), outsideVertexCount == 1) - std::begin(vertexOutside);
-	int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds lookups
-	int v2_ind = i < 2 ? i + 1 : 0;
-	const TexVertex& v1 = rotated.tv[v1_ind];
-	const TexVertex& v2 = rotated.tv[v2_ind];
-
-	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
-	{
-		TexVertex clipped1 = rotated.tv[i].getClipedToPlane(v1, context.gameSettings.nearPlaneZ);
-		TexVertex clipped2 = rotated.tv[i].getClipedToPlane(v2, context.gameSettings.nearPlaneZ);
-
-		Triangle t1 = { v1,       clipped1, v2 };
-		Triangle t2 = { clipped1, clipped2, v2 };
-
-		t1.prepareScreenSpace(context);
-		t2.prepareScreenSpace(context);
-	}
-
-	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
-	{
-		Triangle clipped;
-		clipped.tv[v1_ind] = v1.getClipedToPlane(rotated.tv[i], context.gameSettings.nearPlaneZ);
-		clipped.tv[v2_ind] = v2.getClipedToPlane(rotated.tv[i], context.gameSettings.nearPlaneZ);
-		clipped.tv[i] = rotated.tv[i];
-		clipped.prepareScreenSpace(context);
-	}
+	Triangle t[2];
+	int trianglesOut = doTriangleClipping(vertexOutside, outsideVertexCount, rotated, context.gameSettings.nearPlaneZ, (Triangle*)&t);
+	for (int i = 0; i < trianglesOut; ++i) t[i].prepareScreenSpace(context);
 }
 
 std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> rectPoints)

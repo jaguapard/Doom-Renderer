@@ -35,7 +35,10 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	int outsideVertexCount = 0;
 	for (int i = 0; i < 3; ++i)
 	{
-		rotated.tv[i].spaceCoords = context.ctr->rotateAndTranslate(tv[i].spaceCoords);
+		Vec4 spaceCopy = tv[i].spaceCoords;
+		spaceCopy.w = 1;
+
+		rotated.tv[i].spaceCoords = context.ctr->rotateAndTranslate(spaceCopy);
 		rotated.tv[i].textureCoords = tv[i].textureCoords;
 		rotated.tv[i].worldCoords = tv[i].spaceCoords;
 

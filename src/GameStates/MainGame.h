@@ -89,4 +89,6 @@ protected:
 	std::array<uint32_t, 4> getShiftsForWindow();
 
 	void adjustSsaaMult(int add);
+
+	void saveBuffers() const;
 };

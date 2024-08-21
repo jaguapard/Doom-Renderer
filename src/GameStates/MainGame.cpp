@@ -73,6 +73,7 @@ void MainGame::handleInput()
 	if (input.wasCharPressedOnThisFrame('Y')) settings.ditheringEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('Q') && settings.ssaaMult > 1) this->adjustSsaaMult(settings.ssaaMult - 1);
 	if (input.wasCharPressedOnThisFrame('E')) this->adjustSsaaMult(settings.ssaaMult + 1);
+	if (input.wasCharPressedOnThisFrame('H')) this->saveBuffers();
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{
@@ -390,4 +391,12 @@ void MainGame::adjustSsaaMult(int newMult)
 	pixelWorldPos = { w,h };
 	ctr = { w,h };
 	settings.ssaaMult = newMult;
+}
+
+void MainGame::saveBuffers() const
+{
+	std::string s = std::to_string(__rdtsc());
+	//framebuf.saveToFile("screenshots/" + s + "_framebuf.png");
+	zBuffer.saveToFile("screenshots/" + s + "_zbuf.png");
+	shadowMaps[0].depthBuffer.saveToFile("screenshots/" + s + "_shadow_map.png");
 }

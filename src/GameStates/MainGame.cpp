@@ -260,7 +260,7 @@ void MainGame::draw()
 		{
 			std::vector<std::pair<std::string, std::string>> perfmonInfo = {
 				{"Cam pos", vecToStr(camPos)},
-				{"Fly speed", vecToStr(camAng)},
+				{"Cam ang", vecToStr(camAng)},
 				{"Fly speed", std::to_string(settings.flySpeed) + "/frame"},
 				{"Backface culling", settings.backfaceCullingEnabled ? "enabled" : "disabled"},
 				{"Buffer cleaning", settings.bufferCleaningEnabled ? "enabled" : "disabled"},

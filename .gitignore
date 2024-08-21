@@ -376,3 +376,5 @@ FodyWeavers.xsd
 
 cmake-build-*
 .idea
+
+!scenes/

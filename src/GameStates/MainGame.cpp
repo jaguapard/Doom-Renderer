@@ -4,6 +4,7 @@
 
 #include "../blitting.h"
 #include "../EnumclassHelper.h"
+#include "../AssetLoader.h"
 
 MainGame::MainGame(GameStateInitData data)
 {
@@ -298,7 +299,7 @@ void MainGame::changeMapTo(std::string mapName)
 	else
 	{
 		currentMap = nullptr;
-		sectorWorldModels = {};
+		sectorWorldModels = {AssetLoader::loadObj("scenes/Sponza/sponza.obj")};
 	}
 	performanceMonitor.reset();
 }
@@ -307,13 +308,14 @@ void MainGame::fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJ
 {
 	ctx.renderJobs = &renderJobs;
 
-	if (currentMap)
+	if (true)
 	{
 		for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
 		{
 			for (const auto& model : sectorWorldModels[nSector])
 			{
-				ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, settings.gamma);
+				if (currentMap) ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, settings.gamma);
+				else ctx.lightMult = 1;
 				model.addToRenderQueue(ctx);
 			}
 		}

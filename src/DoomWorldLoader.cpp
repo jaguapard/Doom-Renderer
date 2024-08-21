@@ -148,7 +148,7 @@ Model DoomWorldLoader::getTrianglesForSectorWallQuads(real bottomHeight, real to
 		}
 		triangles.push_back(t);
 	}
-	return Model(triangles, textureIndex, textureManager);
+	return Model(triangles, textureIndex);
 }
 
 std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const Sector& sector, const std::vector<Linedef>& sectorLinedefs, const std::vector<Vertex>& vertices, TextureManager& textureManager)
@@ -207,5 +207,5 @@ std::vector<Model> DoomWorldLoader::triangulateFloorsAndCeilingsForSector(const 
 		if (nf.dot(up) <= 0) std::swap(trisFloor[i].tv[1], trisFloor[i].tv[2]);
 		if (nc.dot(up) > 0) std::swap(trisCeiling[i].tv[1], trisCeiling[i].tv[2]);
 	}
-	return { Model(trisFloor, floorTextureIndex, textureManager), Model(trisCeiling, ceilingTextureIndex, textureManager) };
+	return { Model(trisFloor, floorTextureIndex), Model(trisCeiling, ceilingTextureIndex) };
 }

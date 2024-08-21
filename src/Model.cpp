@@ -3,7 +3,7 @@
 #include <numeric>
 #include "Statsman.h"
 
-Model::Model(const std::vector<Triangle>& triangles, int textureIndex, TextureManager& textureManager)
+Model::Model(const std::vector<Triangle>& triangles, int textureIndex)
 {
 	//assert(triangles.size() > 0);
 	this->textureIndex = textureIndex;

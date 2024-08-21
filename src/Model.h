@@ -6,7 +6,7 @@ class Model
 {
 public:
 	Model() = default;
-	Model(const std::vector<Triangle>& triangles, int textureIndex, TextureManager& textureManager);
+	Model(const std::vector<Triangle>& triangles, int textureIndex);
 	void addToRenderQueue(TriangleRenderContext ctx) const;
 	int getTriangleCount() const;
 	Vec4 getBoundingBoxMidPoint() const;

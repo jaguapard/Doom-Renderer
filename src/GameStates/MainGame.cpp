@@ -315,7 +315,7 @@ void MainGame::fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJ
 			for (const auto& model : sectorWorldModels[nSector])
 			{
 				if (currentMap) ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, settings.gamma);
-				else ctx.lightMult = 1;
+				else ctx.lightMult = settings.gamma;
 				model.addToRenderQueue(ctx);
 			}
 		}

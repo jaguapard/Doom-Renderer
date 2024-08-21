@@ -50,9 +50,11 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 			{
 				int vertIndex = face.mIndices[k];
 				aiVector3D aiVertice = mesh->mVertices[vertIndex];
+				aiVector3D aiUVs = mesh->mTextureCoords[0][vertIndex];
+				aiUVs.y *= -1;
 				t.tv[k].spaceCoords = aiToBob(aiVertice);
 				t.tv[k].worldCoords = aiToBob(aiVertice);
-				t.tv[k].textureCoords = aiToBob(mesh->mTextureCoords[0][vertIndex]);
+				t.tv[k].textureCoords = aiToBob(aiUVs);
 			}
 		}
 

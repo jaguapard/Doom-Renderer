@@ -4,6 +4,12 @@
 #include "Triangle.h"
 #include "Model.h"
 
+struct ShadowMapTriangleAddendum
+{
+	std::array<Vec4, 3> screenCoords;
+	bool isVisibleToMap;
+};
+
 struct ShadowMap
 {
 	ZBuffer depthBuffer;

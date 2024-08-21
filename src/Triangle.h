@@ -73,5 +73,5 @@ struct TriangleRenderContext
 
 	GameSettings gameSettings;
 	int doomSkyTextureMarkerIndex;
-	bool renderingShadowMap;
+	bool renderingShadowMap = false;
 };

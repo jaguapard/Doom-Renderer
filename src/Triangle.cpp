@@ -213,7 +213,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
 			if (!pointsInsideTriangleMask) continue;
 
-			VectorPack16 interpolatedDividedUv = VectorPack16(tv[0].textureCoords) * alpha + VectorPack16(tv[1].textureCoords) * beta + VectorPack16(tv[2].textureCoords) * gamma;
+			VectorPack16 interpolatedDividedUv = this->interpolateTextureCoords(alpha, beta, gamma);
 			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
 			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
@@ -222,7 +222,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
+			VectorPack16 worldCoords = this->interpolateWorldCoords(alpha, beta, gamma);
 			worldCoords /= interpolatedDividedUv.z;
 
 			VectorPack16 dynaLight = renderJob.lightMult;
@@ -259,3 +259,20 @@ Vec4 Triangle::getNormalVector() const
 {
 	return (tv[2].spaceCoords - tv[0].spaceCoords).cross3d(tv[1].spaceCoords - tv[0].spaceCoords);
 }
+
+VectorPack16 Triangle::interpolateSpaceCoords(const FloatPack16& alpha, const FloatPack16& beta, const FloatPack16& gamma) const
+{
+	return VectorPack16(tv[0].spaceCoords) * alpha + VectorPack16(tv[1].spaceCoords) * beta + VectorPack16(tv[2].spaceCoords) * gamma;
+}
+
+
+VectorPack16 Triangle::interpolateTextureCoords(const FloatPack16& alpha, const FloatPack16& beta, const FloatPack16& gamma) const
+{
+	return VectorPack16(tv[0].textureCoords) * alpha + VectorPack16(tv[1].textureCoords) * beta + VectorPack16(tv[2].textureCoords) * gamma;
+}
+
+VectorPack16 Triangle::interpolateWorldCoords(const FloatPack16& alpha, const FloatPack16& beta, const FloatPack16& gamma) const
+{
+	return VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
+}
+

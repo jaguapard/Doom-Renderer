@@ -13,10 +13,10 @@ Vec4 aiToBob(aiVector3D ai)
 	return { ai.x, ai.y, ai.z, 0 };
 }
 
-std::vector<Model> AssetLoader::loadObj(std::string path)
+std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textureManager)
 {
 	Assimp::Importer imp;
-	const auto pScene = imp.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_MakeLeftHanded);
+	const auto pScene = imp.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_MakeLeftHanded | aiProcess_GenUVCoords);
 	std::stringstream ss;
 	ss << "Error while loading model " << path << ": ";
 	if (!pScene)
@@ -29,7 +29,10 @@ std::vector<Model> AssetLoader::loadObj(std::string path)
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
 		aiMesh* mesh = pScene->mMeshes[i];
-		int mod3 = mesh->mNumVertices % 3;
+		aiMaterial* material = pScene->mMaterials[mesh->mMaterialIndex];
+		aiString texturePath;
+		material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
+		int textureIndex = textureManager.getTextureIndexByPath("scenes/Sponza/" + std::string(texturePath.C_Str()));
 
 		std::vector<Triangle> tris;
 		for (size_t j = 0; j < mesh->mNumFaces; ++j)
@@ -41,18 +44,19 @@ std::vector<Model> AssetLoader::loadObj(std::string path)
 				throw std::runtime_error(ss.str());
 			}
 
+
 			Triangle& t = tris.emplace_back();
 			for (int k = 0; k < 3; ++k)
 			{
 				int vertIndex = face.mIndices[k];
 				aiVector3D aiVertice = mesh->mVertices[vertIndex];
-				aiVertice.y *= -1; //in our coordinates, +Y is DOWN, while both DX and OGL use it for up
 				t.tv[k].spaceCoords = aiToBob(aiVertice);
 				t.tv[k].worldCoords = aiToBob(aiVertice);
+				t.tv[k].textureCoords = aiToBob(mesh->mTextureCoords[0][vertIndex]);
 			}
 		}
 
-		models.push_back(Model(tris, 0));
+		models.push_back(Model(tris, textureIndex));
 	}
 	return models;
 

@@ -5,7 +5,7 @@
 #include "Statsman.h"
 #include "smart.h"
 
-Texture::Texture(std::string name)
+Texture::Texture(std::string name, bool useNameAsPath)
 {
 	this->name = name;
 	if (TEXTURE_DEBUG_MODE != TextureDebugMode::NONE)
@@ -15,7 +15,7 @@ Texture::Texture(std::string name)
 	else
 	{
 		std::string path;
-		if (name.size() > 1 && name[1] == ':') path = name; //TODO: a dirty hack to tell absolute paths from relative 
+		if (useNameAsPath) path = name; //TODO: a dirty hack to tell absolute paths from relative 
 		else path = "data/graphics/" + name + ".png"; //TODO: doom uses TEXTURES lumps for some dark magic with them, this code does not work for unprepared textures.
 
 		Smart_Surface surf = Smart_Surface(IMG_Load(path.c_str()));

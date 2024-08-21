@@ -4,5 +4,5 @@
 class AssetLoader
 {
 public:
-	static std::vector<Model> loadObj(std::string path);
+	static std::vector<Model> loadObj(std::string path, TextureManager& textureManager);
 };

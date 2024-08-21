@@ -299,7 +299,7 @@ void MainGame::changeMapTo(std::string mapName)
 	else
 	{
 		currentMap = nullptr;
-		sectorWorldModels = {AssetLoader::loadObj("scenes/Sponza/sponza.obj")};
+		sectorWorldModels = {AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager)};
 	}
 	performanceMonitor.reset();
 }

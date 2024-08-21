@@ -26,7 +26,7 @@ enum class TextureDebugMode
 class Texture
 {
 public:
-	Texture(std::string name);
+	Texture(std::string name, bool useNameAsPath = false);
 	
 	Color getPixelAtUV(const Vec4& uv) const; //z and w values are ignored
 	Color getPixel(int x, int y) const;

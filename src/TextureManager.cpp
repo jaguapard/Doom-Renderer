@@ -21,6 +21,15 @@ int TextureManager::getTextureIndexByName(std::string name)
 	return textures.size() - 1;
 }
 
+int TextureManager::getTextureIndexByPath(std::string path)
+{
+	if (textureNameToIndexMap.find(path) != textureNameToIndexMap.end()) return textureNameToIndexMap[path];
+
+	textures.emplace_back(path, true);
+	textureNameToIndexMap[path] = textures.size() - 1;
+	return textures.size() - 1;
+}
+
 const Texture& TextureManager::getTextureByIndex(int index) const
 {
 	return textures[index];

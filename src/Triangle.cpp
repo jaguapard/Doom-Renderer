@@ -191,7 +191,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	real xBeg = std::clamp<real>(renderJob.minX, 0, context.framebufW - 1);
 	real xEnd = std::clamp<real>(renderJob.maxX, 0, context.framebufW - 1);
 
-	const Texture& texture = context.textureManager->getTextureByIndex(renderJob.textureIndex);
+	const Texture& texture = context.gameSettings.textureManager->getTextureByIndex(renderJob.textureIndex);
 	auto& depthBuf = *context.zBuffer;
 	/*auto& frameBuf = *context.frameBuffer;
 	auto& lightBuf = *context.lightBuffer;

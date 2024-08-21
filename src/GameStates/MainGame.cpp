@@ -161,6 +161,7 @@ void MainGame::init()
 
 
 	this->ctr = { framebufW, framebufH };
+	settings.textureManager = &textureManager;
 	sky = { "RSKY1", textureManager };
 
 	skyTextures = { "RSKY2", "RSKY3", "RSKY1" };
@@ -301,6 +302,20 @@ void MainGame::changeMapTo(std::string mapName)
 		currentMap = nullptr;
 		sectorWorldModels = {AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager)};
 	}
+
+	CoordinateTransformer mapCtr(1920, 1080);
+	mapCtr.prepare(Vec4(-1846, 2799, 568), Vec4(0, -1.2869, -0.6689));
+	this->shadowMaps = { ShadowMap(1920,1080,mapCtr) };
+
+	std::vector<const Model*> models;
+	for (const auto& sectorModels : sectorWorldModels)
+	{
+		for (const auto& model : sectorModels)
+		{
+			models.push_back(&model);
+		}
+	}
+	for (auto& it : shadowMaps) it.render(models, this->settings);
 	performanceMonitor.reset();
 }
 
@@ -334,7 +349,6 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.lightBuffer = &lightBuf;
 	ctx.zBuffer = &zBuffer;
 
-	ctx.textureManager = &textureManager;	
 	ctx.framebufW = framebuf.getW();
 	ctx.framebufH = framebuf.getH();
 	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately

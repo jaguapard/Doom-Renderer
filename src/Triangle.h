@@ -63,8 +63,7 @@ struct TriangleRenderContext
 	std::vector<RenderJob>* renderJobs;
 	const std::vector<PointLight>* pointLights;
 
-	const CoordinateTransformer* ctr;	
-	const TextureManager* textureManager;
+	const CoordinateTransformer* ctr;
 
 	int textureIndex;
 	real lightMult;

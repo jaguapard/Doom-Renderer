@@ -24,6 +24,7 @@
 #include "../misc/Enums.h"
 #include "../PointLight.h"
 #include "../misc/GameSettings.h"
+#include "../ShadowMap.h"
 
 class MainGame : public GameStateBase
 {
@@ -48,6 +49,8 @@ protected:
 	int activeCamPosAndAngle = 2;
 	Vec4 camPos;
 	Vec4 camAng;
+
+	std::vector<ShadowMap> shadowMaps;
 
 	FloatColorBuffer framebuf, pixelWorldPos;
 	PixelBuffer<real> lightBuf;

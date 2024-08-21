@@ -27,4 +27,6 @@ struct GameSettings
 	bool ditheringEnabled = true;
 
 	int ssaaMult;
+
+	TextureManager* textureManager;
 };

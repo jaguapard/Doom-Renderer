@@ -76,14 +76,20 @@ std::map<std::string, std::string> parseCmdArgs(int argc, char** argv)
 	if (argc < 2) return {}; //argv[0] is out exe path, so it's meaningless to try and parse something else
 
 	std::map<std::string, std::string> ret;
-	std::unordered_set<std::string> validKeys = { "benchmark", "threads" };
-	for (int i = 1; i < argc; ++i)
+	std::unordered_set<std::string> validKeys = { "benchmark", "threads", "wnd_w", "wnd_h"};
+
+	for (int i = 1; i < argc; ++i) //skip our executable path
 	{
 		std::string argName = argv[i];
-		if (validKeys.find(argName) == validKeys.end()) std::cout << "Unknown cmd argument at position " << i << ": " << argName << ", ignoring.\n";
+		std::stringstream ss;
+		if (argName.length() < 2 || argName[0] != '-' || argName[1] != '-' || validKeys.find(argName.substr(2)) == validKeys.end())
+		{
+			std::cout << "Unknown cmd argument at position " << i << ": " << argName << ", ignoring.\n";
+		}
 		else 
 		{
-			if (argName == "threads" && argc > i + 1) ret[argName] = argv[i++ + 1];
+			argName = argName.substr(2);
+			if ((argName == "threads" || argName == "wnd_w" || argName == "wnd_h") && argc > i + 1) ret[argName] = argv[i++ + 1];
 			if (argName == "benchmark") ret[argName] = "true";
 		}
 		
@@ -93,6 +99,7 @@ std::map<std::string, std::string> parseCmdArgs(int argc, char** argv)
 
 void program(int argc, char** argv)
 {
+	/*
 	Matrix4 m = {
 		Vec4(6,3,5,1),
 		Vec4(-5,-2,9,-6),
@@ -101,6 +108,7 @@ void program(int argc, char** argv)
 	};
 
 	Matrix4 z = m.inverse();
+	*/
 
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());
@@ -110,11 +118,14 @@ void program(int argc, char** argv)
 	//loadWad("data/test_maps/HEXAGON.wad");
 	//loadWad("data/test_maps/RECT.wad");
 
-	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, 0);
+	auto args = parseCmdArgs(argc, argv);
+	int wndW = args.find("wnd_w") == args.end() ? 1920 : atol(args["wnd_w"].c_str());
+	int wndH = args.find("wnd_h") == args.end() ? 1080 : atol(args["wnd_h"].c_str());
+
+	SDL_Window* wnd = SDL_CreateWindow("Doom Rendering", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wndW, wndH, 0);
 	SDL_Surface* wndSurf = SDL_GetWindowSurface(wnd);
 
 	std::shared_ptr<GameStateBase> currGameState;
-	auto args = parseCmdArgs(argc, argv);
 	bool benchmarkMode = args.find("benchmark") != args.end() && args["benchmark"] == "true";
 
 	std::optional<size_t> threadCount = std::nullopt;

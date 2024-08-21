@@ -117,6 +117,9 @@
     <ClCompile Include="src\AssetLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ShadowMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Texture.h">
@@ -246,6 +249,9 @@
       <Filter>Header Files\misc</Filter>
     </ClInclude>
     <ClInclude Include="src\AssetLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ShadowMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

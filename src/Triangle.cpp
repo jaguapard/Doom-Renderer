@@ -72,7 +72,6 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		rotated.tv[i].spaceCoords = context.ctr->rotateAndTranslate(spaceCopy);
 		rotated.tv[i].textureCoords = tv[i].textureCoords;
 		rotated.tv[i].worldCoords = tv[i].spaceCoords;
-		rotated.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.rotateAndTranslate(spaceCopy);
 
 		if (rotated.tv[i].spaceCoords.z > context.gameSettings.nearPlaneZ)
 		{
@@ -129,15 +128,15 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
 		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
 		screenSpaceTriangle.tv[i].worldCoords = tv[i].worldCoords * zInv;
-
 		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
-
-		real sunZ = 1.0/tv[i].sunScreenPos.z;
-		screenSpaceTriangle.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(tv[i].sunScreenPos * sunZ);
-		screenSpaceTriangle.tv[i].sunScreenPos.z = sunZ;
-
 		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
-		
+
+		Vec4 worldCopy = tv[i].worldCoords;
+		worldCopy.w = 1;
+		Vec4 sunCoordsRotated = (*context.shadowMaps)[0].ctr.rotateAndTranslate(worldCopy);
+		real sunZinv = 1.0/sunCoordsRotated.z;
+		screenSpaceTriangle.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(sunCoordsRotated * sunZinv);
+		screenSpaceTriangle.tv[i].sunScreenPos.z = sunZinv;		
 	}
 
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits

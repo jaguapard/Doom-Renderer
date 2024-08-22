@@ -137,6 +137,8 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		real sunZinv = 1.0/sunCoordsRotated.z;
 		screenSpaceTriangle.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(sunCoordsRotated * sunZinv);
 		screenSpaceTriangle.tv[i].sunScreenPos.z = sunCoordsRotated.z > context.gameSettings.nearPlaneZ ? 0 : sunZinv;
+		screenSpaceTriangle.tv[i].sunScreenPos *= zInv;
+		screenSpaceTriangle.tv[i].sunScreenPos.w = zInv;
 
 		//if (sunCoordsRotated.z > context.gameSettings.nearPlaneZ) __debugbreak();
 	}
@@ -263,6 +265,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				else
 				{
 					VectorPack16 sunScreenPositions = VectorPack16(tv[0].sunScreenPos) * alpha + VectorPack16(tv[1].sunScreenPos) * beta + VectorPack16(tv[2].sunScreenPos) * gamma;
+					sunScreenPositions /= sunScreenPositions.w;
 					Mask16 inShadowMapBounds = sunScreenPositions.x >= 0.0f & sunScreenPositions.x < 1920.0f & sunScreenPositions.y >= 0.0 & sunScreenPositions.y < 1080.0;
 					Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
 					//if (shadowMapDepthGatherMask) __debugbreak();

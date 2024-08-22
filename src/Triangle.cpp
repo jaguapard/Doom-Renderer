@@ -276,7 +276,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 					__m512i smapY = _mm512_cvttps_epi32(sunScreenPositions.y);
 					__m512i vind = _mm512_add_epi32(_mm512_mullo_epi32(smapY, _mm512_set1_epi32(19200)), smapX);
 					FloatPack16 shadowMapDepths = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), shadowMapDepthGatherMask, vind, (*context.shadowMaps)[0].depthBuffer.getRawPixels(), 4);
-					Mask16 pointsInShadow = Mask16(~__mmask16(inShadowMapBounds)) | shadowMapDepths <= sunScreenPositions.z;					
+					Mask16 pointsInShadow = Mask16(~__mmask16(inShadowMapBounds)) | shadowMapDepths < (sunScreenPositions.z-0.0001);					
 					pointsShadowMult = _mm512_mask_blend_ps(pointsInShadow, shadowLightLevel, shadowDarkLevel);
 				}
 				

@@ -136,7 +136,9 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		Vec4 sunCoordsRotated = (*context.shadowMaps)[0].ctr.rotateAndTranslate(worldCopy);
 		real sunZinv = 1.0/sunCoordsRotated.z;
 		screenSpaceTriangle.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(sunCoordsRotated * sunZinv);
-		screenSpaceTriangle.tv[i].sunScreenPos.z = sunZinv;		
+		screenSpaceTriangle.tv[i].sunScreenPos.z = sunCoordsRotated.z > context.gameSettings.nearPlaneZ ? 0 : sunZinv;
+
+		//if (sunCoordsRotated.z > context.gameSettings.nearPlaneZ) __debugbreak();
 	}
 
 	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
@@ -253,21 +255,29 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				Vec4 s1 = tv[0].sunScreenPos;
 				Vec4 s2 = tv[1].sunScreenPos;
 				Vec4 s3 = tv[2].sunScreenPos;
-				VectorPack16 sunScreenPositions = VectorPack16(tv[0].sunScreenPos) * alpha + VectorPack16(tv[1].sunScreenPos) * beta + VectorPack16(tv[2].sunScreenPos) * gamma;
-				Mask16 inShadowMapBounds = sunScreenPositions.x >= 0.0f & sunScreenPositions.x < 1920.0f & sunScreenPositions.y >= 0.0 & sunScreenPositions.y < 1080.0;
-				Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
-				//if (shadowMapDepthGatherMask) __debugbreak();
+				FloatPack16 pointsShadowMult;
+				if (s1.z == 0 || s2.z == 0 || s3.z == 0)
+				{
+					pointsShadowMult = 0.2;
+				}
+				else
+				{
+					VectorPack16 sunScreenPositions = VectorPack16(tv[0].sunScreenPos) * alpha + VectorPack16(tv[1].sunScreenPos) * beta + VectorPack16(tv[2].sunScreenPos) * gamma;
+					Mask16 inShadowMapBounds = sunScreenPositions.x >= 0.0f & sunScreenPositions.x < 1920.0f & sunScreenPositions.y >= 0.0 & sunScreenPositions.y < 1080.0;
+					Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
+					//if (shadowMapDepthGatherMask) __debugbreak();
 
-				__m512i smapX = _mm512_cvttps_epi32(sunScreenPositions.x);
-				__m512i smapY = _mm512_cvttps_epi32(sunScreenPositions.y);
-				__m512i vind = _mm512_add_epi32(_mm512_mullo_epi32(smapY, _mm512_set1_epi32(1920)), smapX);
-				FloatPack16 shadowMapDepths = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), shadowMapDepthGatherMask, vind, (*context.shadowMaps)[0].depthBuffer.getRawPixels(), 4);
-				Mask16 pointsInShadow = inShadowMapBounds & shadowMapDepths <= sunScreenPositions.z;
+					__m512i smapX = _mm512_cvttps_epi32(sunScreenPositions.x);
+					__m512i smapY = _mm512_cvttps_epi32(sunScreenPositions.y);
+					__m512i vind = _mm512_add_epi32(_mm512_mullo_epi32(smapY, _mm512_set1_epi32(1920)), smapX);
+					FloatPack16 shadowMapDepths = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), shadowMapDepthGatherMask, vind, (*context.shadowMaps)[0].depthBuffer.getRawPixels(), 4);
+					Mask16 pointsInShadow = inShadowMapBounds & shadowMapDepths <= sunScreenPositions.z;
 
-				FloatPack16 shadowLightLevel = 1;
-				FloatPack16 shadowDarkLevel = 0.2;
-				FloatPack16 pointsShadowMult = _mm512_mask_blend_ps(pointsInShadow, shadowLightLevel, shadowDarkLevel);
-
+					FloatPack16 shadowLightLevel = 1;
+					FloatPack16 shadowDarkLevel = 0.2;
+					pointsShadowMult = _mm512_mask_blend_ps(pointsInShadow, shadowLightLevel, shadowDarkLevel);
+				}
+				
 				texturePixels *= dynaLight * pointsShadowMult;
 				if (context.gameSettings.wireframeEnabled)
 				{

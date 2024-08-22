@@ -2,6 +2,7 @@
 #include "Statsman.h"
 
 #include <functional>
+#include "ShadowMap.h"
 
 void Triangle::sortByAscendingSpaceX()
 {
@@ -71,6 +72,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		rotated.tv[i].spaceCoords = context.ctr->rotateAndTranslate(spaceCopy);
 		rotated.tv[i].textureCoords = tv[i].textureCoords;
 		rotated.tv[i].worldCoords = tv[i].spaceCoords;
+		rotated.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.rotateAndTranslate(spaceCopy);
 
 		if (rotated.tv[i].spaceCoords.z > context.gameSettings.nearPlaneZ)
 		{
@@ -126,10 +128,10 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		real zInv = context.gameSettings.fovMult / tv[i].spaceCoords.z;
 		screenSpaceTriangle.tv[i].spaceCoords = tv[i].spaceCoords * zInv;
 		screenSpaceTriangle.tv[i].textureCoords = tv[i].textureCoords * zInv;
-
 		screenSpaceTriangle.tv[i].worldCoords = tv[i].worldCoords * zInv;
 
 		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
+		screenSpaceTriangle.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(screenSpaceTriangle.tv[i].sunScreenPos / screenSpaceTriangle.tv[i].sunScreenPos.z);
 		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
 		
 	}

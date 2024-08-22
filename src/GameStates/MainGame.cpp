@@ -304,9 +304,9 @@ void MainGame::changeMapTo(std::string mapName)
 		sectorWorldModels = {AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager)};
 	}
 
-	CoordinateTransformer mapCtr(1920, 1080);
+	CoordinateTransformer mapCtr(19200, 10800);
 	mapCtr.prepare(Vec4(-1846, 2799, 568), Vec4(0, -1.2869, -0.6689));
-	this->shadowMaps = { ShadowMap(1920,1080,mapCtr) };
+	this->shadowMaps = { ShadowMap(19200,10800,mapCtr) };
 
 	std::vector<const Model*> models;
 	for (const auto& sectorModels : sectorWorldModels)

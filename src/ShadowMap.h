@@ -16,5 +16,5 @@ struct ShadowMap
 	CoordinateTransformer ctr;
 
 	ShadowMap(int w, int h, const CoordinateTransformer& ctr);
-	void render(const std::vector<const Model*>& models, const GameSettings& gameSettings);
+	void render(const std::vector<const Model*>& models, const GameSettings& gameSettings, const std::vector<ShadowMap>& shadowMaps);
 };

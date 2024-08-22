@@ -6,12 +6,13 @@ ShadowMap::ShadowMap(int w, int h, const CoordinateTransformer& ctr)
 	this->ctr = ctr;
 }
 
-void ShadowMap::render(const std::vector<const Model*>& models, const GameSettings& gameSettings)
+void ShadowMap::render(const std::vector<const Model*>& models, const GameSettings& gameSettings, const std::vector<ShadowMap>& shadowMaps)
 {
 	TriangleRenderContext ctx;
 	depthBuffer.clear();
 
 	ctx.renderingShadowMap = true;
+	ctx.shadowMaps = &shadowMaps;
 
 	ctx.zBuffer = &depthBuffer;
 	ctx.frameBuffer = nullptr;

@@ -241,11 +241,14 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				worldCoords /= interpolatedDividedUv.z;
 
 				VectorPack16 dynaLight = renderJob.lightMult;
-				for (const auto& it : *context.pointLights)
+				if (false)
 				{
-					FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
-					Vec4 power = it.color * it.intensity;
-					dynaLight += VectorPack16(power) / distSquared;
+					for (const auto& it : *context.pointLights)
+					{
+						FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
+						Vec4 power = it.color * it.intensity;
+						dynaLight += VectorPack16(power) / distSquared;
+					}
 				}
 
 				Vec4 s1 = tv[0].sunScreenPos;

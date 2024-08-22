@@ -263,11 +263,11 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				__m512i smapY = _mm512_cvttps_epi32(sunScreenPositions.y);
 				__m512i vind = _mm512_add_epi32(_mm512_mullo_epi32(smapY, _mm512_set1_epi32(1920)), smapX);
 				FloatPack16 shadowMapDepths = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), shadowMapDepthGatherMask, vind, (*context.shadowMaps)[0].depthBuffer.getRawPixels(), 4);
-				Mask16 pointsInShadow = opaquePixelsMask & shadowMapDepths > sunScreenPositions.z;
+				Mask16 pointsInShadow = inShadowMapBounds & shadowMapDepths <= sunScreenPositions.z;
 
 				FloatPack16 shadowLightLevel = 1;
-				FloatPack16 shadowDarkLevel = 0.4;
-				FloatPack16 pointsShadowMult = _mm512_mask_blend_ps(pointsInShadow, shadowDarkLevel, shadowLightLevel);
+				FloatPack16 shadowDarkLevel = 0.2;
+				FloatPack16 pointsShadowMult = _mm512_mask_blend_ps(pointsInShadow, shadowLightLevel, shadowDarkLevel);
 
 				texturePixels *= dynaLight * pointsShadowMult;
 				if (context.gameSettings.wireframeEnabled)

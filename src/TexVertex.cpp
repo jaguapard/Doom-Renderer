@@ -69,4 +69,5 @@ TexVertex lerp(const TexVertex& t1, const TexVertex& t2, real amount)
 	ret.textureCoords = lerp(t1.textureCoords, t2.textureCoords, amount);
 	ret.worldCoords = lerp(t1.worldCoords, t2.worldCoords, amount);
 	ret.sunScreenPos = lerp(t1.sunScreenPos, t2.sunScreenPos, amount);
+	return ret;
 }

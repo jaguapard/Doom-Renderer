@@ -358,6 +358,8 @@ TriangleRenderContext MainGame::makeTriangleRenderContext()
 	ctx.camPos = camPos;
     ctx.pointLights = &pointLights;
     ctx.pixelWorldPos = &pixelWorldPos;
+	
+	ctx.shadowMaps = &shadowMaps;
 
 	return ctx;
 }

@@ -52,6 +52,7 @@ struct RenderJob
 	real minX, minY, maxX, maxY;
 	real rcpSignedArea;
 };
+class ShadowMap;
 
 struct TriangleRenderContext
 {
@@ -62,6 +63,7 @@ struct TriangleRenderContext
 
 	std::vector<RenderJob>* renderJobs;
 	const std::vector<PointLight>* pointLights;
+	const std::vector<ShadowMap>* shadowMaps;
 
 	const CoordinateTransformer* ctr;
 

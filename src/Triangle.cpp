@@ -244,7 +244,21 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 					dynaLight += VectorPack16(power) / distSquared;
 				}
 
-				texturePixels *= dynaLight;
+				VectorPack16 sunScreenPositions = VectorPack16(tv[0].sunScreenPos) * alpha + VectorPack16(tv[1].sunScreenPos) * beta + VectorPack16(tv[2].sunScreenPos) * gamma;
+				Mask16 inShadowMapBounds = sunScreenPositions.x >= 0.0f & sunScreenPositions.x < 1920.0f & sunScreenPositions.y >= 0.0 & sunScreenPositions.y < 1080.0;
+				Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
+
+				__m512i smapX = _mm512_cvttps_epi32(sunScreenPositions.x);
+				__m512i smapY = _mm512_cvttps_epi32(sunScreenPositions.y);
+				__m512i vind = _mm512_add_epi32(_mm512_mullo_epi32(smapY, _mm512_set1_epi32(1920)), smapX);
+				FloatPack16 shadowMapDepths = _mm512_mask_i32gather_ps(_mm512_setzero_ps(), shadowMapDepthGatherMask, vind, (*context.shadowMaps)[0].depthBuffer.getRawPixels(), 4);
+				Mask16 pointsInShadow = opaquePixelsMask & shadowMapDepths <= interpolatedDividedUv.z;
+
+				FloatPack16 shadowLightLevel = 1;
+				FloatPack16 shadowDarkLevel = 0.1;
+				FloatPack16 pointsShadowMult = _mm512_mask_blend_ps(pointsInShadow, shadowDarkLevel, shadowLightLevel);
+
+				texturePixels *= dynaLight * pointsShadowMult;
 				if (context.gameSettings.wireframeEnabled)
 				{
 					Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;

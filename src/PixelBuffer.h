@@ -11,6 +11,7 @@
 #include "Color.h"
 #include "Vec.h"
 #include "helpers.h"
+#include "VectorPack.h"
 
 struct PixelBufferSize
 {
@@ -34,11 +35,11 @@ struct Rect
 };
 
 template <typename T>
-class PixelBuffer
+class PixelBufferBase
 {
 public:
-	PixelBuffer();
-	PixelBuffer(int w, int h);
+	PixelBufferBase();
+	PixelBufferBase(int w, int h);
 
 	int getW() const;
 	int getH() const;
@@ -70,7 +71,7 @@ public:
 	void saveToFile(const std::string& path) const;
 	virtual Color toColor(T value) const; //cannot make this = 0: compiler complains about abstract class. However, if not used, it doesn't matter that this is undefined. Only children of this class may have this
 
-	void operator=(const PixelBuffer<T>& other);
+	void operator=(const PixelBufferBase<T>& other);
 protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
@@ -83,10 +84,10 @@ protected:
 };
 
 template<typename T>
-inline PixelBuffer<T>::PixelBuffer() {};
+inline PixelBufferBase<T>::PixelBufferBase() {};
 
 template<typename T>
-inline PixelBuffer<T>::PixelBuffer(int w, int h)
+inline PixelBufferBase<T>::PixelBufferBase(int w, int h)
 {
 	store.resize(w * h);
 	store.shrink_to_fit();
@@ -94,69 +95,69 @@ inline PixelBuffer<T>::PixelBuffer(int w, int h)
 }
 
 template<typename T>
-inline int PixelBuffer<T>::getW() const
+inline int PixelBufferBase<T>::getW() const
 {
 	return size.w;
 }
 
 template<typename T>
-inline int PixelBuffer<T>::getH() const
+inline int PixelBufferBase<T>::getH() const
 {
 	return size.h;
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixel(int x, int y) const
+inline T PixelBufferBase<T>::getPixel(int x, int y) const
 {
 	return at(x, y);
 }
 /*
 template<typename T>
-inline T PixelBuffer<T>::getPixel(const __m128i& pos) const
+inline T PixelBufferBase<T>::getPixel(const __m128i& pos) const
 {
 	__m128i offsets = _mm_mullo_epi32(pos, size.pitchInt32);
 	return (*this)[_mm_extract_epi32(offsets, 0) + _mm_extract_epi32(offsets, 1)];
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixel(const Vec4& pos) const
+inline T PixelBufferBase<T>::getPixel(const Vec4& pos) const
 {
 	return getPixel(_mm_cvttps_epi32(pos));
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixel64(const __m128i& pos) const
+inline T PixelBufferBase<T>::getPixel64(const __m128i& pos) const
 {
 	__m128i interm = _mm_mul_epi32(pos, this->size.pitchInt64);
 	return (*this)[_mm_extract_epi64(interm, 0) + _mm_extract_epi64(interm, 1)];
 }
 
 template<typename T>
-inline T PixelBuffer<T>::getPixel64(const __m128d& pos) const
+inline T PixelBufferBase<T>::getPixel64(const __m128d& pos) const
 {
 	return getPixel(_mm_cvttpd_epi32(pos));
 }
 */
 template<typename T>
-inline void PixelBuffer<T>::setPixel(int x, int y, const T& px)
+inline void PixelBufferBase<T>::setPixel(int x, int y, const T& px)
 {
 	at(x, y) = px;
 }
 
 template<typename T>
-inline bool PixelBuffer<T>::isOutOfBounds(int x, int y) const
+inline bool PixelBufferBase<T>::isOutOfBounds(int x, int y) const
 {
 	return !isInBounds(x, y);
 }
 
 template<typename T>
-inline bool PixelBuffer<T>::isInBounds(int x, int y) const
+inline bool PixelBufferBase<T>::isInBounds(int x, int y) const
 {
 	return x >= 0 && y >= 0 && x < size.w && y < size.h;
 }
 
 template<typename T>
-inline void PixelBuffer<T>::clear(T value)
+inline void PixelBufferBase<T>::clear(T value)
 {
 #if 0
 	//#ifdef  //__AVX2__
@@ -200,7 +201,7 @@ inline void PixelBuffer<T>::clear(T value)
 }
 
 template<typename T>
-inline void PixelBuffer<T>::clearRows(int minY, int maxY, T value)
+inline void PixelBufferBase<T>::clearRows(int minY, int maxY, T value)
 {
 	T* start = this->getRawPixels() + size_t(minY) * size.w;
 	T* end = this->getRawPixels() + size_t(maxY) * size.w;
@@ -208,45 +209,45 @@ inline void PixelBuffer<T>::clearRows(int minY, int maxY, T value)
 }
 
 template<typename T>
-inline T* PixelBuffer<T>::getRawPixels()
+inline T* PixelBufferBase<T>::getRawPixels()
 {
-	return const_cast<T*>(static_cast<const PixelBuffer<T>*>(this)->getRawPixels());
+	return const_cast<T*>(static_cast<const PixelBufferBase<T>*>(this)->getRawPixels());
 }
 
 template<typename T>
-inline const T* PixelBuffer<T>::getRawPixels() const
-{
-	return &store.front();
-}
-
-template<typename T>
-inline T* PixelBuffer<T>::begin()
+inline const T* PixelBufferBase<T>::getRawPixels() const
 {
 	return &store.front();
 }
 
 template<typename T>
-inline T* PixelBuffer<T>::end()
+inline T* PixelBufferBase<T>::begin()
+{
+	return &store.front();
+}
+
+template<typename T>
+inline T* PixelBufferBase<T>::end()
 {
 	return &store.back() + 1;
 }
 
 template<typename T>
-inline T& PixelBuffer<T>::operator[](uint64_t i)
+inline T& PixelBufferBase<T>::operator[](uint64_t i)
 {
-	return const_cast<T&>(static_cast<const PixelBuffer<T>&>(*this)[i]);
+	return const_cast<T&>(static_cast<const PixelBufferBase<T>&>(*this)[i]);
 }
 
 template<typename T>
-inline const T& PixelBuffer<T>::operator[](uint64_t i) const
+inline const T& PixelBufferBase<T>::operator[](uint64_t i) const
 {
 	return store[i];
 }
 
 template<typename T>
-inline void PixelBuffer<T>::saveToFile(const std::string& path) const
+inline void PixelBufferBase<T>::saveToFile(const std::string& path) const
 {
-	std::vector<Uint32> pix(size.w*size.h);
+	std::vector<Uint32> pix(size.w * size.h);
 	for (int y = 0; y < size.h; ++y)
 	{
 		for (int x = 0; x < size.w; ++x)
@@ -262,26 +263,26 @@ inline void PixelBuffer<T>::saveToFile(const std::string& path) const
 }
 
 template<>
-inline Color PixelBuffer<Color>::toColor(Color value) const
+inline Color PixelBufferBase<Color>::toColor(Color value) const
 {
 	return value;
 }
 
 template<>
-inline Color PixelBuffer<real>::toColor(real value) const
+inline Color PixelBufferBase<real>::toColor(real value) const
 {
 	uint8_t fv = value * 255;
 	return Color(fv, fv, fv);
 }
 
 template<>
-inline Color PixelBuffer<uint8_t>::toColor(uint8_t value) const
+inline Color PixelBufferBase<uint8_t>::toColor(uint8_t value) const
 {
 	return Color(value, value, value);
 }
 
 template<typename T>
-inline void PixelBuffer<T>::operator=(const PixelBuffer<T>& other)
+inline void PixelBufferBase<T>::operator=(const PixelBufferBase<T>& other)
 {
 	//if (w != 0 && size.h != 0 && (w != other.w || size.h != other.h)) throw std::runtime_error("Attempted to assign pixel buffer of mismatched size");
 
@@ -292,13 +293,13 @@ inline void PixelBuffer<T>::operator=(const PixelBuffer<T>& other)
 }
 
 template<typename T>
-inline T& PixelBuffer<T>::at(int x, int y)
+inline T& PixelBufferBase<T>::at(int x, int y)
 {
-	return const_cast<T&>(static_cast<const PixelBuffer<T>&>(*this).at(x, y));
+	return const_cast<T&>(static_cast<const PixelBufferBase<T>&>(*this).at(x, y));
 }
 
 template<typename T>
-inline const T& PixelBuffer<T>::at(int x, int y) const
+inline const T& PixelBufferBase<T>::at(int x, int y) const
 {
 	assert(x >= 0);
 	assert(y >= 0);
@@ -308,13 +309,42 @@ inline const T& PixelBuffer<T>::at(int x, int y) const
 }
 
 template<typename T>
-inline void PixelBuffer<T>::assignSizes(int w, int h)
+inline void PixelBufferBase<T>::assignSizes(int w, int h)
 {
 	size = PixelBufferSize(w, h);
 }
 
 template<typename T>
-inline const PixelBufferSize& PixelBuffer<T>::getSize() const
+inline const PixelBufferSize& PixelBufferBase<T>::getSize() const
 {
 	return size;
 }
+
+template <typename T>
+class PixelBuffer : public PixelBufferBase<T>
+{
+	using PixelBufferBase<T>::PixelBufferBase;
+};
+
+template <>
+class PixelBuffer<float> : public PixelBufferBase<float>
+{
+public:
+	using PixelBufferBase<float>::PixelBufferBase;
+
+	__mmask16 checkBounds(__m512 x, __m512 y) const
+	{
+		FloatPack16 fx = FloatPack16(x);
+		FloatPack16 fy = FloatPack16(y);
+		return fx >= 0.f & fx < this->getSize().fw & fy >= 0.f & fy < this->getSize().fh;
+	}
+	__m512 gatherPixels16(__m512i indices, __mmask16 mask) const
+	{
+		return _mm512_mask_i32gather_ps(_mm512_setzero_ps(), mask, indices, store.data(), 4);
+	}
+	__m512 gatherPixels16(__m512i x, __m512i y, __mmask16 mask) const
+	{
+		__m512i indices = _mm512_add_epi32(_mm512_mullo_epi32(y, _mm512_set1_epi32(this->getW())), x);
+		return gatherPixels16(indices, mask);
+	}
+};

@@ -17,8 +17,8 @@ void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffe
 	for (size_t i = startIndex; i < endIndex; i += 16)
 	{
 		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence512), _mm512_set1_epi32(endIndex));
-		VectorPack16 multiplied = frameBuf.getPixelsStartingFrom16(i) * (lightBuf.getRawPixels() + i);
-		frameBuf.storePixels16(i, multiplied, bounds);
+		VectorPack16 multiplied = frameBuf.getPixels16(i) * (lightBuf.getRawPixels() + i);
+		frameBuf.setPixels16(i, multiplied, bounds);
 	}
 }
 
@@ -68,7 +68,7 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 				}
 				screenPixels *= 255.0 / (ssaaMult * ssaaMult); //now screenPixels have averaged pixels ready to be converted to ints for further manipulations
 			}
-			else screenPixels = frameBuf.getPixelLine16(dstX, dstY) * 255;
+			else screenPixels = frameBuf.getPixels16(dstX, dstY) * 255;
 
 			__m512i surfacePixels = _mm512_setzero_si512();
 			for (int i = 0; i < 4; ++i)
@@ -103,9 +103,9 @@ void blitting::applyFog(FloatColorBuffer& frameBuf, const FloatColorBuffer& worl
 	for (size_t i = startIndex; i < endIndex; i += 16)
 	{
 		__mmask16 bounds = _mm512_cmplt_epi32_mask(_mm512_add_epi32(_mm512_set1_epi32(i), sequence512), _mm512_set1_epi32(endIndex));
-		VectorPack16 origColors = frameBuf.getPixelsStartingFrom16(i);
+		VectorPack16 origColors = frameBuf.getPixels16(i);
 
-        FloatPack16 dist = _mm512_sqrt_ps((worldPos.getPixelsStartingFrom16(i) - camPos).lenSq3d());
+        FloatPack16 dist = _mm512_sqrt_ps((worldPos.getPixels16(i) - camPos).lenSq3d());
 		Mask16 emptyMask = dist == 0.0;
 
 		FloatPack16 lerpT;
@@ -124,6 +124,6 @@ void blitting::applyFog(FloatColorBuffer& frameBuf, const FloatColorBuffer& worl
 		}
 
 		VectorPack16 lerpedColor = origColors + (fogColorPack - origColors) * lerpT;
-		frameBuf.storePixels16(i, lerpedColor, bounds);
+		frameBuf.setPixels16(i, lerpedColor, bounds);
 	}
 }

@@ -9,7 +9,7 @@
 struct FloatColorBufferSize
 {
 	float fw, fh;
-	int w, h;
+	uint32_t w, h;
 
 	FloatColorBufferSize() = default;
 	FloatColorBufferSize(int w, int h)
@@ -34,10 +34,11 @@ public:
 
     void scatterPixels16(const __m512i &xCoords, const __m512i &yCoords, const __mmask16 &mask, const VectorPack16 &pixels);
 
-	VectorPack16 getPixelLine16(int xStart, int y) const;
-	VectorPack16 getPixelsStartingFrom16(size_t index) const;
+	VectorPack16 getPixels16(size_t xStart, size_t y) const;
+	VectorPack16 getPixels16(size_t index) const;
 
-	void storePixels16(int pixelIndex, const VectorPack16& pixels, __mmask16 mask);
+	void setPixels16(size_t xStart, size_t y, const VectorPack16& pixels, __mmask16 mask);
+	void setPixels16(size_t pixelIndex, const VectorPack16& pixels, __mmask16 mask);
 
 	void setPixel(int x, int y, Color color);
 

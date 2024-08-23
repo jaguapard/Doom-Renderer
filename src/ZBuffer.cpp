@@ -37,3 +37,8 @@ Color ZBuffer::toColor(real value) const
 	uint8_t fv = intensity * 255;
 	return Color(fv,fv,fv);
 }
+
+FloatPack16 ZBuffer::toRealDist(const FloatPack16& values)
+{
+	return FloatPack16(-1) / values;
+}

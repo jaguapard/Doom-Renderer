@@ -15,7 +15,7 @@
 
 struct PixelBufferSize
 {
-	int w, h;
+	uint32_t w, h;
 	float fw, fh;
 
 

@@ -9,7 +9,7 @@
 struct FloatColorBufferSize
 {
 	float fw, fh;
-	int w, h;
+	uint32_t w, h;
 
 	FloatColorBufferSize() = default;
 	FloatColorBufferSize(int w, int h)

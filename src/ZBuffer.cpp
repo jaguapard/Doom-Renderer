@@ -32,7 +32,8 @@ bool ZBuffer::testAndSet(int x, int y, real depth, bool doWrite)
 Color ZBuffer::toColor(real value) const
 {
 	real dist = -1.0/value;
-	real intensity = std::clamp<real>(dist, 0, 1800) / 1800;
+	real maxDist = 10000;
+	real intensity = std::clamp<real>(dist, 0, maxDist) / maxDist;
 	uint8_t fv = intensity * 255;
 	return Color(fv,fv,fv);
 }

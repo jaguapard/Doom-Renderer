@@ -347,4 +347,21 @@ public:
 		__m512i indices = _mm512_add_epi32(_mm512_mullo_epi32(y, _mm512_set1_epi32(this->getW())), x);
 		return gatherPixels16(indices, mask);
 	}
+	
+	void setPixels16(size_t indexStart, __m512 pixels, __mmask16 mask)
+	{
+		assert(indexStart < size_t(getW()) * getH());
+		_mm512_mask_store_ps(store.data()+indexStart, mask, pixels);
+	}
+
+	void setPixels16(int xStart, int y, __m512 pixels, __mmask16 mask)
+	{
+		assert(xStart >= 0);
+		assert(y >= 0);
+		assert(xStart < getW());
+		assert(y < getH());
+
+		setPixels16(y * getW() + xStart, pixels, mask);
+	}
+
 };

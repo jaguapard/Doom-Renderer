@@ -1,4 +1,5 @@
 #include "ShadowMap.h"
+#include "Threadpool.h"
 
 ShadowMap::ShadowMap(int w, int h, const CoordinateTransformer& ctr)
 {
@@ -6,7 +7,7 @@ ShadowMap::ShadowMap(int w, int h, const CoordinateTransformer& ctr)
 	this->ctr = ctr;
 }
 
-void ShadowMap::render(const std::vector<const Model*>& models, const GameSettings& gameSettings, const std::vector<ShadowMap>& shadowMaps)
+void ShadowMap::render(const std::vector<const Model*>& models, const GameSettings& gameSettings, const std::vector<ShadowMap>& shadowMaps, Threadpool& threadpool)
 {
 	TriangleRenderContext ctx;
 	depthBuffer.clear();
@@ -34,8 +35,19 @@ void ShadowMap::render(const std::vector<const Model*>& models, const GameSettin
 		it->addToRenderQueue(ctx);
 	}
 
-	for (auto& job : renderJobs)
+	int threads = threadpool.getThreadCount();
+	std::vector<task_id> ids;
+	for (int i = 0; i < threads; ++i)
 	{
-		job.originalTriangle.drawSlice(ctx, job, 0, depthBuffer.getH());
+		taskfunc_t task = [&, i]() {
+			auto [limLow, limHigh] = threadpool.getLimitsForThread(i, 0, depthBuffer.getH(), threads);
+			for (auto& job : renderJobs)
+			{
+				job.originalTriangle.drawSlice(ctx, job, limLow, limHigh);
+			}
+		};
+
+		ids.push_back(threadpool.addTask(task));
 	}
+	threadpool.waitForMultipleTasks(ids);	
 }

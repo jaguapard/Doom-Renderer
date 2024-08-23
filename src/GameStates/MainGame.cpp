@@ -318,7 +318,7 @@ void MainGame::changeMapTo(std::string mapName)
 			models.push_back(&model);
 		}
 	}
-	for (auto& it : shadowMaps) it.render(models, this->settings, shadowMaps);
+	for (auto& it : shadowMaps) it.render(models, this->settings, shadowMaps, *threadpool);
 	performanceMonitor.reset();
 }
 

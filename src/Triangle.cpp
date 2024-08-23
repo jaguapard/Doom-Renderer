@@ -196,17 +196,14 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 	auto& lightBuf = *context.lightBuffer;
 	auto& depthBuf = *context.zBuffer;
 	auto& pixelWorldPosBuf = *context.pixelWorldPos;
-	int bufW = frameBuf.getW(); //save to avoid constant memory reads. Buffers don't change in size while rendering.
 
 	for (real y = yBeg; y <= yEnd; ++y)
 	{
-		size_t pixelIndex = size_t(y) * bufW + size_t(xBeg); //all buffers have the same size, so we can use a single index
-
+		size_t yInt = y;
 		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
-		for (FloatPack16 x = FloatPack16::sequence() + xBeg;
-			Mask16 loopBoundsMask = x <= xEnd;
-			x += 16, pixelIndex += 16)
+		for (FloatPack16 x = FloatPack16::sequence() + xBeg; Mask16 loopBoundsMask = x <= xEnd; x += 16)
 		{
+			size_t xInt = x[0];
 			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
 			auto [alpha, beta, gamma] = calculateBarycentricCoordinates(r, tv[0].spaceCoords, tv[1].spaceCoords, tv[2].spaceCoords, renderJob.rcpSignedArea);
 
@@ -214,7 +211,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			if (!pointsInsideTriangleMask) continue;
 
 			VectorPack16 interpolatedDividedUv = this->interpolateTextureCoords(alpha, beta, gamma);
-			FloatPack16 currDepthValues = &depthBuf[pixelIndex];
+			FloatPack16 currDepthValues = depthBuf.getPixels16(xInt, yInt, pointsInsideTriangleMask);
 			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
@@ -248,9 +245,9 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
                 //lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
             }
 
-			_mm512_mask_store_ps(&depthBuf[pixelIndex], opaquePixelsMask, interpolatedDividedUv.z);
-			frameBuf.storePixels16(pixelIndex, texturePixels, opaquePixelsMask);
-			if (context.gameSettings.fogEnabled) pixelWorldPosBuf.storePixels16(pixelIndex, worldCoords, opaquePixelsMask);
+			depthBuf.setPixels16(xInt, yInt, interpolatedDividedUv.z, opaquePixelsMask);
+			frameBuf.setPixels16(xInt, yInt, texturePixels, opaquePixelsMask);
+			if (context.gameSettings.fogEnabled) pixelWorldPosBuf.setPixels16(xInt, yInt, worldCoords, opaquePixelsMask);
 		}
 	}
 }

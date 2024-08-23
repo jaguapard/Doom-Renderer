@@ -249,17 +249,13 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 				Vec4 s1 = tv[0].sunScreenPos;
 				Vec4 s2 = tv[1].sunScreenPos;
-				Vec4 s3 = tv[2].sunScreenPos;
-				FloatPack16 pointsShadowMult;
+				Vec4 s3 = tv[2].sunScreenPos;				
 				FloatPack16 shadowLightLevel = 1;
 				FloatPack16 shadowDarkLevel = 0.2;
+				FloatPack16 pointsShadowMult = shadowDarkLevel;
 
 				const ShadowMap& currentShadowMap = (*context.shadowMaps)[0];
-				if (s1.z == 0 || s2.z == 0 || s3.z == 0)
-				{
-					pointsShadowMult = 0.2;
-				}
-				else
+				if (s1.z != 0 && s2.z != 0 && s3.z != 0)
 				{
 					VectorPack16 sunScreenPositions = VectorPack16(tv[0].sunScreenPos) * alpha + VectorPack16(tv[1].sunScreenPos) * beta + VectorPack16(tv[2].sunScreenPos) * gamma;
 					sunScreenPositions /= sunScreenPositions.w;

@@ -70,7 +70,7 @@ void FloatColorBuffer::scatterPixels16(const __m512i& xCoords, const __m512i& yC
 	_mm512_mask_i32scatter_ps(a.get(), mask, pixelIndices, pixels.a, sizeof(float));
 }
 
-VectorPack16 FloatColorBuffer::getPixels16(int xStart, int y) const
+VectorPack16 FloatColorBuffer::getPixels16(size_t xStart, size_t y) const
 {
 	VectorPack16 ret;
 	size_t index = y * size.w + xStart;
@@ -91,7 +91,7 @@ VectorPack16 FloatColorBuffer::getPixels16(size_t index) const
 	return ret;
 }
 
-void FloatColorBuffer::setPixels16(int xStart, int y, const VectorPack16& pixels, __mmask16 mask)
+void FloatColorBuffer::setPixels16(size_t xStart, size_t y, const VectorPack16& pixels, __mmask16 mask)
 {
 	setPixels16(size_t(y * getW()) + xStart, pixels, mask);
 }

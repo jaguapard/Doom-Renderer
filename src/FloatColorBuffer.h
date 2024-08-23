@@ -34,10 +34,10 @@ public:
 
     void scatterPixels16(const __m512i &xCoords, const __m512i &yCoords, const __mmask16 &mask, const VectorPack16 &pixels);
 
-	VectorPack16 getPixels16(int xStart, int y) const;
+	VectorPack16 getPixels16(size_t xStart, size_t y) const;
 	VectorPack16 getPixels16(size_t index) const;
 
-	void setPixels16(int xStart, int y, const VectorPack16& pixels, __mmask16 mask);
+	void setPixels16(size_t xStart, size_t y, const VectorPack16& pixels, __mmask16 mask);
 	void setPixels16(size_t pixelIndex, const VectorPack16& pixels, __mmask16 mask);
 
 	void setPixel(int x, int y, Color color);

@@ -353,7 +353,7 @@ public:
 		return _mm512_mask_loadu_ps(fillerVal, mask, store.data()+indexStart);
 	}
 	
-	__m512 getPixels16(int xStart, int y, __mmask16 mask = 0xFFFF, __m512 fillerVal = _mm512_set1_ps(0)) const
+	__m512 getPixels16(size_t xStart, size_t y, __mmask16 mask = 0xFFFF, __m512 fillerVal = _mm512_set1_ps(0)) const
 	{
 		return getPixels16(y * getW() + xStart, mask, fillerVal);
 	}
@@ -363,7 +363,7 @@ public:
 		_mm512_mask_store_ps(store.data()+indexStart, mask, pixels);
 	}
 
-	void setPixels16(int xStart, int y, __m512 pixels, __mmask16 mask)
+	void setPixels16(size_t xStart, size_t y, __m512 pixels, __mmask16 mask)
 	{
 		assert(xStart >= 0);
 		assert(y >= 0);

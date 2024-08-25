@@ -28,7 +28,7 @@ Texture::Texture(std::string name, bool useNameAsPath)
 			int h = nSurf->h;
 
 			int downSamplingMult = 1;
-			this->pixels = FloatColorBuffer(w, h);
+			this->pixels = PixelBuffer<Color>(w, h);
 
 			for (int y = 0; y < h; ++y)
 			{
@@ -44,7 +44,7 @@ Texture::Texture(std::string name, bool useNameAsPath)
 				"Falling back to purple-black checkerboard.\n\n";
 			int w = 64, h = 64;
 
-			this->pixels = FloatColorBuffer(w, h);
+			this->pixels = PixelBuffer<Color>(w, h);
 			for (int y = 0; y < h; ++y)
 			{
 				for (int x = 0; x < w; ++x)
@@ -73,7 +73,31 @@ VectorPack16 Texture::gatherPixels512(const FloatPack16& u, const FloatPack16& v
 
 	__m512i xCoords = _mm512_cvttps_epi32(xPixelPos);
 	__m512i yCoords = _mm512_cvttps_epi32(yPixelPos);
-	return pixels.gatherPixels16(xCoords, yCoords, mask & (uFrac < 1) & (vFrac < 1));
+
+	Mask16 fullMask = mask & (uFrac < 1) & (vFrac < 1);
+	__m512i data = pixels.gatherPixels16(xCoords, yCoords, fullMask);
+	
+	/*
+	FloatPack16 r = _mm512_cvtepi32_ps(_mm512_shuffle_epi8(data, _mm512_setr4_epi32(0xFFFFFF00, 0xFFFFFF04, 0xFFFFFF08, 0xFFFFFF0C)));
+	FloatPack16 g = _mm512_cvtepi32_ps(_mm512_shuffle_epi8(data, _mm512_setr4_epi32(0xFFFFFF01, 0xFFFFFF05, 0xFFFFFF09, 0xFFFFFF0D)));
+	FloatPack16 b = _mm512_cvtepi32_ps(_mm512_shuffle_epi8(data, _mm512_setr4_epi32(0xFFFFFF02, 0xFFFFFF06, 0xFFFFFF0A, 0xFFFFFF0E)));
+	FloatPack16 a = _mm512_cvtepi32_ps(_mm512_shuffle_epi8(data, _mm512_setr4_epi32(0xFFFFFF03, 0xFFFFFF07, 0xFFFFFF0B, 0xFFFFFF0F)));
+	return VectorPack16(r, g, b, a) * (1.f / 256);*/
+	
+	__mmask64 takeLowestByteMask = 0x1111111111111111;
+	FloatPack16 r = _mm512_cvtepi32_ps(_mm512_maskz_mov_epi8(takeLowestByteMask, data));
+	FloatPack16 g = _mm512_cvtepi32_ps(_mm512_maskz_mov_epi8(takeLowestByteMask, _mm512_srli_epi32(data, 8)));
+	FloatPack16 b = _mm512_cvtepi32_ps(_mm512_maskz_mov_epi8(takeLowestByteMask, _mm512_srli_epi32(data, 16)));
+	FloatPack16 a = _mm512_cvtepi32_ps(_mm512_maskz_mov_epi8(takeLowestByteMask, _mm512_srli_epi32(data, 24)));
+	return VectorPack16(r, g, b, a) * (1.f / 256);
+
+	/*
+	const __m512i lowestByte = _mm512_set1_epi32(0xFF);
+	FloatPack16 r = _mm512_cvtepi32_ps(_mm512_and_epi32(data, lowestByte));
+	FloatPack16 g = _mm512_cvtepi32_ps(_mm512_and_epi32(_mm512_srli_epi32(data, 8), lowestByte));
+	FloatPack16 b = _mm512_cvtepi32_ps(_mm512_and_epi32(_mm512_srli_epi32(data, 16), lowestByte));
+	FloatPack16 a = _mm512_cvtepi32_ps(_mm512_srli_epi32(data, 24));
+	return VectorPack16(r, g, b, a) * (1.f / 256);*/
 }
 
 
@@ -100,8 +124,8 @@ void Texture::checkForTransparentPixels()
 	{
 		for (int x = 0; x < w; ++x)
 		{
-			Vec4 color = pixels.getPixelAsVec4(x, y);
-			if (color.w < 1)
+			Color color = pixels.getPixel(x, y);
+			if (color.a < SDL_ALPHA_OPAQUE)
 			{
 				_hasOnlyOpaquePixels = false;
 				return;
@@ -115,7 +139,7 @@ void Texture::checkForTransparentPixels()
 void Texture::constructDebugTexture()
 {
 	int tw = 1024, th = 1024;
-	this->pixels = FloatColorBuffer(tw, th);
+	this->pixels = PixelBuffer<Color>(tw, th);
 
 	//WHITE, GREY, RED, GREEN, BLUE, YELLOW
 	Color dbg_colors[] = { {255,255,255}, {127,127,127}, {255,0,0}, {0,255,0}, {0,0,255}, {255,255,0} };

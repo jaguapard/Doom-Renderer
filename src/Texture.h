@@ -39,7 +39,7 @@ public:
 
 	static constexpr TextureDebugMode TEXTURE_DEBUG_MODE = TextureDebugMode::NONE;
 private:
-	FloatColorBuffer pixels;
+	PixelBuffer<Color> pixels;
 	std::string name;
 	bool _hasOnlyOpaquePixels = true;
 	

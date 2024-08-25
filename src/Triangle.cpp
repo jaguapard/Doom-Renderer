@@ -118,6 +118,15 @@ std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> re
 	return std::make_pair(t[0], t[1]);
 }
 
+real _3min(real a, real b, real c)
+{
+	return std::min(a, std::min(b, c));
+}
+real _3max(real a, real b, real c)
+{
+	return std::max(a, std::max(b, c));
+}
+
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
 void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 {
@@ -143,21 +152,14 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		//if (sunCoordsRotated.z > context.gameSettings.nearPlaneZ) __debugbreak();
 	}
 
-	//we need to sort by triangle's screen Y (ascending) for later flat top and bottom splits
-	screenSpaceTriangle.sortByAscendingSpaceY();
-	if (screenSpaceTriangle.tv[2].spaceCoords.y - screenSpaceTriangle.tv[0].spaceCoords.y == 0) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
+	real y1 = screenSpaceTriangle.tv[0].spaceCoords.y;
+	real y2 = screenSpaceTriangle.tv[1].spaceCoords.y;
+	real y3 = screenSpaceTriangle.tv[2].spaceCoords.y;
+	if (_3min(y1, y2, y3) == _3max(y1, y2, y3)) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
 	
 	screenSpaceTriangle.addToRenderQueueFinal(context);
 }
 
-real _3min(real a, real b, real c)
-{
-	return std::min(a, std::min(b, c));
-}
-real _3max(real a, real b, real c)
-{
-	return std::max(a, std::max(b, c));
-}
 void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 {
 	RenderJob rj;

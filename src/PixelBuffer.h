@@ -376,5 +376,21 @@ public:
 
 		setPixels16(y * getW() + xStart, pixels, mask);
 	}
+};
 
+template <>
+class PixelBuffer<Color> : public PixelBufferBase<Color>
+{
+public:
+	using PixelBufferBase<Color>::PixelBufferBase;
+
+	__m512i gatherPixels16(__m512i indices, __mmask16 mask = 0xFFFF, __m512i fillerVal = _mm512_set1_epi32(0)) const
+	{
+		return _mm512_mask_i32gather_epi32(fillerVal, mask, indices, this->store.data(), sizeof(Color));
+	}
+	
+	__m512i gatherPixels16(__m512i x, __m512i y, __mmask16 mask = 0xFFFF, __m512i fillerVal = _mm512_set1_epi32(0)) const
+	{
+		return gatherPixels16(this->calcIndices(x, y), mask, fillerVal);
+	}
 };

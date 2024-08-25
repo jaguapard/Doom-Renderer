@@ -9,7 +9,7 @@
 MainGame::MainGame(GameStateInitData data)
 {
 	initData = data;
-	defaultMap = "MAP01";
+	defaultMap = "MAP00";
 	init();
 
 	this->changeMapTo(defaultMap);
@@ -302,6 +302,8 @@ void MainGame::changeMapTo(std::string mapName)
 	{
 		currentMap = nullptr;
 		sectorWorldModels = {AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager)};
+		camPos = Vec4(-1305.55, 175.75, 67.645);
+		camAng = Vec4(0, -1.444047, -0.125);
 	}
 
 	int shadowMapW = 19200;

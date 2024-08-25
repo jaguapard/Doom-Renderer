@@ -72,6 +72,11 @@ public:
 	virtual Color toColor(T value) const; //cannot make this = 0: compiler complains about abstract class. However, if not used, it doesn't matter that this is undefined. Only children of this class may have this
 
 	void operator=(const PixelBufferBase<T>& other);
+
+	__m512i calcIndices(__m512i x, __m512i y) const
+	{
+		return _mm512_add_epi32(x, _mm512_mullo_epi32(y, _mm512_set1_epi32(this->getW())));
+	}
 protected:
 	T& at(int x, int y);
 	const T& at(int x, int y) const;
@@ -344,8 +349,7 @@ public:
 	}
 	__m512 gatherPixels16(__m512i x, __m512i y, __mmask16 mask) const
 	{
-		__m512i indices = _mm512_add_epi32(_mm512_mullo_epi32(y, _mm512_set1_epi32(this->getW())), x);
-		return gatherPixels16(indices, mask);
+		return gatherPixels16(this->calcIndices(x, y), mask);
 	}
 
 	__m512 getPixels16(size_t indexStart, __mmask16 mask = 0xFFFF, __m512 fillerVal = _mm512_set1_ps(0)) const

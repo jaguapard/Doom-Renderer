@@ -29,41 +29,54 @@ void Triangle::sortByAscendingTextureY()
 	std::sort(std::begin(tv), std::end(tv), [&](TexVertex& tv1, TexVertex& tv2) {return tv1.textureCoords.y < tv2.textureCoords.y; });
 }
 
-int doTriangleClipping(std::array<bool, 3> vertexOutside, int outsideVertexCount, const Triangle& triangleToClip, real clippingZ, Triangle* ret)
+int doTriangleClipping(const Triangle& triangleToClip, real clippingZ, Triangle* trianglesOut, int* outsideVertexCount)
 {
+	std::array<bool, 3> vertexOutside = { false };
+	*outsideVertexCount = 0;
+	for (int i = 0; i < 3; ++i)
+	{
+		if (triangleToClip.tv[i].spaceCoords.z > clippingZ)
+		{
+			vertexOutside[i] = true;
+			(*outsideVertexCount)++;
+		}
+	}
+
 	//search for one of a kind vertex (outside if outsideVertexCount==1, else inside)
-	int i = std::find(std::begin(vertexOutside), std::end(vertexOutside), outsideVertexCount == 1) - std::begin(vertexOutside);
+	int i = std::find(std::begin(vertexOutside), std::end(vertexOutside), *outsideVertexCount == 1) - std::begin(vertexOutside);
 	int v1_ind = i > 0 ? i - 1 : 2; //preserve vertice order of the original triangle and prevent out of bounds lookups
 	int v2_ind = i < 2 ? i + 1 : 0;
 	const TexVertex& v1 = triangleToClip.tv[v1_ind];
 	const TexVertex& v2 = triangleToClip.tv[v2_ind];
-
-	if (outsideVertexCount == 1) //if 1 vertice is outside, then 1 triangle gets turned into two
+	
+	switch (*outsideVertexCount)
 	{
+	case 0:
+		trianglesOut[0] = triangleToClip;
+		return 1;
+	case 1: //if 1 vertice is outside, then 1 triangle gets turned into two
 		TexVertex clipped1 = triangleToClip.tv[i].getClipedToPlane(v1, clippingZ);
 		TexVertex clipped2 = triangleToClip.tv[i].getClipedToPlane(v2, clippingZ);
 
-		ret[0] = { v1,       clipped1, v2 };
-		ret[1] = { clipped1, clipped2, v2 };
+		trianglesOut[0] = { v1,       clipped1, v2 };
+		trianglesOut[1] = { clipped1, clipped2, v2 };
 		return 2;
-	}
-
-	if (outsideVertexCount == 2) //in case there are 2 vertices that are outside, the triangle just gets clipped (no new triangles needed)
-	{
+	case 2:
 		Triangle clipped;
 		clipped.tv[v1_ind] = v1.getClipedToPlane(triangleToClip.tv[i], clippingZ);
 		clipped.tv[v2_ind] = v2.getClipedToPlane(triangleToClip.tv[i], clippingZ);
 		clipped.tv[i] = triangleToClip.tv[i];
-		ret[0] = clipped;
+
+		trianglesOut[0] = clipped;
 		return 1;
+	default:
+		return 0;
 	}
 }
 
 void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 {
 	Triangle rotated;
-	std::array<bool, 3> vertexOutside = { false };
-	int outsideVertexCount = 0;
 	for (int i = 0; i < 3; ++i)
 	{
 		Vec4 spaceCopy = tv[i].spaceCoords;
@@ -72,31 +85,18 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 		rotated.tv[i].spaceCoords = context.ctr->rotateAndTranslate(spaceCopy);
 		rotated.tv[i].textureCoords = tv[i].textureCoords;
 		rotated.tv[i].worldCoords = tv[i].spaceCoords;
-
-		if (rotated.tv[i].spaceCoords.z > context.gameSettings.nearPlaneZ)
-		{
-			outsideVertexCount++;
-			vertexOutside[i] = true;
-		}
 	}
-
-	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
-	if (outsideVertexCount == 3) return;
 
 	if (context.gameSettings.backfaceCullingEnabled)
 	{
 		Vec4 normal = rotated.getNormalVector();
-		if (rotated.tv[0].spaceCoords.dot(normal) >= 0)
-		{
-			StatCount(statsman.triangles.verticesOutside[outsideVertexCount]--); //if a triangle is culled by backface culling, it will not get a chance to be split, so stats will be wrong
-			return;
-		}
+		if (rotated.tv[0].spaceCoords.dot(normal) >= 0) return;
 	}
 
-	if (outsideVertexCount == 0) return rotated.prepareScreenSpace(context); //all vertices are in front of camera, prepare data for drawRotationPrepped and proceed
-
 	Triangle t[2];
-	int trianglesOut = doTriangleClipping(vertexOutside, outsideVertexCount, rotated, context.gameSettings.nearPlaneZ, (Triangle*)&t);
+	int outsideVertexCount;
+	int trianglesOut = doTriangleClipping(rotated, context.gameSettings.nearPlaneZ, (Triangle*)&t, &outsideVertexCount);
+	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
 	for (int i = 0; i < trianglesOut; ++i) t[i].prepareScreenSpace(context);
 }
 

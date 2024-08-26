@@ -158,13 +158,10 @@ inline FloatPack16::FloatPack16(float f1, float f2, float f3, float f4, float f5
 	*this = _mm512_setr_ps(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16);
 }
 
-//#pragma optimize("", off)
 inline FloatPack16::FloatPack16(const FloatPack16& other)
 {
-	//zmm = _mm512_loadu_ps(&other.zmm);
 	zmm = other.zmm;
 }
-//#pragma optimize("", on)
 
 inline FloatPack16 FloatPack16::operator+(const float other) const
 {

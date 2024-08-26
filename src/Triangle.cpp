@@ -140,6 +140,7 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
 		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
 
+		/*
 		Vec4 worldCopy = tv[i].worldCoords;
 		worldCopy.w = 1;
 		Vec4 sunCoordsRotated = (*context.shadowMaps)[0].ctr.rotateAndTranslate(worldCopy);
@@ -147,7 +148,7 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		screenSpaceTriangle.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(sunCoordsRotated * sunZinv);
 		screenSpaceTriangle.tv[i].sunScreenPos.z = sunCoordsRotated.z > context.gameSettings.nearPlaneZ ? 0 : sunZinv;
 		screenSpaceTriangle.tv[i].sunScreenPos *= zInv;
-		screenSpaceTriangle.tv[i].sunScreenPos.w = zInv;
+		screenSpaceTriangle.tv[i].sunScreenPos.w = zInv;*/
 
 		//if (sunCoordsRotated.z > context.gameSettings.nearPlaneZ) __debugbreak();
 	}
@@ -249,21 +250,22 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 						dynaLight += VectorPack16(power) / distSquared;
 					}
 				}
+				dynaLight.a = 1;
 
 				Vec4 s1 = tv[0].sunScreenPos;
 				Vec4 s2 = tv[1].sunScreenPos;
 				Vec4 s3 = tv[2].sunScreenPos;		
 				Vec4 shadowLightColorMults = Vec4(1, 1, 1) * 1.5;
 				Vec4 shadowDarkColorMults = shadowLightColorMults * 0.2;
-				VectorPack16 shadowColorMults = shadowDarkColorMults;
+				VectorPack16 shadowColorMults = 0;
 				//shadowColorMults.a = 0.f;
 
 				const ShadowMap& currentShadowMap = (*context.shadowMaps)[0];
-				if (s1.z != 0 && s2.z != 0 && s3.z != 0)
+				//if (s1.z != 0 && s2.z != 0 && s3.z != 0)
 				{
-					VectorPack16 sunWorldPositions = (*context.shadowMaps)[0].ctr.getCurrentTransformationMatrix().transposed() * worldCoords;
+					VectorPack16 sunWorldPositions = currentShadowMap.ctr.getCurrentTransformationMatrix() * worldCoords;
 					FloatPack16 zInv = FloatPack16(context.gameSettings.fovMult) / sunWorldPositions.z;
-					VectorPack16 sunScreenPositions = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(sunWorldPositions * zInv);
+					VectorPack16 sunScreenPositions = currentShadowMap.ctr.screenSpaceToPixels(sunWorldPositions * zInv);
 					sunScreenPositions.z = zInv;
 
 					Mask16 inShadowMapBounds = currentShadowMap.depthBuffer.checkBounds(sunScreenPositions.x, sunScreenPositions.y);
@@ -271,13 +273,14 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 					//if (shadowMapDepthGatherMask) __debugbreak();
 
 					FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
-					//float shadowMapBias = 1.f / 10e6;
-					float shadowMapBias = 0;
+					float shadowMapBias = 1.f / 10e6;
+					//float shadowMapBias = 0;
 					Mask16 pointsInShadow = Mask16(~__mmask16(inShadowMapBounds)) | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
-					shadowColorMults.r = _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
-					shadowColorMults.g = _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
-					shadowColorMults.b = _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
+					shadowColorMults.r += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
+					shadowColorMults.g += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
+					shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
 				}
+				shadowColorMults.a = 1;
 
 				texturePixels = (texturePixels * renderJob.lightMult) * (dynaLight + shadowColorMults);
 				if (context.gameSettings.wireframeEnabled)

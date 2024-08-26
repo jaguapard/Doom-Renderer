@@ -291,6 +291,13 @@ void MainGame::update()
 {
 }
 
+#ifdef NDEBUG
+bool debug = false;
+#else
+bool debug = true;
+#endif
+
+
 void MainGame::changeMapTo(std::string mapName)
 {
 	if (mapName != "MAP00")
@@ -306,8 +313,8 @@ void MainGame::changeMapTo(std::string mapName)
 		camAng = Vec4(0, -1.444047, -0.125);
 	}
 
-	int shadowMapW = 19200;
-	int shadowMapH = 10800;
+	int shadowMapW = debug ? 192 : 19200;
+	int shadowMapH = debug ? 108 : 10800;
 	CoordinateTransformer mapCtr(shadowMapW, shadowMapH);
 	mapCtr.prepare(Vec4(-1846, 2799, 568), Vec4(0, -1.2869, -0.6689));
 	this->shadowMaps = { ShadowMap(shadowMapW,shadowMapH,mapCtr) };

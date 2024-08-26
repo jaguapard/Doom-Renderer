@@ -99,7 +99,7 @@ std::map<std::string, std::string> parseCmdArgs(int argc, char** argv)
 
 void program(int argc, char** argv)
 {
-	/*
+	
 	Matrix4 m = {
 		Vec4(6,3,5,1),
 		Vec4(-5,-2,9,-6),
@@ -108,7 +108,30 @@ void program(int argc, char** argv)
 	};
 
 	Matrix4 z = m.inverse();
-	*/
+
+	Vec4 results[16];
+	VectorPack16 pack;
+	for (int i = 0; i < 16; ++i)
+	{
+		Vec4 v = Vec4(1032, -2434, 324.534, 1) + Vec4(i*0.5235, i*-123, i/31, i+3);
+		results[i] = m * v;
+		pack.x[i] = v.x;
+		pack.y[i] = v.y;
+		pack.z[i] = v.z;
+		pack.w[i] = v.w;
+	}
+
+	VectorPack16 res2 = m * pack;
+	for (int i = 0; i < 16; ++i)
+	{
+		assert(abs(res2.x[i] - results[i].x) < 0.00001);
+		assert(abs(res2.y[i] - results[i].y) < 0.00001);
+		assert(abs(res2.z[i] - results[i].z) < 0.00001);
+		assert(abs(res2.w[i] - results[i].w) < 0.00001);
+	}
+	
+	
+	
 
 	if (SDL_Init(SDL_INIT_EVERYTHING)) throw std::runtime_error(std::string("Failed to initialize SDL: ") + SDL_GetError());
 	if (TTF_Init()) throw std::runtime_error(std::string("Failed to initialize SDL TTF: ") + TTF_GetError());

@@ -139,18 +139,6 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 		screenSpaceTriangle.tv[i].worldCoords = tv[i].worldCoords * zInv;
 		screenSpaceTriangle.tv[i].spaceCoords = context.ctr->screenSpaceToPixels(screenSpaceTriangle.tv[i].spaceCoords);
 		screenSpaceTriangle.tv[i].textureCoords.z = zInv;
-
-		/*
-		Vec4 worldCopy = tv[i].worldCoords;
-		worldCopy.w = 1;
-		Vec4 sunCoordsRotated = (*context.shadowMaps)[0].ctr.rotateAndTranslate(worldCopy);
-		real sunZinv = 1.0/sunCoordsRotated.z;
-		screenSpaceTriangle.tv[i].sunScreenPos = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(sunCoordsRotated * sunZinv);
-		screenSpaceTriangle.tv[i].sunScreenPos.z = sunCoordsRotated.z > context.gameSettings.nearPlaneZ ? 0 : sunZinv;
-		screenSpaceTriangle.tv[i].sunScreenPos *= zInv;
-		screenSpaceTriangle.tv[i].sunScreenPos.w = zInv;*/
-
-		//if (sunCoordsRotated.z > context.gameSettings.nearPlaneZ) __debugbreak();
 	}
 
 	real y1 = screenSpaceTriangle.tv[0].spaceCoords.y;
@@ -187,9 +175,7 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	rj.textureIndex = context.textureIndex;
 
 	real xSpan = screenMaxX - screenMinX;
-	real ySpan = screenMaxY - screenMinY;
-
-	
+	real ySpan = screenMaxY - screenMinY;	
 }
 
 inline std::tuple<FloatPack16, FloatPack16, FloatPack16> calculateBarycentricCoordinates(const VectorPack16& r, const Vec4& r1, const Vec4& r2, const Vec4& r3, const real& rcpSignedArea)
@@ -251,10 +237,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 					}
 				}
 				dynaLight.a = 1;
-
-				Vec4 s1 = tv[0].sunScreenPos;
-				Vec4 s2 = tv[1].sunScreenPos;
-				Vec4 s3 = tv[2].sunScreenPos;		
+	
 				Vec4 shadowLightColorMults = Vec4(1, 1, 1) * 1.5;
 				Vec4 shadowDarkColorMults = shadowLightColorMults * 0.2;
 				VectorPack16 shadowColorMults = 0;
@@ -270,7 +253,6 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 
 					Mask16 inShadowMapBounds = currentShadowMap.depthBuffer.checkBounds(sunScreenPositions.x, sunScreenPositions.y);
 					Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
-					//if (shadowMapDepthGatherMask) __debugbreak();
 
 					FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
 					float shadowMapBias = 1.f / 10e6;

@@ -10,7 +10,6 @@ struct TexVertex
     Vec4 spaceCoords; //this can mean different things inside different contexts, world or screen space
     Vec4 textureCoords; //this too, but it's either normal uv's, or z-divided ones
     Vec4 worldCoords; //world coordinates for this vertex
-    Vec4 sunScreenPos;
 
     
     //TexVertex(__m256 v);

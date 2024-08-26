@@ -257,7 +257,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 					FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
 					float shadowMapBias = 1.f / 10e6;
 					//float shadowMapBias = 0;
-					Mask16 pointsInShadow = Mask16(~__mmask16(inShadowMapBounds)) | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
+					Mask16 pointsInShadow = ~inShadowMapBounds | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
 					shadowColorMults.r += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
 					shadowColorMults.g += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
 					shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));

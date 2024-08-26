@@ -179,9 +179,9 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	real screenMaxY = _3max(r1.y, r2.y, r3.y);
 
 	rj.minX = floor(screenMinX);
-	rj.maxX = ceil(screenMaxX + 0.5);
+	rj.maxX = ceil(screenMaxX);
 	rj.minY = floor(screenMinY);
-	rj.maxY = ceil(screenMaxY + 0.5);
+	rj.maxY = ceil(screenMaxY);
 	rj.lightMult = context.lightMult;
 	rj.textureIndex = context.textureIndex;
 

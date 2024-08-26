@@ -124,6 +124,13 @@ Vec4 Matrix4::multiplyByTransposed(const Vec4 v) const
 	__m512 mul = _mm512_mul_ps(zmm, bcst);
 	__m256 red1 = _mm256_add_ps(_mm512_extractf32x8_ps(mul, 0), _mm512_extractf32x8_ps(mul, 1));
 	return _mm_add_ps(_mm256_extractf32x4_ps(red1, 0), _mm256_extractf32x4_ps(red1, 1));
+#elif __AVX2__ && 0
+	__m256 bcst1 = _mm256_permutevar8x32_ps(_mm256_castps128_ps256(v), _mm256_setr_epi32(0, 0, 0, 0, 1, 1, 1, 1));
+	__m256 bcst2 = _mm256_permutevar8x32_ps(_mm256_castps128_ps256(v), _mm256_setr_epi32(2, 2, 2, 2, 3, 3, 3, 3));
+	__m256 mul1 = _mm256_mul_ps(ymm0, bcst1);
+	__m256 mul2 = _mm256_mul_ps(ymm1, bcst2);
+	__m256 res1 = _mm256_add_ps(mul1, mul2);
+	return _mm_add_ps(_mm256_extractf32x4_ps(res1, 0), _mm256_extractf32x4_ps(res1, 1));
 #else
 	__m128 x = _mm_set1_ps(v.x);
 	__m128 y = _mm_set1_ps(v.y);

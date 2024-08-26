@@ -22,12 +22,12 @@ namespace bob
 #endif
 	public:
 		_SSE_Vec4_float() = default;
-		_SSE_Vec4_float(const float x);
-		_SSE_Vec4_float(const float x, const float y);
-		_SSE_Vec4_float(const float x, const float y, const float z);
-		_SSE_Vec4_float(const float x, const float y, const float z, const float w);
+		//_SSE_Vec4_float(const float x);
+		//_SSE_Vec4_float(const float x, const float y);
+		//_SSE_Vec4_float(const float x, const float y, const float z);
+		_SSE_Vec4_float(const float x, const float y = 0, const float z = 0, const float w = 0);
 		_SSE_Vec4_float(const __m128 v);
-		_SSE_Vec4_float(const std::initializer_list<float> list);
+		//_SSE_Vec4_float(const std::initializer_list<float> list);
 
 		_SSE_Vec4_float operator+(const float other) const; //Add a single value to all elements of the vector
 		_SSE_Vec4_float operator-(const float other) const; //Subtract a single value from all elements of the vector
@@ -71,23 +71,27 @@ namespace bob
 		_SSE_Vec4_float cross3d(const _SSE_Vec4_float other) const;		
 	};
 
-	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x) : x(x), y(0), z(0), w(0) {}
-	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y) : x(x), y(y), z(0), w(0) {}
-	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y, const float z) : x(x), y(y), z(z), w(0) {}
-	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y, const float z, const float w) : x(x), y(y), z(z), w(w) {}
+	//inline _SSE_Vec4_float::_SSE_Vec4_float(const float x) : x(x), y(0), z(0), w(0) {}
+	//inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y) : x(x), y(y), z(0), w(0) {}
+	//inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y, const float z) : x(x), y(y), z(z), w(0) {}
+	inline _SSE_Vec4_float::_SSE_Vec4_float(const float x, const float y, const float z, const float w)
+	{
+		*this = _mm_setr_ps(x, y, z, w);
+	}
 
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const __m128 v)
     {
         *reinterpret_cast<__m128*>(this) = v;
     }
 
+	/*
 	inline _SSE_Vec4_float::_SSE_Vec4_float(const std::initializer_list<float> list)
 	{
 		x = list.size() >= 1 ? *(list.begin()) : 0;
 		y = list.size() >= 2 ? *(list.begin() + 1) : 0;
 		z = list.size() >= 3 ? *(list.begin() + 2) : 0;
 		w = list.size() >= 4 ? *(list.begin() + 3) : 0;
-	}
+	}*/
 
 	inline _SSE_Vec4_float _SSE_Vec4_float::operator+(const float other) const
 	{

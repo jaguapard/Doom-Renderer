@@ -11,6 +11,7 @@ struct Mask16
 	Mask16 operator&(const Mask16& other) const;
 	Mask16 operator|(const Mask16& other) const;
 	Mask16 operator^(const Mask16& other) const;
+	Mask16 operator~() const;
 	Mask16& operator&=(const Mask16& other);
 	Mask16& operator|=(const Mask16& other);
 	Mask16& operator^=(const Mask16& other);
@@ -37,6 +38,11 @@ inline Mask16 Mask16::operator|(const Mask16& other) const
 inline Mask16 Mask16::operator^(const Mask16& other) const
 {
 	return _kxor_mask16(mask, other.mask);
+}
+
+inline Mask16 Mask16::operator~() const
+{
+	return _knot_mask16(*this);
 }
 
 inline Mask16& Mask16::operator&=(const Mask16& other)

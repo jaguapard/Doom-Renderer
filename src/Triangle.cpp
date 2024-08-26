@@ -236,15 +236,12 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 						dynaLight += VectorPack16(power) / distSquared;
 					}
 				}
-				dynaLight.a = 1;
 	
 				Vec4 shadowLightColorMults = Vec4(1, 1, 1) * 1.5;
 				Vec4 shadowDarkColorMults = shadowLightColorMults * 0.2;
 				VectorPack16 shadowColorMults = 0;
-				//shadowColorMults.a = 0.f;
 
-				const ShadowMap& currentShadowMap = (*context.shadowMaps)[0];
-				//if (s1.z != 0 && s2.z != 0 && s3.z != 0)
+				for (const auto& currentShadowMap : *context.shadowMaps)
 				{
 					VectorPack16 sunWorldPositions = currentShadowMap.ctr.getCurrentTransformationMatrix() * worldCoords;
 					FloatPack16 zInv = FloatPack16(context.gameSettings.fovMult) / sunWorldPositions.z;
@@ -262,7 +259,6 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 					shadowColorMults.g += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
 					shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
 				}
-				shadowColorMults.a = 1;
 
 				texturePixels = (texturePixels * renderJob.lightMult) * (dynaLight + shadowColorMults);
 				if (context.gameSettings.wireframeEnabled)

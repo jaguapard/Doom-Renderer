@@ -237,6 +237,7 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 			{
 				VectorPack16 worldCoords = this->interpolateWorldCoords(alpha, beta, gamma);
 				worldCoords /= interpolatedDividedUv.z;
+				worldCoords.w = 1;
 
 				VectorPack16 dynaLight = 0;
 				if (false)
@@ -260,14 +261,18 @@ void Triangle::drawSlice(const TriangleRenderContext& context, const RenderJob& 
 				const ShadowMap& currentShadowMap = (*context.shadowMaps)[0];
 				if (s1.z != 0 && s2.z != 0 && s3.z != 0)
 				{
-					VectorPack16 sunScreenPositions = VectorPack16(tv[0].sunScreenPos) * alpha + VectorPack16(tv[1].sunScreenPos) * beta + VectorPack16(tv[2].sunScreenPos) * gamma;
-					sunScreenPositions /= sunScreenPositions.w;
+					VectorPack16 sunWorldPositions = (*context.shadowMaps)[0].ctr.getCurrentTransformationMatrix().transposed() * worldCoords;
+					FloatPack16 zInv = FloatPack16(context.gameSettings.fovMult) / sunWorldPositions.z;
+					VectorPack16 sunScreenPositions = (*context.shadowMaps)[0].ctr.screenSpaceToPixels(sunWorldPositions * zInv);
+					sunScreenPositions.z = zInv;
+
 					Mask16 inShadowMapBounds = currentShadowMap.depthBuffer.checkBounds(sunScreenPositions.x, sunScreenPositions.y);
 					Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
 					//if (shadowMapDepthGatherMask) __debugbreak();
 
 					FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
-					float shadowMapBias = 1.f / 10e6;
+					//float shadowMapBias = 1.f / 10e6;
+					float shadowMapBias = 0;
 					Mask16 pointsInShadow = Mask16(~__mmask16(inShadowMapBounds)) | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
 					shadowColorMults.r = _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
 					shadowColorMults.g = _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));

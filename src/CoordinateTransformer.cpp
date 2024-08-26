@@ -40,6 +40,11 @@ Vec4 CoordinateTransformer::screenSpaceToPixels(const Vec4 v) const
 	return (v + this->_shift) * hVec;
 }
 
+VectorPack16 CoordinateTransformer::screenSpaceToPixels(const VectorPack16& v) const
+{
+	return (v + this->_shift) * hVec;
+}
+
 Vec4 CoordinateTransformer::rotateAndTranslate(Vec4 v) const
 {
 	Vec4 interm = rotationTranslation.multiplyByTransposed(v);

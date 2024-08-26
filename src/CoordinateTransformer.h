@@ -10,6 +10,7 @@ public:
 	CoordinateTransformer(int w, int h);
 	void prepare(const Vec4 camPos, const Vec4 camAng);
 	Vec4 screenSpaceToPixels(const Vec4 v) const;
+	VectorPack16 screenSpaceToPixels(const VectorPack16& v) const;
 
 	Vec4 rotateAndTranslate(Vec4 v) const;
 	Vec4 shift(const Vec4 v) const;

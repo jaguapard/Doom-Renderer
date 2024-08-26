@@ -162,7 +162,6 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 
 void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 {
-	RenderJob rj;
 	const Vec4 r1 = tv[0].spaceCoords;
 	const Vec4 r2 = tv[1].spaceCoords;
 	const Vec4 r3 = tv[2].spaceCoords;
@@ -170,6 +169,7 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	real signedArea = (r1 - r3).cross2d(r2 - r3);
 	if (signedArea == 0.0) return;
 
+	RenderJob& rj = context.renderJobs->emplace_back();
 	rj.rcpSignedArea = 1.0 / signedArea;
 	rj.originalTriangle = *this;
 
@@ -188,7 +188,7 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	real xSpan = screenMaxX - screenMinX;
 	real ySpan = screenMaxY - screenMinY;
 
-	context.renderJobs->push_back(rj);
+	
 }
 
 inline std::tuple<FloatPack16, FloatPack16, FloatPack16> calculateBarycentricCoordinates(const VectorPack16& r, const Vec4& r1, const Vec4& r2, const Vec4& r3, const real& rcpSignedArea)

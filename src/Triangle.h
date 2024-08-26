@@ -51,6 +51,11 @@ struct RenderJob
 
 	real minX, minY, maxX, maxY;
 	real rcpSignedArea;
+
+	RenderJob()
+	{
+
+	}
 };
 class ShadowMap;
 

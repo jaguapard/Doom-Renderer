@@ -26,6 +26,10 @@
 #include "../misc/GameSettings.h"
 #include "../ShadowMap.h"
 
+class alignas(64) RenderJobList : public std::vector<RenderJob>
+{
+
+};
 class MainGame : public GameStateBase
 {
 public:
@@ -77,7 +81,7 @@ protected:
 	DoomMap* currentMap = nullptr;
 	std::string warpTo;
 
-	std::vector<RenderJob> renderJobs;
+	std::vector<RenderJobList> renderJobs;
 	std::array<uint32_t, 4> shifts;
 
 

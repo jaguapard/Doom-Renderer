@@ -188,6 +188,8 @@ void MainGame::init()
 		//{Vec4(500,300,0), Vec4(0.5,0.7,1,1), 2e5},
 		//{Vec4(-500,300,0), Vec4(0.1,0.5,1,1), 2e5},
 	};
+
+	renderJobs.resize(threadpool->getThreadCount());
 }
 
 std::string vecToStr(const Vec4& v)
@@ -227,6 +229,10 @@ std::vector<MainGame::ModelSlice> MainGame::distributeTrianglesForWorkers()
 		skySlice.pTrianglesEnd = skySlice.pTrianglesBegin + sky.getModel().getTriangles().size();
 	}
 
+	size_t trianglesBeforeDistribution = 0, trianglesAfterDistribution = 0;
+	for (const auto& it : modelSlices) trianglesBeforeDistribution += it.pTrianglesEnd - it.pTrianglesBegin;
+	assert(trianglesBeforeDistribution == totalTriangles);
+
 	size_t sliceIndex = 0;
 	for (size_t i = 0; i < threadCount; ++i)
 	{
@@ -243,34 +249,52 @@ std::vector<MainGame::ModelSlice> MainGame::distributeTrianglesForWorkers()
 			}
 			else
 			{
-				ModelSlice newSlice;
-				newSlice.pModel = modelSlices[sliceIndex].pModel;
-				newSlice.pTrianglesEnd = modelSlices[sliceIndex].pTrianglesEnd;
 				const Triangle* pBorder = modelSlices[sliceIndex].pTrianglesBegin + myTriangleLimit;
+				ModelSlice& newSlice = modelSlices.emplace_back(); //maybe should insert in the same place?
+
+				newSlice.pModel = modelSlices[sliceIndex].pModel;
+				newSlice.pTrianglesEnd = modelSlices[sliceIndex].pTrianglesEnd;				
 				newSlice.pTrianglesBegin = pBorder;
+
 				modelSlices[sliceIndex].pTrianglesEnd = pBorder;
-				modelSlices.push_back(newSlice); //maybe should insert in the same place?
+				modelSlices[sliceIndex].workerNumber = i;
 				myTriangleLimit = 0;
 			}
 			++sliceIndex;
 		}
 	}
+	modelSlices.back().workerNumber = threadCount - 1; //TODO: not a good way
+	for (const auto& it : modelSlices) trianglesAfterDistribution += it.pTrianglesEnd - it.pTrianglesBegin;
+	assert(trianglesBeforeDistribution == trianglesAfterDistribution);
 
 	for (auto& it : modelSlices) assert(it.workerNumber != -1);
 	return modelSlices;
 }
+
 void MainGame::draw()
 {
 	int threadCount = threadpool->getThreadCount();
 	
 	TriangleRenderContext ctx = makeTriangleRenderContext();
+	std::vector<ModelSlice> distributedSlices = this->distributeTrianglesForWorkers();
 
-	
-
-	
-
-	
-	fillRenderJobsList(ctx, renderJobs);
+	std::vector<task_id> transformTasks;
+	for (int tNum = 0; tNum < threadCount; ++tNum)
+	{
+		taskfunc_t f = [&, tNum]() {
+			TriangleRenderContext localCtx = ctx;
+			localCtx.renderJobs = &renderJobs[tNum];
+			for (const auto& slice : distributedSlices)
+			{
+				if (slice.workerNumber == tNum)
+				{
+					slice.pModel->addTriangleRangeToRenderQueue(slice.pTrianglesBegin, slice.pTrianglesEnd, localCtx);
+				}
+			}
+		};
+		transformTasks.push_back(threadpool->addTask(f));
+	}
+	threadpool->waitForMultipleTasks(transformTasks);
 
 	std::vector<ThreadpoolTask> taskBatch;
 
@@ -288,6 +312,7 @@ void MainGame::draw()
 		//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
 		//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
 		taskfunc_t f = [=]() {
+			TriangleRenderContext localCtx = ctx;
 			int ssaaMult = settings.ssaaMult;
 			auto lim = threadpool->getLimitsForThread(tNum, 0, wndSurf->h);
 			int outputMinY = lim.first; //truncate limits to avoid fighting
@@ -295,7 +320,7 @@ void MainGame::draw()
 			int renderMinY = outputMinY * ssaaMult; //it is essential to caclulate rendering zone limits like this, to ensure there are no intersections in different threads
 			int renderMaxY = outputMaxY * ssaaMult;
 	
-			ctx.zBuffer->clearRows(renderMinY, renderMaxY); //Z buffer has to be cleared, else only pixels closer than previous frame will draw
+			localCtx.zBuffer->clearRows(renderMinY, renderMaxY); //Z buffer has to be cleared, else only pixels closer than previous frame will draw
 			if (settings.bufferCleaningEnabled)
 			{
 				//ctx.frameBuffer->clearRows(renderMinY, renderMaxY);
@@ -303,13 +328,16 @@ void MainGame::draw()
 			}
 			
 			MainFragmentRenderInput mfrInp;
-			mfrInp.ctx = ctx;
-			mfrInp.renderJobs = &renderJobs;
+			mfrInp.ctx = localCtx;
 			mfrInp.zoneMinY = renderMinY;
 			mfrInp.zoneMaxY = renderMaxY;
 
 			MainFragmentRenderShader mfrShaderInst;
-			mfrShaderInst.run(mfrInp);
+			for (auto& it : renderJobs)
+			{
+				mfrInp.renderJobs = &it;
+				mfrShaderInst.run(mfrInp);
+			}
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
@@ -324,7 +352,7 @@ void MainGame::draw()
 
 	std::vector<task_id> renderTaskIds = threadpool->addTaskBatch(taskBatch);
 	threadpool->waitForMultipleTasks(renderTaskIds);
-	renderJobs.clear();
+	for (auto& it : renderJobs) it.clear();
 
 	windowUpdateTaskId = threadpool->addTask([&, this]() {
 		performanceMonitor.registerFrameDone();

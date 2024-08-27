@@ -91,4 +91,14 @@ protected:
 	void adjustSsaaMult(int add);
 
 	void saveBuffers() const;
+
+	struct ModelSlice
+	{
+		const Triangle* pTrianglesBegin;
+		const Triangle* pTrianglesEnd;
+		const Model* pModel;
+		size_t workerNumber;
+	};
+	std::vector<ModelSlice> distributeTrianglesForWorkers();
+
 };

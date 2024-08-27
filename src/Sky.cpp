@@ -108,7 +108,7 @@ void Sky::addToRenderQueue(TriangleRenderContext ctx)
 	this->skyModel.addToRenderQueue(ctx);
 }
 
-const std::vector<Triangle>& Sky::getTriangles() const
+const Model& Sky::getModel() const
 {
-	return skyModel.getTriangles();
+	return skyModel;
 }

@@ -9,7 +9,7 @@ public:
 	Sky() = default;
 	Sky(std::string textureName, TextureManager& textureManager);
 	void addToRenderQueue(TriangleRenderContext ctx);
-	const std::vector<Triangle>& getTriangles() const;
+	const Model& getModel() const;
 private:
 	Model skyModel;	
 };

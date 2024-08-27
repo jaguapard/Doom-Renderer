@@ -199,11 +199,82 @@ std::string boolToStr(bool b)
 {
 	return b ? "enabled" : "disabled";
 }
+
+struct ModelSlice
+{
+	const Triangle* pTrianglesBegin;
+	const Triangle* pTrianglesEnd;
+	const Model* pModel;
+	size_t workerNumber;
+};
+
+std::vector<MainGame::ModelSlice> MainGame::distributeTrianglesForWorkers()
+{
+	size_t threadCount = threadpool->getThreadCount();
+	std::vector<ModelSlice> modelSlices;
+	size_t totalTriangles = 0;
+	for (const auto& sectorModels : sectorWorldModels)
+	{
+		for (const auto& model : sectorModels)
+		{
+			size_t count = model.getTriangleCount();
+			totalTriangles += count;
+
+			ModelSlice& slice = modelSlices.emplace_back();
+			slice.pTrianglesBegin = model.getTriangles().data();
+			slice.pTrianglesEnd = slice.pTrianglesBegin + count;
+			slice.pModel = &model;
+		}
+	}
+	if (true)
+	{
+		totalTriangles += sky.getModel().getTriangles().size();
+		ModelSlice& skySlice = modelSlices.emplace_back();
+		skySlice.pModel = &sky.getModel();
+		skySlice.pTrianglesBegin = sky.getModel().getTriangles().data();
+		skySlice.pTrianglesEnd = skySlice.pTrianglesBegin + sky.getModel().getTriangles().size();
+	}
+
+	size_t sliceIndex = 0;
+	for (size_t i = 0; i < threadCount; ++i)
+	{
+		size_t myTriangleCount = 0;
+		auto [limLow, limHigh] = threadpool->getLimitsForThread(i, 0, totalTriangles, threadCount);
+		size_t myTriangleLimit = limHigh - limLow;
+		while (myTriangleLimit > 0 && sliceIndex < modelSlices.size())
+		{
+			size_t currentSliceSize = modelSlices[sliceIndex].pTrianglesEnd - modelSlices[sliceIndex].pTrianglesBegin;
+			if (currentSliceSize <= myTriangleLimit)
+			{
+				myTriangleLimit -= currentSliceSize;
+				modelSlices[sliceIndex].workerNumber = i;
+			}
+			else
+			{
+				ModelSlice newSlice;
+				newSlice.pModel = modelSlices[sliceIndex].pModel;
+				newSlice.pTrianglesEnd = modelSlices[sliceIndex].pTrianglesEnd;
+				const Triangle* pBorder = modelSlices[sliceIndex].pTrianglesBegin + myTriangleLimit;
+				newSlice.pTrianglesBegin = pBorder;
+				modelSlices[sliceIndex].pTrianglesEnd = pBorder;
+				modelSlices.push_back(newSlice); //maybe should insert in the same place?
+				myTriangleLimit = 0;
+			}
+			++sliceIndex;
+		}
+	}
+}
 void MainGame::draw()
 {
 	int threadCount = threadpool->getThreadCount();
 	
 	TriangleRenderContext ctx = makeTriangleRenderContext();
+
+	
+
+	
+
+	
 	fillRenderJobsList(ctx, renderJobs);
 
 	std::vector<ThreadpoolTask> taskBatch;

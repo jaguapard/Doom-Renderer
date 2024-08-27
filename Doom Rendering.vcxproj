@@ -115,6 +115,7 @@
     <ClInclude Include="src\PolygonBitmap.h" />
     <ClInclude Include="src\PolygonTriangulator.h" />
     <ClInclude Include="src\real.h" />
+    <ClInclude Include="src\shaders\ShaderBase.h" />
     <ClInclude Include="src\ShadowMap.h" />
     <ClInclude Include="src\Sky.h" />
     <ClInclude Include="src\smart.h" />

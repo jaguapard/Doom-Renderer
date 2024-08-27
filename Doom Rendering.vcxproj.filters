@@ -25,6 +25,9 @@
     <Filter Include="Header Files\misc">
       <UniqueIdentifier>{79ac45a4-3703-4ef3-8559-0705c11330ba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\shaders">
+      <UniqueIdentifier>{d5686a54-98e7-4fc5-b9c4-06c9638a3e08}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ZBuffer.cpp">
@@ -253,6 +256,9 @@
     </ClInclude>
     <ClInclude Include="src\ShadowMap.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shaders\ShaderBase.h">
+      <Filter>Header Files\shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

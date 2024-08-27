@@ -60,7 +60,7 @@ void Model::addToRenderQueue(TriangleRenderContext ctx) const
 	const auto& texture = ctx.gameSettings.textureManager->getTextureByIndex(textureIndex);
 	ctx.textureIndex = textureIndex;
 	ctx.gameSettings.backfaceCullingEnabled &= texture.hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
-	for (const auto& it : triangles) it.addToRenderQueue(ctx);
+	this->addTriangleRangeToRenderQueue(this->triangles.data(), this->triangles.data() + this->triangles.size(), ctx);
 }
 
 int Model::getTriangleCount() const
@@ -81,4 +81,18 @@ const std::vector<Triangle>& Model::getTriangles() const
 void Model::swapVertexOrder()
 {
 	for (auto& it : triangles) std::swap(it.tv[1], it.tv[2]);
+}
+
+void Model::addTriangleRangeToRenderQueue(const Triangle* pTrianglesBegin, const Triangle* pTrianglesEnd, TriangleRenderContext ctx) const
+{
+	if (this->textureIndex == ctx.doomSkyTextureMarkerIndex) return; //skip sky textured level geometry
+	
+	const auto& texture = ctx.gameSettings.textureManager->getTextureByIndex(textureIndex);
+	ctx.textureIndex = textureIndex;
+	ctx.gameSettings.backfaceCullingEnabled &= texture.hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
+	while (pTrianglesBegin < pTrianglesEnd)
+	{
+		pTrianglesBegin->addToRenderQueue(ctx);
+		++pTrianglesBegin;
+	}
 }

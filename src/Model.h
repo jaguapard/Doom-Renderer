@@ -7,12 +7,14 @@ class Model
 public:
 	Model() = default;
 	Model(const std::vector<Triangle>& triangles, int textureIndex);
-	void addToRenderQueue(TriangleRenderContext ctx) const;
 	int getTriangleCount() const;
 	Vec4 getBoundingBoxMidPoint() const;
 	const std::vector<Triangle>& getTriangles() const;
 
 	void swapVertexOrder();
+
+	void addToRenderQueue(TriangleRenderContext ctx) const;
+	void addTriangleRangeToRenderQueue(const Triangle* pTrianglesBegin, const Triangle* pTrianglesEnd, TriangleRenderContext ctx) const;
 private:
 	std::vector<Triangle> triangles;
 	int textureIndex;

@@ -97,7 +97,7 @@ protected:
 		const Triangle* pTrianglesBegin;
 		const Triangle* pTrianglesEnd;
 		const Model* pModel;
-		size_t workerNumber;
+		int workerNumber = -1;
 	};
 	std::vector<ModelSlice> distributeTrianglesForWorkers();
 

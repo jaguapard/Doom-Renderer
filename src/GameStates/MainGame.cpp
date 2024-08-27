@@ -200,14 +200,6 @@ std::string boolToStr(bool b)
 	return b ? "enabled" : "disabled";
 }
 
-struct ModelSlice
-{
-	const Triangle* pTrianglesBegin;
-	const Triangle* pTrianglesEnd;
-	const Model* pModel;
-	size_t workerNumber;
-};
-
 std::vector<MainGame::ModelSlice> MainGame::distributeTrianglesForWorkers()
 {
 	size_t threadCount = threadpool->getThreadCount();
@@ -263,6 +255,9 @@ std::vector<MainGame::ModelSlice> MainGame::distributeTrianglesForWorkers()
 			++sliceIndex;
 		}
 	}
+
+	for (auto& it : modelSlices) assert(it.workerNumber != -1);
+	return modelSlices;
 }
 void MainGame::draw()
 {

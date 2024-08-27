@@ -9,13 +9,31 @@ void MainFragmentRenderShader::run(MainFragmentRenderInput& input)
 	}
 }
 
+std::optional<RenderJob::BoundingBox> MainFragmentRenderShader::getRenderJobSliceBoundingBox(const RenderJob& renderJob, int zoneMinY, int zoneMaxY, real xMin, real xMax)
+{
+	if (renderJob.boundingBox.minY >= zoneMaxY || renderJob.boundingBox.maxY < zoneMinY) return {};
+	real yBeg = std::clamp<real>(renderJob.boundingBox.minY, zoneMinY, zoneMaxY - 1);
+	real yEnd = std::clamp<real>(renderJob.boundingBox.maxY, zoneMinY, zoneMaxY - 1);
+	real xBeg = std::clamp<real>(renderJob.boundingBox.minX, xMin, xMax);
+	real xEnd = std::clamp<real>(renderJob.boundingBox.maxX, xMin, xMax);
+
+	RenderJob::BoundingBox adjustedBox;
+	adjustedBox.minY = yBeg;
+	adjustedBox.maxY = yEnd;
+	adjustedBox.minX = xBeg;
+	adjustedBox.maxX = xEnd;
+	return adjustedBox;
+}
+
 void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
 {
-	if (renderJob.minY >= zoneMaxY || renderJob.maxY < zoneMinY) return;
-	real yBeg = std::clamp<real>(renderJob.minY, zoneMinY, zoneMaxY - 1);
-	real yEnd = std::clamp<real>(renderJob.maxY, zoneMinY, zoneMaxY - 1);
-	real xBeg = std::clamp<real>(renderJob.minX, 0, context.framebufW - 1);
-	real xEnd = std::clamp<real>(renderJob.maxX, 0, context.framebufW - 1);
+	auto boundingBox = getRenderJobSliceBoundingBox(renderJob, zoneMinY, zoneMaxY, 0, context.framebufW - 1);
+	if (!boundingBox) return;
+
+	real yBeg = boundingBox.value().minY;
+	real yEnd = boundingBox.value().maxY;
+	real xBeg = boundingBox.value().minX;
+	real xEnd = boundingBox.value().maxX;
 
 	const Texture& texture = context.gameSettings.textureManager->getTextureByIndex(renderJob.textureIndex);
 	auto& depthBuf = *context.zBuffer;

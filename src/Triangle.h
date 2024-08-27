@@ -47,9 +47,14 @@ struct RenderJob
 
 	int textureIndex;
 	real lightMult;
-
-	real minX, minY, maxX, maxY;
 	real rcpSignedArea;
+
+	struct BoundingBox
+	{
+		real minX, minY, maxX, maxY;
+	};
+
+	BoundingBox boundingBox;
 
 	RenderJob()
 	{

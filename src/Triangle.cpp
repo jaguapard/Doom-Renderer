@@ -177,3 +177,8 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	real xSpan = screenMaxX - screenMinX;
 	real ySpan = screenMaxY - screenMinY;	
 }
+
+Vec4 Triangle::getNormalVector() const
+{
+	return (tv[2].spaceCoords - tv[0].spaceCoords).cross3d(tv[1].spaceCoords - tv[0].spaceCoords);
+}

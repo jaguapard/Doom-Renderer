@@ -5,6 +5,7 @@
 #include "../blitting.h"
 #include "../EnumclassHelper.h"
 #include "../AssetLoader.h"
+#include "../shaders/MainFragmentRenderShader.h"
 
 MainGame::MainGame(GameStateInitData data)
 {
@@ -234,12 +235,15 @@ void MainGame::draw()
 				//ctx.frameBuffer->clearRows(renderMinY, renderMaxY);
 				//ctx.lightBuffer->clearRows(renderMinY, renderMaxY, 1);
 			}
+			
+			MainFragmentRenderInput mfrInp;
+			mfrInp.ctx = ctx;
+			mfrInp.renderJobs = &renderJobs;
+			mfrInp.zoneMinY = renderMinY;
+			mfrInp.zoneMaxY = renderMaxY;
 
-			for (int i = 0; i < renderJobs.size(); ++i)
-			{
-				const RenderJob& myJob = renderJobs[i];
-				myJob.originalTriangle.drawSlice(ctx, myJob, renderMinY, renderMaxY);
-			}
+			MainFragmentRenderShader mfrShaderInst;
+			mfrShaderInst.run(mfrInp);
 
 			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
 			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity

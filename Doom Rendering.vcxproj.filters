@@ -123,7 +123,7 @@
     <ClCompile Include="src\ShadowMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\shaders\MainFragmentRenderingShader.cpp">
+    <ClCompile Include="src\shaders\MainFragmentRenderShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -263,7 +263,7 @@
     <ClInclude Include="src\shaders\ShaderBase.h">
       <Filter>Header Files\shaders</Filter>
     </ClInclude>
-    <ClInclude Include="src\shaders\MainFragmentRenderingShader.h">
+    <ClInclude Include="src\shaders\MainFragmentRenderShader.h">
       <Filter>Header Files\shaders</Filter>
     </ClInclude>
   </ItemGroup>

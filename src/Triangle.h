@@ -30,7 +30,6 @@ struct Triangle
 
 	void addToRenderQueue(const TriangleRenderContext& context) const;
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
-	void drawSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const;
 
 	Vec4 getNormalVector() const;
 

@@ -1,6 +1,6 @@
 #include "ShadowMap.h"
 #include "Threadpool.h"
-
+#include "shaders/MainFragmentRenderShader.h"
 ShadowMap::ShadowMap(int w, int h, const CoordinateTransformer& ctr)
 {
 	this->depthBuffer = { w,h };
@@ -41,10 +41,14 @@ void ShadowMap::render(const std::vector<const Model*>& models, const GameSettin
 	{
 		taskfunc_t task = [&, i]() {
 			auto [limLow, limHigh] = threadpool.getLimitsForThread(i, 0, depthBuffer.getH(), threads);
-			for (auto& job : renderJobs)
-			{
-				job.originalTriangle.drawSlice(ctx, job, limLow, limHigh);
-			}
+			MainFragmentRenderInput mfrInp;
+			mfrInp.ctx = ctx;
+			mfrInp.renderJobs = &renderJobs;
+			mfrInp.zoneMinY = limLow;
+			mfrInp.zoneMaxY = limHigh;
+
+			MainFragmentRenderShader mfrShaderInst;
+			mfrShaderInst.run(mfrInp);
 		};
 
 		ids.push_back(threadpool.addTask(task));

@@ -1,4 +1,4 @@
-#include "MainFragmentRenderingShader.h"
+#include "MainFragmentRenderShader.h"
 #include "../ShadowMap.h"
 
 void MainFragmentRenderShader::run(MainFragmentRenderInput& input)

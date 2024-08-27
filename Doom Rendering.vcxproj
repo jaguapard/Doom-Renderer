@@ -70,6 +70,7 @@
     <ClCompile Include="src\Polygon.cpp" />
     <ClCompile Include="src\PolygonBitmap.cpp" />
     <ClCompile Include="src\PolygonTriangulator.cpp" />
+    <ClCompile Include="src\shaders\MainFragmentRenderingShader.cpp" />
     <ClCompile Include="src\ShadowMap.cpp" />
     <ClCompile Include="src\Sky.cpp" />
     <ClCompile Include="src\Statsman.cpp" />
@@ -115,6 +116,7 @@
     <ClInclude Include="src\PolygonBitmap.h" />
     <ClInclude Include="src\PolygonTriangulator.h" />
     <ClInclude Include="src\real.h" />
+    <ClInclude Include="src\shaders\MainFragmentRenderingShader.h" />
     <ClInclude Include="src\shaders\ShaderBase.h" />
     <ClInclude Include="src\ShadowMap.h" />
     <ClInclude Include="src\Sky.h" />

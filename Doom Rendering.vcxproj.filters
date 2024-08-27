@@ -123,6 +123,9 @@
     <ClCompile Include="src\ShadowMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\shaders\MainFragmentRenderingShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Texture.h">
@@ -258,6 +261,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\shaders\ShaderBase.h">
+      <Filter>Header Files\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shaders\MainFragmentRenderingShader.h">
       <Filter>Header Files\shaders</Filter>
     </ClInclude>
   </ItemGroup>

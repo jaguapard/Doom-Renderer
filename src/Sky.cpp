@@ -107,3 +107,8 @@ void Sky::addToRenderQueue(TriangleRenderContext ctx)
 	ctx.gameSettings.backfaceCullingEnabled = false; //force sky to have no face culling
 	this->skyModel.addToRenderQueue(ctx);
 }
+
+const std::vector<Triangle>& Sky::getTriangles() const
+{
+	return skyModel.getTriangles();
+}

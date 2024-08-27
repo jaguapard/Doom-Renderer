@@ -72,6 +72,7 @@
     <ClCompile Include="src\PolygonTriangulator.cpp" />
     <ClCompile Include="src\shaders\DepthTextureRenderShader.cpp" />
     <ClCompile Include="src\shaders\MainFragmentRenderShader.cpp" />
+    <ClCompile Include="src\shaders\VertexTransformerShader.cpp" />
     <ClCompile Include="src\ShadowMap.cpp" />
     <ClCompile Include="src\Sky.cpp" />
     <ClCompile Include="src\Statsman.cpp" />
@@ -120,6 +121,7 @@
     <ClInclude Include="src\shaders\DepthTextureRenderShader.h" />
     <ClInclude Include="src\shaders\MainFragmentRenderShader.h" />
     <ClInclude Include="src\shaders\ShaderBase.h" />
+    <ClInclude Include="src\shaders\VertexTransformerShader.h" />
     <ClInclude Include="src\ShadowMap.h" />
     <ClInclude Include="src\Sky.h" />
     <ClInclude Include="src\smart.h" />

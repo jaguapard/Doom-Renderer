@@ -1,6 +1,6 @@
 #include "ShadowMap.h"
 #include "Threadpool.h"
-#include "shaders/MainFragmentRenderShader.h"
+#include "shaders/DepthTextureRenderShader.h"
 ShadowMap::ShadowMap(int w, int h, const CoordinateTransformer& ctr)
 {
 	this->depthBuffer = { w,h };
@@ -12,7 +12,6 @@ void ShadowMap::render(const std::vector<const Model*>& models, const GameSettin
 	TriangleRenderContext ctx;
 	depthBuffer.clear();
 
-	ctx.renderingShadowMap = true;
 	ctx.shadowMaps = &shadowMaps;
 
 	ctx.zBuffer = &depthBuffer;
@@ -47,7 +46,7 @@ void ShadowMap::render(const std::vector<const Model*>& models, const GameSettin
 			mfrInp.zoneMinY = limLow;
 			mfrInp.zoneMaxY = limHigh;
 
-			MainFragmentRenderShader mfrShaderInst;
+			DepthTextureRenderShader mfrShaderInst;
 			mfrShaderInst.run(mfrInp);
 		};
 

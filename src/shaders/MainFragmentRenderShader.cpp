@@ -61,7 +61,7 @@ void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& c
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			if (!context.renderingShadowMap)
+			//if (!context.renderingShadowMap)
 			{
 				VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
 				worldCoords /= interpolatedDividedUv.z;

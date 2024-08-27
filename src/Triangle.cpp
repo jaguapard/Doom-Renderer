@@ -144,7 +144,10 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	real y1 = screenSpaceTriangle.tv[0].spaceCoords.y;
 	real y2 = screenSpaceTriangle.tv[1].spaceCoords.y;
 	real y3 = screenSpaceTriangle.tv[2].spaceCoords.y;
-	if (_3min(y1, y2, y3) == _3max(y1, y2, y3)) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
+	real x1 = screenSpaceTriangle.tv[0].spaceCoords.x;
+	real x2 = screenSpaceTriangle.tv[1].spaceCoords.x;
+	real x3 = screenSpaceTriangle.tv[2].spaceCoords.x;
+	if (_3min(y1, y2, y3) == _3max(y1, y2, y3) || _3min(x1, x2, x3) == _3max(x1, x2, x3)) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
 	
 	screenSpaceTriangle.addToRenderQueueFinal(context);
 }

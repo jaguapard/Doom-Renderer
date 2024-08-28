@@ -3,20 +3,30 @@
 
 void MainFragmentRenderShader::run(MainFragmentRenderInput& input)
 {
+	RenderJob::BoundingBox threadBounds;
+	threadBounds.minX = 0;
+	threadBounds.minY = input.zoneMinY;
+	threadBounds.maxX = input.ctx.framebufW - 1;
+	threadBounds.maxY = input.zoneMinY;
 	for (const auto& it : *input.renderJobs)
 	{
-		this->drawRenderJobSlice(input.ctx, it, input.zoneMinY, input.zoneMaxY);
+		assert(zoneMinY == floor(zoneMinY));
+		assert(zoneMaxY == floor(zoneMaxY));
+		auto boundingBox = getRenderJobSliceBoundingBox(it, threadBounds);
+		if (!boundingBox) continue;
+		this->drawRenderJobSlice(input.ctx, it, boundingBox.value());
 	}
 }
 
-std::optional<RenderJob::BoundingBox> MainFragmentRenderShader::getRenderJobSliceBoundingBox(const RenderJob& renderJob, real zoneMinY, real zoneMaxY, real xMin, real xMax)
+std::optional<RenderJob::BoundingBox> MainFragmentRenderShader::getRenderJobSliceBoundingBox(const RenderJob& renderJob, const RenderJob::BoundingBox& threadBounds)
 {
-	if (renderJob.boundingBox.minY >= zoneMaxY || renderJob.boundingBox.maxY < zoneMinY) return {};
+	if (renderJob.boundingBox.minY >= threadBounds.maxY || renderJob.boundingBox.maxY < threadBounds.minY) return {};
 
 	//real minX, minY, maxX, maxY;
 	__m128 original = _mm_loadu_ps(&renderJob.boundingBox.minX);
-	__m128 lows = _mm_setr_ps(xMin, zoneMinY, xMin, zoneMinY);
-	__m128 highs = _mm_setr_ps(xMax, zoneMaxY-1, xMax, zoneMaxY-1);
+	__m128 tb = _mm_loadu_ps(&threadBounds.minX);
+	__m128 lows = _mm_shuffle_ps(tb, tb, _MM_SHUFFLE(1, 0, 1, 0));
+	__m128 highs = _mm_shuffle_ps(tb, tb, _MM_SHUFFLE(3, 2, 3, 2));
 
 	__m128 clampedLow = _mm_max_ps(lows, original);
 	__m128 clampedHigh = _mm_min_ps(highs, clampedLow);
@@ -25,17 +35,12 @@ std::optional<RenderJob::BoundingBox> MainFragmentRenderShader::getRenderJobSlic
 	return adjustedBox;
 }
 
-void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, real zoneMinY, real zoneMaxY) const
+void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, const RenderJob::BoundingBox& boundingBoxOverride) const
 {
-	assert(zoneMinY == floor(zoneMinY));
-	assert(zoneMaxY == floor(zoneMaxY));
-	auto boundingBox = getRenderJobSliceBoundingBox(renderJob, zoneMinY, zoneMaxY, 0, context.framebufW - 1);
-	if (!boundingBox) return;
-
-	real yBeg = boundingBox.value().minY;
-	real yEnd = boundingBox.value().maxY;
-	real xBeg = boundingBox.value().minX;
-	real xEnd = boundingBox.value().maxX;
+	real yBeg = boundingBoxOverride.minY;
+	real yEnd = boundingBoxOverride.maxY;
+	real xBeg = boundingBoxOverride.minX;
+	real xEnd = boundingBoxOverride.maxX;
 
 	const Texture& texture = context.gameSettings.textureManager->getTextureByIndex(renderJob.pModel->textureIndex);
 	auto& depthBuf = *context.zBuffer;

@@ -18,7 +18,7 @@ class MainFragmentRenderShader : public ShaderBase<MainFragmentRenderInput, void
 public:
 	virtual void run(MainFragmentRenderInput& input);
 protected:
-	static std::optional<RenderJob::BoundingBox> getRenderJobSliceBoundingBox(const RenderJob& renderJob, real zoneMinY, real zoneMaxY, real xMin, real xMax);
+	static std::optional<RenderJob::BoundingBox> getRenderJobSliceBoundingBox(const RenderJob& renderJob, const RenderJob::BoundingBox& threadBounds);
 private:
-	void drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, real zoneMinY, real zoneMaxY) const;
+	void drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, const RenderJob::BoundingBox& boundingBoxOverride) const;
 };

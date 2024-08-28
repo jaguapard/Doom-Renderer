@@ -62,64 +62,61 @@ void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& c
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			//if (!context.renderingShadowMap)
+			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
+			worldCoords /= interpolatedDividedUv.z;
+			worldCoords.w = 1;
+
+			VectorPack16 dynaLight = 0;
+			if (false)
 			{
-				VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
-				worldCoords /= interpolatedDividedUv.z;
-				worldCoords.w = 1;
-
-				VectorPack16 dynaLight = 0;
-				if (false)
+				for (const auto& it : *context.pointLights)
 				{
-					for (const auto& it : *context.pointLights)
-					{
-						FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
-						Vec4 power = it.color * it.intensity;
-						dynaLight += VectorPack16(power) / distSquared;
-					}
+					FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
+					Vec4 power = it.color * it.intensity;
+					dynaLight += VectorPack16(power) / distSquared;
 				}
-
-				Vec4 shadowLightColorMults = Vec4(1, 1, 1) * 1.5;
-				Vec4 shadowDarkColorMults = shadowLightColorMults * 0.2;
-				VectorPack16 shadowColorMults = 0;
-
-				for (const auto& currentShadowMap : *context.shadowMaps)
-				{
-					VectorPack16 sunWorldPositions = currentShadowMap.ctr.getCurrentTransformationMatrix() * worldCoords;
-					FloatPack16 zInv = FloatPack16(context.gameSettings.fovMult) / sunWorldPositions.z;
-					VectorPack16 sunScreenPositions = currentShadowMap.ctr.screenSpaceToPixels(sunWorldPositions * zInv);
-					sunScreenPositions.z = zInv;
-
-					Mask16 inShadowMapBounds = currentShadowMap.depthBuffer.checkBounds(sunScreenPositions.x, sunScreenPositions.y);
-					Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
-
-					FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
-					float shadowMapBias = 1.f / 10e6;
-					//float shadowMapBias = 0;
-					Mask16 pointsInShadow = ~inShadowMapBounds | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
-					shadowColorMults.r += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
-					shadowColorMults.g += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
-					shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
-				}
-
-				texturePixels = (texturePixels * adjustedLight) * (dynaLight + shadowColorMults);
-				if (context.gameSettings.wireframeEnabled)
-				{
-					Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
-					Mask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
-					Mask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
-					Mask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
-
-					texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
-					texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
-					texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
-					texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
-					//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
-				}
-
-				context.frameBuffer->setPixels16(xInt, yInt, texturePixels, opaquePixelsMask);
-				if (context.gameSettings.fogEnabled) context.pixelWorldPos->setPixels16(xInt, yInt, worldCoords, opaquePixelsMask);
 			}
+
+			Vec4 shadowLightColorMults = Vec4(1, 1, 1) * 1.5;
+			Vec4 shadowDarkColorMults = shadowLightColorMults * 0.2;
+			VectorPack16 shadowColorMults = 0;
+
+			for (const auto& currentShadowMap : *context.shadowMaps)
+			{
+				VectorPack16 sunWorldPositions = currentShadowMap.ctr.getCurrentTransformationMatrix() * worldCoords;
+				FloatPack16 zInv = FloatPack16(context.gameSettings.fovMult) / sunWorldPositions.z;
+				VectorPack16 sunScreenPositions = currentShadowMap.ctr.screenSpaceToPixels(sunWorldPositions * zInv);
+				sunScreenPositions.z = zInv;
+
+				Mask16 inShadowMapBounds = currentShadowMap.depthBuffer.checkBounds(sunScreenPositions.x, sunScreenPositions.y);
+				Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
+
+				FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
+				float shadowMapBias = 1.f / 10e6;
+				//float shadowMapBias = 0;
+				Mask16 pointsInShadow = ~inShadowMapBounds | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
+				shadowColorMults.r += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
+				shadowColorMults.g += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
+				shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
+			}
+
+			texturePixels = (texturePixels * adjustedLight) * (dynaLight + shadowColorMults);
+			if (context.gameSettings.wireframeEnabled)
+			{
+				Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
+				Mask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
+				Mask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
+				Mask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
+
+				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
+				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
+				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
+				texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
+				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
+			}
+
+			context.frameBuffer->setPixels16(xInt, yInt, texturePixels, opaquePixelsMask);
+			if (context.gameSettings.fogEnabled) context.pixelWorldPos->setPixels16(xInt, yInt, worldCoords, opaquePixelsMask);
 
 			depthBuf.setPixels16(xInt, yInt, interpolatedDividedUv.z, opaquePixelsMask);
 		}

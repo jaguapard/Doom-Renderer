@@ -66,7 +66,8 @@ protected:
 	GameSettings settings;
 	PerformanceMonitor performanceMonitor;	
 
-	std::vector<std::vector<Model>> sectorWorldModels;
+	std::vector<Model> sceneModels;
+
 	TextureManager textureManager;
 
 	Sky sky;

@@ -16,6 +16,7 @@
 
 struct TriangleRenderContext;
 struct RenderJob;
+class Model;
 
 struct Triangle
 {
@@ -28,7 +29,7 @@ struct Triangle
 	void sortByAscendingTextureX();
 	void sortByAscendingTextureY();
 
-	void addToRenderQueue(const TriangleRenderContext& context) const;
+	void addToRenderQueue(const TriangleRenderContext& context, const Model* pModel) const;
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
 
 	Vec4 getNormalVector() const;
@@ -37,16 +38,15 @@ struct Triangle
 	VectorPack16 interpolateTextureCoords(const FloatPack16& alpha, const FloatPack16& beta, const FloatPack16& gamma) const;
 	VectorPack16 interpolateWorldCoords(const FloatPack16& alpha, const FloatPack16& beta, const FloatPack16& gamma) const;
 private:
-	void prepareScreenSpace(const TriangleRenderContext& context) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	void addToRenderQueueFinal(const TriangleRenderContext& context) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
+	void prepareScreenSpace(const TriangleRenderContext& context, const Model* pModel) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
+	void addToRenderQueueFinal(const TriangleRenderContext& context, const Model* pModel) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };
 
 struct RenderJob
 {
 	Triangle originalTriangle;
 
-	int textureIndex;
-	real lightMult;
+	const Model* pModel;
 	real rcpSignedArea;
 
 	struct BoundingBox
@@ -76,8 +76,6 @@ struct TriangleRenderContext
 
 	const CoordinateTransformer* ctr;
 
-	int textureIndex;
-	real lightMult;
 	real framebufW, framebufH;
 	Vec4 camPos;
 

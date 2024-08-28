@@ -74,7 +74,7 @@ int doTriangleClipping(const Triangle& triangleToClip, real clippingZ, Triangle*
 	}
 }
 
-void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
+void Triangle::addToRenderQueue(const TriangleRenderContext& context, const Model* pModel) const
 {
 	Triangle rotated;
 	for (int i = 0; i < 3; ++i)
@@ -97,7 +97,7 @@ void Triangle::addToRenderQueue(const TriangleRenderContext& context) const
 	int outsideVertexCount;
 	int trianglesOut = doTriangleClipping(rotated, context.gameSettings.nearPlaneZ, (Triangle*)&t, &outsideVertexCount);
 	StatCount(statsman.triangles.verticesOutside[outsideVertexCount]++);
-	for (int i = 0; i < trianglesOut; ++i) t[i].prepareScreenSpace(context);
+	for (int i = 0; i < trianglesOut; ++i) t[i].prepareScreenSpace(context, pModel);
 }
 
 std::pair<Triangle, Triangle> Triangle::pairFromRect(std::array<TexVertex, 4> rectPoints)
@@ -128,7 +128,7 @@ real _3max(real a, real b, real c)
 }
 
 //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
+void Triangle::prepareScreenSpace(const TriangleRenderContext& context, const Model* pModel) const
 {
 	Triangle screenSpaceTriangle;
 	for (int i = 0; i < 3; ++i)
@@ -149,10 +149,10 @@ void Triangle::prepareScreenSpace(const TriangleRenderContext& context) const
 	real x3 = screenSpaceTriangle.tv[2].spaceCoords.x;
 	if (_3min(y1, y2, y3) == _3max(y1, y2, y3) || _3min(x1, x2, x3) == _3max(x1, x2, x3)) return; //avoid divisions by 0. 0 height triangle is nonsensical anyway
 	
-	screenSpaceTriangle.addToRenderQueueFinal(context);
+	screenSpaceTriangle.addToRenderQueueFinal(context, pModel);
 }
 
-void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
+void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context, const Model* pModel) const
 {
 	const Vec4 r1 = tv[0].spaceCoords;
 	const Vec4 r2 = tv[1].spaceCoords;
@@ -174,8 +174,7 @@ void Triangle::addToRenderQueueFinal(const TriangleRenderContext& context) const
 	rj.boundingBox.maxX = ceil(screenMaxX);
 	rj.boundingBox.minY = floor(screenMinY);
 	rj.boundingBox.maxY = ceil(screenMaxY);
-	rj.lightMult = context.lightMult;
-	rj.textureIndex = context.textureIndex;
+	rj.pModel = pModel;
 
 	real xSpan = screenMaxX - screenMinX;
 	real ySpan = screenMaxY - screenMinY;	

@@ -35,9 +35,10 @@ void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& c
 	real xBeg = boundingBox.value().minX;
 	real xEnd = boundingBox.value().maxX;
 
-	const Texture& texture = context.gameSettings.textureManager->getTextureByIndex(renderJob.textureIndex);
+	const Texture& texture = context.gameSettings.textureManager->getTextureByIndex(renderJob.pModel->textureIndex);
 	auto& depthBuf = *context.zBuffer;
 	const auto& tv = renderJob.originalTriangle.tv;
+	real adjustedLight = renderJob.pModel->lightMult ? powf(renderJob.pModel->lightMult.value(), context.gameSettings.gamma) : context.gameSettings.gamma;
 
 	for (real y = yBeg; y <= yEnd; ++y)
 	{
@@ -101,7 +102,7 @@ void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& c
 					shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
 				}
 
-				texturePixels = (texturePixels * renderJob.lightMult) * (dynaLight + shadowColorMults);
+				texturePixels = (texturePixels * adjustedLight) * (dynaLight + shadowColorMults);
 				if (context.gameSettings.wireframeEnabled)
 				{
 					Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;

@@ -207,20 +207,18 @@ std::vector<MainGame::ModelSlice> MainGame::distributeTrianglesForWorkers()
 	size_t threadCount = threadpool->getThreadCount();
 	std::vector<ModelSlice> modelSlices;
 	size_t totalTriangles = 0;
-	for (const auto& sectorModels : sectorWorldModels)
+	for (const auto& model : sceneModels)
 	{
-		for (const auto& model : sectorModels)
-		{
-			size_t count = model.getTriangleCount();
-			totalTriangles += count;
+		size_t count = model.getTriangleCount();
+		totalTriangles += count;
 
-			ModelSlice& slice = modelSlices.emplace_back();
-			slice.pTrianglesBegin = model.getTriangles().data();
-			slice.pTrianglesEnd = slice.pTrianglesBegin + count;
-			slice.pModel = &model;
-		}
+		ModelSlice& slice = modelSlices.emplace_back();
+		slice.pTrianglesBegin = model.getTriangles().data();
+		slice.pTrianglesEnd = slice.pTrianglesBegin + count;
+		slice.pModel = &model;
 	}
-	if (true)
+
+	if (settings.skyRenderingMode == SkyRenderingMode::SPHERE)
 	{
 		totalTriangles += sky.getModel().getTriangles().size();
 		ModelSlice& skySlice = modelSlices.emplace_back();
@@ -401,12 +399,22 @@ void MainGame::changeMapTo(std::string mapName)
 	if (mapName != "MAP00")
 	{
 		currentMap = &maps.at(mapName);
-		sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+		auto sectorWorldModels = currentMap->getMapGeometryModels(textureManager);
+		sceneModels.clear();
+
+		for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
+		{
+			for (auto& model : sectorWorldModels[nSector])
+			{
+				model.lightMult = currentMap->sectors[nSector].lightLevel / 256.0;
+				sceneModels.push_back(model);
+			}
+		}
 	}
 	else
 	{
 		currentMap = nullptr;
-		sectorWorldModels = {AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager)};
+		sceneModels = AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager);
 		camPos = Vec4(-1305.55, 175.75, 67.645);
 		camAng = Vec4(0, -1.444047, -0.125);
 	}
@@ -417,37 +425,8 @@ void MainGame::changeMapTo(std::string mapName)
 	mapCtr.prepare(Vec4(-1846, 2799, 568), Vec4(0, -1.2869, -0.6689));
 	this->shadowMaps = { ShadowMap(shadowMapW,shadowMapH,mapCtr) };
 
-	std::vector<const Model*> models;
-	for (const auto& sectorModels : sectorWorldModels)
-	{
-		for (const auto& model : sectorModels)
-		{
-			models.push_back(&model);
-		}
-	}
-	for (auto& it : shadowMaps) it.render(models, this->settings, shadowMaps, *threadpool);
+	for (auto& it : shadowMaps) it.render(sceneModels, this->settings, shadowMaps, *threadpool);
 	performanceMonitor.reset();
-}
-
-void MainGame::fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJob>& renderJobs)
-{
-	ctx.renderJobs = &renderJobs;
-
-	if (true)
-	{
-		for (int nSector = 0; nSector < sectorWorldModels.size(); ++nSector)
-		{
-			for (const auto& model : sectorWorldModels[nSector])
-			{
-				if (currentMap) ctx.lightMult = pow(currentMap->sectors[nSector].lightLevel / 256.0, settings.gamma);
-				else ctx.lightMult = settings.gamma;
-				model.addToRenderQueue(ctx);
-			}
-		}
-	}
-	if (settings.skyRenderingMode == SkyRenderingMode::SPHERE) sky.addToRenderQueue(ctx); //a 3D sky can be drawn after everything else. In fact, it's better, since a large part of it may already be occluded.
-
-	
 }
 
 TriangleRenderContext MainGame::makeTriangleRenderContext()

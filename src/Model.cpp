@@ -58,7 +58,6 @@ void Model::addToRenderQueue(TriangleRenderContext ctx) const
 	*/
 	render:
 	const auto& texture = ctx.gameSettings.textureManager->getTextureByIndex(textureIndex);
-	ctx.textureIndex = textureIndex;
 	ctx.gameSettings.backfaceCullingEnabled &= texture.hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
 	this->addTriangleRangeToRenderQueue(this->triangles.data(), this->triangles.data() + this->triangles.size(), ctx);
 }
@@ -88,11 +87,10 @@ void Model::addTriangleRangeToRenderQueue(const Triangle* pTrianglesBegin, const
 	if (this->textureIndex == ctx.doomSkyTextureMarkerIndex) return; //skip sky textured level geometry
 	
 	const auto& texture = ctx.gameSettings.textureManager->getTextureByIndex(textureIndex);
-	ctx.textureIndex = textureIndex;
 	ctx.gameSettings.backfaceCullingEnabled &= texture.hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
 	while (pTrianglesBegin < pTrianglesEnd)
 	{
-		pTrianglesBegin->addToRenderQueue(ctx);
+		pTrianglesBegin->addToRenderQueue(ctx, this);
 		++pTrianglesBegin;
 	}
 }

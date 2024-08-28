@@ -15,8 +15,10 @@ public:
 
 	void addToRenderQueue(TriangleRenderContext ctx) const;
 	void addTriangleRangeToRenderQueue(const Triangle* pTrianglesBegin, const Triangle* pTrianglesEnd, TriangleRenderContext ctx) const;
-private:
-	std::vector<Triangle> triangles;
+	
+	std::optional<real> lightMult;
 	int textureIndex;
+private:
+	std::vector<Triangle> triangles;	
 	std::array<Vec4, 8> boundingBox; //8 points to check clipping and collision against
 };

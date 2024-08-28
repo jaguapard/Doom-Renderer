@@ -1,4 +1,5 @@
 #include "DepthTextureRenderShader.h"
+#include "../Model.h"
 
 void DepthTextureRenderShader::run(MainFragmentRenderInput& input)
 {
@@ -18,7 +19,7 @@ void DepthTextureRenderShader::drawRenderJobSlice(const TriangleRenderContext& c
 	real xBeg = boundingBox.value().minX;
 	real xEnd = boundingBox.value().maxX;
 
-	const Texture& texture = context.gameSettings.textureManager->getTextureByIndex(renderJob.textureIndex); //texture is still required - need to know whether there are transparent pixels
+	const Texture& texture = context.gameSettings.textureManager->getTextureByIndex(renderJob.pModel->textureIndex); //texture is still required - need to know whether there are transparent pixels
 	auto& depthBuf = *context.zBuffer;
 	const auto& tv = renderJob.originalTriangle.tv;
 

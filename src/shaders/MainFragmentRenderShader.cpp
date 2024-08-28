@@ -12,16 +12,16 @@ void MainFragmentRenderShader::run(MainFragmentRenderInput& input)
 std::optional<RenderJob::BoundingBox> MainFragmentRenderShader::getRenderJobSliceBoundingBox(const RenderJob& renderJob, real zoneMinY, real zoneMaxY, real xMin, real xMax)
 {
 	if (renderJob.boundingBox.minY >= zoneMaxY || renderJob.boundingBox.maxY < zoneMinY) return {};
-	real yBeg = std::clamp<real>(renderJob.boundingBox.minY, zoneMinY, zoneMaxY - 1);
-	real yEnd = std::clamp<real>(renderJob.boundingBox.maxY, zoneMinY, zoneMaxY - 1);
-	real xBeg = std::clamp<real>(renderJob.boundingBox.minX, xMin, xMax);
-	real xEnd = std::clamp<real>(renderJob.boundingBox.maxX, xMin, xMax);
 
+	//real minX, minY, maxX, maxY;
+	__m128 original = _mm_loadu_ps(&renderJob.boundingBox.minX);
+	__m128 lows = _mm_setr_ps(xMin, zoneMinY, xMin, zoneMinY);
+	__m128 highs = _mm_setr_ps(xMax, zoneMaxY-1, xMax, zoneMaxY-1);
+
+	__m128 clampedLow = _mm_max_ps(lows, original);
+	__m128 clampedHigh = _mm_min_ps(highs, clampedLow);
 	RenderJob::BoundingBox adjustedBox;
-	adjustedBox.minY = yBeg;
-	adjustedBox.maxY = yEnd;
-	adjustedBox.minX = xBeg;
-	adjustedBox.maxX = xEnd;
+	_mm_storeu_ps(&adjustedBox.minX, clampedHigh);
 	return adjustedBox;
 }
 

@@ -94,7 +94,7 @@ void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& c
 			for (const auto& currentShadowMap : *context.shadowMaps)
 			{
 				VectorPack16 sunWorldPositions = currentShadowMap.ctr.getCurrentTransformationMatrix() * worldCoords;
-				FloatPack16 zInv = FloatPack16(context.gameSettings.fovMult) / sunWorldPositions.z;
+				FloatPack16 zInv = FloatPack16(currentShadowMap.fovMult) / sunWorldPositions.z;
 				VectorPack16 sunScreenPositions = currentShadowMap.ctr.screenSpaceToPixels(sunWorldPositions * zInv);
 				sunScreenPositions.z = zInv;
 

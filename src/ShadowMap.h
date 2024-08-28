@@ -13,8 +13,9 @@ struct ShadowMapTriangleAddendum
 
 struct ShadowMap
 {
-	ZBuffer depthBuffer;
 	CoordinateTransformer ctr;
+	ZBuffer depthBuffer;	
+	real fovMult = 1;
 
 	ShadowMap(int w, int h, const CoordinateTransformer& ctr);
 	void render(const std::vector<Model>& models, const GameSettings& gameSettings, const std::vector<ShadowMap>& shadowMaps, Threadpool& threadpool);

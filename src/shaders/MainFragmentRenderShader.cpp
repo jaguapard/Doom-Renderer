@@ -9,7 +9,7 @@ void MainFragmentRenderShader::run(MainFragmentRenderInput& input)
 	}
 }
 
-std::optional<RenderJob::BoundingBox> MainFragmentRenderShader::getRenderJobSliceBoundingBox(const RenderJob& renderJob, int zoneMinY, int zoneMaxY, real xMin, real xMax)
+std::optional<RenderJob::BoundingBox> MainFragmentRenderShader::getRenderJobSliceBoundingBox(const RenderJob& renderJob, real zoneMinY, real zoneMaxY, real xMin, real xMax)
 {
 	if (renderJob.boundingBox.minY >= zoneMaxY || renderJob.boundingBox.maxY < zoneMinY) return {};
 	real yBeg = std::clamp<real>(renderJob.boundingBox.minY, zoneMinY, zoneMaxY - 1);
@@ -25,8 +25,10 @@ std::optional<RenderJob::BoundingBox> MainFragmentRenderShader::getRenderJobSlic
 	return adjustedBox;
 }
 
-void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
+void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, real zoneMinY, real zoneMaxY) const
 {
+	assert(zoneMinY == floor(zoneMinY));
+	assert(zoneMaxY == floor(zoneMaxY));
 	auto boundingBox = getRenderJobSliceBoundingBox(renderJob, zoneMinY, zoneMaxY, 0, context.framebufW - 1);
 	if (!boundingBox) return;
 

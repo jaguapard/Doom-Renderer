@@ -6,7 +6,7 @@ struct MainFragmentRenderInput
 {
 	TriangleRenderContext ctx;
 	const std::vector<RenderJob>* renderJobs;
-	int zoneMinY, zoneMaxY;
+	real zoneMinY, zoneMaxY;
 };
 
 struct RenderHelpers
@@ -18,7 +18,7 @@ class MainFragmentRenderShader : public ShaderBase<MainFragmentRenderInput, void
 public:
 	virtual void run(MainFragmentRenderInput& input);
 protected:
-	static std::optional<RenderJob::BoundingBox> getRenderJobSliceBoundingBox(const RenderJob& renderJob, int zoneMinY, int zoneMaxY, real xMin, real xMax);
+	static std::optional<RenderJob::BoundingBox> getRenderJobSliceBoundingBox(const RenderJob& renderJob, real zoneMinY, real zoneMaxY, real xMin, real xMax);
 private:
-	void drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const;
+	void drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, real zoneMinY, real zoneMaxY) const;
 };

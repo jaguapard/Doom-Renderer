@@ -9,8 +9,10 @@ void DepthTextureRenderShader::run(MainFragmentRenderInput& input)
 	}
 }
 
-void DepthTextureRenderShader::drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, int zoneMinY, int zoneMaxY) const
+void DepthTextureRenderShader::drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, real zoneMinY, real zoneMaxY) const
 {
+	assert(zoneMinY == floor(zoneMinY));
+	assert(zoneMaxY == floor(zoneMaxY));
 	auto boundingBox = getRenderJobSliceBoundingBox(renderJob, zoneMinY, zoneMaxY, 0, context.framebufW - 1);
 	if (!boundingBox) return;
 

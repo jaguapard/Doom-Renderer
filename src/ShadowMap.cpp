@@ -43,8 +43,8 @@ void ShadowMap::render(const std::vector<Model>& models, const GameSettings& gam
 			MainFragmentRenderInput mfrInp;
 			mfrInp.ctx = ctx;
 			mfrInp.renderJobs = &renderJobs;
-			mfrInp.zoneMinY = limLow;
-			mfrInp.zoneMaxY = limHigh;
+			mfrInp.zoneMinY = floor(limLow);
+			mfrInp.zoneMaxY = floor(limHigh);
 
 			DepthTextureRenderShader mfrShaderInst;
 			mfrShaderInst.run(mfrInp);

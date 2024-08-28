@@ -1,6 +1,6 @@
 #include "ShadowMap.h"
 #include "Threadpool.h"
-#include "shaders/DepthTextureRenderShader.h"
+#include "shaders/MainFragmentRenderShader.h"
 ShadowMap::ShadowMap(int w, int h, const CoordinateTransformer& ctr)
 {
 	this->depthBuffer = { w,h };
@@ -44,9 +44,10 @@ void ShadowMap::render(const std::vector<Model>& models, const GameSettings& gam
 			mfrInp.ctx = ctx;
 			mfrInp.renderJobs = &renderJobs;
 			mfrInp.zoneMinY = floor(limLow);
-			mfrInp.zoneMaxY = floor(limHigh);
+			mfrInp.zoneMaxY = floor(limHigh-1);
+			mfrInp.renderDepthTextureOnly = true;
 
-			DepthTextureRenderShader mfrShaderInst;
+			MainFragmentRenderShader mfrShaderInst;
 			mfrShaderInst.run(mfrInp);
 		};
 

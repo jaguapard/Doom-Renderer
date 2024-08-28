@@ -126,9 +126,6 @@
     <ClCompile Include="src\shaders\MainFragmentRenderShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\shaders\DepthTextureRenderShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\shaders\VertexTransformerShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -270,9 +267,6 @@
       <Filter>Header Files\shaders</Filter>
     </ClInclude>
     <ClInclude Include="src\shaders\MainFragmentRenderShader.h">
-      <Filter>Header Files\shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shaders\DepthTextureRenderShader.h">
       <Filter>Header Files\shaders</Filter>
     </ClInclude>
     <ClInclude Include="src\shaders\VertexTransformerShader.h">

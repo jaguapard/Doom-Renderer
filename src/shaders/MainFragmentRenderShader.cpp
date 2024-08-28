@@ -3,18 +3,21 @@
 
 void MainFragmentRenderShader::run(MainFragmentRenderInput& input)
 {
+	assert(input.zoneMinY == floor(input.zoneMinY));
+	assert(input.zoneMaxY == floor(input.zoneMaxY));
+
 	RenderJob::BoundingBox threadBounds;
 	threadBounds.minX = 0;
 	threadBounds.minY = input.zoneMinY;
 	threadBounds.maxX = input.ctx.framebufW - 1;
-	threadBounds.maxY = input.zoneMinY;
+	threadBounds.maxY = input.zoneMaxY;
+	bool depthOnly = input.renderDepthTextureOnly;
 	for (const auto& it : *input.renderJobs)
 	{
-		assert(zoneMinY == floor(zoneMinY));
-		assert(zoneMaxY == floor(zoneMaxY));
 		auto boundingBox = getRenderJobSliceBoundingBox(it, threadBounds);
 		if (!boundingBox) continue;
-		this->drawRenderJobSlice(input.ctx, it, boundingBox.value());
+		if (!depthOnly) this->drawRenderJobSlice(input.ctx, it, boundingBox.value());
+		else this->drawRenderJobSliceDepthOnly(input.ctx, it, boundingBox.value());
 	}
 }
 
@@ -124,6 +127,44 @@ void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& c
 
 			context.frameBuffer->setPixels16(xInt, yInt, texturePixels, opaquePixelsMask);
 			if (context.gameSettings.fogEnabled) context.pixelWorldPos->setPixels16(xInt, yInt, worldCoords, opaquePixelsMask);
+
+			depthBuf.setPixels16(xInt, yInt, interpolatedDividedUv.z, opaquePixelsMask);
+		}
+	}
+}
+
+void MainFragmentRenderShader::drawRenderJobSliceDepthOnly(const TriangleRenderContext& context, const RenderJob& renderJob, const RenderJob::BoundingBox& boundingBoxOverride) const
+{
+	real yBeg = boundingBoxOverride.minY;
+	real yEnd = boundingBoxOverride.maxY;
+	real xBeg = boundingBoxOverride.minX;
+	real xEnd = boundingBoxOverride.maxX;
+
+	const Texture& texture = context.gameSettings.textureManager->getTextureByIndex(renderJob.pModel->textureIndex); //texture is still required - need to know whether there are transparent pixels
+	auto& depthBuf = *context.zBuffer;
+	const auto& tv = renderJob.originalTriangle.tv;
+
+	for (real y = yBeg; y <= yEnd; ++y)
+	{
+		size_t yInt = y;
+		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
+		for (FloatPack16 x = FloatPack16::sequence() + xBeg; Mask16 loopBoundsMask = x <= xEnd; x += 16)
+		{
+			size_t xInt = x[0];
+			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
+			auto [alpha, beta, gamma] = RenderHelpers::calculateBarycentricCoordinates(r, tv[0].spaceCoords, tv[1].spaceCoords, tv[2].spaceCoords, renderJob.rcpSignedArea);
+
+			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
+			if (!pointsInsideTriangleMask) continue;
+
+			VectorPack16 interpolatedDividedUv = VectorPack16(tv[0].textureCoords) * alpha + VectorPack16(tv[1].textureCoords) * beta + VectorPack16(tv[2].textureCoords) * gamma;
+			FloatPack16 currDepthValues = depthBuf.getPixels16(xInt, yInt);
+			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
+			if (!visiblePointsMask) continue; //if all points are occluded, then skip
+
+			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
+			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
+			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
 			depthBuf.setPixels16(xInt, yInt, interpolatedDividedUv.z, opaquePixelsMask);
 		}

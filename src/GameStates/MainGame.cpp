@@ -328,7 +328,7 @@ void MainGame::draw()
 			MainFragmentRenderInput mfrInp;
 			mfrInp.ctx = localCtx;
 			mfrInp.zoneMinY = renderMinY;
-			mfrInp.zoneMaxY = renderMaxY;
+			mfrInp.zoneMaxY = renderMaxY - 1;
 
 			MainFragmentRenderShader mfrShaderInst;
 			for (auto& it : renderJobs)

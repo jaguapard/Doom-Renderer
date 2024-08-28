@@ -7,6 +7,7 @@ struct MainFragmentRenderInput
 	TriangleRenderContext ctx;
 	const std::vector<RenderJob>* renderJobs;
 	real zoneMinY, zoneMaxY;
+	bool renderDepthTextureOnly = false;
 };
 
 struct RenderHelpers
@@ -21,4 +22,5 @@ protected:
 	static std::optional<RenderJob::BoundingBox> getRenderJobSliceBoundingBox(const RenderJob& renderJob, const RenderJob::BoundingBox& threadBounds);
 private:
 	void drawRenderJobSlice(const TriangleRenderContext& context, const RenderJob& renderJob, const RenderJob::BoundingBox& boundingBoxOverride) const;
+	void drawRenderJobSliceDepthOnly(const TriangleRenderContext& context, const RenderJob& renderJob, const RenderJob::BoundingBox& boundingBoxOverride) const;
 };

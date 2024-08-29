@@ -65,7 +65,7 @@ void MainFragmentRenderShader::drawRenderJobSlice(const TriangleRenderContext& c
 
 			VectorPack16 interpolatedDividedUv = VectorPack16(tv[0].textureCoords) * alpha + VectorPack16(tv[1].textureCoords) * beta + VectorPack16(tv[2].textureCoords) * gamma;
 			FloatPack16 currDepthValues = depthBuf.getPixels16(xInt, yInt);
-			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
+			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues == interpolatedDividedUv.z;
 			if (!visiblePointsMask) continue; //if all points are occluded, then skip
 
 			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;

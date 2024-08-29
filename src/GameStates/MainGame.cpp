@@ -334,6 +334,10 @@ void MainGame::draw()
 			for (auto& it : renderJobs)
 			{
 				mfrInp.renderJobs = &it;
+				mfrInp.renderDepthTextureOnly = true;
+				mfrShaderInst.run(mfrInp);
+
+				mfrInp.renderDepthTextureOnly = false;
 				mfrShaderInst.run(mfrInp);
 			}
 

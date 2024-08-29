@@ -105,6 +105,7 @@
     <ClInclude Include="src\GameStates\BenchmarkState.h" />
     <ClInclude Include="src\GameStates\GameStateBase.h" />
     <ClInclude Include="src\GameStates\MainGame.h" />
+    <ClInclude Include="src\KeepApartVector.h" />
     <ClInclude Include="src\Lehmer.h" />
     <ClInclude Include="src\Matrix4.h" />
     <ClInclude Include="src\misc\Enums.h" />

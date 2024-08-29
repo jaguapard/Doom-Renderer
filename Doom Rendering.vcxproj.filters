@@ -272,6 +272,9 @@
     <ClInclude Include="src\shaders\VertexTransformerShader.h">
       <Filter>Header Files\shaders</Filter>
     </ClInclude>
+    <ClInclude Include="src\KeepApartVector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\Backface culling.md" />

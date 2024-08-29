@@ -14,6 +14,16 @@ Vec4 aiToBob(aiVector3D ai)
 	return { ai.x, ai.y, ai.z, 0 };
 }
 
+std::string getFolderFromPath(std::string path)
+{
+	size_t lastSlash = path.rfind('/');
+	if (lastSlash != path.npos) return path.substr(0, lastSlash);
+
+	lastSlash = path.rfind('\\');
+	if (lastSlash != path.npos) return path.substr(0, lastSlash);
+
+	throw std::runtime_error("Could not extract folder from path string: " + path);
+}
 std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textureManager)
 {
 	Assimp::Importer imp;
@@ -33,7 +43,7 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 		aiMaterial* material = pScene->mMaterials[mesh->mMaterialIndex];
 		aiString texturePath;
 		material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
-		int textureIndex = textureManager.getTextureIndexByPath("scenes/Sponza/" + std::string(texturePath.C_Str()));
+		int textureIndex = textureManager.getTextureIndexByPath(getFolderFromPath(path) + std::string(texturePath.C_Str()));
 
 		std::vector<Triangle> tris;
 		for (size_t j = 0; j < mesh->mNumFaces; ++j)

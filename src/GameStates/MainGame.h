@@ -25,11 +25,8 @@
 #include "../PointLight.h"
 #include "../misc/GameSettings.h"
 #include "../ShadowMap.h"
+#include "../KeepApartVector.h"
 
-class alignas(64) RenderJobList : public std::vector<RenderJob>
-{
-
-};
 class MainGame : public GameStateBase
 {
 public:
@@ -82,7 +79,7 @@ protected:
 	DoomMap* currentMap = nullptr;
 	std::string warpTo;
 
-	std::vector<RenderJobList> renderJobs;
+	std::vector<KeepApartVector<RenderJob>> renderJobs;
 	std::array<uint32_t, 4> shifts;
 
 
@@ -90,7 +87,7 @@ protected:
 	void changeMapTo(std::string mapName);
 
 	TriangleRenderContext makeTriangleRenderContext();
-	void fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJob>& renderJobs);
+	//void fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJob>& renderJobs);
 	std::array<uint32_t, 4> getShiftsForWindow();
 
 	void adjustSsaaMult(int add);

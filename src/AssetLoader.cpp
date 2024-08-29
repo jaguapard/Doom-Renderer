@@ -14,15 +14,16 @@ Vec4 aiToBob(aiVector3D ai)
 	return { ai.x, ai.y, ai.z, 0 };
 }
 
-std::string getFolderFromPath(std::string path)
+std::string getFolderFromPath(std::string path, bool addTrailingSlash = false)
 {
 	size_t lastSlash = path.rfind('/');
-	if (lastSlash != path.npos) return path.substr(0, lastSlash);
+	std::string pathStr;
+	if (lastSlash != path.npos) pathStr = path.substr(0, lastSlash);
+	else if (lastSlash != path.npos) pathStr = path.substr(0, lastSlash);
+	else throw std::runtime_error("Could not extract folder from path string: " + path);
 
-	lastSlash = path.rfind('\\');
-	if (lastSlash != path.npos) return path.substr(0, lastSlash);
-
-	throw std::runtime_error("Could not extract folder from path string: " + path);
+	if (addTrailingSlash) return pathStr + "/";
+	else return pathStr;
 }
 std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textureManager)
 {
@@ -43,7 +44,7 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 		aiMaterial* material = pScene->mMaterials[mesh->mMaterialIndex];
 		aiString texturePath;
 		material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
-		int textureIndex = textureManager.getTextureIndexByPath(getFolderFromPath(path) + std::string(texturePath.C_Str()));
+		int textureIndex = textureManager.getTextureIndexByPath(getFolderFromPath(path,true) + std::string(texturePath.C_Str()));
 
 		std::vector<Triangle> tris;
 		for (size_t j = 0; j < mesh->mNumFaces; ++j)

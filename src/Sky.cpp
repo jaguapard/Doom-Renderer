@@ -102,12 +102,6 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 	this->skyModel.lightMult = 1;
 }
 
-void Sky::addToRenderQueue(TriangleRenderContext ctx)
-{
-	ctx.gameSettings.backfaceCullingEnabled = false; //force sky to have no face culling
-	this->skyModel.addToRenderQueue(ctx);
-}
-
 const Model& Sky::getModel() const
 {
 	return skyModel;

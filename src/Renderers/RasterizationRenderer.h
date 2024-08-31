@@ -55,4 +55,7 @@ private:
 	std::optional<Triangle> transformToScreenSpace(const Triangle& t) const;
 
 	std::array<uint32_t, 4> getShiftsForSurface(const SDL_Surface* surf) const;
+
+	BoundingBox clampBoundingBox(const BoundingBox& clampFrom, const BoundingBox& clampBy) const;
+	void drawRenderJobSlice(const RenderJob& renderJob, const BoundingBox& threadBox, bool depthOnly = false);
 };

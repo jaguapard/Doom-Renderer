@@ -22,8 +22,8 @@ BenchmarkState::BenchmarkState(GameStateInitData data)
 
 	//override some settings from the MainGame state init
 	benchmarkModeFramesRemaining = benchmarkModeFrames;
-	camPos = { 441, 877, -488 };
-	camAng = { 0,0,-0.43 };
+	this->camera.pos = { 441, 877, -488 };
+	this->camera.angle = { 0,0,-0.43 };
 
 	settings.performanceMonitorDisplayEnabled = false;
 	settings.wireframeEnabled = false;
@@ -45,7 +45,7 @@ void BenchmarkState::handleInput() //benchmark mode doesn't care about input
 
 void BenchmarkState::update()
 {
-	camAng.y = (1 - double(benchmarkModeFrames - benchmarkModeFramesRemaining) / benchmarkModeFrames) * 2 * M_PI;
+	this->camera.angle.y = (1 - double(benchmarkModeFrames - benchmarkModeFramesRemaining) / benchmarkModeFrames) * 2 * M_PI;
 	if (!benchmarkModeFramesRemaining--)
 	{
 		auto info = performanceMonitor.getPercentileInfo();

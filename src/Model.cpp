@@ -42,26 +42,6 @@ Model::Model(const std::vector<Triangle>& triangles, int textureIndex)
 	assert(this->triangles.size() > 0);
 }
 
-void Model::addToRenderQueue(TriangleRenderContext ctx) const
-{
-	if (this->textureIndex == ctx.doomSkyTextureMarkerIndex) return; //skip sky textured level geometry
-
-	/*/for (const auto& p : boundingBox)
-	{
-		Vec4 screen = ctx.ctr->toScreenCoords(p);
-		if (screen.x )
-		if (isInRange(screen.x, real(0), ctx.framebufW)) goto render; //if any points of the bounding box are on the screen, then the model may be visible, proceed to rendering
-		if (isInRange(screen.y, real(0), ctx.framebufH)) goto render;
-	}
-	StatCount(statsman.models.boundingBoxDiscards++);
-	return; //if we got here, it means that all points are outside the screen, so no need to draw this model
-	*/
-	render:
-	const auto& texture = ctx.gameSettings.textureManager->getTextureByIndex(textureIndex);
-	ctx.gameSettings.backfaceCullingEnabled &= texture.hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
-	this->addTriangleRangeToRenderQueue(this->triangles.data(), this->triangles.data() + this->triangles.size(), ctx);
-}
-
 int Model::getTriangleCount() const
 {
 	return triangles.size();
@@ -80,17 +60,4 @@ const std::vector<Triangle>& Model::getTriangles() const
 void Model::swapVertexOrder()
 {
 	for (auto& it : triangles) std::swap(it.tv[1], it.tv[2]);
-}
-
-void Model::addTriangleRangeToRenderQueue(const Triangle* pTrianglesBegin, const Triangle* pTrianglesEnd, TriangleRenderContext ctx) const
-{
-	if (this->textureIndex == ctx.doomSkyTextureMarkerIndex) return; //skip sky textured level geometry
-	
-	const auto& texture = ctx.gameSettings.textureManager->getTextureByIndex(textureIndex);
-	ctx.gameSettings.backfaceCullingEnabled &= texture.hasOnlyOpaquePixels(); //stuff with transparency requires having backface culling disabled to be properly rendered
-	while (pTrianglesBegin < pTrianglesEnd)
-	{
-		pTrianglesBegin->addToRenderQueue(ctx, this);
-		++pTrianglesBegin;
-	}
 }

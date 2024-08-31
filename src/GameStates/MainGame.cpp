@@ -182,7 +182,7 @@ void MainGame::init()
 		//{Vec4(-500,300,0), Vec4(0.1,0.5,1,1), 2e5},
 	};
 
-	this->renderer = std::make_unique<RasterizationRenderer>(w, h);
+	this->renderer = std::make_unique<RasterizationRenderer>(w, h, *threadpool);
 }
 
 std::string vecToStr(const Vec4& v)
@@ -198,9 +198,11 @@ std::string boolToStr(bool b)
 void MainGame::draw()
 {
 	std::vector<const Model*> modelPtrs;
-	for (const auto& it : sceneModels) modelPtrs.push_back(&it);
+	int skyTextureMarker = textureManager.getTextureIndexByName("F_SKY1");
+	for (const auto& it : sceneModels) if (it.textureIndex != skyTextureMarker) modelPtrs.push_back(&it);
 	if (settings.skyRenderingMode == SkyRenderingMode::SPHERE) modelPtrs.push_back(&sky.getModel());
 
+	threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
 	renderer->drawScene(modelPtrs, wndSurf, settings, camera);
 
 	windowUpdateTaskId = threadpool->addTask([&, this]() {
@@ -269,11 +271,11 @@ void MainGame::changeMapTo(std::string mapName)
 	{
 		currentMap = nullptr;
 		//GLTF and FBX load fine
-		//sceneModels = AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager);
+		sceneModels = AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager);
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/pkg_c1_trees/NewSponza_CypressTree_FBX_YUp.fbx", textureManager);
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/pkg_a_curtains/NewSponza_Curtains_FBX_YUp.fbx", textureManager);
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_glTF_003.gltf", textureManager);
-		sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_Yup_003.fbx", textureManager);
+		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_Yup_003.fbx", textureManager);
 		this->camera.pos = Vec4(-1305.55, 175.75, 67.645);
 		this->camera.angle = Vec4(0, -1.444047, -0.125);
 	}
@@ -288,45 +290,18 @@ void MainGame::changeMapTo(std::string mapName)
 	performanceMonitor.reset();
 }
 
-TriangleRenderContext MainGame::makeTriangleRenderContext()
-{
-	TriangleRenderContext ctx;
-	ctr.prepare(camPos, camAng);
-	ctx.ctr = &ctr;
-	ctx.frameBuffer = &framebuf;
-	ctx.lightBuffer = &lightBuf;
-	ctx.zBuffer = &zBuffer;
-
-	ctx.framebufW = framebuf.getW();
-	ctx.framebufH = framebuf.getH();
-	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
-	ctx.gameSettings = settings;
-
-	ctx.camPos = camPos;
-    ctx.pointLights = &pointLights;
-    ctx.pixelWorldPos = &pixelWorldPos;
-	
-	ctx.shadowMaps = &shadowMaps;
-
-	return ctx;
-}
-
-
 void MainGame::adjustSsaaMult(int newMult)
 {
 	int w = wndSurf->w * newMult;
 	int h = wndSurf->h * newMult;
-	framebuf = { w,h };
-	zBuffer = { w,h };
-	pixelWorldPos = { w,h };
-	ctr = { w,h };
 	settings.ssaaMult = newMult;
+	this->renderer = std::make_unique<RasterizationRenderer>(w, h, *threadpool);
 }
 
 void MainGame::saveBuffers() const
 {
 	std::string s = std::to_string(__rdtsc());
 	//framebuf.saveToFile("screenshots/" + s + "_framebuf.png");
-	zBuffer.saveToFile("screenshots/" + s + "_zbuf.png");
+	//zBuffer.saveToFile("screenshots/" + s + "_zbuf.png");
 	shadowMaps[0].depthBuffer.saveToFile("screenshots/" + s + "_shadow_map.png");
 }

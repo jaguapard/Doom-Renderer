@@ -71,6 +71,7 @@
     <ClCompile Include="src\PolygonBitmap.cpp" />
     <ClCompile Include="src\PolygonTriangulator.cpp" />
     <ClCompile Include="src\Renderers\RasterizationRenderer.cpp" />
+    <ClCompile Include="src\Renderers\RendererBase.cpp" />
     <ClCompile Include="src\shaders\MainFragmentRenderShader.cpp" />
     <ClCompile Include="src\shaders\VertexTransformerShader.cpp" />
     <ClCompile Include="src\ShadowMap.cpp" />

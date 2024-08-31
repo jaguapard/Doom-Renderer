@@ -4,6 +4,7 @@
 #include "../Statsman.h"
 #include "../shaders/MainFragmentRenderShader.h"
 #include "../blitting.h"
+#include <sstream>
 
 RasterizationRenderer::RasterizationRenderer(int w, int h, Threadpool& threadpool)
 {
@@ -12,6 +13,8 @@ RasterizationRenderer::RasterizationRenderer(int w, int h, Threadpool& threadpoo
 	this->pixelWorldPosBuf = { w,h };
 	this->threadpool = &threadpool;
 	this->ctr = { w,h };
+
+	this->renderJobs.resize(threadpool.getThreadCount());
 }
 
 void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings, const Camera& pov)
@@ -54,21 +57,19 @@ void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, S
 				//this->zBuffer.clearRows(renderMinY, renderMaxY, 1);
 			}
 
-			MainFragmentRenderInput mfrInp;
-			mfrInp.ctx = localCtx;
-			mfrInp.zoneMinY = renderMinY;
-			mfrInp.zoneMaxY = renderMaxY - 1;
+			BoundingBox threadBox;
+			threadBox.minX = 0;
+			threadBox.minY = renderMinY;
+			threadBox.maxX = this->frameBuf.getW() - 1;
+			threadBox.maxY = renderMaxY - 1;
 
-			MainFragmentRenderShader mfrShaderInst;
-			for (auto& it : renderJobs)
+			for (const auto& it : this->renderJobs)
 			{
-				mfrInp.renderJobs = &it;
-				//mfrInp.renderDepthTextureOnly = true;
-				//mfrShaderInst.run(mfrInp);
-
-				mfrInp.renderDepthTextureOnly = false;
-				mfrShaderInst.run(mfrInp);
-			}
+				for (const auto& rj : it)
+				{
+					this->drawRenderJobSlice(rj, threadBox, false);
+				}
+			}			
 
 			//if (this->currFrameGameSettings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
 			//threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
@@ -79,12 +80,13 @@ void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, S
 	}
 
 	threadpool->waitForMultipleTasks(drawTasks);
+	for (auto& it : this->renderJobs) it.clear();
 }
 
 std::vector<std::pair<std::string, std::string>> RasterizationRenderer::getAdditionalOSDInfo()
 {
 	return {
-		{"Render resolution", std::to_string(frameBuf.getW()) + "x" + std::to_string(frameBuf.getH())}
+		{"Render resolution", (std::stringstream() << this->frameBuf.getW() << "x" << this->frameBuf.getH() << " (" << this->currFrameGameSettings.ssaaMult << "x)").str()}
 	};
 }
 
@@ -253,7 +255,7 @@ int RasterizationRenderer::doWorldTransformationsAndClipping(const Triangle& tri
 	if (currFrameGameSettings.backfaceCullingEnabled && currFrameGameSettings.textureManager->getTextureByIndex(model.textureIndex).hasOnlyOpaquePixels())
 	{
 		Vec4 normal = rotated.getNormalVector();
-		if (rotated.tv[0].spaceCoords.dot(normal) >= 0) return;
+		if (rotated.tv[0].spaceCoords.dot(normal) >= 0) return 0;
 	}
 
 	int outsideVertexCount;
@@ -304,4 +306,131 @@ std::array<uint32_t, 4> RasterizationRenderer::getShiftsForSurface(const SDL_Sur
 	shifts[3] = missingShift;
 	for (auto& it : shifts) assert(it % 8 == 0);
 	return shifts;
+}
+
+BoundingBox RasterizationRenderer::clampBoundingBox(const BoundingBox& clampFrom, const BoundingBox& clampBy) const
+{
+	assert(offsetof(clampFrom, minX) == 0);
+	assert(offsetof(clampFrom, minY) == 4);
+	assert(offsetof(clampFrom, maxX) == 8);
+	assert(offsetof(clampFrom, maxY) == 12);
+	assert(sizeof(clampFrom.maxY) == 4);
+
+	//real minX, minY, maxX, maxY;
+	BoundingBox ret;
+	if (clampFrom.minY >= clampBy.maxY || clampFrom.maxY < clampBy.minY)
+	{
+		ret.minY = -999;
+		ret.maxY = -9999;
+		return ret;
+	}
+
+	__m128 original = _mm_loadu_ps((const float*)&clampFrom);
+	__m128 clampingBox = _mm_loadu_ps((const float*)&clampBy);
+
+	__m128 lows = _mm_shuffle_ps(clampingBox, clampingBox, _MM_SHUFFLE(1, 0, 1, 0));
+	__m128 highs = _mm_shuffle_ps(clampingBox, clampingBox, _MM_SHUFFLE(3, 2, 3, 2));
+
+	__m128 clampedLow = _mm_max_ps(lows, original);
+	__m128 clampedHigh = _mm_min_ps(highs, clampedLow);
+	_mm_storeu_ps((float*)&ret, clampedHigh);
+	return ret;
+}
+
+void RasterizationRenderer::drawRenderJobSlice(const RenderJob& renderJob, const BoundingBox& threadBox, bool depthOnly)
+{
+	BoundingBox clampedBox = this->clampBoundingBox(renderJob.boundingBox, threadBox);
+	real yBeg = clampedBox.minY;
+	real yEnd = clampedBox.maxY;
+	real xBeg = clampedBox.minX;
+	real xEnd = clampedBox.maxX;
+
+	const Texture& texture = this->currFrameGameSettings.textureManager->getTextureByIndex(renderJob.pModel->textureIndex);
+	const auto& tv = renderJob.transformedTriangle.tv;
+	real adjustedLight = renderJob.pModel->lightMult ? powf(renderJob.pModel->lightMult.value(), this->currFrameGameSettings.gamma) : this->currFrameGameSettings.gamma;
+
+	for (real y = yBeg; y <= yEnd; ++y)
+	{
+		size_t yInt = y;
+		//the loop increment section is fairly busy because it's body can be interrupted at various steps, but all increments must always happen
+		for (FloatPack16 x = FloatPack16::sequence() + xBeg; Mask16 loopBoundsMask = x <= xEnd; x += 16)
+		{
+			size_t xInt = x[0];
+			VectorPack16 r = VectorPack16(x, y, 0.0, 0.0);
+			auto [alpha, beta, gamma] = RenderHelpers::calculateBarycentricCoordinates(r, tv[0].spaceCoords, tv[1].spaceCoords, tv[2].spaceCoords, renderJob.rcpSignedArea);
+
+			Mask16 pointsInsideTriangleMask = loopBoundsMask & alpha >= 0.0 & beta >= 0.0 & gamma >= 0.0;
+			if (!pointsInsideTriangleMask) continue;
+
+			VectorPack16 interpolatedDividedUv = VectorPack16(tv[0].textureCoords) * alpha + VectorPack16(tv[1].textureCoords) * beta + VectorPack16(tv[2].textureCoords) * gamma;
+			FloatPack16 currDepthValues = this->zBuffer.getPixels16(xInt, yInt);
+			Mask16 visiblePointsMask = pointsInsideTriangleMask & currDepthValues > interpolatedDividedUv.z;
+			if (!visiblePointsMask) continue; //if all points are occluded, then skip
+
+			VectorPack16 uvCorrected = interpolatedDividedUv / interpolatedDividedUv.z;
+			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
+			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
+
+			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
+			worldCoords /= interpolatedDividedUv.z;
+			worldCoords.w = 1;
+
+			VectorPack16 dynaLight = 0;
+			/*/
+			if (false)
+			{
+				for (const auto& it : *context.pointLights)
+				{
+					FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
+					Vec4 power = it.color * it.intensity;
+					dynaLight += VectorPack16(power) / distSquared;
+				}
+			}*/
+
+			Vec4 shadowLightColorMults = Vec4(1, 1, 1) * 1.5;
+			Vec4 shadowDarkColorMults = shadowLightColorMults * 0.2;
+			VectorPack16 shadowColorMults = 0;
+
+			/*
+			for (const auto& currentShadowMap : *context.shadowMaps)
+			{
+				VectorPack16 sunWorldPositions = currentShadowMap.ctr.getCurrentTransformationMatrix() * worldCoords;
+				FloatPack16 zInv = FloatPack16(currentShadowMap.fovMult) / sunWorldPositions.z;
+				VectorPack16 sunScreenPositions = currentShadowMap.ctr.screenSpaceToPixels(sunWorldPositions * zInv);
+				sunScreenPositions.z = zInv;
+
+				Mask16 inShadowMapBounds = currentShadowMap.depthBuffer.checkBounds(sunScreenPositions.x, sunScreenPositions.y);
+				Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
+
+				FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
+				float shadowMapBias = 1.f / 10e6;
+				//float shadowMapBias = 0;
+				Mask16 pointsInShadow = ~inShadowMapBounds | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
+				shadowColorMults.r += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
+				shadowColorMults.g += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
+				shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
+			}*/
+
+			//texturePixels = (texturePixels * adjustedLight) * (dynaLight + shadowColorMults);
+			texturePixels = (texturePixels * adjustedLight);
+			if (this->currFrameGameSettings.wireframeEnabled)
+			{
+				Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
+				Mask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
+				Mask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
+				Mask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
+
+				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
+				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
+				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
+				texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
+				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
+			}
+
+			this->frameBuf.setPixels16(xInt, yInt, texturePixels, opaquePixelsMask);
+			if (this->currFrameGameSettings.fogEnabled) this->pixelWorldPosBuf.setPixels16(xInt, yInt, worldCoords, opaquePixelsMask);
+
+			this->zBuffer.setPixels16(xInt, yInt, interpolatedDividedUv.z, opaquePixelsMask);
+		}
+	}
 }

@@ -9,6 +9,7 @@ ShadowMap::ShadowMap(int w, int h, const CoordinateTransformer& ctr)
 
 void ShadowMap::render(const std::vector<Model>& models, const GameSettings& gameSettings, const std::vector<ShadowMap>& shadowMaps, Threadpool& threadpool)
 {
+	/*
 	TriangleRenderContext ctx;
 	depthBuffer.clear();
 
@@ -53,5 +54,5 @@ void ShadowMap::render(const std::vector<Model>& models, const GameSettings& gam
 
 		ids.push_back(threadpool.addTask(task));
 	}
-	threadpool.waitForMultipleTasks(ids);	
+	threadpool.waitForMultipleTasks(ids);	*/
 }

@@ -287,6 +287,9 @@
     <ClInclude Include="src\Renderers\RendererBase.h">
       <Filter>Header Files\Renderers</Filter>
     </ClInclude>
+    <ClInclude Include="src\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\Backface culling.md" />

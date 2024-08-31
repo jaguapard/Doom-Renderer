@@ -93,6 +93,7 @@
     <ClInclude Include="src\bob\Timer.h" />
     <ClInclude Include="src\bob\Vec2.h" />
     <ClInclude Include="src\bob\Vec3.h" />
+    <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Color.h" />
     <ClInclude Include="src\CoordinateTransformer.h" />
     <ClInclude Include="src\EnumclassHelper.h" />

@@ -42,27 +42,6 @@ private:
 	void addToRenderQueueFinal(const TriangleRenderContext& context, const Model* pModel) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
 };
 
-struct RenderJob
-{
-	Triangle originalTriangle;
-
-	const Model* pModel;
-	real rcpSignedArea;
-
-	struct BoundingBox
-	{
-		real minX, minY, maxX, maxY;
-	};
-
-	BoundingBox boundingBox;
-
-	RenderJob()
-	{
-
-	}
-};
-class ShadowMap;
-
 struct TriangleRenderContext
 {
 	FloatColorBuffer* frameBuffer = nullptr;

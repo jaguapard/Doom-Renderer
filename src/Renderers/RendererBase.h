@@ -2,9 +2,13 @@
 #include "../Model.h"
 
 struct GameSettings;
+struct Camera;
 
 class RendererBase
 {
 public:
-	virtual void drawScene(const std::vector<Model>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings) = 0;
+	virtual void drawScene(const std::vector<const Model*>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings, const Camera& pov) = 0;
+	virtual std::vector<std::pair<std::string, std::string>> getAdditionalOSDInfo() = 0;
+	//virtual size_t getInternalRenderWidth() = 0;
+	//virtual size_t getInternalRenderHeight() = 0;
 };

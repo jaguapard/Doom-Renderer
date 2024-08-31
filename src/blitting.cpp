@@ -3,7 +3,7 @@
 #include "avx_helpers.h"
 
 const __m512i sequence512 = _mm512_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-static thread_local LehmerRNG rng;
+//static thread_local LehmerRNG rng;
 
 void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY)
 {
@@ -22,7 +22,7 @@ void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffe
 	}
 }
 
-void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4> shifts, const bool ditheringEnabled, const uint32_t ssaaMult)
+void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, const std::array<uint32_t, 4> shifts, const bool ditheringEnabled, const uint32_t ssaaMult, LehmerRNG& rngSource)
 {
 	assert(frameBuf.getW() == surf->w * ssaaMult);
 	assert(frameBuf.getH() == surf->h * ssaaMult);
@@ -76,7 +76,7 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 				__m512i channelValue = _mm512_cvttps_epi32(screenPixels[i]); //now lower bits of each epi32 contain values of channels
 				if (ditheringEnabled)
 				{
-					__m512i rngOut = rng.next();
+					__m512i rngOut = rngSource.next();
 					FloatPack16 increaseThreshold = (screenPixels[i] - _mm512_floor_ps(screenPixels[i])) * float(UINT32_MAX);
 
 					Mask16 increaseMask = _mm512_cmplt_epu32_mask(rngOut, _mm512_cvttps_epu32(increaseThreshold));

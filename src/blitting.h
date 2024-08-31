@@ -8,9 +8,11 @@
 #include "ZBuffer.h"
 #include "misc/Enums.h"
 
+class LehmerRNG;
+
 namespace blitting
 {
 	void lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY);
-	void frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, std::array<uint32_t, 4> shifts, bool ditheringEnabled, uint32_t ssaaMult);
+	void frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surface* surf, size_t minY, size_t maxY, std::array<uint32_t, 4> shifts, bool ditheringEnabled, uint32_t ssaaMult, LehmerRNG& rngSource);
 	void applyFog(FloatColorBuffer& frameBuf, const FloatColorBuffer& worldPos, Vec4 camPos, float fogIntensity, Vec4 fogColor, size_t minY, size_t maxY, FogEffectVersion fogEffectVersion);
 }

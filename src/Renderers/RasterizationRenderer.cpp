@@ -19,6 +19,7 @@ RasterizationRenderer::RasterizationRenderer(int w, int h, Threadpool& threadpoo
 	this->ctr = { w,h };
 
 	this->renderJobs.resize(threadpool.getThreadCount());
+	this->rngSources.resize(threadpool.getThreadCount());
 }
 
 void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings, const Camera& pov)
@@ -84,7 +85,7 @@ void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, S
 
 			//if (this->currFrameGameSettings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
 			//threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			if (dstSurf) blitting::frameBufferIntoSurface(this->frameBuf, dstSurf, outputMinY, outputMaxY, surfaceShifts, this->currFrameGameSettings.ditheringEnabled, ssaaMult);
+			if (dstSurf) blitting::frameBufferIntoSurface(this->frameBuf, dstSurf, outputMinY, outputMaxY, surfaceShifts, this->currFrameGameSettings.ditheringEnabled, ssaaMult, rngSources[tNum]);
 		};
 
 		drawTasks.push_back(threadpool->addTask(f));

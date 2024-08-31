@@ -1,5 +1,7 @@
 #include "RendererBase.h"
 #include "../ShadowMap.h"
+#include "../Lehmer.h"
+
 class Threadpool;
 
 struct BoundingBox
@@ -55,6 +57,7 @@ private:
 	};
 
 	std::vector<std::vector<RenderJob>> renderJobs;
+	std::vector<LehmerRNG> rngSources;
 
 	std::vector<ModelSlice> distributeTrianglesForWorkers(const std::vector<const Model*>& sceneModels, size_t threadCount);
 	void addTriangleRangeToRenderQueue(const Triangle* pBegin, const Triangle* pEnd, const Model* pModel, size_t workerNumber);

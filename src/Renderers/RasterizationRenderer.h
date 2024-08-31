@@ -1,5 +1,5 @@
 #include "RendererBase.h"
-
+#include "../ShadowMap.h"
 class Threadpool;
 
 struct BoundingBox
@@ -13,9 +13,15 @@ class ShadowMap;
 class RasterizationRenderer : public RendererBase
 {
 public:
-	RasterizationRenderer(int w, int h, Threadpool& threadpool);
+	RasterizationRenderer(int w, int h, Threadpool& threadpool, bool depthOnly = false);
 	virtual void drawScene(const std::vector<const Model*>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings, const Camera& pov);
+	virtual void drawScene(const std::vector<const Model*>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings, const Camera& pov, bool depthOnly);
 	virtual std::vector<std::pair<std::string, std::string>> getAdditionalOSDInfo();
+	virtual void saveBuffers();
+
+	const ZBuffer& getDepthBuffer() const;
+	void addShadowMap(const ShadowMap& m);
+	void removeShadowMaps();
 private:
 	Threadpool* threadpool;
 
@@ -25,6 +31,8 @@ private:
 
 	GameSettings currFrameGameSettings;
 	CoordinateTransformer ctr;
+
+	std::vector<const ShadowMap*> shadowMaps;
 
 	struct RenderJob
 	{

@@ -79,9 +79,5 @@ protected:
 	void init();
 	void changeMapTo(std::string mapName);
 
-	TriangleRenderContext makeTriangleRenderContext();;
-
 	void adjustSsaaMult(int add);
-
-	void saveBuffers() const;
 };

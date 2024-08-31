@@ -75,7 +75,7 @@ void MainGame::handleInput()
 	if (input.wasCharPressedOnThisFrame('Y')) settings.ditheringEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('Q') && settings.ssaaMult > 1) this->adjustSsaaMult(settings.ssaaMult - 1);
 	if (input.wasCharPressedOnThisFrame('E')) this->adjustSsaaMult(settings.ssaaMult + 1);
-	if (input.wasCharPressedOnThisFrame('H')) this->saveBuffers();
+	if (input.wasCharPressedOnThisFrame('H')) this->renderer->saveBuffers();
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{
@@ -280,13 +280,21 @@ void MainGame::changeMapTo(std::string mapName)
 		this->camera.angle = Vec4(0, -1.444047, -0.125);
 	}
 
-	int shadowMapW = debug ? 192 : 19200;
-	int shadowMapH = debug ? 108 : 10800;
-	CoordinateTransformer mapCtr(shadowMapW, shadowMapH);
-	mapCtr.prepare(Vec4(-1846, 2799, 568), Vec4(0, -1.2869, -0.6689));
-	this->shadowMaps = { ShadowMap(shadowMapW,shadowMapH,mapCtr) };
+	auto *r = dynamic_cast<RasterizationRenderer*>(this->renderer.get());
+	if (r)
+	{
+		r->removeShadowMaps();
+		int shadowMapW = debug ? 192 : 19200;
+		int shadowMapH = debug ? 108 : 10800;
+		Camera shadowMapPov = { .pos = Vec4(-1846, 2799, 568), .angle = Vec4(0, -1.2869, -0.6689) };
+		this->shadowMaps = { ShadowMap(shadowMapW,shadowMapH,shadowMapPov) };
 
-	for (auto& it : shadowMaps) it.render(sceneModels, this->settings, shadowMaps, *threadpool);
+		for (auto& it : shadowMaps)
+		{
+			it.render(sceneModels, this->settings, *threadpool);
+			r->addShadowMap(it);
+		}		
+	}
 	performanceMonitor.reset();
 }
 
@@ -296,12 +304,5 @@ void MainGame::adjustSsaaMult(int newMult)
 	int h = wndSurf->h * newMult;
 	settings.ssaaMult = newMult;
 	this->renderer = std::make_unique<RasterizationRenderer>(w, h, *threadpool);
-}
-
-void MainGame::saveBuffers() const
-{
-	std::string s = std::to_string(__rdtsc());
-	//framebuf.saveToFile("screenshots/" + s + "_framebuf.png");
-	//zBuffer.saveToFile("screenshots/" + s + "_zbuf.png");
-	shadowMaps[0].depthBuffer.saveToFile("screenshots/" + s + "_shadow_map.png");
+	for (auto& it : shadowMaps) dynamic_cast<RasterizationRenderer*>(this->renderer.get())->addShadowMap(it);
 }

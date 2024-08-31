@@ -5,12 +5,16 @@
 #include "../shaders/MainFragmentRenderShader.h"
 #include "../blitting.h"
 #include <sstream>
+#include "../ShadowMap.h"
 
-RasterizationRenderer::RasterizationRenderer(int w, int h, Threadpool& threadpool)
+RasterizationRenderer::RasterizationRenderer(int w, int h, Threadpool& threadpool, bool depthOnly)
 {
 	this->zBuffer = { w,h };
-	this->frameBuf = { w,h };
-	this->pixelWorldPosBuf = { w,h };
+	if (!depthOnly)
+	{
+		this->frameBuf = { w,h };
+		this->pixelWorldPosBuf = { w,h };
+	}
 	this->threadpool = &threadpool;
 	this->ctr = { w,h };
 
@@ -19,11 +23,17 @@ RasterizationRenderer::RasterizationRenderer(int w, int h, Threadpool& threadpoo
 
 void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings, const Camera& pov)
 {
-	this->currFrameGameSettings = gameSettings;
+	this->drawScene(models, dstSurf, gameSettings, pov, false); //can't add a default value to virtual function, so just overload it
+}
+
+void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings, const Camera& pov, bool depthOnly)
+{
+	this->currFrameGameSettings = gameSettings; 
 	size_t threadCount = threadpool->getThreadCount();
 	std::vector<ModelSlice> distributedSlices = this->distributeTrianglesForWorkers(models, threadCount);
 	this->ctr.prepare(pov.pos, pov.angle);
-	auto surfaceShifts = this->getShiftsForSurface(dstSurf);
+	std::array<uint32_t, 4> surfaceShifts;
+	if (dstSurf) surfaceShifts = this->getShiftsForSurface(dstSurf);
 
 	std::vector<task_id> transformTasks, drawTasks;
 	for (int tNum = 0; tNum < threadCount; ++tNum)
@@ -44,7 +54,8 @@ void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, S
 		//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
 		taskfunc_t f = [=]() {
 			int ssaaMult = this->currFrameGameSettings.ssaaMult;
-			auto lim = threadpool->getLimitsForThread(tNum, 0, dstSurf->h);
+			int outputHeight = (depthOnly ? this->zBuffer.getH() : this->frameBuf.getH()) / ssaaMult;
+			auto lim = threadpool->getLimitsForThread(tNum, 0, outputHeight);
 			int outputMinY = lim.first; //truncate limits to avoid fighting
 			int outputMaxY = lim.second;
 			int renderMinY = outputMinY * ssaaMult; //it is essential to caclulate rendering zone limits like this, to ensure there are no intersections in different threads
@@ -60,21 +71,21 @@ void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, S
 			BoundingBox threadBox;
 			threadBox.minX = 0;
 			threadBox.minY = renderMinY;
-			threadBox.maxX = this->frameBuf.getW() - 1;
+			threadBox.maxX = (depthOnly ? this->zBuffer.getW() : this->frameBuf.getW()) - 1;
 			threadBox.maxY = renderMaxY - 1;
 
 			for (const auto& it : this->renderJobs)
 			{
 				for (const auto& rj : it)
 				{
-					this->drawRenderJobSlice(rj, threadBox, false);
+					this->drawRenderJobSlice(rj, threadBox, depthOnly);
 				}
 			}			
 
 			//if (this->currFrameGameSettings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
 			//threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			blitting::frameBufferIntoSurface(this->frameBuf, dstSurf, outputMinY, outputMaxY, surfaceShifts, this->currFrameGameSettings.ditheringEnabled, ssaaMult);
-			};
+			if (dstSurf) blitting::frameBufferIntoSurface(this->frameBuf, dstSurf, outputMinY, outputMaxY, surfaceShifts, this->currFrameGameSettings.ditheringEnabled, ssaaMult);
+		};
 
 		drawTasks.push_back(threadpool->addTask(f));
 	}
@@ -88,6 +99,19 @@ std::vector<std::pair<std::string, std::string>> RasterizationRenderer::getAddit
 	return {
 		{"Render resolution", (std::stringstream() << this->frameBuf.getW() << "x" << this->frameBuf.getH() << " (" << this->currFrameGameSettings.ssaaMult << "x)").str()}
 	};
+}
+
+void RasterizationRenderer::saveBuffers()
+{
+	std::string s = std::to_string(__rdtsc());
+	//this->frameBuf.saveToFile("screenshots/" + s + "_framebuf.png");
+	this->zBuffer.saveToFile("screenshots/" + s + "_zbuf.png");
+	this->shadowMaps[0]->depthBuffer.saveToFile("screenshots/" + s + "_shadow_map.png");
+}
+
+const ZBuffer& RasterizationRenderer::getDepthBuffer() const
+{
+	return this->zBuffer;
 }
 
 std::vector<RasterizationRenderer::ModelSlice> RasterizationRenderer::distributeTrianglesForWorkers(const std::vector<const Model*>& sceneModels, size_t threadCount)
@@ -371,66 +395,78 @@ void RasterizationRenderer::drawRenderJobSlice(const RenderJob& renderJob, const
 			VectorPack16 texturePixels = texture.gatherPixels512(uvCorrected.x, uvCorrected.y, visiblePointsMask);
 			Mask16 opaquePixelsMask = visiblePointsMask & texturePixels.a > 0.0f;
 
-			VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
-			worldCoords /= interpolatedDividedUv.z;
-			worldCoords.w = 1;
-
-			VectorPack16 dynaLight = 0;
-			/*/
-			if (false)
+			if (!depthOnly)
 			{
-				for (const auto& it : *context.pointLights)
+				VectorPack16 worldCoords = VectorPack16(tv[0].worldCoords) * alpha + VectorPack16(tv[1].worldCoords) * beta + VectorPack16(tv[2].worldCoords) * gamma;
+				worldCoords /= interpolatedDividedUv.z;
+				worldCoords.w = 1;
+
+				VectorPack16 dynaLight = 0;
+				/*/
+				if (false)
 				{
-					FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
-					Vec4 power = it.color * it.intensity;
-					dynaLight += VectorPack16(power) / distSquared;
+					for (const auto& it : *context.pointLights)
+					{
+						FloatPack16 distSquared = (worldCoords - it.pos).lenSq3d();
+						Vec4 power = it.color * it.intensity;
+						dynaLight += VectorPack16(power) / distSquared;
+					}
+				}*/
+
+				Vec4 shadowLightColorMults = Vec4(1, 1, 1) * 1.5;
+				Vec4 shadowDarkColorMults = shadowLightColorMults * 0.2;
+				VectorPack16 shadowColorMults = 0;
+
+				for (const auto& it :  this->shadowMaps)
+				{
+					const auto& currentShadowMap = *it;
+					VectorPack16 sunWorldPositions = currentShadowMap.ctr.getCurrentTransformationMatrix() * worldCoords;
+					FloatPack16 zInv = FloatPack16(currentShadowMap.fovMult) / sunWorldPositions.z;
+					VectorPack16 sunScreenPositions = currentShadowMap.ctr.screenSpaceToPixels(sunWorldPositions * zInv);
+					sunScreenPositions.z = zInv;
+
+					Mask16 inShadowMapBounds = currentShadowMap.depthBuffer.checkBounds(sunScreenPositions.x, sunScreenPositions.y);
+					Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
+
+					FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
+					float shadowMapBias = 1.f / 10e6;
+					//float shadowMapBias = 0;
+					Mask16 pointsInShadow = ~inShadowMapBounds | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
+					shadowColorMults.r += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
+					shadowColorMults.g += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
+					shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
 				}
-			}*/
 
-			Vec4 shadowLightColorMults = Vec4(1, 1, 1) * 1.5;
-			Vec4 shadowDarkColorMults = shadowLightColorMults * 0.2;
-			VectorPack16 shadowColorMults = 0;
+				texturePixels = (texturePixels * adjustedLight) * (dynaLight + shadowColorMults);
+				if (this->currFrameGameSettings.wireframeEnabled)
+				{
+					Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
+					Mask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
+					Mask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
+					Mask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
 
-			/*
-			for (const auto& currentShadowMap : *context.shadowMaps)
-			{
-				VectorPack16 sunWorldPositions = currentShadowMap.ctr.getCurrentTransformationMatrix() * worldCoords;
-				FloatPack16 zInv = FloatPack16(currentShadowMap.fovMult) / sunWorldPositions.z;
-				VectorPack16 sunScreenPositions = currentShadowMap.ctr.screenSpaceToPixels(sunWorldPositions * zInv);
-				sunScreenPositions.z = zInv;
+					texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
+					texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
+					texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
+					texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
+					//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
+				}
 
-				Mask16 inShadowMapBounds = currentShadowMap.depthBuffer.checkBounds(sunScreenPositions.x, sunScreenPositions.y);
-				Mask16 shadowMapDepthGatherMask = inShadowMapBounds & opaquePixelsMask;
-
-				FloatPack16 shadowMapDepths = currentShadowMap.depthBuffer.gatherPixels16(_mm512_cvttps_epi32(sunScreenPositions.x), _mm512_cvttps_epi32(sunScreenPositions.y), shadowMapDepthGatherMask);
-				float shadowMapBias = 1.f / 10e6;
-				//float shadowMapBias = 0;
-				Mask16 pointsInShadow = ~inShadowMapBounds | shadowMapDepths < (sunScreenPositions.z - shadowMapBias);
-				shadowColorMults.r += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.x), FloatPack16(shadowDarkColorMults.x));
-				shadowColorMults.g += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.y), FloatPack16(shadowDarkColorMults.y));
-				shadowColorMults.b += _mm512_mask_blend_ps(pointsInShadow, FloatPack16(shadowLightColorMults.z), FloatPack16(shadowDarkColorMults.z));
-			}*/
-
-			//texturePixels = (texturePixels * adjustedLight) * (dynaLight + shadowColorMults);
-			texturePixels = (texturePixels * adjustedLight);
-			if (this->currFrameGameSettings.wireframeEnabled)
-			{
-				Mask16 visibleEdgeMaskAlpha = visiblePointsMask & alpha <= 0.01;
-				Mask16 visibleEdgeMaskBeta = visiblePointsMask & beta <= 0.01;
-				Mask16 visibleEdgeMaskGamma = visiblePointsMask & gamma <= 0.01;
-				Mask16 total = visibleEdgeMaskAlpha | visibleEdgeMaskBeta | visibleEdgeMaskGamma;
-
-				texturePixels.r = _mm512_mask_blend_ps(visibleEdgeMaskAlpha, texturePixels.r, _mm512_set1_ps(1));
-				texturePixels.g = _mm512_mask_blend_ps(visibleEdgeMaskBeta, texturePixels.g, _mm512_set1_ps(1));
-				texturePixels.b = _mm512_mask_blend_ps(visibleEdgeMaskGamma, texturePixels.b, _mm512_set1_ps(1));
-				texturePixels.a = _mm512_mask_blend_ps(total, texturePixels.a, _mm512_set1_ps(1));
-				//lightMult = _mm512_mask_blend_ps(visibleEdgeMask, lightMult, _mm512_set1_ps(1));
+				this->frameBuf.setPixels16(xInt, yInt, texturePixels, opaquePixelsMask);
+				if (this->currFrameGameSettings.fogEnabled) this->pixelWorldPosBuf.setPixels16(xInt, yInt, worldCoords, opaquePixelsMask);
 			}
-
-			this->frameBuf.setPixels16(xInt, yInt, texturePixels, opaquePixelsMask);
-			if (this->currFrameGameSettings.fogEnabled) this->pixelWorldPosBuf.setPixels16(xInt, yInt, worldCoords, opaquePixelsMask);
 
 			this->zBuffer.setPixels16(xInt, yInt, interpolatedDividedUv.z, opaquePixelsMask);
 		}
 	}
+}
+
+void RasterizationRenderer::addShadowMap(const ShadowMap& m)
+{
+	this->shadowMaps.push_back(&m);
+}
+
+void RasterizationRenderer::removeShadowMaps()
+{
+	this->shadowMaps.clear();
 }

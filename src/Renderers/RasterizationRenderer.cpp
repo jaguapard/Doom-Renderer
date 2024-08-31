@@ -20,6 +20,8 @@ RasterizationRenderer::RasterizationRenderer(int w, int h, Threadpool& threadpoo
 
 	this->renderJobs.resize(threadpool.getThreadCount());
 	this->rngSources.resize(threadpool.getThreadCount());
+	this->filteredJobIndices.resize(threadpool.getThreadCount());
+	for (auto& it : this->filteredJobIndices) it.resize(threadpool.getThreadCount());
 }
 
 void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, SDL_Surface* dstSurf, const GameSettings& gameSettings, const Camera& pov)
@@ -75,13 +77,13 @@ void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, S
 			threadBox.maxX = (depthOnly ? this->zBuffer.getW() : this->frameBuf.getW()) - 1;
 			threadBox.maxY = renderMaxY - 1;
 
-			for (const auto& it : this->renderJobs)
+			for (int giverThread = 0; giverThread < threadCount; ++giverThread)
 			{
-				for (const auto& rj : it)
+				for (const auto& rjIndex : this->filteredJobIndices[giverThread][tNum])
 				{
-					this->drawRenderJobSlice(rj, threadBox, depthOnly);
+					this->drawRenderJobSlice(this->renderJobs[giverThread][rjIndex], threadBox, depthOnly);
 				}
-			}			
+			}
 
 			//if (this->currFrameGameSettings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
 			//threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
@@ -93,6 +95,7 @@ void RasterizationRenderer::drawScene(const std::vector<const Model*>& models, S
 
 	threadpool->waitForMultipleTasks(drawTasks);
 	for (auto& it : this->renderJobs) it.clear();
+	for (auto& it : this->filteredJobIndices) for (auto& it2 : it) it2.clear();
 }
 
 std::vector<std::pair<std::string, std::string>> RasterizationRenderer::getAdditionalOSDInfo()
@@ -229,6 +232,8 @@ real _3max(real a, real b, real c)
 
 void RasterizationRenderer::addTriangleRangeToRenderQueue(const Triangle* pBegin, const Triangle* pEnd, const Model* pModel, size_t workerNumber)
 {
+	int tCount = this->threadpool->getThreadCount();
+	double perThread = double(zBuffer.getH()) / tCount;
 	for (auto pTriangle = pBegin; pTriangle < pEnd; ++pTriangle)
 	{
 		Triangle t[2];
@@ -246,6 +251,7 @@ void RasterizationRenderer::addTriangleRangeToRenderQueue(const Triangle* pBegin
 			real signedArea = (r1 - r3).cross2d(r2 - r3);
 			if (signedArea == 0.0) continue;
 
+			size_t renderJobIndex = this->renderJobs[workerNumber].size();
 			RenderJob& rj = this->renderJobs[workerNumber].emplace_back();
 			rj.rcpSignedArea = 1.0 / signedArea;
 			rj.transformedTriangle = t;
@@ -260,6 +266,13 @@ void RasterizationRenderer::addTriangleRangeToRenderQueue(const Triangle* pBegin
 			rj.boundingBox.minY = floor(screenMinY);
 			rj.boundingBox.maxY = ceil(screenMaxY);
 			rj.pModel = pModel;
+
+			int firstWorker = int(rj.boundingBox.minY) / perThread;
+			int lastWorker = int(rj.boundingBox.maxY) / perThread;
+			for (int j = std::clamp(firstWorker, 0, tCount-1); j <= std::clamp(lastWorker, 0, tCount-1); ++j)
+			{
+				filteredJobIndices[workerNumber][j].push_back(renderJobIndex); //prevent threads from checking unrelated jobs ("not my business")
+			}
 		}
 	}
 }

@@ -47,7 +47,6 @@ private:
 
 		RenderJob() {};
 	};
-
 	struct ModelSlice
 	{
 		const Triangle* pTrianglesBegin;
@@ -57,6 +56,7 @@ private:
 	};
 
 	std::vector<std::vector<RenderJob>> renderJobs;
+	std::vector<std::vector<std::vector<size_t>>> filteredJobIndices;
 	std::vector<LehmerRNG> rngSources;
 
 	std::vector<ModelSlice> distributeTrianglesForWorkers(const std::vector<const Model*>& sceneModels, size_t threadCount);

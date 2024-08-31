@@ -70,6 +70,7 @@
     <ClCompile Include="src\Polygon.cpp" />
     <ClCompile Include="src\PolygonBitmap.cpp" />
     <ClCompile Include="src\PolygonTriangulator.cpp" />
+    <ClCompile Include="src\Renderers\RasterizationRenderer.cpp" />
     <ClCompile Include="src\shaders\MainFragmentRenderShader.cpp" />
     <ClCompile Include="src\shaders\VertexTransformerShader.cpp" />
     <ClCompile Include="src\ShadowMap.cpp" />
@@ -118,6 +119,8 @@
     <ClInclude Include="src\PolygonBitmap.h" />
     <ClInclude Include="src\PolygonTriangulator.h" />
     <ClInclude Include="src\real.h" />
+    <ClInclude Include="src\Renderers\RasterizationRenderer.h" />
+    <ClInclude Include="src\Renderers\RendererBase.h" />
     <ClInclude Include="src\shaders\MainFragmentRenderShader.h" />
     <ClInclude Include="src\shaders\ShaderBase.h" />
     <ClInclude Include="src\shaders\VertexTransformerShader.h" />

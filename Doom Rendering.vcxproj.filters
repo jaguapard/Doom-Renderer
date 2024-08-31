@@ -28,6 +28,9 @@
     <Filter Include="Header Files\shaders">
       <UniqueIdentifier>{d5686a54-98e7-4fc5-b9c4-06c9638a3e08}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Renderers">
+      <UniqueIdentifier>{09665ef5-8a9a-4005-b74e-ea98ed45727b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ZBuffer.cpp">
@@ -127,6 +130,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\shaders\VertexTransformerShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderers\RasterizationRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -274,6 +280,12 @@
     </ClInclude>
     <ClInclude Include="src\KeepApartVector.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Renderers\RasterizationRenderer.h">
+      <Filter>Header Files\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Renderers\RendererBase.h">
+      <Filter>Header Files\Renderers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

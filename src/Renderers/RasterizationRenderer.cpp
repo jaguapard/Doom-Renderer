@@ -234,6 +234,12 @@ void RasterizationRenderer::addTriangleRangeToRenderQueue(const Triangle* pBegin
 {
 	int tCount = this->threadpool->getThreadCount();
 	double rcpPerThread = tCount / double(zBuffer.getH());
+	BoundingBox screenBox;
+	screenBox.minX = 0;
+	screenBox.minY = 0;
+	screenBox.maxX = zBuffer.getW() - 1;
+	screenBox.maxY = zBuffer.getH() - 1;
+
 	for (auto pTriangle = pBegin; pTriangle < pEnd; ++pTriangle)
 	{
 		Triangle t[2];
@@ -267,9 +273,10 @@ void RasterizationRenderer::addTriangleRangeToRenderQueue(const Triangle* pBegin
 			rj.boundingBox.maxY = ceil(screenMaxY);
 			rj.pModel = pModel;
 
-			int firstWorker = int(rj.boundingBox.minY) * rcpPerThread;
-			int lastWorker = int(rj.boundingBox.maxY) * rcpPerThread;
-			for (int j = std::clamp(firstWorker, 0, tCount-1); j <= std::clamp(lastWorker, 0, tCount-1); ++j)
+			BoundingBox clipped = this->clampBoundingBox(rj.boundingBox, screenBox);
+			int firstWorker = int(clipped.minY) * rcpPerThread;
+			int lastWorker = int(clipped.maxY) * rcpPerThread;
+			for (int j = firstWorker; j <= lastWorker; ++j)
 			{
 				filteredJobIndices[workerNumber][j].push_back(renderJobIndex); //prevent threads from checking unrelated jobs ("not my business")
 			}

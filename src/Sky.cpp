@@ -98,8 +98,9 @@ Sky::Sky(std::string textureName, TextureManager& textureManager)
 			tv.textureCoords = preremapUv;
 		}
 	}
-	this->skyModel = Model(skyTriangles, textureIndex);
+	this->skyModel = Model(skyTriangles, textureIndex, textureManager);
 	this->skyModel.lightMult = 1;
+	this->skyModel.noBackfaceCulling = true;
 }
 
 const Model& Sky::getModel() const

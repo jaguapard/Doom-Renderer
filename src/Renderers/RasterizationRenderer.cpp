@@ -297,7 +297,7 @@ int RasterizationRenderer::doWorldTransformationsAndClipping(const Triangle& tri
 		rotated.tv[i].worldCoords = triangle.tv[i].spaceCoords;
 	}
 
-	if (currFrameGameSettings.backfaceCullingEnabled && currFrameGameSettings.textureManager->getTextureByIndex(model.textureIndex).hasOnlyOpaquePixels())
+	if (currFrameGameSettings.backfaceCullingEnabled && !model.noBackfaceCulling)
 	{
 		Vec4 normal = rotated.getNormalVector();
 		if (rotated.tv[0].spaceCoords.dot(normal) >= 0) return 0;

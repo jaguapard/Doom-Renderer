@@ -3,7 +3,7 @@
 #include <numeric>
 #include "Statsman.h"
 
-Model::Model(const std::vector<Triangle>& triangles, int textureIndex)
+Model::Model(const std::vector<Triangle>& triangles, int textureIndex, const TextureManager& textureManager)
 {
 	//assert(triangles.size() > 0);
 	this->textureIndex = textureIndex;
@@ -40,6 +40,8 @@ Model::Model(const std::vector<Triangle>& triangles, int textureIndex)
 		this->triangles.push_back(it);
 	}
 	assert(this->triangles.size() > 0);
+
+	this->noBackfaceCulling = !textureManager.getTextureByIndex(textureIndex).hasOnlyOpaquePixels();
 }
 
 int Model::getTriangleCount() const

@@ -68,7 +68,7 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 				t.tv[k].textureCoords = aiToBob(aiUVs);
 			}
 		}
-		models.push_back(Model(tris, textureIndex));
+		models.push_back(Model(tris, textureIndex, textureManager));
 	}
 	
 	size_t triangleCount = 0;

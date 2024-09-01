@@ -8,6 +8,7 @@ class AssetLoader
 public:
 	AssetLoader();
 	std::vector<Model> loadObj(std::string path, TextureManager& textureManager, std::string convertToSavePath = "");
+	static std::vector<Model> loadBmdl(std::string path, TextureManager& textureManager);
 	
 	//void saveModels(const std::vector<Model>& models, std::string path) const;
 private:

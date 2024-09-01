@@ -38,6 +38,13 @@ void writeVarToFile(const T& var, std::ofstream& file, size_t sizeOverride = 0)
 	else file.write((const char*)(&var), sizeOverride);
 }
 
+template <typename T>
+void readVarFromFile(T& var, std::ifstream& file, size_t sizeOverride = 0)
+{
+	if (!sizeOverride) file.read((char*)(&var), sizeof(var));
+	else file.read((char*)(&var), sizeOverride);
+}
+
 std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textureManager, std::string convertToSavePath)
 {
 	const auto pScene = this->importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_MakeLeftHanded | aiProcess_GenUVCoords);
@@ -109,8 +116,52 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 		}
 	}
 	
-	size_t triangleCount = 0;
-	for (auto& it : models) triangleCount += it.getTriangleCount();
-	std::cout << "Scene " << path << ": loaded " << triangleCount << " triangles\n";
 	return models;
+}
+
+std::vector<Model> AssetLoader::loadBmdl(std::string path, TextureManager& textureManager)
+{
+	std::ifstream file(path, std::ios::binary);
+	file.exceptions(file.badbit | file.failbit);
+	std::vector<Model> ret;
+	std::string parentDir = getFolderFromPath(path, true);
+
+	float triangleData[15];
+	size_t fileSize;
+	while (!file.eof())
+	{
+		uint64_t modelSize;
+		readVarFromFile(modelSize, file);
+		uint64_t bytesRemaining = modelSize;
+		if (modelSize % sizeof(triangleData) != 0) throw std::runtime_error("Error while loading model" + path + ": unexpected model size: " + std::to_string(modelSize) + " bytes, not mod " + std::to_string(sizeof(triangleData)));
+
+		std::string textureRelPath;
+		char c = -1;
+		while (c != 0)
+		{
+			readVarFromFile(c, file);
+			textureRelPath.push_back(c);
+		}
+		std::string textureFullPath = parentDir + textureRelPath;
+
+		int textureIndex = textureManager.getTextureIndexByPath(textureFullPath);
+		std::vector<Triangle> tris;
+		while (bytesRemaining > 0)
+		{
+			readVarFromFile(triangleData, file);
+			Triangle& t = tris.emplace_back();
+			for (int i = 0; i < 3; ++i)
+			{
+				t.tv[i].worldCoords = Vec4(triangleData[i * 5], triangleData[i * 5 + 1], triangleData[i * 5 + 2]);
+				t.tv[i].textureCoords = Vec4(triangleData[i * 5 + 3], triangleData[i * 5 + 4]);
+				t.tv[i].spaceCoords = t.tv[i].worldCoords;
+			}
+			bytesRemaining -= sizeof(triangleData);
+		}
+
+		ret.emplace_back(tris, textureIndex, textureManager);
+		file.peek();
+	}
+
+	return ret;
 }

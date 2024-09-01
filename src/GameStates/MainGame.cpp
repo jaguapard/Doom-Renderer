@@ -272,14 +272,34 @@ void MainGame::changeMapTo(std::string mapName)
 		currentMap = nullptr;
 		AssetLoader loader;
 		//GLTF and FBX load fine
-		sceneModels = loader.loadObj("scenes/Sponza/sponza.obj", textureManager, "H:/Sponza goodies/old_sponza/old_sponza.bmdl");
-		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/pkg_c1_trees/NewSponza_CypressTree_FBX_YUp.fbx", textureManager);
+		//sceneModels = loader.loadObj("scenes/Sponza/sponza.obj", textureManager, "H:/Sponza goodies/old_sponza/old_sponza.bmdl");
+		//loader.loadObj("H:/Sponza goodies/pkg_c1_trees/NewSponza_CypressTree_FBX_YUp.fbx", textureManager, "H:/Sponza goodies/tree.bmdl");
+		//loader.loadObj("H:/Sponza goodies/pkg_a_curtains/NewSponza_Curtains_FBX_YUp.fbx", textureManager, "H:/Sponza goodies/curtains.bmdl");
+		//loader.loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_Yup_003.fbx", textureManager, "H:/Sponza goodies/new_sponza.bmdl");
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/pkg_a_curtains/NewSponza_Curtains_FBX_YUp.fbx", textureManager);
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_glTF_003.gltf", textureManager);
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_Yup_003.fbx", textureManager);
+
+		std::string paths[] = {
+			"H:/Sponza goodies/main1_sponza/new_sponza.bmdl",
+			"H:/Sponza goodies/pkg_a_curtains/curtains.bmdl",
+			"H:/Sponza goodies/pkg_c1_trees/tree.bmdl",
+			
+		};
+
+		for (auto& it : paths)
+		{
+			auto ret = AssetLoader::loadBmdl(it, textureManager);
+			for (auto& mdl : ret) sceneModels.push_back(mdl);
+		}
+		//sceneModels = AssetLoader::loadBmdl("H:/Sponza goodies/old_sponza/old_sponza.bmdl", textureManager);
 		this->camera.pos = Vec4(-1305.55, 175.75, 67.645);
 		this->camera.angle = Vec4(0, -1.444047, -0.125);
 	}
+
+	size_t triangleCount = 0;
+	for (auto& it : sceneModels) triangleCount += it.getTriangleCount();
+	std::cout << "Total triangles loaded: " << triangleCount << "\n";
 
 	auto *r = dynamic_cast<RasterizationRenderer*>(this->renderer.get());
 	if (r)

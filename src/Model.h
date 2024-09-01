@@ -12,10 +12,6 @@ public:
 	const std::vector<Triangle>& getTriangles() const;
 
 	void swapVertexOrder();
-
-	void addToRenderQueue(TriangleRenderContext ctx) const;
-	void addTriangleRangeToRenderQueue(const Triangle* pTrianglesBegin, const Triangle* pTrianglesEnd, TriangleRenderContext ctx) const;
-	
 	std::optional<real> lightMult;
 	int textureIndex;
 	bool noBackfaceCulling = false;

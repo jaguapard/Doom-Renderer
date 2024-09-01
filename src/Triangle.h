@@ -14,8 +14,6 @@
 #include "PointLight.h"
 #include "misc/GameSettings.h"
 
-struct TriangleRenderContext;
-struct RenderJob;
 class Model;
 
 struct Triangle

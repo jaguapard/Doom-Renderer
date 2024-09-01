@@ -1,6 +1,6 @@
 #include "AssetLoader.h"
 
-#include <assimp/Importer.hpp>
+
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "Vec.h"
@@ -25,15 +25,18 @@ std::string getFolderFromPath(std::string path, bool addTrailingSlash = false)
 	if (addTrailingSlash) return pathStr + "/";
 	else return pathStr;
 }
+AssetLoader::AssetLoader()
+{
+
+}
 std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textureManager)
 {
-	Assimp::Importer imp;
-	const auto pScene = imp.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_MakeLeftHanded | aiProcess_GenUVCoords);
+	const auto pScene = this->importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_MakeLeftHanded | aiProcess_GenUVCoords);
 	std::stringstream ss;
 	ss << "Error while loading scene " << path << ": ";
 	if (!pScene)
 	{
-		ss << imp.GetErrorString();
+		ss << this->importer.GetErrorString();
 		throw std::runtime_error(ss.str());
 	}
 	
@@ -44,7 +47,10 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 		aiMaterial* material = pScene->mMaterials[mesh->mMaterialIndex];
 		aiString texturePath;
 		material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
-		int textureIndex = textureManager.getTextureIndexByPath(getFolderFromPath(path,true) + std::string(texturePath.C_Str()));
+
+		std::string textureRelPath = texturePath.C_Str();
+		std::string textureFullPath = getFolderFromPath(path, true) + textureRelPath;
+		int textureIndex = textureManager.getTextureIndexByPath(textureFullPath);
 
 		std::vector<Triangle> tris;
 		for (size_t j = 0; j < mesh->mNumFaces; ++j)

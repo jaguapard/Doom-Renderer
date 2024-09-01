@@ -270,8 +270,9 @@ void MainGame::changeMapTo(std::string mapName)
 	else
 	{
 		currentMap = nullptr;
+		AssetLoader loader;
 		//GLTF and FBX load fine
-		sceneModels = AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager);
+		sceneModels = loader.loadObj("scenes/Sponza/sponza.obj", textureManager, "H:/Sponza goodies/old_sponza/old_sponza.bmdl");
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/pkg_c1_trees/NewSponza_CypressTree_FBX_YUp.fbx", textureManager);
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/pkg_a_curtains/NewSponza_Curtains_FBX_YUp.fbx", textureManager);
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_glTF_003.gltf", textureManager);

@@ -6,6 +6,7 @@
 #include "Vec.h"
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 #pragma comment(lib, "assimp-vc143-mt.lib")
 
@@ -29,7 +30,15 @@ AssetLoader::AssetLoader()
 {
 
 }
-std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textureManager)
+
+template <typename T>
+void writeVarToFile(const T& var, std::ofstream& file, size_t sizeOverride = 0)
+{
+	if (!sizeOverride) file.write((const char*)(&var), sizeof(var));
+	else file.write((const char*)(&var), sizeOverride);
+}
+
+std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textureManager, std::string convertToSavePath)
 {
 	const auto pScene = this->importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_MakeLeftHanded | aiProcess_GenUVCoords);
 	std::stringstream ss;
@@ -41,6 +50,9 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 	}
 	
 	std::vector<Model> models;
+	std::ofstream convertedSavedModel;
+	if (convertToSavePath.length() > 0) convertedSavedModel = std::ofstream(convertToSavePath, std::ios::binary);
+
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
 		aiMesh* mesh = pScene->mMeshes[i];
@@ -75,6 +87,26 @@ std::vector<Model> AssetLoader::loadObj(std::string path, TextureManager& textur
 			}
 		}
 		models.push_back(Model(tris, textureIndex, textureManager));
+
+		if (convertToSavePath.length() > 0)
+		{
+			float saveData[15];
+			uint64_t modelSize = tris.size() * sizeof(saveData); //size of a single model entry in bytes, not counting size member and path. 
+			writeVarToFile(modelSize, convertedSavedModel);
+			convertedSavedModel.write(textureRelPath.c_str(), textureRelPath.length() + 1);
+			for (const auto& it : tris)
+			{				
+				for (int k = 0; k < 3; ++k)
+				{
+					saveData[5 * k] = it.tv[k].worldCoords.x;
+					saveData[5 * k + 1] = it.tv[k].worldCoords.y;
+					saveData[5 * k + 2] = it.tv[k].worldCoords.z;
+					saveData[5 * k + 3] = it.tv[k].textureCoords.x;
+					saveData[5 * k + 4] = it.tv[k].textureCoords.y;
+				}
+				writeVarToFile(saveData, convertedSavedModel);
+			}
+		}
 	}
 	
 	size_t triangleCount = 0;

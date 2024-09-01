@@ -7,7 +7,7 @@ class AssetLoader
 {
 public:
 	AssetLoader();
-	std::vector<Model> loadObj(std::string path, TextureManager& textureManager);
+	std::vector<Model> loadObj(std::string path, TextureManager& textureManager, std::string convertToSavePath = "");
 	
 	//void saveModels(const std::vector<Model>& models, std::string path) const;
 private:

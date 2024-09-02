@@ -70,6 +70,8 @@
     <ClCompile Include="src\Polygon.cpp" />
     <ClCompile Include="src\PolygonBitmap.cpp" />
     <ClCompile Include="src\PolygonTriangulator.cpp" />
+    <ClCompile Include="src\Renderers\RasterizationRenderer.cpp" />
+    <ClCompile Include="src\Renderers\RendererBase.cpp" />
     <ClCompile Include="src\shaders\MainFragmentRenderShader.cpp" />
     <ClCompile Include="src\shaders\VertexTransformerShader.cpp" />
     <ClCompile Include="src\ShadowMap.cpp" />
@@ -92,6 +94,7 @@
     <ClInclude Include="src\bob\Timer.h" />
     <ClInclude Include="src\bob\Vec2.h" />
     <ClInclude Include="src\bob\Vec3.h" />
+    <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Color.h" />
     <ClInclude Include="src\CoordinateTransformer.h" />
     <ClInclude Include="src\EnumclassHelper.h" />
@@ -105,6 +108,7 @@
     <ClInclude Include="src\GameStates\BenchmarkState.h" />
     <ClInclude Include="src\GameStates\GameStateBase.h" />
     <ClInclude Include="src\GameStates\MainGame.h" />
+    <ClInclude Include="src\KeepApartVector.h" />
     <ClInclude Include="src\Lehmer.h" />
     <ClInclude Include="src\Matrix4.h" />
     <ClInclude Include="src\misc\Enums.h" />
@@ -117,6 +121,8 @@
     <ClInclude Include="src\PolygonBitmap.h" />
     <ClInclude Include="src\PolygonTriangulator.h" />
     <ClInclude Include="src\real.h" />
+    <ClInclude Include="src\Renderers\RasterizationRenderer.h" />
+    <ClInclude Include="src\Renderers\RendererBase.h" />
     <ClInclude Include="src\shaders\MainFragmentRenderShader.h" />
     <ClInclude Include="src\shaders\ShaderBase.h" />
     <ClInclude Include="src\shaders\VertexTransformerShader.h" />

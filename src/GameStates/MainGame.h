@@ -25,11 +25,10 @@
 #include "../PointLight.h"
 #include "../misc/GameSettings.h"
 #include "../ShadowMap.h"
+#include "../KeepApartVector.h"
+#include "../Camera.h"
+#include "../Renderers/RendererBase.h"
 
-class alignas(64) RenderJobList : public std::vector<RenderJob>
-{
-
-};
 class MainGame : public GameStateBase
 {
 public:
@@ -51,17 +50,9 @@ protected:
 
 	std::vector<Vec4> camPosAndAngArchieve;
 	int activeCamPosAndAngle = 2;
-	Vec4 camPos;
-	Vec4 camAng;
+	Camera camera;
 
 	std::vector<ShadowMap> shadowMaps;
-
-	FloatColorBuffer framebuf, pixelWorldPos;
-	PixelBuffer<real> lightBuf;
-	ZBuffer zBuffer;
-    FloatColorBuffer screenBuf;
-
-	CoordinateTransformer ctr;
 
 	GameSettings settings;
 	PerformanceMonitor performanceMonitor;	
@@ -82,28 +73,11 @@ protected:
 	DoomMap* currentMap = nullptr;
 	std::string warpTo;
 
-	std::vector<RenderJobList> renderJobs;
 	std::array<uint32_t, 4> shifts;
 
-
+	std::unique_ptr<RendererBase> renderer;
 	void init();
 	void changeMapTo(std::string mapName);
 
-	TriangleRenderContext makeTriangleRenderContext();
-	void fillRenderJobsList(TriangleRenderContext ctx, std::vector<RenderJob>& renderJobs);
-	std::array<uint32_t, 4> getShiftsForWindow();
-
 	void adjustSsaaMult(int add);
-
-	void saveBuffers() const;
-
-	struct ModelSlice
-	{
-		const Triangle* pTrianglesBegin;
-		const Triangle* pTrianglesEnd;
-		const Model* pModel;
-		int workerNumber = -1;
-	};
-	std::vector<ModelSlice> distributeTrianglesForWorkers();
-
 };

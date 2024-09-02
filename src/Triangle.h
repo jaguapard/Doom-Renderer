@@ -14,8 +14,6 @@
 #include "PointLight.h"
 #include "misc/GameSettings.h"
 
-struct TriangleRenderContext;
-struct RenderJob;
 class Model;
 
 struct Triangle
@@ -29,56 +27,9 @@ struct Triangle
 	void sortByAscendingTextureX();
 	void sortByAscendingTextureY();
 
-	void addToRenderQueue(const TriangleRenderContext& context, const Model* pModel) const;
 	static std::pair<Triangle, Triangle> pairFromRect(std::array<TexVertex, 4> rectPoints);
 
 	Vec4 getNormalVector() const;
-
-	VectorPack16 interpolateSpaceCoords(const FloatPack16& alpha, const FloatPack16& beta, const FloatPack16& gamma) const;
-	VectorPack16 interpolateTextureCoords(const FloatPack16& alpha, const FloatPack16& beta, const FloatPack16& gamma) const;
-	VectorPack16 interpolateWorldCoords(const FloatPack16& alpha, const FloatPack16& beta, const FloatPack16& gamma) const;
 private:
-	void prepareScreenSpace(const TriangleRenderContext& context, const Model* pModel) const; //WARNING: this method expects tv to contain rotated (but not yet z-divided coords)!
-	void addToRenderQueueFinal(const TriangleRenderContext& context, const Model* pModel) const; //This method expects tv to contain screen space coords in tv.spaceCoords with z holding 1/world z and z divided texture coords in tv.textureCoords
-};
 
-struct RenderJob
-{
-	Triangle originalTriangle;
-
-	const Model* pModel;
-	real rcpSignedArea;
-
-	struct BoundingBox
-	{
-		real minX, minY, maxX, maxY;
-	};
-
-	BoundingBox boundingBox;
-
-	RenderJob()
-	{
-
-	}
-};
-class ShadowMap;
-
-struct TriangleRenderContext
-{
-	FloatColorBuffer* frameBuffer = nullptr;
-	PixelBuffer<real>* lightBuffer = nullptr;
-	ZBuffer* zBuffer = nullptr;
-	FloatColorBuffer* pixelWorldPos = nullptr;
-
-	std::vector<RenderJob>* renderJobs;
-	const std::vector<PointLight>* pointLights;
-	const std::vector<ShadowMap>* shadowMaps;
-
-	const CoordinateTransformer* ctr;
-
-	real framebufW, framebufH;
-	Vec4 camPos;
-
-	GameSettings gameSettings;
-	int doomSkyTextureMarkerIndex;
 };

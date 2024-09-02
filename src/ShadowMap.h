@@ -3,6 +3,7 @@
 #include "CoordinateTransformer.h"
 #include "Triangle.h"
 #include "Model.h"
+#include "Camera.h"
 
 class Threadpool;
 struct ShadowMapTriangleAddendum
@@ -13,9 +14,11 @@ struct ShadowMapTriangleAddendum
 
 struct ShadowMap
 {
-	ZBuffer depthBuffer;
 	CoordinateTransformer ctr;
+	ZBuffer depthBuffer;	
+	real fovMult = 1;
+	Camera pov;
 
-	ShadowMap(int w, int h, const CoordinateTransformer& ctr);
-	void render(const std::vector<Model>& models, const GameSettings& gameSettings, const std::vector<ShadowMap>& shadowMaps, Threadpool& threadpool);
+	ShadowMap(int w, int h, const Camera& pov);
+	void render(const std::vector<Model>& models, const GameSettings& gameSettings, Threadpool& threadpool);
 };

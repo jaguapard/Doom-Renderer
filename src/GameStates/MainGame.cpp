@@ -6,6 +6,7 @@
 #include "../EnumclassHelper.h"
 #include "../AssetLoader.h"
 #include "../shaders/MainFragmentRenderShader.h"
+#include "../Renderers/RasterizationRenderer.h"
 
 MainGame::MainGame(GameStateInitData data)
 {
@@ -31,8 +32,8 @@ void MainGame::handleInput()
 		input.handleEvent(ev);
 		if (settings.mouseCaptured && ev.type == SDL_MOUSEMOTION)
 		{
-			camAng.y += ev.motion.xrel * settings.camAngAdjustmentSpeed_Mouse;
-			camAng.z -= ev.motion.yrel * settings.camAngAdjustmentSpeed_Mouse;
+			this->camera.angle.y += ev.motion.xrel * settings.camAngAdjustmentSpeed_Mouse;
+			this->camera.angle.z -= ev.motion.yrel * settings.camAngAdjustmentSpeed_Mouse;
 		}
 		if (ev.type == SDL_MOUSEWHEEL)
 		{
@@ -65,16 +66,16 @@ void MainGame::handleInput()
 	if (input.wasCharPressedOnThisFrame('P')) settings.performanceMonitorDisplayEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('J')) settings.skyRenderingMode = EnumclassHelper::next(settings.skyRenderingMode);
 	if (input.wasCharPressedOnThisFrame('O')) settings.wireframeEnabled ^= 1;
-	if (input.wasCharPressedOnThisFrame('C')) camPos = { -96, 70, 784 };
+	if (input.wasCharPressedOnThisFrame('C')) this->camera.pos = { -96, 70, 784 };
 	if (input.wasCharPressedOnThisFrame('K')) settings.wheelAdjMod = EnumclassHelper::next(settings.wheelAdjMod);
 	if (input.wasCharPressedOnThisFrame('L')) settings.fovMult = 1;
-	if (input.wasCharPressedOnThisFrame('V')) camAng = { 0,0,0 };
+	if (input.wasCharPressedOnThisFrame('V')) this->camera.angle = { 0,0,0 };
 	if (input.wasCharPressedOnThisFrame('R')) settings.backfaceCullingEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('U')) settings.fogEffectVersion = EnumclassHelper::next(settings.fogEffectVersion);
 	if (input.wasCharPressedOnThisFrame('Y')) settings.ditheringEnabled ^= 1;
 	if (input.wasCharPressedOnThisFrame('Q') && settings.ssaaMult > 1) this->adjustSsaaMult(settings.ssaaMult - 1);
 	if (input.wasCharPressedOnThisFrame('E')) this->adjustSsaaMult(settings.ssaaMult + 1);
-	if (input.wasCharPressedOnThisFrame('H')) this->saveBuffers();
+	if (input.wasCharPressedOnThisFrame('H')) this->renderer->saveBuffers();
 
 	if (input.wasButtonPressedOnThisFrame(SDL_SCANCODE_LCTRL))
 	{
@@ -107,9 +108,9 @@ void MainGame::handleInput()
 	settings.fogIntensity += 10 * (input.isButtonHeld(SDL_SCANCODE_B) - input.isButtonHeld(SDL_SCANCODE_N));
 
 	//camAng.z = fmod(camAng.z, M_PI);
-	camAng.y = fmod(camAng.y, 2 * M_PI);
-	camAng.z = std::clamp<real>(camAng.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
-	Matrix4 rotationOnlyMatrix = Matrix4::rotationXYZ(camAng);
+	this->camera.angle.y = fmod(this->camera.angle.y, 2 * M_PI);
+	this->camera.angle.z = std::clamp<real>(this->camera.angle.z, -M_PI / 2 + 0.01, M_PI / 2 - 0.01); //no real need for 0.01, but who knows
+	Matrix4 rotationOnlyMatrix = Matrix4::rotationXYZ(this->camera.angle);
 
 	const Vec4 forward = Vec4(0, 0, -1);
 	const Vec4 right = Vec4(1, 0, 0);
@@ -130,7 +131,7 @@ void MainGame::handleInput()
 	if (real len = camAdd.len() > 0)
 	{
 		camAdd /= len;
-		camPos += camAdd * settings.flySpeed;
+		this->camera.pos += camAdd * settings.flySpeed;
 
 		for (int i = 0; i < 4; ++i) pointLights[i].pos += camAdd * settings.flySpeed;
 	}
@@ -141,7 +142,8 @@ void MainGame::init()
 	threadpool = initData.threadpool;
 	wnd = initData.wnd;
 	wndSurf = SDL_GetWindowSurface(wnd);
-	shifts = getShiftsForWindow();
+	int w = wndSurf->w;
+	int h = wndSurf->h;
 
 	camPosAndAngArchieve = {
 	   { 0,0,0 }, {0,0,0},
@@ -149,20 +151,11 @@ void MainGame::init()
 	   {-96, 70, 784}, {0,0,0}, //doom 2 map 01 player start
 	};
 
-	camPos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
-	camAng = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
+	this->camera.pos = camPosAndAngArchieve[activeCamPosAndAngle * 2];
+	this->camera.angle = camPosAndAngArchieve[activeCamPosAndAngle * 2 + 1];
 
 	settings.ssaaMult = 1;
-	int framebufW = wndSurf->w*settings.ssaaMult;
-	int framebufH = wndSurf->h*settings.ssaaMult;
 
-	framebuf = { framebufW, framebufH };
-	//lightBuf = { framebufW, framebufH };
-	zBuffer = { framebufW, framebufH };
-	pixelWorldPos = { framebufW, framebufH };
-
-
-	this->ctr = { framebufW, framebufH };
 	settings.textureManager = &textureManager;
 	sky = { "RSKY1", textureManager };
 
@@ -179,17 +172,17 @@ void MainGame::init()
 	maps = WadLoader::loadWad("doom2.wad"); //can't redistribute commercial wads!
 
 	pointLights = {
-		{camPos, Vec4(1,0.7,0.4,1), 2e4},
-		{camPos + Vec4(-200, 100, 200), Vec4(1,0,0.4,1), 2e4},
-		{camPos + Vec4(200, 100, 200), Vec4(0,0,1,1), 2e4},
-		{camPos + Vec4(100, 50, 100), Vec4(0,1,0,1), 2e4},
+		{this->camera.pos, Vec4(1,0.7,0.4,1), 2e4},
+		{this->camera.pos + Vec4(-200, 100, 200), Vec4(1,0,0.4,1), 2e4},
+		{this->camera.pos + Vec4(200, 100, 200), Vec4(0,0,1,1), 2e4},
+		{this->camera.pos + Vec4(100, 50, 100), Vec4(0,1,0,1), 2e4},
 
 		//{Vec4(0,300,0), Vec4(1,1,1,1), 1e5},
 		//{Vec4(500,300,0), Vec4(0.5,0.7,1,1), 2e5},
 		//{Vec4(-500,300,0), Vec4(0.1,0.5,1,1), 2e5},
 	};
 
-	renderJobs.resize(threadpool->getThreadCount());
+	this->renderer = std::make_unique<RasterizationRenderer>(w, h, *threadpool);
 }
 
 std::string vecToStr(const Vec4& v)
@@ -202,163 +195,23 @@ std::string boolToStr(bool b)
 	return b ? "enabled" : "disabled";
 }
 
-std::vector<MainGame::ModelSlice> MainGame::distributeTrianglesForWorkers()
-{
-	size_t threadCount = threadpool->getThreadCount();
-	std::vector<ModelSlice> modelSlices;
-	size_t totalTriangles = 0;
-	for (const auto& model : sceneModels)
-	{
-		size_t count = model.getTriangleCount();
-		totalTriangles += count;
-
-		ModelSlice& slice = modelSlices.emplace_back();
-		slice.pTrianglesBegin = model.getTriangles().data();
-		slice.pTrianglesEnd = slice.pTrianglesBegin + count;
-		slice.pModel = &model;
-	}
-
-	if (settings.skyRenderingMode == SkyRenderingMode::SPHERE)
-	{
-		totalTriangles += sky.getModel().getTriangles().size();
-		ModelSlice& skySlice = modelSlices.emplace_back();
-		skySlice.pModel = &sky.getModel();
-		skySlice.pTrianglesBegin = sky.getModel().getTriangles().data();
-		skySlice.pTrianglesEnd = skySlice.pTrianglesBegin + sky.getModel().getTriangles().size();
-	}
-
-	size_t trianglesBeforeDistribution = 0, trianglesAfterDistribution = 0;
-	for (const auto& it : modelSlices) trianglesBeforeDistribution += it.pTrianglesEnd - it.pTrianglesBegin;
-	assert(trianglesBeforeDistribution == totalTriangles);
-
-	size_t sliceIndex = 0;
-	for (size_t i = 0; i < threadCount; ++i)
-	{
-		size_t myTriangleCount = 0;
-		auto [limLow, limHigh] = threadpool->getLimitsForThread(i, 0, totalTriangles, threadCount);
-		size_t myTriangleLimit = limHigh - limLow;
-		while (myTriangleLimit > 0 && sliceIndex < modelSlices.size())
-		{
-			size_t currentSliceSize = modelSlices[sliceIndex].pTrianglesEnd - modelSlices[sliceIndex].pTrianglesBegin;
-			if (currentSliceSize <= myTriangleLimit)
-			{
-				myTriangleLimit -= currentSliceSize;
-				modelSlices[sliceIndex].workerNumber = i;
-			}
-			else
-			{
-				const Triangle* pBorder = modelSlices[sliceIndex].pTrianglesBegin + myTriangleLimit;
-				ModelSlice& newSlice = modelSlices.emplace_back(); //maybe should insert in the same place?
-
-				newSlice.pModel = modelSlices[sliceIndex].pModel;
-				newSlice.pTrianglesEnd = modelSlices[sliceIndex].pTrianglesEnd;				
-				newSlice.pTrianglesBegin = pBorder;
-
-				modelSlices[sliceIndex].pTrianglesEnd = pBorder;
-				modelSlices[sliceIndex].workerNumber = i;
-				myTriangleLimit = 0;
-			}
-			++sliceIndex;
-		}
-	}
-	modelSlices.back().workerNumber = threadCount - 1; //TODO: not a good way
-	for (const auto& it : modelSlices) trianglesAfterDistribution += it.pTrianglesEnd - it.pTrianglesBegin;
-	assert(trianglesBeforeDistribution == trianglesAfterDistribution);
-
-	for (auto& it : modelSlices) assert(it.workerNumber != -1);
-	return modelSlices;
-}
-
 void MainGame::draw()
 {
-	int threadCount = threadpool->getThreadCount();
-	
-	TriangleRenderContext ctx = makeTriangleRenderContext();
-	std::vector<ModelSlice> distributedSlices = this->distributeTrianglesForWorkers();
+	std::vector<const Model*> modelPtrs;
+	int skyTextureMarker = textureManager.getTextureIndexByName("F_SKY1");
+	for (const auto& it : sceneModels) if (it.textureIndex != skyTextureMarker) modelPtrs.push_back(&it);
+	if (settings.skyRenderingMode == SkyRenderingMode::SPHERE) modelPtrs.push_back(&sky.getModel());
 
-	std::vector<task_id> transformTasks;
-	for (int tNum = 0; tNum < threadCount; ++tNum)
-	{
-		taskfunc_t f = [&, tNum]() {
-			TriangleRenderContext localCtx = ctx;
-			localCtx.renderJobs = &renderJobs[tNum];
-			for (const auto& slice : distributedSlices)
-			{
-				if (slice.workerNumber == tNum)
-				{
-					slice.pModel->addTriangleRangeToRenderQueue(slice.pTrianglesBegin, slice.pTrianglesEnd, localCtx);
-				}
-			}
-		};
-		transformTasks.push_back(threadpool->addTask(f));
-	}
-	threadpool->waitForMultipleTasks(transformTasks);
-
-	std::vector<ThreadpoolTask> taskBatch;
-
-	/*
-	std::vector<std::pair<int, int>> limits;
-	for (int i = 0; i < threadCount; ++i)
-	{
-		auto x = threadpool->getLimitsForThread(i, 0, ctx.framebufH);
-		limits.push_back(std::make_pair(int(x.first), int(x.second)));
-		if (i > 0) assert(limits[i].first >= limits[i - 1].second);
-	}*/
-
-	for (int tNum = 0; tNum < threadCount; ++tNum)
-	{
-		//is is crucial to capture some stuff by value [=], else function risks getting garbage values when the task starts. 
-		//It is, however, assumed that renderJobs vector remains in a valid state until all tasks are completed.
-		taskfunc_t f = [=]() {
-			TriangleRenderContext localCtx = ctx;
-			int ssaaMult = settings.ssaaMult;
-			auto lim = threadpool->getLimitsForThread(tNum, 0, wndSurf->h);
-			int outputMinY = lim.first; //truncate limits to avoid fighting
-			int outputMaxY = lim.second;
-			int renderMinY = outputMinY * ssaaMult; //it is essential to caclulate rendering zone limits like this, to ensure there are no intersections in different threads
-			int renderMaxY = outputMaxY * ssaaMult;
-	
-			localCtx.zBuffer->clearRows(renderMinY, renderMaxY); //Z buffer has to be cleared, else only pixels closer than previous frame will draw
-			if (settings.bufferCleaningEnabled)
-			{
-				//ctx.frameBuffer->clearRows(renderMinY, renderMaxY);
-				//ctx.lightBuffer->clearRows(renderMinY, renderMaxY, 1);
-			}
-			
-			MainFragmentRenderInput mfrInp;
-			mfrInp.ctx = localCtx;
-			mfrInp.zoneMinY = renderMinY;
-			mfrInp.zoneMaxY = renderMaxY - 1;
-
-			MainFragmentRenderShader mfrShaderInst;
-			for (auto& it : renderJobs)
-			{
-				mfrInp.renderJobs = &it;
-				mfrShaderInst.run(mfrInp);
-			}
-
-			//blitting::lightIntoFrameBuffer(*ctx.frameBuffer, *ctx.lightBuffer, myMinY, myMaxY);
-			if (settings.fogEnabled) blitting::applyFog(*ctx.frameBuffer, *ctx.pixelWorldPos, camPos, settings.fogIntensity / settings.fovMult, Vec4(0.7, 0.7, 0.7, 1), renderMinY, renderMaxY, settings.fogEffectVersion); //divide by fovMult to prevent FOV setting from messing with fog intensity
-			threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
-			blitting::frameBufferIntoSurface(*ctx.frameBuffer, wndSurf, outputMinY, outputMaxY, shifts, ctx.gameSettings.ditheringEnabled, ssaaMult);
-		};
-
-		ThreadpoolTask task;
-		task.func = f;
-		taskBatch.emplace_back(task);
-	}
-
-	std::vector<task_id> renderTaskIds = threadpool->addTaskBatch(taskBatch);
-	threadpool->waitForMultipleTasks(renderTaskIds);
-	for (auto& it : renderJobs) it.clear();
+	threadpool->waitUntilTaskCompletes(windowUpdateTaskId);
+	renderer->drawScene(modelPtrs, wndSurf, settings, camera);
 
 	windowUpdateTaskId = threadpool->addTask([&, this]() {
 		performanceMonitor.registerFrameDone();
 		if (settings.performanceMonitorDisplayEnabled || performanceMonitor.getFrameNumber() % 1024 == 0)
 		{
 			std::vector<std::pair<std::string, std::string>> perfmonInfo = {
-				{"Cam pos", vecToStr(camPos)},
-				{"Cam ang", vecToStr(camAng)},
+				{"Cam pos", vecToStr(this->camera.pos)},
+				{"Cam ang", vecToStr(this->camera.angle)},
 				{"Fly speed", std::to_string(settings.flySpeed) + "/frame"},
 				{"Backface culling", settings.backfaceCullingEnabled ? "enabled" : "disabled"},
 				{"Buffer cleaning", settings.bufferCleaningEnabled ? "enabled" : "disabled"},
@@ -366,12 +219,15 @@ void MainGame::draw()
 				{"Fog", !settings.fogEnabled ? "disabled" : ("version " + std::to_string(int(settings.fogEffectVersion)) + ", intensity " + std::to_string(settings.fogIntensity))},
 				{"Dithering", settings.ditheringEnabled ? "enabled" : "disabled"},
 				{"Gamma", std::to_string(settings.gamma)},
-				{"Render resolution", std::to_string(framebuf.getW()) + "x" + std::to_string(framebuf.getH()) + " (" + std::to_string(settings.ssaaMult) + "x)"},
 				{"Output resolution", std::to_string(wndSurf->w) + "x" + std::to_string(wndSurf->h)},
 
-				{"Transformation matrix", "\n" + ctr.getCurrentTransformationMatrix().toString()},
-				{"Inverse transformation matrix", "\n" + ctr.getCurrentInverseTransformationMatrix().toString()},
+				//{"Transformation matrix", "\n" + ctr.getCurrentTransformationMatrix().toString()},
+				//{"Inverse transformation matrix", "\n" + ctr.getCurrentInverseTransformationMatrix().toString()},
 			};
+
+			auto additionalOSDinfo = renderer->getAdditionalOSDInfo();
+			for (auto& it : additionalOSDinfo) perfmonInfo.push_back(it);
+
 			if (settings.performanceMonitorDisplayEnabled) performanceMonitor.drawOn(wndSurf, { 0,0 }, perfmonInfo);
 			else std::cout << performanceMonitor.composeString(perfmonInfo) << "\n";
 		}
@@ -414,79 +270,71 @@ void MainGame::changeMapTo(std::string mapName)
 	else
 	{
 		currentMap = nullptr;
-		sceneModels = AssetLoader::loadObj("scenes/Sponza/sponza.obj", textureManager);
-		camPos = Vec4(-1305.55, 175.75, 67.645);
-		camAng = Vec4(0, -1.444047, -0.125);
-	}
+		AssetLoader loader;
+		//GLTF and FBX load fine
+		//sceneModels = loader.loadObj("scenes/Sponza/sponza.obj", textureManager, "H:/Sponza goodies/old_sponza/old_sponza.bmdl");
+		//loader.loadObj("H:/Sponza goodies/pkg_c1_trees/NewSponza_CypressTree_FBX_YUp.fbx", textureManager, "H:/Sponza goodies/tree.bmdl");
+		//loader.loadObj("H:/Sponza goodies/pkg_b_ivy/NewSponza_IvyGrowth_FBX_YUp.fbx", textureManager, "H:/Sponza goodies/pkg_b_ivy/ivy.bmdl");
+		//loader.loadObj("H:/Sponza goodies/pkg_a_curtains/NewSponza_Curtains_FBX_YUp.fbx", textureManager, "H:/Sponza goodies/curtains.bmdl");
+		//loader.loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_Yup_003.fbx", textureManager, "H:/Sponza goodies/new_sponza.bmdl");
+		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/pkg_a_curtains/NewSponza_Curtains_FBX_YUp.fbx", textureManager);
+		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_Yup_003.fbx", textureManager);
+		//return;
+		std::string paths[] = {
+			"H:/Sponza goodies/main1_sponza/new_sponza.bmdl",
+			"H:/Sponza goodies/pkg_a_curtains/curtains.bmdl",
+			"H:/Sponza goodies/pkg_c1_trees/tree.bmdl",	
+			"H:/Sponza goodies/pkg_b_ivy/ivy.bmdl",
+		};
 
-	int shadowMapW = debug ? 192 : 19200;
-	int shadowMapH = debug ? 108 : 10800;
-	CoordinateTransformer mapCtr(shadowMapW, shadowMapH);
-	mapCtr.prepare(Vec4(-1846, 2799, 568), Vec4(0, -1.2869, -0.6689));
-	this->shadowMaps = { ShadowMap(shadowMapW,shadowMapH,mapCtr) };
+		size_t modelsToLoad = std::size(paths);
+		std::vector<task_id> loaderTasks;
+		std::mutex mtx;
 
-	for (auto& it : shadowMaps) it.render(sceneModels, this->settings, shadowMaps, *threadpool);
-	performanceMonitor.reset();
-}
-
-TriangleRenderContext MainGame::makeTriangleRenderContext()
-{
-	TriangleRenderContext ctx;
-	ctr.prepare(camPos, camAng);
-	ctx.ctr = &ctr;
-	ctx.frameBuffer = &framebuf;
-	ctx.lightBuffer = &lightBuf;
-	ctx.zBuffer = &zBuffer;
-
-	ctx.framebufW = framebuf.getW();
-	ctx.framebufH = framebuf.getH();
-	ctx.doomSkyTextureMarkerIndex = textureManager.getTextureIndexByName("F_SKY1"); //Doom uses F_SKY1 to mark sky. Any models with this texture will exit their rendering immediately
-	ctx.gameSettings = settings;
-
-	ctx.camPos = camPos;
-    ctx.pointLights = &pointLights;
-    ctx.pixelWorldPos = &pixelWorldPos;
-	
-	ctx.shadowMaps = &shadowMaps;
-
-	return ctx;
-}
-
-std::array<uint32_t, 4> MainGame::getShiftsForWindow()
-{
-	//this is a stupid fix for everything becoming way too blue in debug mode specifically.
-	//it tries to find a missing bit shift to put the alpha value into the unused byte, since Color.toSDL_Uint32 expects 4 shifts
-	auto* wf = wndSurf->format;
-	std::array<uint32_t, 4> shifts = { wf->Rshift, wf->Gshift, wf->Bshift };
-	uint32_t missingShift = 24;
-	for (int i = 0; i < 3; ++i)
-	{
-		if (std::find(std::begin(shifts), std::end(shifts), i * 8) == std::end(shifts))
+		for (int i = 0; i < modelsToLoad; ++i)
 		{
-			missingShift = i * 8;
-			break;
+			taskfunc_t f = [&, i]() {
+				auto returnedModels = AssetLoader::loadBmdl(paths[i], textureManager);
+				std::lock_guard lck(mtx);
+				this->sceneModels.insert(this->sceneModels.end(), returnedModels.begin(), returnedModels.end());
+			};
+
+			loaderTasks.push_back(this->threadpool->addTask(f));
 		}
+		this->threadpool->waitForMultipleTasks(loaderTasks);
+		this->camera.pos = Vec4(-1305.55, 175.75, 67.645);
+		this->camera.angle = Vec4(0, -1.444047, -0.125);
 	}
-	shifts[3] = missingShift;
-	for (auto& it : shifts) assert(it % 8 == 0);
-	return shifts;
+
+	size_t triangleCount = 0;
+	for (auto& it : sceneModels) triangleCount += it.getTriangleCount();
+	std::cout << "Total triangles loaded: " << triangleCount << "\n";
+
+	auto *r = dynamic_cast<RasterizationRenderer*>(this->renderer.get());
+	if (r)
+	{
+		r->removeShadowMaps();
+		int shadowMapW = debug ? 192 : 19200;
+		int shadowMapH = debug ? 108 : 10800;
+		//Camera shadowMapPov = { .pos = Vec4(-1846, 2799, 568), .angle = Vec4(0, -1.2869, -0.6689) };
+		//Camera shadowMapPov = { .pos = Vec4(-288.22, 2493.0354, -519.728333), .angle = Vec4(0, 3.685142, -1.213774) };
+		Camera shadowMapPov = { .pos = Vec4(843.313965, 3009.328857, -55.578117), .angle = Vec4(0, -4.721983, -1.09903) };
+		this->shadowMaps = { ShadowMap(shadowMapW,shadowMapH,shadowMapPov) };
+
+		for (auto& it : shadowMaps)
+		{
+			it.render(sceneModels, this->settings, *threadpool);
+			r->addShadowMap(it);
+		}		
+	}
+	performanceMonitor.reset();
 }
 
 void MainGame::adjustSsaaMult(int newMult)
 {
 	int w = wndSurf->w * newMult;
 	int h = wndSurf->h * newMult;
-	framebuf = { w,h };
-	zBuffer = { w,h };
-	pixelWorldPos = { w,h };
-	ctr = { w,h };
 	settings.ssaaMult = newMult;
-}
-
-void MainGame::saveBuffers() const
-{
-	std::string s = std::to_string(__rdtsc());
-	//framebuf.saveToFile("screenshots/" + s + "_framebuf.png");
-	zBuffer.saveToFile("screenshots/" + s + "_zbuf.png");
-	shadowMaps[0].depthBuffer.saveToFile("screenshots/" + s + "_shadow_map.png");
+	this->renderer = std::make_unique<RasterizationRenderer>(w, h, *threadpool);
+	for (auto& it : shadowMaps) dynamic_cast<RasterizationRenderer*>(this->renderer.get())->addShadowMap(it);
 }

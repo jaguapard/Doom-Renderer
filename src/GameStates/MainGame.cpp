@@ -283,16 +283,24 @@ void MainGame::changeMapTo(std::string mapName)
 		std::string paths[] = {
 			"H:/Sponza goodies/main1_sponza/new_sponza.bmdl",
 			"H:/Sponza goodies/pkg_a_curtains/curtains.bmdl",
-			"H:/Sponza goodies/pkg_c1_trees/tree.bmdl",
-			
+			"H:/Sponza goodies/pkg_c1_trees/tree.bmdl",			
 		};
 
-		for (auto& it : paths)
+		size_t modelsToLoad = std::size(paths);
+		std::vector<task_id> loaderTasks;
+		std::mutex mtx;
+
+		for (int i = 0; i < modelsToLoad; ++i)
 		{
-			auto ret = AssetLoader::loadBmdl(it, textureManager);
-			for (auto& mdl : ret) sceneModels.push_back(mdl);
+			taskfunc_t f = [&, i]() {
+				auto returnedModels = AssetLoader::loadBmdl(paths[i], textureManager);
+				std::lock_guard lck(mtx);
+				this->sceneModels.insert(this->sceneModels.end(), returnedModels.begin(), returnedModels.end());
+			};
+
+			loaderTasks.push_back(this->threadpool->addTask(f));
 		}
-		//sceneModels = AssetLoader::loadBmdl("H:/Sponza goodies/old_sponza/old_sponza.bmdl", textureManager);
+		this->threadpool->waitForMultipleTasks(loaderTasks);
 		this->camera.pos = Vec4(-1305.55, 175.75, 67.645);
 		this->camera.angle = Vec4(0, -1.444047, -0.125);
 	}

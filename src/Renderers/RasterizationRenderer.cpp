@@ -390,7 +390,7 @@ void RasterizationRenderer::drawRenderJobSlice(const RenderJob& renderJob, const
 	real xBeg = clampedBox.minX;
 	real xEnd = clampedBox.maxX;
 
-	const Texture& texture = this->currFrameGameSettings.textureManager->getTextureByIndex(renderJob.pModel->textureIndex);
+	const Texture& texture = this->currFrameGameSettings.textureManager->getTextureByIndex(renderJob.pModel->textureIndex, false);
 	const auto& tv = renderJob.transformedTriangle.tv;
 	real adjustedLight = renderJob.pModel->lightMult ? powf(renderJob.pModel->lightMult.value(), this->currFrameGameSettings.gamma) : this->currFrameGameSettings.gamma;
 

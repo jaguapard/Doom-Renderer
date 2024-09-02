@@ -7,11 +7,13 @@
 
 TextureManager::TextureManager()
 {
+	std::lock_guard lck(this->mtx);
 	this->textureNameTranslation = this->loadTextureTranslation();
 }
 
 int TextureManager::getTextureIndexByName(std::string name)
 {
+	std::lock_guard lck(this->mtx);
 	auto it = textureNameTranslation.find(name);
 	std::string fileName = it == textureNameTranslation.end() ? name : it->second;
 	if (textureNameToIndexMap.find(fileName) != textureNameToIndexMap.end()) return textureNameToIndexMap[fileName]; //find by file name
@@ -23,6 +25,7 @@ int TextureManager::getTextureIndexByName(std::string name)
 
 int TextureManager::getTextureIndexByPath(std::string path)
 {
+	std::lock_guard lck(this->mtx);
 	if (textureNameToIndexMap.find(path) != textureNameToIndexMap.end()) return textureNameToIndexMap[path];
 
 	textures.emplace_back(path, true);
@@ -30,18 +33,25 @@ int TextureManager::getTextureIndexByPath(std::string path)
 	return textures.size() - 1;
 }
 
-const Texture& TextureManager::getTextureByIndex(int index) const
+const Texture& TextureManager::getTextureByIndex(int index, bool multithreadProtectionEnabled) const
 {
+	if (multithreadProtectionEnabled)
+	{
+		std::lock_guard lck(this->mtx);
+		return textures[index];
+	}
 	return textures[index];
 }
 
 const Texture& TextureManager::getTextureByName(const std::string& name)
 {
+	std::lock_guard lck(this->mtx);
 	return this->getTextureByIndex(this->getTextureIndexByName(name));
 }
 
 std::unordered_map<std::string, std::string> TextureManager::loadTextureTranslation()
 {
+	std::lock_guard lck(this->mtx);
 	std::unordered_map<std::string, std::string> ret;
 	std::ifstream f("data/TEXTURES_DOOM2.txt");
 

@@ -274,16 +274,17 @@ void MainGame::changeMapTo(std::string mapName)
 		//GLTF and FBX load fine
 		//sceneModels = loader.loadObj("scenes/Sponza/sponza.obj", textureManager, "H:/Sponza goodies/old_sponza/old_sponza.bmdl");
 		//loader.loadObj("H:/Sponza goodies/pkg_c1_trees/NewSponza_CypressTree_FBX_YUp.fbx", textureManager, "H:/Sponza goodies/tree.bmdl");
+		//loader.loadObj("H:/Sponza goodies/pkg_b_ivy/NewSponza_IvyGrowth_FBX_YUp.fbx", textureManager, "H:/Sponza goodies/pkg_b_ivy/ivy.bmdl");
 		//loader.loadObj("H:/Sponza goodies/pkg_a_curtains/NewSponza_Curtains_FBX_YUp.fbx", textureManager, "H:/Sponza goodies/curtains.bmdl");
 		//loader.loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_Yup_003.fbx", textureManager, "H:/Sponza goodies/new_sponza.bmdl");
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/pkg_a_curtains/NewSponza_Curtains_FBX_YUp.fbx", textureManager);
-		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_glTF_003.gltf", textureManager);
 		//sceneModels = AssetLoader::loadObj("H:/Sponza goodies/main1_sponza/NewSponza_Main_Yup_003.fbx", textureManager);
-
+		//return;
 		std::string paths[] = {
 			"H:/Sponza goodies/main1_sponza/new_sponza.bmdl",
 			"H:/Sponza goodies/pkg_a_curtains/curtains.bmdl",
-			"H:/Sponza goodies/pkg_c1_trees/tree.bmdl",			
+			"H:/Sponza goodies/pkg_c1_trees/tree.bmdl",	
+			"H:/Sponza goodies/pkg_b_ivy/ivy.bmdl",
 		};
 
 		size_t modelsToLoad = std::size(paths);
@@ -315,7 +316,9 @@ void MainGame::changeMapTo(std::string mapName)
 		r->removeShadowMaps();
 		int shadowMapW = debug ? 192 : 19200;
 		int shadowMapH = debug ? 108 : 10800;
-		Camera shadowMapPov = { .pos = Vec4(-1846, 2799, 568), .angle = Vec4(0, -1.2869, -0.6689) };
+		//Camera shadowMapPov = { .pos = Vec4(-1846, 2799, 568), .angle = Vec4(0, -1.2869, -0.6689) };
+		//Camera shadowMapPov = { .pos = Vec4(-288.22, 2493.0354, -519.728333), .angle = Vec4(0, 3.685142, -1.213774) };
+		Camera shadowMapPov = { .pos = Vec4(843.313965, 3009.328857, -55.578117), .angle = Vec4(0, -4.721983, -1.09903) };
 		this->shadowMaps = { ShadowMap(shadowMapW,shadowMapH,shadowMapPov) };
 
 		for (auto& it : shadowMaps)

@@ -42,6 +42,7 @@ Model::Model(const std::vector<Triangle>& triangles, int textureIndex, const Tex
 	assert(this->triangles.size() > 0);
 
 	this->noBackfaceCulling = !textureManager.getTextureByIndex(textureIndex).hasOnlyOpaquePixels();
+	this->triangles.shrink_to_fit();
 }
 
 int Model::getTriangleCount() const

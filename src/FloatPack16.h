@@ -1,78 +1,7 @@
 #pragma once
 #include <immintrin.h>
 #include "bob/SSE_Vec4.h"
-
-struct Mask16
-{
-	__mmask16 mask;
-	Mask16() = default;
-	Mask16(const __mmask16& m);
-
-	Mask16 operator&(const Mask16& other) const;
-	Mask16 operator|(const Mask16& other) const;
-	Mask16 operator^(const Mask16& other) const;
-	Mask16 operator~() const;
-	Mask16& operator&=(const Mask16& other);
-	Mask16& operator|=(const Mask16& other);
-	Mask16& operator^=(const Mask16& other);
-
-	operator __mmask16() const;
-	operator bool() const;
-};
-
-inline Mask16::Mask16(const __mmask16& m)
-{
-	mask = m;
-}
-
-inline Mask16 Mask16::operator&(const Mask16& other) const
-{
-	return _kand_mask16(mask, other.mask);
-}
-
-inline Mask16 Mask16::operator|(const Mask16& other) const
-{
-	return _kor_mask16(mask, other.mask);
-}
-
-inline Mask16 Mask16::operator^(const Mask16& other) const
-{
-	return _kxor_mask16(mask, other.mask);
-}
-
-inline Mask16 Mask16::operator~() const
-{
-	return _knot_mask16(*this);
-}
-
-inline Mask16& Mask16::operator&=(const Mask16& other)
-{
-	*this = *this & other;
-    return *this;
-}
-
-inline Mask16& Mask16::operator|=(const Mask16& other)
-{
-	*this = *this | other;
-    return *this;
-}
-
-inline Mask16& Mask16::operator^=(const Mask16& other)
-{
-	*this = *this ^ other;
-    return *this;
-}
-
-inline Mask16::operator __mmask16() const
-{
-	return mask;
-}
-
-inline Mask16::operator bool() const
-{
-	return !_ktestz_mask16_u8(mask, mask);
-}
-
+#include "Mask16.h"
 
 struct alignas(64) FloatPack16
 {
@@ -94,10 +23,10 @@ struct alignas(64) FloatPack16
 	FloatPack16 operator*(const float other) const;
 	FloatPack16 operator/(const float other) const;
 
-	FloatPack16 operator+=(const float other);
-	FloatPack16 operator-=(const float other);
-	FloatPack16 operator*=(const float other);
-	FloatPack16 operator/=(const float other);
+	FloatPack16& operator+=(const float other);
+	FloatPack16& operator-=(const float other);
+	FloatPack16& operator*=(const float other);
+	FloatPack16& operator/=(const float other);
 
 	FloatPack16 operator+(const FloatPack16& other) const;
 	FloatPack16 operator-(const FloatPack16& other) const;
@@ -128,9 +57,11 @@ struct alignas(64) FloatPack16
 	operator __m512() const;
 
 	FloatPack16 clamp(float min, float max) const;
+	FloatPack16 clamp(const FloatPack16& min, const FloatPack16& max) const;
 	FloatPack16 sqrt() const;
 	FloatPack16 rsqrt14() const;
 	FloatPack16 rsqrt28() const;
+	__m512i trunc() const;
 
 	static FloatPack16 sequence(float mult = 1.0);
 
@@ -183,22 +114,22 @@ inline FloatPack16 FloatPack16::operator/(const float other) const
 	return _mm512_div_ps(zmm, _mm512_set1_ps(other));
 }
 
-inline FloatPack16 FloatPack16::operator+=(const float other)
+inline FloatPack16& FloatPack16::operator+=(const float other)
 {
 	return *this = *this + other;
 }
 
-inline FloatPack16 FloatPack16::operator-=(const float other)
+inline FloatPack16& FloatPack16::operator-=(const float other)
 {
 	return *this = *this - other;
 }
 
-inline FloatPack16 FloatPack16::operator*=(const float other)
+inline FloatPack16& FloatPack16::operator*=(const float other)
 {
 	return *this = *this * other;
 }
 
-inline FloatPack16 FloatPack16::operator/=(const float other)
+inline FloatPack16& FloatPack16::operator/=(const float other)
 {
 	return *this = *this / other;
 }
@@ -320,9 +251,14 @@ inline FloatPack16::operator __m512() const
 
 inline FloatPack16 FloatPack16::clamp(float min, float max) const
 {
-	FloatPack16 ret;
 	__m512 c = _mm512_min_ps(zmm, _mm512_set1_ps(max));
 	return _mm512_max_ps(c, _mm512_set1_ps(min));
+}
+
+inline FloatPack16 FloatPack16::clamp(const FloatPack16& min, const FloatPack16& max) const
+{
+	__m512 c = _mm512_min_ps(zmm, max);
+	return _mm512_max_ps(c, min);
 }
 
 inline FloatPack16 FloatPack16::sqrt() const
@@ -338,6 +274,11 @@ inline FloatPack16 FloatPack16::rsqrt14() const
 inline FloatPack16 FloatPack16::rsqrt28() const
 {
 	return _mm512_rsqrt28_ps(*this);
+}
+
+inline __m512i FloatPack16::trunc() const
+{
+	return _mm512_cvttps_epi32(zmm);
 }
 
 inline FloatPack16 FloatPack16::sequence(float mult)

@@ -376,6 +376,11 @@ public:
 
 		setPixels16(y * getW() + xStart, pixels, mask);
 	}
+
+	void scatterPixels16(__m512i x, __m512i y, __m512 pixels, __mmask16 mask = 0xFFFF)
+	{
+		_mm512_mask_i32scatter_ps(store.data(), mask, calcIndices(x, y), pixels, 4);
+	}
 };
 
 template <>

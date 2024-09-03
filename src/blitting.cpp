@@ -1,8 +1,9 @@
 #include "blitting.h"
 #include "Lehmer.h"
 #include "avx_helpers.h"
+#include "IntPack16.h"
 
-const __m512i sequence512 = _mm512_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+const IntPack16 sequence512 = IntPack16::sequence();
 //static thread_local LehmerRNG rng;
 
 void blitting::lightIntoFrameBuffer(FloatColorBuffer& frameBuf, const PixelBuffer<real>& lightBuf, size_t minY, size_t maxY)
@@ -46,13 +47,13 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 		permuteMask_rg[i*4+byteIndexR] =  
 	}*/
 
-	__m512i step = _mm512_mullo_epi32(sequence512, _mm512_set1_epi32(ssaaMult));
+	IntPack16 step = IntPack16::sequence(ssaaMult);
 	for (int dstY = minY; dstY < maxY; ++dstY)
 	{
 		for (int dstX = 0; dstX < w; dstX += 16)
 		{
-			__m512i dstX_vec = _mm512_add_epi32(_mm512_set1_epi32(dstX), sequence512);
-			Mask16 loopBounds = _mm512_cmplt_epi32_mask(dstX_vec, _mm512_set1_epi32(w));
+			IntPack16 dstX_vec = dstX + sequence512;
+			Mask16 loopBounds = dstX_vec < w;
 
 			VectorPack16 screenPixels = 0;
 			if (ssaaMult > 1)
@@ -61,8 +62,8 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 				{
 					for (int x = 0; x < ssaaMult; ++x)
 					{
-						__m512i xCoords = _mm512_add_epi32(_mm512_set1_epi32(dstX * ssaaMult + x), step);
-						__m512i yCoords = _mm512_set1_epi32(dstY * ssaaMult + y);
+						IntPack16 xCoords = dstX * ssaaMult + x + step;
+						IntPack16 yCoords = dstY * ssaaMult + y;
 						screenPixels += frameBuf.gatherPixels16(xCoords, yCoords, loopBounds); //gather horizontal pixels in steps of ssaaMult from ssaaMult consecutive rows
 					}
 				}
@@ -70,25 +71,23 @@ void blitting::frameBufferIntoSurface(const FloatColorBuffer& frameBuf, SDL_Surf
 			}
 			else screenPixels = frameBuf.getPixels16(dstX, dstY) * 255;
 
-			__m512i surfacePixels = _mm512_setzero_si512();
+			IntPack16 surfacePixels = 0;
 			for (int i = 0; i < 4; ++i)
 			{
-				__m512i channelValue = _mm512_cvttps_epi32(screenPixels[i]); //now lower bits of each epi32 contain values of channels
+				IntPack16 channelValue = screenPixels[i].trunc(); //now lower bits of each epi32 contain values of channels
 				if (ditheringEnabled)
 				{
-					__m512i rngOut = rngSource.next();
+					IntPack16 rngOut = rngSource.next();
 					FloatPack16 increaseThreshold = (screenPixels[i] - _mm512_floor_ps(screenPixels[i])) * float(UINT32_MAX);
 
 					Mask16 increaseMask = _mm512_cmplt_epu32_mask(rngOut, _mm512_cvttps_epu32(increaseThreshold));
-					channelValue = _mm512_mask_add_epi32(channelValue, increaseMask, channelValue, _mm512_set1_epi32(1));
+					channelValue += IntPack16(1, increaseMask);
 				}
 
-				__m512i clamped = avx_helpers::_mm512_clamp_epi32(channelValue, _mm512_set1_epi32(0), _mm512_set1_epi32(255));
-				__m512i shifted = _mm512_sllv_epi32(clamped, _mm512_set1_epi32(shifts[i]));
-				surfacePixels = _mm512_or_epi32(surfacePixels, shifted);
+				surfacePixels |= channelValue.clamp(0, 255) << shifts[i];
 			}
 
-			_mm512_mask_store_epi32(surfPixelsStart + dstY * w + dstX, loopBounds, surfacePixels);
+			surfacePixels.store(surfPixelsStart + dstY * w + dstX, loopBounds);
 		}
 	}
 }
